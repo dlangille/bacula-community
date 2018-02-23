@@ -5,14 +5,14 @@
 #define COMMUNITY 1      /* Define to create a Windows community binary */
 
 /* Note: there can be only *one* VERSION in this file */
-#define VERSION "9.0.6"
-#define BDATE   "20 November 2017"
-#define LSMDATE "20Nov17"
+#define VERSION "9.0.7"
+#define BDATE   "24 February 2018"
+#define LSMDATE "24Feb18"
 
 #define RELEASE 1   /* Use ONLY in rpms */
 
-#define PROG_COPYRIGHT "Copyright (C) %d-2017 Kern Sibbald.\n"
-#define BYEAR "2017"       /* year for copyright messages in progs */
+#define PROG_COPYRIGHT "Copyright (C) %d-2019 Kern Sibbald.\n"
+#define BYEAR "2018"       /* year for copyright messages in progs */
 
 /*
  * Versions of packages needed to build Bacula components
