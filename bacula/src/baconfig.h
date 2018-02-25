@@ -253,6 +253,8 @@ enum {
 /* Size of crypto length stored at head of crypto buffer. Do NOT change! */
 #define CRYPTO_LEN_SIZE ((int)sizeof(uint32_t))
 
+/* Plugin Features */
+#define PLUGIN_FEATURE_RESTORELISTFILES "RestoreListFiles"
 
 /**
  * This is for dumb compilers/libraries like Solaris. Linux GCC
@@ -618,6 +620,8 @@ void t_msg(const char *file, int line, int64_t level, const char *fmt,...);
  *   Windows
  */
 #define PathSeparator '\\'
+#define PathSeparatorUp "..\\"
+#define PathSeparatorCur ".\\"
 
 inline bool IsPathSeparator(int ch) { return ch == '/' || ch == '\\'; }
 inline char *first_path_separator(char *path) { return strpbrk(path, "/\\"); }

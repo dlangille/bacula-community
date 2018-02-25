@@ -31,7 +31,11 @@ extern DLL_IMP_EXP char *version;
 extern DLL_IMP_EXP char *dist_name;
 
 const int dbglvl = 150;
+#ifdef HAVE_WIN32
+const char *plugin_type = "-fd.dll";
+#else
 const char *plugin_type = "-fd.so";
+#endif
 
 extern int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
 extern bool check_changes(JCR *jcr, FF_PKT *ff_pkt);
@@ -1706,11 +1710,24 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
    case bVarInteractiveSession:
       *(int *)value = (int)jcr->interactive_session;
       break;
+   case bVarFileIndex:
+      *(int *)value = (int)jcr->JobFiles;
+      break;
    case bVarFileSeen:
       break;                 /* a write only variable, ignore read request */
    case bVarVssObject:
+#ifdef HAVE_WIN32
+      if (jcr->pVSSClient) {
+         *(void **)value = jcr->pVSSClient->GetVssObject();
+         break;
+       }
+#endif
        return bRC_Error;
    case bVarVssDllHandle:
+#ifdef HAVE_WIN32
+      *(void **)value = vsslib;
+      break;
+#endif
        return bRC_Error;
    case bVarWhere:
       *(char **)value = jcr->where;

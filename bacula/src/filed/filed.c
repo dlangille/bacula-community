@@ -82,8 +82,11 @@ static void usage()
  *  Main Bacula Unix Client Program
  *
  */
+#if defined(HAVE_WIN32)
+#define main BaculaMain
+#endif
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
    int ch;
    bool keep_readall_caps = false;

@@ -11,7 +11,7 @@
 
 #define RELEASE 1   /* Use ONLY in rpms */
 
-#define PROG_COPYRIGHT "Copyright (C) %d-2019 Kern Sibbald.\n"
+#define PROG_COPYRIGHT "Copyright (C) %d-2018 Kern Sibbald.\n"
 #define BYEAR "2018"       /* year for copyright messages in progs */
 
 /*
@@ -138,6 +138,8 @@
 /* #define DEBUG_MEMSET 1 */
 /* #define DEBUG_MUTEX 1 */
 /* #define DEBUG_BLOCK_CHECKSUM 1 */
+
+#define BDEMO ""
 
 /*
  * Set SMALLOC_SANITY_CHECK to zero to turn off, otherwise

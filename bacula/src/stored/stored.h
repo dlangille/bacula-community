@@ -92,6 +92,8 @@ int readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result);
 #include "vtape_dev.h"
 #include "cloud_dev.h"
 #include "aligned_dev.h"
+#include "win_file_dev.h"
+#include "win_tape_dev.h"
 #include "sd_plugins.h"
 
 /* Daemon globals from stored.c */

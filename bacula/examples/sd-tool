@@ -1,0 +1,608 @@
+#!/bin/bash
+
+# sd-tool - Tool to manipulate tapes and tape-changers
+# Copyright (C) 2010, 2011 Dennis Leeuw
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+
+BACULA_PID_DIR="/opt/bacula/working"
+MTX_DEV="/dev/tape/by-id/scsi-1ADIC_A0C0410012_LLA-changer"
+DRIVES=(/dev/tape/by-id/scsi-3500308c0a08d1000-nst /dev/tape/by-id/scsi-3500308c0a08d1004-nst)
+
+function set_dte_data() {
+	# This function sets the DTE_voltag and DTE_slots arrays
+	echo -n "See what's in the drives... "
+	local tmp=""
+	for (( I=0; $I < ${#STATUS_ARRAY[*]}; I=$(($I+1)) ))
+		do
+		if [ "${STATUS_ARRAY[$I]#Data Transfer Element}" != "${STATUS_ARRAY[$I]}" ]
+			then
+			# Line looks like this:
+			# Data Transfer Element 1:Full (Storage Element 7 Loaded):VolumeTag = 000006
+			DTE_number=${STATUS_ARRAY[$I]#Data Transfer Element }
+			DTE_number=${DTE_number%%:*}
+
+			# Check Full fist
+			if [ "${STATUS_ARRAY[$I]#*:Full}" != "${STATUS_ARRAY[$I]}" ]
+				then
+				# We now know we are a DTE and we have a tape
+				tmp=${STATUS_ARRAY[$I]#*Storage Element }
+				tmp=${tmp%% *}
+				DTE_slots[$DTE_number]=${tmp}
+				tmp=${STATUS_ARRAY[$I]#*VolumeTag = }
+				DTE_voltag[$DTE_number]=`echo ${tmp}`
+			fi
+		fi
+	done
+	echo "done."
+	return 0
+}
+
+function set_ie_data() {
+	# This function sets the IE_voltag and IE_slots_empty and IE_slots_full arrays
+	echo -n "See what's in the Import/Export slots... "
+	local count_full=0
+	local count_empty=0
+	local tmp=""
+	for (( I=0; $I < ${#STATUS_ARRAY[*]}; I=$(($I+1)) ))
+		do
+		if [ "${STATUS_ARRAY[$I]#      Storage Element}" != "${STATUS_ARRAY[$I]}" ] &&
+		   [ "${STATUS_ARRAY[$I]#*IMPORT/EXPORT}" != "${STATUS_ARRAY[$I]}" ]
+			then
+			# Line looks like this:
+			#      Storage Element 36 IMPORT/EXPORT:Empty:VolumeTag=
+
+			# Check Full fist
+			if [ "${STATUS_ARRAY[$I]#*:Full}" != "${STATUS_ARRAY[$I]}" ]
+				then
+				# We now know we are a IE and we have a tape
+				tmp=${STATUS_ARRAY[$I]#*Storage Element }
+				tmp=${tmp%% *}
+				IE_slots_full[$count_full]=${tmp}
+				tmp=${STATUS_ARRAY[$I]#*VolumeTag=}
+				IE_voltag[$count_full]=`echo ${tmp}`
+				count_full=$(($count_full+1))
+			else
+				# Line is Empty
+				tmp=${STATUS_ARRAY[$I]#*Storage Element }
+				tmp=${tmp%% *}
+				IE_slots_empty[$count_empty]=${tmp}
+				count_empty=$(($count_empty+1))
+			fi
+		fi
+	done
+	echo "done."
+	return 0
+}
+
+function set_se_data() {
+	# This function sets the SE_voltag and SE_slots_empty and SE_slots_full arrays
+	echo -n "See what's in the slots... "
+	local count_full=0
+	local count_empty=0
+	local tmp=""
+	for (( I=0; $I < ${#STATUS_ARRAY[*]}; I=$(($I+1)) ))
+		do
+		if [ "${STATUS_ARRAY[$I]#      Storage Element}" != "${STATUS_ARRAY[$I]}" ] &&
+		   [ "${STATUS_ARRAY[$I]#*IMPORT/EXPORT}" = "${STATUS_ARRAY[$I]}" ]
+			then
+			# Line looks like this:
+			#       Storage Element 30:Full :VolumeTag=000035
+
+			# Check Full fist
+			if [ "${STATUS_ARRAY[$I]#*:Full}" != "${STATUS_ARRAY[$I]}" ]
+				then
+				# We now know we are a SE and we have a tape
+				tmp=${STATUS_ARRAY[$I]#*Storage Element }
+				tmp=${tmp%%:*}
+				SE_slots_full[$count_full]=${tmp}
+				tmp=${STATUS_ARRAY[$I]#*VolumeTag=}
+				SE_voltag[$count_full]=`echo ${tmp}`
+				count_full=$(($count_full+1))
+			else
+				# Line is Empty
+				tmp=${STATUS_ARRAY[$I]#*Storage Element }
+				tmp=${tmp%%:*}
+
+				# Test if tape is in a drive
+				local full=0
+				for (( N=0; $N < ${#DTE_slots[*]}; N=$(($N+1)) ))
+					do
+					if [ "$tmp" = "${DTE_slots[$N]}" ]
+						then
+						SE_slots_full[$count_full]=${tmp}
+						SE_voltag[$count_full]=${DTE_voltag[$N]}
+						full=1
+						count_full=$(($count_full+1))
+					fi
+				done
+
+				# If it is not in a drive mark it as empty`
+				if [ "$full" = "0" ]
+					then
+					SE_slots_empty[$count_empty]=${tmp}
+					count_empty=$(($count_empty+1))
+				fi
+			fi
+			count=$(($count+1))
+		fi
+	done
+	IE_slots=$count
+	echo "done."
+	return 0
+}
+function set_mtx_status() {
+	echo -n "Retrieving changer information... "
+	local IFS=$'\n'
+	STATUS_ARRAY=(`mtx -f ${MTX_DEV} status`)
+	echo "done."
+}
+function set_mtx_data() {
+	# Collect MTX data
+	set_mtx_status
+
+	# Set data from MTX status
+	set_dte_data
+	set_se_data
+	set_ie_data
+
+	return 0
+}
+function error_handler() {
+	echo $2
+	if [ "$1" = "fatal" ]; then
+		exit 1
+	fi
+}
+function get_storage_from_pool() {
+	# Fetch the Storage name from the Pool resource
+	local storage=`echo "show pool=$1" | /opt/bacula/bin/bconsole | grep Storage:`
+	local err=$?
+	storage=${storage#*name=}
+	storage=${storage%% *}
+	echo $storage
+	return $err
+}
+function get_empty_drive() {
+        local drive_index=-1
+	local my_storage=`get_storage_from_pool $pool`
+
+        # Find the device(s) without writers
+        local IFS=$'\n'
+        local free_device=(`echo "status storage=${my_storage}" | /opt/bacula/bin/bconsole | grep -B1 writers=0| head -1`)
+	local err=$?
+
+        # We only want 1, so we take the first one:
+        free_device=${free_device[0]##*(}
+        free_device=${free_device%)*}
+        for (( I=0; $I < ${#DRIVES[*]}; I=$(($I+1)) )); do
+                if [ "${DRIVES[$I]}" = "${free_device}" ]; then
+                        drive_index=$I
+                fi
+        done
+
+        if [ "${drive_index}" = "-1" ]; then
+                echo "No free drive available"
+                return 1
+        fi
+        echo $drive_index
+        return $err
+}
+function update_slots() {
+	if [ "$1" != "" ]; then
+		pool=$1
+	fi
+
+	if [ "$pool" = "" ]; then
+		echo "update_slots: No 'pool' set"
+		exit 1
+	fi
+	local my_storage=`get_storage_from_pool $pool`
+	if [ "$my_storage" = "" ]; then
+		echo "update_slots: No storage found for $pool"
+		exit 1
+	fi
+
+	echo -n "Updating slots... "
+	echo "update storage=${my_storage} drive=0 slots" | /opt/bacula/bin/bconsole 2>/dev/null 1>/dev/null
+	if [ $? = 0 ]; then
+		echo "done."
+	else
+		echo "failed."
+		# Continue after failed... should we?
+	fi
+}
+function unload_drive() {
+        local slot=$1
+        local drive=$2
+	echo "mtx -f $MTX_DEV unload $slot $drive"
+        mtx -f $MTX_DEV unload $slot $drive
+	return $?
+}
+function stop_sd() {
+	local sleep=0
+	echo -n "Stopping bacula-sd... "
+	service bacula-sd stop 1>/dev/null 2>/dev/null
+
+	while([ -f ${BACULA_PID_DIR}/bacula-sd.*.pid ]); do
+		sleep 2
+		sleep=$(($sleep+2))
+
+		if [ $sleep = 10 ]; then
+			error_handler fatal "failed."
+		fi
+	done
+
+	echo "done."
+	return 0
+}
+function help__() {
+	# Call all help functions
+	help_show_
+	help_remove_
+	help_load_
+	help_unload_
+}
+function help_unload_() {
+	echo "Syntax: $0 unload <volume(s)> from <pool>"
+	echo "        unload <volumes> from <pool>"
+	echo "        <volume(s)> a single volume or a space seperated list of volumes"
+	echo "        <pool> the name of the pool the volumes should come from"
+}
+
+function _unload_() {
+	for volname in $@
+		do
+
+		# Find volname in SE_voltag
+		# set org_slot from SE_slots
+		for (( N=0; $N < ${#SE_voltag[*]}; N=$(($N+1)) ))
+			do
+			if [ "$volname" = "${SE_voltag[$N]}" ]
+				then
+				org_slot="${SE_slots_full[$N]}"
+			fi
+		done
+
+		# Set first (last) free export slot
+		dest_slot=${IE_slots_empty[${#IE_slots_empty[*]}-1]}
+
+		unset IE_slots_empty[${#IE_slots_empty[*]}-1]
+
+		echo -n "Unloading $volname from ${org_slot} to ${dest_slot}... "
+		mtx -f ${MTX_DEV} eepos 0 transfer ${org_slot} ${dest_slot}
+		if [ $? = 0 ]; then
+			echo "done."
+		else
+			echo "failed."
+		fi
+	done
+
+	# Make sure the catalog knows about it
+	update_slots
+	return 0
+}
+### LOAD ###
+function _load_() {
+	# Make sure we have updated information
+	if [ "$pool" != "Scratch" ]; then
+		update_slots
+	fi
+
+	# If no slots are filled, do nothing
+        if [ "${#IE_voltag[*]}" = 0 ]; then
+		# Check MTX again, just to be sure
+		set_mtx_status 2>/dev/null 1>/dev/null
+		set_mtx_data 2>/dev/null 1>/dev/null
+		if [ "${#IE_voltag[*]}" = 0 ]; then
+			echo "There is nothing in the Import/Export slots."
+                	exit 0
+		fi
+        fi
+
+	# Per filled IE slot load the tape if there is room
+	slots_line=""
+	for (( N=0; $N < ${#IE_voltag[*]}; N=$(($N+1)) ))
+		do
+		# Reset test variables
+		known_volume=""
+
+		# Figure out our destination slot
+		if [ "${#SE_slots_empty}" = "0" ]; then
+			error_handler fatal "There are no more empty slots."
+		fi
+		
+		dest_slot=${SE_slots_empty[${#SE_slots_empty[*]}-1]}
+
+		unset SE_slots_empty[${#SE_slots_empty[*]}-1]
+
+		# Is the volume already known to the catalog
+		known_volume=`echo "list media pool=$pool" | /opt/bacula/bin/bconsole | sed -e 's/  */ /g' | grep "| ${IE_voltag[$N]} |"`
+
+		# Move tape from IE to slot
+		echo -n "Loading ${IE_voltag[$N]} from ${IE_slots_full[$N]} to ${dest_slot}... "
+		mtx -f ${MTX_DEV} eepos 0 transfer ${IE_slots_full[$N]} ${dest_slot}
+		if [ $? = 0 ]; then
+			echo "done."
+			if [ "$known_volume" = "" ]; then
+				slots_line="${slots_line},${dest_slot}"
+			fi
+		else
+			echo "failed."
+		fi
+	done
+
+	# Let the catalog know
+	if [ "$pool" != "Scratch" ]; then
+		update_slots
+	fi
+
+	# If slots line is empty, we have only loaded tapes that already were in the catalog
+	# So they must have a label... oeps assumption!
+	if [ "$slots_line" != "" ]; then
+		# Label them tapes
+		# FIXME this only works with barcode labeling
+		local my_free_drive=`get_empty_drive`
+		if [ $? != 0 ]; then
+			echo
+			echo "label storage=${my_storage} pool=${pool} slots=${slots_line#,} drive=${my_free_drive} barcodes"
+			error_handler fatal "No free drive found"
+		fi
+		local my_storage=`get_storage_from_pool $pool`
+		if [ $? != 0 ]; then
+			echo "label storage=${my_storage} pool=${pool} slots=${slots_line#,} drive=${my_free_drive} barcodes"
+			error_handler fatal "No valid free drive found"
+		fi
+		echo -n "Labeling new tapes, with: label storage=${my_storage} pool=${pool} slots=${slots_line#,} drive=${my_free_drive} barcodes"
+		echo -e "label storage=${my_storage} pool=${pool} slots=${slots_line#,} drive=${my_free_drive} barcodes\nyes" | /opt/bacula/bin/bconsole
+		#2>/dev/null 1>/dev/null
+		if [ $? = 0 ]; then
+			echo "done."
+		else
+			echo "failed."
+		fi
+
+		# Better safe then sorry
+		if [ "$pool" != "Scratch" ]; then
+			update_slots
+		fi
+	fi
+
+	return 0
+}
+
+function help_load_() {
+	echo "Syntax: $0 load into <pool>"
+	echo "        Load all tapes from the IE-slots into <pool>"
+	echo "        <pool> the name of the pool the volumes should be loaded into"
+}
+# END LOAD #
+function help_show_() {
+	help_show_oldest
+}
+
+function help_show_oldest() {
+	echo "Syntax: $0 show oldest [number] from <pool>"
+	echo "       [number] amount of tapes to be unloaded, if no number is given then the amount of free IE slots is used"
+	echo "       <pool> the name of the pool the volumes should come from"
+}
+function _show_oldest() {
+	# Provide amount of I/E slots we can use
+	# Script returns volumes
+
+	# Check number
+	if [ "$number" = "" ]; then
+		free_slots=${#IE_slots_empty[*]}
+	else
+		free_slots=$number
+	fi
+
+	# Check pool
+	if [ "$pool" = "" ]; then
+		error_handler fatal "No pool given"
+	fi
+
+	# Global IFS setting
+	IFS=$'\n'
+
+	# Make sure we get updated information
+	update_slots 1>/dev/null 2>/dev/null
+
+	# Get all tapes that can be ejected
+	local N=0
+	for line in `echo "list media pool=${pool}" | /opt/bacula/bin/bconsole | egrep -e 'Full|Error|Used'`; do
+		# Check if tape is in the drive
+		# We only want to unload loaded tapes
+		tmp=`echo ${line} | cut -d'|' -f11`
+		if [ "${tmp:$((${#tmp}-2)):1}" = "1" ]; then
+			loadedtape_list[$N]=$line
+			N=$(($N+1))
+		fi
+	done
+
+	# Sort on last written (get the oldest first)
+	local C=0
+	for dateline in `for line in ${loadedtape_list[*]}
+			do
+				echo ${line} | cut -d'|' -f13
+			done | sort`; do
+	
+		# Find the line with the date athand
+		for dataline in ${loadedtape_list[*]}; do
+			if [ ${dataline#*${dateline}} != ${dataline} ]; then
+				# Get volumes the tape is loaded in
+				my_vol=`echo $dataline | cut -d'|' -f3`
+				my_vol=${my_vol# }
+				echo -n "${my_vol%% *} "
+				C=$(($C+1))
+				# If all free slots are filled exit
+				if [ "$C" = "$free_slots" ]; then
+					echo
+					exit
+				fi
+			fi
+		done
+	done
+
+	echo
+}
+function help_remove_() {
+	help_remove_oldest
+	help_remove_label
+}
+
+function help_remove_oldest() {
+	echo "Syntax: $0 remove oldest [number] from <pool>"
+	echo "        Unload oldest [number] of tapes from <pool> into the IE slots"
+	echo "        [number] amount of tapes to be unloaded, if no number is given then the amount of free IE slots is used"
+	echo "        <pool> the name of the pool the volumes should come from"
+}
+
+function help_remove_label() {
+	echo "Syntax: $0 remove label from <volume(s)>"
+	echo "        Removes the label from a tape and thus destroys"
+	echo "        all data on that tape (use with care!)."
+	echo "        <volume(s)> a single volume or a space seperated list of volumes"
+}
+function _remove_oldest() {
+	volumes=`_show_oldest $number`
+	if [ "x$volumes" = "" ]; then
+		echo "No volumes to be unloaded"
+		exit 0
+	fi
+	_unload_ $volumes
+}
+function _remove_label() {
+	local indrive=0
+	local current_slot=-1
+	local my_storage=`get_storage_from_pool $pool`
+
+	# No running jobs, so stop SD
+	if [ `echo "status storage=${my_pool}" | /opt/bacula/bin/bconsole | grep "No Jobs running"` = "No Jobs running" ]; then
+		sd_stop
+	else
+		echo "There are still jobs running, so can not destroy labels"
+		exit 255
+	fi
+
+	# No jobs are running... so fixed drive index
+	# and bring that drive offline
+	echo -n "Bring ${DRIVES[${drive_index}]} offline... "
+	local drive_index=0
+	mt -f ${DRIVES[${drive_index}]} offline
+	echo "done."
+
+	# Destroy label(s)
+	for rm_name in ${remove_volumes}; do
+		# See if the tape is already in the drive
+		for (( I=0; $I < ${#DTE_voltag[*]}; I=$(($I+1)) )); do
+			if [ "$rm_name" = "${DTE_voltag[$I]}" ]; then
+				indrive=1
+			fi
+		done
+
+		echo -n "Make sure $rm_name is loaded... "
+		if [ $indrive = 0 ]; then
+			unload_drive ${DTE_slots[${drive_index}]} ${drive_index}
+		else
+			for (( I=0; $I < ${#SE_voltag[*]}; I=$(($I+1)) )); do
+				if [ "$rm_name" = "${SE_voltag[$I]}" ]; then
+					current_slot=${SE_slots_full[$I]}
+					mtx -f ${MTX_DEV} load ${current_slot} ${drive_index}
+				fi
+			done
+		fi
+		echo "done."
+
+		echo -n "Destroy label on ${rm_name}... "
+		# Rewind the tape
+		mt -f ${DRIVES[${drive_index}]} rewind
+		if [ $? != 0 ]; then
+			error_handler fatal "rewind failed"
+		else
+			echo -n "rewind done, "
+		fi
+
+		# Write EOF at the start of the tape
+		mt -f ${DRIVES[${my_free_drive}]} weof
+		if [ $? != 0 ]; then
+			error_handler fatal "EOF write failed"
+		else
+			echo "wrote EOF"
+		fi
+
+		# Empty slot
+		unload_drive ${current_slot} ${drive_index}
+	done
+
+	# Restore to initial state
+	mtx -f ${MTX_DEV} load ${DTE_slots[${drive_index}]} ${drive_index}
+	service bacula-sd start
+
+	exit 0
+}
+#------#
+# Main #
+#------#
+
+# If nothing is given... do help
+if [ "$1" = "" ]; then
+	function=help
+fi
+
+# Parse command line
+until [ "$1" = "" ]; do
+	if [ $1 = help ]; then
+		function=$1
+	elif [ $1 = show ] || \
+	   [ $1 = remove ] || \
+	   [ $1 = load ] || \
+	   [ $1 = unload ]; then
+		# Do list
+		do=$1
+	elif [ $1 = label ] || \
+	     [ $1 = oldest ] || \
+	     [ $1 = show ] || \
+	     [ $1 = remove ] || \
+	     [ $1 = load ] || \
+	     [ $1 = unload ]; then
+		# What list
+		what=$1
+	elif [ $1 = into ] || \
+	     [ $1 = from ]; then
+		# Pool + extra shift
+		pool=$2
+		shift
+	elif [ "${1//[0-9]/}" = "" ]; then
+		number="${number} $1"
+	fi
+
+	shift
+done
+
+# Clean up number
+number=${number# }
+
+# Set global vars
+if [ "$function" != "help" ]; then
+	set_mtx_data
+fi
+
+# Do function
+${function}_${do}_${what}
+
+#-----#
+# END #
+
