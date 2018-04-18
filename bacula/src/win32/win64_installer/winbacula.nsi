@@ -72,6 +72,7 @@
 !include "StrFunc.nsh"
 !include "WinMessages.nsh"
 !include "x64.nsh"
+
 ;
 ; Basics
 ;
@@ -241,6 +242,8 @@ Var HCTL
 Function .onInit
   Push $R0
   Push $R1
+
+  ;LogSet on
 
   ; Process Command Line Options
   StrCpy $OptService 1
