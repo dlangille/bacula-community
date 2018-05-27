@@ -1,4 +1,46 @@
-              Changelog on version 9.0.7
+              Changelog on version 9.0.8
+
+Release 9.0.8
+
+27May18
+ - Fix bug #2212 where restore jobid=nn file=xxx restores the files twice
+ - Pull regression truncate-test from Branch-9.1
+ - Apply patch from Wandlei Huttel to add Run Time and suffix to Restored 
+  bytes
+ - Fix bug #2343 where truncate of explicit Volume name truncates non-purged 
+  volumes
+
+26May18
+ - Fix some file execute permissions. Fixes bug #2389
+
+25May18
+ - Fix license problems in Bug #2382
+ - Apply patch from Leo to fix bug 2192
+
+21May18
+ - Fix bad placement of jcr->pool reference as pointed out by Martin Simmons
+
+18May18
+ - rpm: Add OpenSuse Leap 42.3
+
+17May18
+ - rpm: Update bacula.spec for Fedora 27
+
+15May18
+ - baculum: Fix SQL grouping error in restore wizard reported by Rasmus Linden
+
+21Apr18
+ - Update some old copyrights
+
+20Apr18
+ - baculum: Update Portuguese translations
+
+19Apr18
+ - Remove old Bacula Systems notices
+
+Bugs fixed/closed since last release:
+2212 2343 2382 2389
+
 
 Release 9.0.7
 
