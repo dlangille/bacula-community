@@ -1,6 +1,55 @@
 
-               Release Notes for Bacula 9.2.1
+               Release Notes for Bacula 9.2.2
 
+Release 9.2.2
+
+This is a minor bug fix release (6,143 lines of diff).  The main fixes to
+this version are: eliminate most messages that are repeately printed,
+eliminate malformed message output, error when compiling without TLS, ... 
+
+Note: if you are running MySQL and have not recently executed
+src/cats/update_bacula_tables, please do so.  It will not change your
+database version but it will fix some potential MySQL problems (for more
+detals see the release notes for version 9.2.1).
+
+29Oct18
+ - Implement new message numbers in stored/block.c
+ - Fix incorrectly indicating: malformed message
+ - Fix bugs #2335 and #2349 Volume messages printed many times
+ - Add new test for bug printing many multiple Max Volume jobs= info
+ - Fix complier warning due to unused subroutine variable
+ - Fix bug #2334 seg fault when releasing globals
+ - Fix escaping special characters in bvfs restore for sqlite catalog
+ - Fix tls_bsock_shutdown() compilation when no TLS available.
+ - Fix bsock compilation warning.
+ - Fix bsock compilation problem in *BSD.
+ - Add new manual test
+
+ - rpm: Fix mysql dependency for bacula-postgresql
+
+ - baculum: Fix basic auth user setting in API install wizard
+ - baculum: Improve error handling in web part
+ - baculum: Fix formatted size and time values on the volume details page
+ - baculum: Fix undefined index error on web config wizard page
+ - baculum: Fix #2418 creating or updating new resource
+ - baculum: Fix size unit formatters in restore browser reported by Wanderlei 
+   Huttel
+ - baculum: Do not store any main oauth2 client nor main http basic user in api 
+   config
+ - baculum: Update Japanese translation files
+ - baculum: Fix availability web config wizard when there is problem with access 
+   to api
+ - baculum: Add new size directive control
+ - baculum: Fix logging output if it is not possible to decode to json
+ - baculum: Fix saving logs when an error occurs
+ - baculum: API panel and wizard improvements
+ - baculum: Add name field to api client parameters
+
+Bugs fixed/closed since last release:
+2334 2335 2418
+
+
+=======================================================================
 Release 9.2.1
 
 This is a bug fix release. It also contains some refactoring. That said,
