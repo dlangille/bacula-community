@@ -2352,7 +2352,7 @@ CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err)
    }
 
    POOL_MEM cmdLine(PM_FNAME);
-   Mmsg(cmdLine, "%s /c %s%s", comspec, exeFile, argStart);
+   Mmsg(cmdLine, "%s /c \"%s\"%s", comspec, exeFile, argStart);
 
    free(exeFile);
 
