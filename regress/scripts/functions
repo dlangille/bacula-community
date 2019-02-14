@@ -7,6 +7,10 @@
 
 . ./config
 
+if [ "$TestName" ]; then
+   export TestName
+fi
+
 check_encoding()
 {
    if ${bin}/bacula-dir -d50 -t -c ${conf}/bacula-dir.conf 2>&1 | grep 'Wanted SQL_ASCII, got UTF8' >/dev/null ; then

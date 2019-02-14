@@ -116,7 +116,7 @@ BEGIN {
     $ENV{LANG} = 'C';
     $out = ($debug) ? '@tee' : '@out';
 
-    $TestName = basename($0);
+    $TestName = $ENV{TestName} || basename($0);
 
     $dstat = $estat = $rstat = $bstat = $zstat = 0;
 }
