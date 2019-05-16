@@ -1137,7 +1137,8 @@ void update_bootstrap_file(JCR *jcr)
          /* Start output with when and who wrote it */
          bstrftimes(edt, sizeof(edt), time(NULL));
          fprintf(fd, "# %s - %s - %s%s\n", edt, jcr->jr.Job,
-                 level_to_str(edl, sizeof(edl), jcr->getJobLevel()), jcr->since);
+                 level_to_str(edl, sizeof(edl), jcr->getJobLevel()),
+                 jcr->since);
          for (int i=0; i < VolCount; i++) {
             /* Write the record */
             fprintf(fd, "Volume=\"%s\"\n", VolParams[i].VolumeName);
