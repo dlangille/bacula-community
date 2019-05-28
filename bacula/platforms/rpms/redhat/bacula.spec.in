@@ -382,7 +382,6 @@ Provides: bacula-mysql
 #  auto generated requires from src/scripts/logwatch/applybaculadate
 #  this is a gross kludge to keep it from being a requirement
 #
-Provides: perl(Logwatch)
 %endif
 %if %{postgresql}
 %package postgresql
