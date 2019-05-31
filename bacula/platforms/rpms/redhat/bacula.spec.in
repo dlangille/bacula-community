@@ -132,6 +132,10 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 %{?build_fc26:%define fc26 1}
 %define fc27 0
 %{?build_fc27:%define fc27 1}
+%define fc28 0
+%{?build_fc28:%define fc28 1}
+%define fc29 0
+%{?build_fc29:%define fc29 1}
 # RedHat Enterprise builds
 %define rhel3 0
 %{?build_rhel3:%define rhel3 1}
@@ -208,7 +212,7 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 # if the platform is using systemd
 %define usesystemd 0
 
-%if %{rhel7} || %{fc22}|| %{fc25} || %{fc26} || %{fc27} || %{centos7}
+%if %{rhel7} || %{fc22}|| %{fc25} || %{fc26} || %{fc27} || %{fc28} || %{fc29} || %{centos7}
 %define usesystemd 1
 %endif
 
@@ -227,7 +231,7 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 %define rhat 1
 %endif
 %define fed 0
-%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27}
+%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27} || %{fc28 || %{fc29}
 %define fed 1
 %endif
 %define suse 0
@@ -290,7 +294,7 @@ exit 1
 %{?build_x86_64:%define x86_64 1}
 
 # check what distribution we are
-%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27}
+%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27} || %{fc28} || %{fc29}
 %define _dist %(grep Fedora /etc/redhat-release)
 %endif
 %if %{centos7} || %{centos6}
