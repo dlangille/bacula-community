@@ -231,7 +231,7 @@ Source2: Release_Notes-%{version}-%{release}.tar.gz
 %define rhat 1
 %endif
 %define fed 0
-%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27} || %{fc28 || %{fc29}
+%if %{fc16} || %{fc17} || %{fc18} || %{fc22} || %{fc25} || %{fc26} || %{fc27} || %{fc28} || %{fc29}
 %define fed 1
 %endif
 %define suse 0
