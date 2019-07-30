@@ -57,6 +57,8 @@ public:
    const char *working;
    struct stat statp;           /* stat() of prepared .xbstream */
    const char* xtrabackupconf;
+   POOLMEM *backup_binary;
+   POOLMEM *stream_binary;
    BPIPE* bpipe;
 
    /* Methods */
