@@ -36,6 +36,7 @@
  
 #include "cats.h" 
 #include <mysql.h> 
+#include <mysqld_error.h>
 #define  __BDB_MYSQL_H_ 1 
 #include "bdb_mysql.h" 
  
@@ -470,19 +471,41 @@ bool BDB_MYSQL::bdb_sql_query(const char *query, DB_RESULT_HANDLER *result_handl
    SQL_ROW row; 
    bool send = true; 
    bool retval = false; 
-   BDB_MYSQL *mdb = this; 
+   BDB_MYSQL *mdb = this;
+   int retry=5;
  
    Dmsg1(500, "db_sql_query starts with %s\n", query); 
  
    bdb_lock(); 
-   errmsg[0] = 0; 
-   ret = mysql_query(m_db_handle, query); 
-   if (ret != 0) { 
+   errmsg[0] = 0;
+
+   do {
+      ret = mysql_query(m_db_handle, query);
+      if (ret != 0) {
+         uint32_t merrno = mysql_errno(m_db_handle);
+         switch (merrno) {
+         case ER_LOCK_DEADLOCK:
+            if (retry > 0) {
+               Dmsg0(500, "db_sql_query failed because of a deadlock, retrying in few seconds...\n"); 
+               bmicrosleep(2, 0);
+               /* TODO: When we will manage transactions, it's important to test if we are in or not */
+            }
+            break;
+
+         default:
+            Dmsg1(50, "db_sql_query failed errno=%d\n", merrno);
+            retry=0;            /* Stop directly here, no retry */
+            break;
+         }
+      }
+   } while (ret != 0 && retry-- > 0);
+
+   if (ret != 0) {
       Mmsg(mdb->errmsg, _("Query failed: %s: ERR=%s\n"), query, sql_strerror()); 
       Dmsg0(500, "db_sql_query failed\n"); 
       goto get_out; 
-   } 
- 
+   }
+
    Dmsg0(500, "db_sql_query succeeded. checking handler\n"); 
  
    if (result_handler) { 
