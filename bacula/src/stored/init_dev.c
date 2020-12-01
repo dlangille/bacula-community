@@ -222,6 +222,10 @@ DEVICE *init_dev(JCR *jcr, DEVRES *device, bool adata, bstatcollect *statcollect
    /* Do device specific initialization */
    dev->device_specific_init(jcr, device);
 
+   if (device->dev_type == B_FILE_DEV || device->dev_type == B_CLOUD_DEV) {
+      dev->capabilities |= CAP_LSEEK;
+   }
+
    /* ***FIXME*** move to fifo driver */
    if (dev->is_fifo()) {
       dev->capabilities |= CAP_STREAM; /* set stream device */

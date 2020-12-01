@@ -73,7 +73,7 @@ DEVICE *BaculaSDdriver(JCR *jcr, DEVRES *device)
       return NULL;
    }
    dev = New(cloud_dev(jcr, device));
-   dev->capabilities |= CAP_LSEEK;
+   dev->capabilities |= CAP_LSEEK;  /* ATTN overwritten in init_dev() later */
    return dev;
 }
 
@@ -652,7 +652,7 @@ cloud_dev::cloud_dev(JCR *jcr, DEVRES *device)
 {
    Enter(dbglvl);
    m_fd = -1;
-   capabilities |= CAP_LSEEK;
+   capabilities |= CAP_LSEEK;   /* ATTN overwritten in init_dev() later */
 
    /* Initialize Cloud driver */
    if (!driver) {
