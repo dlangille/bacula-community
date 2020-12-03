@@ -477,7 +477,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          uLong compress_len = compress_buf_size;
          int stat = Z_BUF_ERROR;
 
-         if (rec->maskedStream == STREAM_SPARSE_DATA) {
+         if (rec->maskedStream == STREAM_SPARSE_GZIP_DATA) {
             ser_declare;
             uint64_t faddr;
             char ec1[50];
@@ -542,7 +542,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          int r, real_compress_len;
 #endif
 
-         if (rec->maskedStream == STREAM_SPARSE_DATA) {
+         if (rec->maskedStream == STREAM_SPARSE_COMPRESSED_DATA) {
             ser_declare;
             uint64_t faddr;
             char ec1[50];
