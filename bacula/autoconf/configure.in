@@ -3974,7 +3974,8 @@ AC_CONFIG_FILES([
    src/findlib/Makefile \
    src/tools/Makefile \
    src/tools/cdp-client/Makefile \
-   src/plugins/fd/Makefile.inc \
+   src/plugins/fd/Makefile \
+   src/plugins/fd/pluginlib/Makefile \
    src/plugins/sd/Makefile \
    src/plugins/dir/Makefile.inc \
    src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py \
