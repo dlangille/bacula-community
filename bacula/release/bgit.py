@@ -39,6 +39,16 @@ def add_file_logger(filename):
 
 def run_cmp_branch(args):
     repo=args.repo
+    # check if the branch exists
+    f1=f2=False
+    for ref in repo.references:
+        f1|=(args.branch1==ref.name)
+        f2|=(args.branch2==ref.name)
+    for found, name in ((f1, args.branch1), (f2, args.branch2)):
+        if not found:
+            print("Branch not found: ", name)
+            return False
+
     if args.switch:
         args.branch1, args.branch2=args.branch2, args.branch1
     if args.short_legend:
@@ -53,6 +63,7 @@ def run_cmp_branch(args):
     commons=repo.merge_base(args.branch1, args.branch2)
     if len(commons)!=1:
         print("cannot find the unique common commit between", args.branch1, args.branch2)
+        return False
 
     common=commons[0]
     # make a list of all know commit in branch-2
