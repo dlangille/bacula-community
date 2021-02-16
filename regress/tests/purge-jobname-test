@@ -1,0 +1,85 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Try to purge job by giving its name.
+# Test for #6051
+#
+# Create 1 backup and 1 restore jobs, purge both by name and check if they are no longer in
+# the catalog.
+#
+TestName="backup-bacula-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log2.out
+restore where=$tmp/bacula-restores select all done yes
+wait
+messages
+@$out $tmp/log3.out
+llist jobid=1
+@$out $tmp/log4.out
+llist jobid=2
+quit
+END_OF_DATA
+
+run_bacula
+
+# Grep for job names
+backup_name=`cat $tmp/log3.out | grep ' name:' | tr -s '\n' '\n' | cut -d':' -f2 | tr -d ' '`
+restore_name=`cat $tmp/log4.out | grep ' name:' | tr -s '\n' '\n' | cut -d':' -f2 | tr -d ' '`
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log4.out
+purge jobs name=${backup_name}
+@$out $tmp/log5.out
+purge jobs name=$restore_name
+@$out $tmp/log6.out
+list jobs
+@$out $tmp/log7.out
+purge jobs name=$restore_name@@##
+quit
+END_OF_DATA
+
+run_bconsole
+
+n=`cat $tmp/log6.out | grep "No results to list" | wc -l`
+
+if [ $n -ne 1 ]; then
+   estat=1
+   print_debug "Not all jobs purged! See ${tmp}/log6.out for more info"
+fi
+
+n=`cat $tmp/log7.out | grep "Invalid jobname" | wc -l`
+if [ $n -ne 1 ]; then
+   estat=1
+   print_debug "Invalid jobname should not be allowed!"
+fi
+
+stop_bacula
+
+end_test
