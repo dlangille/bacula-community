@@ -993,6 +993,15 @@ void backup_cleanup(JCR *jcr, int TermCode)
    Dmsg2(100, "Enter backup_cleanup %d %c\n", TermCode, TermCode);
    memset(&cr, 0, sizeof(cr));
 
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
+
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
 #ifdef xxxx
    /* The current implementation of the JS_Warning status is not
     * completed. SQL part looks to be ok, but the code is using

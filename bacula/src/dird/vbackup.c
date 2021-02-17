@@ -402,6 +402,15 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
    Dmsg2(100, "Enter vbackup_cleanup %d %c\n", TermCode, TermCode);
    memset(&cr, 0, sizeof(cr));
 
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
+
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
    jcr->jr.JobLevel = L_FULL;   /* we want this to appear as a Full backup */
    jcr->JobFiles = jcr->SDJobFiles;
    jcr->JobBytes = jcr->SDJobBytes;

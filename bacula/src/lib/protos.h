@@ -264,6 +264,7 @@ void     set_jcr_in_tsd(JCR *jcr);
 void     remove_jcr_from_tsd(JCR *jcr);
 uint32_t get_jobid_from_tsd();
 uint32_t get_jobid_from_tid(pthread_t tid);
+int compareJobStatus(int oldJobStatus, int newJobStatus);
 
 
 /* lex.c */

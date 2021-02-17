@@ -456,6 +456,15 @@ void verify_cleanup(JCR *jcr, int TermCode)
       TermCode = JS_ErrorTerminated;
    }
 
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
+
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
    update_job_end(jcr, TermCode);
 
    if (job_canceled(jcr)) {

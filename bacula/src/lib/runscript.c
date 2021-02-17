@@ -100,7 +100,7 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
 
    RUNSCRIPT *script;
    bool runit;
-
+   bool ret = true; /* Changed to false in case any of the scripts fails */
    int when;
 
    if (strstr(label, NT_("Before"))) {
@@ -166,10 +166,13 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
 
       /* we execute it */
       if (runit) {
-         script->run(jcr, label);
+         if (!script->run(jcr, label)) {
+            ret = false; /* return err in case any of the script commands failed */
+         }
       }
    }
-   return 1;
+
+   return ret;
 }
 
 bool RUNSCRIPT::is_local()

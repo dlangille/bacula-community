@@ -77,6 +77,15 @@ void admin_cleanup(JCR *jcr, int TermCode)
 
    Dmsg0(100, "Enter admin_cleanup()\n");
 
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
+
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
    update_job_end(jcr, TermCode);
 
    if (!db_get_job_record(jcr, jcr->db, &jcr->jr)) {
@@ -88,7 +97,11 @@ void admin_cleanup(JCR *jcr, int TermCode)
    msg_type = M_INFO;                 /* by default INFO message */
    switch (jcr->JobStatus) {
    case JS_Terminated:
-      term_msg = _("Admin OK");
+      if (jcr->JobErrors) {
+         term_msg = _("Admin OK -- with warnings");
+      } else {
+         term_msg = _("Admin OK");
+      }
       break;
    case JS_FatalError:
    case JS_ErrorTerminated:

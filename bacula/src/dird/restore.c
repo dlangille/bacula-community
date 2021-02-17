@@ -658,6 +658,16 @@ void restore_cleanup(JCR *jcr, int TermCode)
    utime_t RunTime;
 
    Dmsg0(20, "In restore_cleanup\n");
+
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
+
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
    update_job_end(jcr, TermCode);
 
    memset(&cr, 0, sizeof(cr));

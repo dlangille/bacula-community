@@ -703,7 +703,9 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
    remove_dummy_jobmedia_records(jcr);
 
    Dmsg2(100, "Enter mac_cleanup %d %c\n", TermCode, TermCode);
-   update_job_end(jcr, TermCode);
+
+   /* Job needs to be marked as terminated before running the after runscript */
+   jcr->setJobStatus(TermCode);
 
    /*
     * Check if we actually did something.
@@ -848,6 +850,13 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
       }
    }
+   run_scripts(jcr, jcr->job->RunScripts, "AfterJob");
+
+   /* Runscript could have changed JobStatus,
+    * now check if it should be changed in the report or not */
+   TermCode = compareJobStatus(TermCode, jcr->JobStatus);
+
+   update_job_end(jcr, TermCode);
 
    switch (jcr->JobStatus) {
    case JS_Terminated:

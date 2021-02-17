@@ -923,22 +923,16 @@ void JCR::setJobStarted()
    job_started_time = time(NULL);
 }
 
-static pthread_mutex_t status_lock = PTHREAD_MUTEX_INITIALIZER;
-
-void JCR::setJobStatus(int newJobStatus)
+/*
+ * Compare two job statuses, return one with higher priority.
+ */
+int compareJobStatus(int oldJobStatus, int newJobStatus)
 {
    int priority, old_priority;
-   int oldJobStatus = JobStatus;
+   int ret_status = oldJobStatus;
 
-   P(status_lock);
    priority = get_status_priority(newJobStatus);
    old_priority = get_status_priority(oldJobStatus);
-
-   Dmsg2(800, "set_jcr_job_status(%ld, %c)\n", JobId, newJobStatus);
-
-   /* Update wait_time depending on newJobStatus and oldJobStatus */
-   update_wait_time(this, newJobStatus);
-
    /*
     * For a set of errors, ... keep the current status
     *   so it isn't lost. For all others, set it.
@@ -955,13 +949,31 @@ void JCR::setJobStatus(int newJobStatus)
        priority == 0 && old_priority == 0)) {
       Dmsg4(800, "Set new stat. old: %c,%d new: %c,%d\n",
             (oldJobStatus==0)?'0':oldJobStatus, old_priority, newJobStatus, priority);
-      JobStatus = newJobStatus;     /* replace with new status */
+      ret_status = newJobStatus;     /* replace with new status */
    }
 
-   if (oldJobStatus != JobStatus) {
+   if (oldJobStatus != newJobStatus) {
       Dmsg2(800, "leave setJobStatus old=%c new=%c\n", (oldJobStatus==0)?'0':oldJobStatus, newJobStatus);
 //    generate_plugin_event(this, bEventStatusChange, NULL);
    }
+
+   return ret_status;
+}
+
+static pthread_mutex_t status_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void JCR::setJobStatus(int newJobStatus)
+{
+
+   P(status_lock);
+
+   Dmsg2(800, "set_jcr_job_status(%ld, %c)\n", JobId, newJobStatus);
+
+   /* Update wait_time depending on newJobStatus and oldJobStatus */
+   update_wait_time(this, newJobStatus);
+
+   JobStatus = compareJobStatus(JobStatus, newJobStatus);
+
    V(status_lock);
 }
 
