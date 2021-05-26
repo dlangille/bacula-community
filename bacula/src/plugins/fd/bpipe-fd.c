@@ -202,9 +202,7 @@ static bRC freePlugin(bpContext *ctx)
    if (!p_ctx) {
       return bRC_Error;
    }
-   if (p_ctx->cmd) {
-      free(p_ctx->cmd);                  /* free any allocated command string */
-   }
+   bfree_and_null(p_ctx->cmd);
    free_and_null_pool_memory(p_ctx->restore_obj_buf);
    if (p_ctx->rop_writer) {
       restoreobj *rop;
