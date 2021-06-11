@@ -25,6 +25,7 @@
 import logging
 
 import kubernetes
+from baculak8s.util.size_util import k8s_size_to_int
 from baculak8s.entities.file_info import NOT_EMPTY_FILE
 from baculak8s.plugins.k8sbackend.k8sfileinfo import (K8SObjType, encoder_dump,
                                                       encoder_load,
@@ -53,11 +54,15 @@ def persistentvolumeclaims_namespaced_names(corev1api, namespace, labels=""):
 
 def persistentvolumeclaims_list_namespaced(corev1api, namespace, estimate=False, labels=""):
     pvcslist = {}
+    pvcstotalsize = 0
     pvcs = corev1api.list_namespaced_persistent_volume_claim(namespace=namespace, watch=False, label_selector=labels)
     for pvc in pvcs.items:
         pvcdata = persistentvolumeclaims_read_namespaced(corev1api, namespace, pvc.metadata.name)
         spec = encoder_dump(pvcdata)
         # logging.debug("PVCDATA-OBJ:{}".format(pvcdata))
+        pvcsize = k8s_size_to_int(pvcdata.status.capacity['storage'])
+        pvcstotalsize += pvcsize
+        # logging.debug("PVCDATA-SIZE:{} {}".format(pvcdata.status.capacity['storage'], pvcsize))
         # logging.debug("PVCDATA-ENC:{}".format(spec))
         pvcslist['pvc-' + pvc.metadata.name] = {
             'spec': spec if not estimate else None,
@@ -67,7 +72,7 @@ def persistentvolumeclaims_list_namespaced(corev1api, namespace, estimate=False,
                               size=len(spec),
                               creation_timestamp=pvcdata.metadata.creation_timestamp),
         }
-    return pvcslist
+    return pvcslist, pvcstotalsize
 
 
 def persistentvolumeclaims_restore_namespaced(corev1api, file_info, file_content):

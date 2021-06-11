@@ -65,7 +65,7 @@ class Job(metaclass=ABCMeta):
         response = self._plugin.connect()
 
         if 'error' in response:
-            logging.debug("response data:" + str(response))
+            logging.debug("response data:{}".format(response))
             if 'error_code' in response:
                 self._io.send_connection_error(response['error_code'])
             else:

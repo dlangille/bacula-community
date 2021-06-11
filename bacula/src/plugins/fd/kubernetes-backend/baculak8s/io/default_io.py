@@ -129,21 +129,38 @@ class DefaultIO(object):
             4 - A EOD packet
         """
 
-        full_file_name = info.name
+        self.send_command("FNAME:{}".format(info.name))
+        self.send_command("TSTAMP:{} {} {}".format(info.accessed_at, info.modified_at, info.created_at))
+        self.send_command("STAT:{} {} {} {} {} {}".format(info.type, info.size, info.uid, info.gid, info.mode, info.nlink))
+        self.send_eod()
 
-        self.send_command("FNAME:%s" % full_file_name)
+    def send_plugin_object(self, podata):
+        """
+            Prints PluginObject class information into stdout
 
-        timestamp_tuple = (info.accessed_at, info.modified_at, info.created_at)
-        self.send_command("TSTAMP:%s %s %s" % timestamp_tuple)
-
-        stat_tuple = (info.type, info.size, info.uid, info.gid, info.mode, info.nlink)
-        self.send_command("STAT:%s %s %s %s %s %s" % stat_tuple)
+        Args:
+            podata (class PluginObject): Entity representing information about a Plugin Object
+        """
+        self.send_command("PLUGINOBJ:{}".format(podata.path))
+        self.send_command("PLUGINOBJ_NAME:{}".format(podata.name))
+        if podata.cat is not None:
+            self.send_command("PLUGINOBJ_CAT:{}".format(podata.cat))
+        if podata.type is not None:
+            self.send_command("PLUGINOBJ_TYPE:{}".format(podata.type))
+        if podata.src is not None:
+            self.send_command("PLUGINOBJ_SRC:{}".format(podata.src))
+        if podata.uuid is not None:
+            self.send_command("PLUGINOBJ_UUID:{}".format(podata.uuid))
+        if podata.size is not None:
+            self.send_command("PLUGINOBJ_SIZE:{}".format(podata.size))
+        if podata.count is not None:
+            self.send_command("PLUGINOBJ_COUNT:{}".format(podata.count))
         self.send_eod()
 
     def send_query_response(self, response):
         key = response[0]
         value = response[1]
-        self.send_command(str(key)+"="+str(value))
+        self.send_command("{}={}".format(key, value))
 
     def read_line(self):
         """

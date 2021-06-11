@@ -18,6 +18,7 @@
 import logging
 
 from baculak8s.entities.file_info import DIRECTORY
+from baculak8s.entities.plugin_object import PluginObject
 from baculak8s.io.packet_definitions import FILE_DATA_START
 from baculak8s.jobs.estimation_job import PVCDATA_GET_ERROR, EstimationJob
 from baculak8s.jobs.job_pod_bacula import DEFAULTRECVBUFFERSIZE
@@ -27,6 +28,7 @@ from baculak8s.plugins.k8sbackend.baculabackup import BACULABACKUPPODNAME
 from baculak8s.plugins.k8sbackend.podexec import ExecStatus, exec_commands
 from baculak8s.util.respbody import parse_json_descr
 from baculak8s.util.boolparam import BoolParam
+from baculak8s.plugins.k8sbackend.k8sfileinfo import defaultk8spath
 
 BACKUP_START_PACKET = "BackupStart"
 BACKUP_PARAM_LABELS = "Resource Selector: {}"
@@ -53,10 +55,44 @@ class BackupJob(EstimationJob):
             self._io.send_info(BACKUP_PARAM_LABELS.format(_label))
 
     def execution_loop(self):
-        return super().processing_loop(estimate=False)
+        super().processing_loop(estimate=False)
+        self.process_plugin_objects()
 
     def process_file(self, data):
         return self._backup_file(data)
+
+    def process_plugin_objects(self):
+        # logging.debug("SELF: {}".format(dir(self)))
+        """
+            name: plugin command line
+            category: Container
+            type: Kubernetes/Openshift POD
+            source: (name on the network?)
+            uuid: (I don't know if available)
+            size: total size POD would be nice
+            status: T/W/e
+            count: Number of POD
+        """
+        logging.debug("PO_PODS: {}".format(self._plugin.pods_counter))
+        po_pods = PluginObject("/{}/".format(defaultk8spath),
+                               "Kubernetes PODs",
+                               cat="Container",
+                               potype="POD",
+                               src=self._plugin.po_source_data,
+                               uuid=self._plugin.po_source_data,
+                               count=self._plugin.pods_counter)
+        self._io.send_plugin_object(po_pods)
+        logging.debug("PO_PVCS: {} {}".format(self._plugin.pvcs_counter, self._plugin.pvcs_totalsize))
+        po_pvcs = PluginObject("/{}/".format(defaultk8spath),
+                               "Kubernetes Persistent Volume Claims",
+                               cat="Container",
+                               potype="PVC",
+                               src=self._plugin.po_source_data,
+                               uuid=self._plugin.po_source_data,
+                               count=self._plugin.pvcs_counter,
+                               size=self._plugin.pvcs_totalsize)
+        logging.debug("PO_PVCS: {}".format(po_pvcs))
+        self._io.send_plugin_object(po_pvcs)
 
     def _backup_file(self, data):
         file_info = data.get('fi')

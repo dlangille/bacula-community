@@ -123,6 +123,10 @@ class KubernetesPlugin(Plugin):
             K8SObjType.K8SOBJ_PVCDATA: {},
         }
         self._connected = False
+        self.pods_counter = 0
+        self.pvcs_counter = 0
+        self.pvcs_totalsize = 0
+        self.po_source_data = "<notset>"
 
     def connect(self):
         """
@@ -204,6 +208,9 @@ class KubernetesPlugin(Plugin):
                 data = {}
             else:
                 data = {'response': response}
+                response = self.__execute(lambda: self.coreapi.get_api_versions(), check_connection=False)
+                if not (isinstance(response, dict) and "error" in response):
+                    self.po_source_data = response.server_address_by_client_cid_rs[0].server_address
             return data
 
     def disconnect(self):
@@ -328,12 +335,20 @@ class KubernetesPlugin(Plugin):
                                                                 self.config['labels']))
 
     def get_pods(self, namespace, estimate=False):
-        return self.__execute(lambda: pods_list_namespaced(self.corev1api, namespace, estimate, self.config['labels']))
+        pods = self.__execute(lambda: pods_list_namespaced(self.corev1api, namespace, estimate, self.config['labels']))
+        nrpods = len(pods)
+        logging.debug("get_pods[{}]:pods:{}".format(namespace, nrpods))
+        self.pods_counter += nrpods
+        return pods
 
     def get_pvcs(self, namespace, estimate=False):
-        pvcs = self.__execute(lambda: persistentvolumeclaims_list_namespaced(self.corev1api, namespace, estimate,
+        pvcs, totalsize = self.__execute(lambda: persistentvolumeclaims_list_namespaced(self.corev1api, namespace, estimate,
                                                                              self.config['labels']))
         self.k8s['pvcs'] = pvcs
+        nrpvcs = len(pvcs)
+        logging.debug("get_pvcs[{}]:pvcs:{}".format(namespace, nrpvcs))
+        self.pvcs_counter += nrpvcs
+        self.pvcs_totalsize += totalsize
         return pvcs
 
     def get_podtemplates(self, namespace, estimate=False):

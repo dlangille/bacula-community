@@ -101,7 +101,7 @@ class EstimationJob(JobPodBacula):
                 self._handle_error(NO_PV_FOUND)
 
             for pv in pv_list:
-                logging.debug('processing pv:' + str(pv))
+                logging.debug("processing pv: {}".format(pv))
                 self.process_file(pv_list.get(pv))
 
         ns_list = self._plugin.list_all_namespaces(estimate=estimate)
@@ -115,7 +115,7 @@ class EstimationJob(JobPodBacula):
 
             for nsname in ns_list:
                 ns = ns_list.get(nsname)
-                logging.debug('processing ns:{}'.format(ns))
+                logging.debug('processing ns: {}'.format(ns.get('name')))
                 if not estimate:
                     self._io.send_info(PROCESSING_NAMESPACE_INFO.format(namespace=ns['name']))
                 self.process_file(ns)
