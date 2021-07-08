@@ -1,0 +1,351 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#  Test RunScript with AfterJob parameter. By default failing such script should fail the job,
+#  even if the job itself succeeded.
+#
+. scripts/functions
+
+TestName="runscript-after-job-test"
+JobName=backup
+
+scripts/cleanup
+scripts/copy-confs
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "NextPool", "Default", "Pool", "File")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Storage", "File2", "Pool", "Default")'
+
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Job {
+  Name = "backup_dir"
+    FileSet = "Full Set"
+    JobDefs = DefaultJob
+    RunScript {
+      Command = "/bin/false afterbackup"
+      RunsWhen = After
+      RunsOnClient = no
+      #FailJobOnError = no
+   }
+}
+
+Job {
+  Name = "admin"
+  Type = Admin
+  JobDefs = DefaultJob
+  RunScript {
+      Command = "/bin/false afteradmin"
+      RunsWhen = After
+      RunsOnClient = no
+      #FailJobOnError = no
+  }
+}
+
+Job {
+  Name = "restore_dir"
+  Type = Restore
+  JobDefs = DefaultJob
+   RunScript  {
+      RunsWhen = After
+      RunsOnClient = no
+      Command = "/bin/false afterrestore"
+      #FailJobOnError = no
+   }
+}
+
+Job {
+  Name = "copy-job"
+  Type = Copy
+  JobDefs = DefaultJob
+  Selection Type = PoolUncopiedJobs
+   RunScript  {
+      RunsWhen = After
+      RunsOnClient = no
+      Command = "/bin/false aftercopy"
+      #FailJobOnError = no
+   }
+}
+
+Job {
+  Name = "VerifyVolume"
+  JobDefs = DefaultJob
+  Type = Verify
+  Level = VolumeToCatalog
+  RunScript  {
+     RunsWhen = After
+     RunsOnClient = no
+     Command = "/bin/false afterverify"
+     #FailJobOnError = no
+  }
+}
+END_OF_DATA
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/RUN_ALL_OK.log
+label volume=TestVolume001 storage=File2 pool=File slot=1 drive=0
+label volume=TestVolume002 storage=File2 pool=Default slot=1 drive=0
+run job=BackupClient1 yes
+wait
+messages
+@$out ${cwd}/tmp/backup_dir.log
+run job=backup_dir yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/sql_backup_dir.log
+select jobstatus from job where jobid=2;
+
+@$out ${cwd}/tmp/copy_dir.log
+run job=copy-job yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/sql_copy_dir.log
+select jobstatus from job where jobid=3;
+
+@$out ${cwd}/tmp/restore_dir.log
+restore restorejob=restore_dir where=${cwd}/tmp/bacula-restores select all done yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/sql_restore_dir.log
+select jobstatus from job where jobid=5;
+
+@$out ${cwd}/tmp/admin_dir.log
+run job=admin yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/sql_admin_dir.log
+select jobstatus from job where jobid=6;
+
+@$out ${cwd}/tmp/verify_dir.log
+run job=VerifyVolume yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/sql_verify_dir.log
+select jobstatus from job where jobid=6;
+
+quit
+END_OF_DATA
+
+run_bacula
+
+grep 'shell command: run AfterJob "/bin/false afterbackup"' ${cwd}/tmp/backup_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/backup_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/backup_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Backup Error' > /dev/null
+c=$?
+cat ${cwd}/tmp/sql_backup_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'E' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "backup_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false aftercopy"' ${cwd}/tmp/copy_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/copy_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/copy_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Copying Error' > /dev/null
+c=$?
+cat ${cwd}/tmp/sql_copy_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'E' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "copy_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false afterrestore"' ${cwd}/tmp/restore_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/restore_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/restore_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Restore Error' > /dev/null
+c=$?
+cat ${cwd}/tmp/sql_restore_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'E' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "restore_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false afteradmin"' ${cwd}/tmp/admin_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/admin_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/admin_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Admin Error' > /dev/null
+c=$?
+cat ${cwd}/tmp/sql_admin_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'E' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "admin_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false afterverify"' ${cwd}/tmp/verify_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/verify_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/verify_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Verify Error' > /dev/null
+c=$?
+cat ${cwd}/tmp/sql_verify_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'E' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "verify_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+####### Now run same jobs with 'FailJobOnError = no' to make sure that jobs won't fail now
+sed -i 's/#FailJobOnError/FailJobOnError/g' bin/bacula-dir.conf
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/reload.log
+reload
+@output /dev/null
+messages
+@$out ${cwd}/tmp/no_fail_backup_dir.log
+run job=backup_dir yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/no_fail_sql_backup_dir.log
+select jobstatus from job where jobid=8;
+
+@$out ${cwd}/tmp/no_fail_copy_dir.log
+run job=copy-job yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/no_fail_sql_copy_dir.log
+select jobstatus from job where jobid=9;
+
+@$out ${cwd}/tmp/no_fail_restore_dir.log
+restore restorejob=restore_dir where=${cwd}/tmp/bacula-restores select all done yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/no_fail_sql_restore_dir.log
+select jobstatus from job where jobid=11;
+
+@$out ${cwd}/tmp/no_fail_admin_dir.log
+run job=admin yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/no_fail_sql_admin_dir.log
+select jobstatus from job where jobid=12;
+
+@$out ${cwd}/tmp/no_fail_verify_dir.log
+run job=VerifyVolume yes
+wait
+messages
+sql
+@$out ${cwd}/tmp/no_fail_sql_verify_dir.log
+select jobstatus from job where jobid=13;
+
+quit
+END_OF_DATA
+
+run_bconsole
+
+grep 'shell command: run AfterJob "/bin/false afterbackup"' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/no_fail_backup_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Backup OK -- with warnings' > /dev/null
+c=$?
+cat ${cwd}/tmp/no_fail_sql_backup_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'T' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "no_fail_backup_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+if [ $a != 0 -o $b != 0 -o $c != 0 ] ; then
+   echo "backup_dir in error a=$a b=$b c=$c"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false aftercopy"' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/no_fail_copy_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Copying OK -- with warnings' > /dev/null
+c=$?
+cat ${cwd}/tmp/no_fail_sql_copy_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'T' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "no_fail_copy_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+
+grep 'shell command: run AfterJob "/bin/false afterrestore"' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/no_fail_restore_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Restore OK -- with errors' > /dev/null
+c=$?
+cat ${cwd}/tmp/no_fail_sql_restore_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'T' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "no_fail_restore_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+
+grep 'shell command: run AfterJob "/bin/false afteradmin"' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/no_fail_admin_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Admin OK -- with warnings' > /dev/null
+c=$?
+cat ${cwd}/tmp/no_fail_sql_admin_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'T' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "no_fail_admin_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+grep 'shell command: run AfterJob "/bin/false afterverify"' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
+a=$?
+grep 'Error: Runscript: AfterJob returned non-zero status=1' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
+b=$?
+status=`cat ${cwd}/tmp/no_fail_verify_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
+echo ${status} | grep 'Verify OK -- with warnings' > /dev/null
+c=$?
+cat ${cwd}/tmp/no_fail_sql_verify_dir.log | grep '|' | cut -d'|' -f2 | tail -1 | grep 'T' > /dev/null
+d=$?
+
+if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
+   echo "no_fail_verify_dir in error a=$a b=$b c=$c d=$d"
+   estat=1
+fi
+
+stop_bacula
+end_test
