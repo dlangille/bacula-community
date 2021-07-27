@@ -20,6 +20,7 @@
 #include "bacula.h"
 #include "dird.h"
 #include "lib/lockmgr.h"
+#include "lib/store_mngr_cmds.h"
 
 static const int dbglvl = 200;
 
@@ -329,6 +330,131 @@ static void swapit(uint32_t *v1, uint32_t *v2)
    uint32_t temp = *v1;
    *v1 = *v2;
    *v2 = temp;
+}
+
+void QueryStore::apply_policy(bool write_store) {
+   alist *list = write_store ? wstore.get_list() : rstore.get_list();
+   STORE *store = NULL;
+   JCR *tmp_jcr = new_jcr(sizeof(JCR), dird_free_jcr); // temporary jcr needed for connecting to the SD
+   BSOCK *sd = tmp_jcr->store_bsock;
+   sm_ctx *context = NULL;
+   dlist *d_list = New(dlist(context, &context->link));
+
+   /* Init store mngr so that we can assing current storage to the jcr - needed for the connect call below */
+   tmp_jcr->store_mngr = New(ListedOrderStore());
+
+   /* Query Storage daemon for needed information for each storage in the list */
+   foreach_alist(store, list) {
+      if (write_store) {
+         tmp_jcr->store_mngr->set_wstorage(store, "qeuerystore_applypolicy");
+      } else {
+         tmp_jcr->store_mngr->set_rstore(store, "qeuerystore_applypolicy");
+      }
+
+      if (!connect_to_storage_daemon(tmp_jcr, 1, 1, 0)) {
+         Dmsg1(dbglvl, "Failed to connect to the Storage: %s during policy quering\n", store->name());
+         continue;
+      }
+
+      sd = tmp_jcr->store_bsock;
+
+      /* Init storage querying */
+      if (!sd->fsend(store_query)) {
+         Dmsg2(dbglvl, "Failed to send \"%s\" command to the %s Storage\n", store_query, store->name());
+         continue;
+      }
+
+      sm_ctx *context = New(sm_ctx(store));
+
+      /* Execute the policy-specific querying */
+      int ret = query(sd, d_list, context);
+
+      sd->signal(BNET_TERMINATE);
+      sd->close();
+
+      if(!ret) {
+         Dmsg1(dbglvl, "Failed to query '\%s\' Storage\n", store->name());
+         delete context; /* Free context since it was not added to the list */
+
+         /* Continue in case some more processing is needed - we don't want to work on
+            invalid data */
+         continue;
+      }
+   }
+
+   /* Let the policy reorder storage list according to the information gathered */
+   reorder_list(list, d_list);
+
+   if (d_list) {
+      delete d_list;
+   }
+
+   if (tmp_jcr) {
+      free_jcr(tmp_jcr);
+   }
+}
+
+void FreeSpaceStore::reorder_list(alist *list, dlist *d_list) {
+   sm_ctx *ctx;
+   STORE *store;
+
+   list->destroy();
+   list->init(10, not_owned_by_alist);
+
+   Dmsg0(dbglvl, "Storage List after applying FreeSpace policy:\n");
+   foreach_dlist(ctx, d_list) {
+      store = ctx->store;
+      list->append(store);
+      Dmsg2(dbglvl, "*** store: %s size: %llu\n", ctx->store->name(), ctx->number);
+   }
+}
+
+bool FreeSpaceStore::query(BSOCK *sd, dlist *d_list, sm_ctx *context) {
+   STORE *store = context->store;
+   bool ret = false;
+   POOL_MEM device_name;
+   DEVICE *dev;
+   uint64_t fs;
+   uint64_t *size = (uint64_t *) &context->number;
+
+   if (sd->recv() >= 0) {
+       Dmsg1(dbglvl, "<stored: %s", sd->msg);
+       if (strncmp(sd->msg, OK_store_query, strlen(OK_store_query)) != 0) {
+          Dmsg2(dbglvl, "Failed to query storage: %s msg=%s\n", store->name(), sd->msg);
+          goto bail_out;
+       }
+   } else {
+      Dmsg1(dbglvl, "Failed to query storage: %s\n", store->name());
+      goto bail_out;
+   }
+
+   /* Now go through the list of devices for the storage resource and
+    * query each for available storage space */
+   foreach_alist(dev, store->device) {
+      pm_strcpy(device_name, dev->name());
+      bash_spaces(device_name.c_str());
+      sd->fsend(store_query_freespace, device_name.c_str());
+   }
+
+   sd->signal(BNET_EOD);
+
+   if (sd->recv() >= 0) {
+      ret = sscanf(sd->msg, OK_store_size, &fs) == 1;
+      if (!ret) {
+         Dmsg1(dbglvl, "Failed to get size for storage: %s\n", store->name());
+         goto bail_out;
+      }
+
+      *size = fs;
+   }
+
+   // Insert store size to the list
+   d_list->binary_insert_multiple(context, &FreeSpaceStore::cmp);
+
+   ret = true;
+
+bail_out:
+   return ret;
 }
 
 void LeastUsedStore::apply_policy(bool write_store) {

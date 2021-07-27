@@ -95,6 +95,7 @@ const int sd_dbglvl = 300;
 #include "vtape_dev.h"
 #include "cloud_dev.h"
 #include "aligned_dev.h"
+#include "store_mngr.h"
 #ifdef SD_DEDUP_SUPPORT
 #include "dedup_dev.h"
 #endif

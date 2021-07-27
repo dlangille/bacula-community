@@ -62,6 +62,7 @@ extern bool run_cmd(JCR *jcr);
 extern bool status_cmd(JCR *sjcr);
 extern bool qstatus_cmd(JCR *jcr);
 extern bool collect_cmd(JCR *jcr);
+extern bool query_store(JCR *jcr);
 //extern bool query_cmd(JCR *jcr);
 
 /* Forward referenced functions */
@@ -146,6 +147,7 @@ static struct dir_cmds cmds[] = {
 #endif
    {"run",         run_cmd,         0},
    {"statistics",  collect_cmd,     0},
+   {"store_mngr",  query_store,     0},
 // {"query",       query_cmd,       0},
    {NULL,        NULL}                      /* list terminator */
 };

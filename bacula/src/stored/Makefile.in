@@ -49,7 +49,7 @@ SDCORE_OBJS = \
 
 # bacula-sd
 SDOBJS = \
-   stored.o append.o authenticate.o dircmd.o fd_cmds.o job.o \
+   stored.o append.o authenticate.o store_mngr.o dircmd.o fd_cmds.o job.o \
    hello.o status.o vbackup.o \
    sdcollect.o $(SDCORE_OBJS)  $(EXTRA_STORED_OBJS)
 

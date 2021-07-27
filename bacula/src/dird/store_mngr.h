@@ -29,7 +29,6 @@
 /* Forward delcaration */
 class STORE;
 
-
 /*
  * Helper class to make managing each storage type (write/read) easier.
  * It contains storage resource ('store' member) which is currently used as well as list of all
@@ -243,6 +242,89 @@ class ListedOrderStore : public StorageManager {
    }
 
    ~ListedOrderStore() {
+   }
+};
+
+/* Context with per-policy specific data (as of now there's only single uint64_t value available for each policy)*/
+class sm_ctx : public SMARTALLOC {
+   public:
+      STORE *store;
+      dlink link;
+      uint64_t number; /* Per-policy specific number (e.g. free space, cpu usage...) */
+
+      sm_ctx(STORE *s) {
+         store = s;
+         number = 0;
+      }
+};
+
+/*
+ * Abstract class for policies which require DIR<->SD querying.
+ * Each querying policy has to implement query() and reorder() methods - theese act
+ * as a callbacks for QueryStore's generic methods.
+ */
+class QueryStore : public StorageManager {
+   protected:
+      /* Policy-specific query method */
+      virtual bool query(BSOCK *sd, dlist *d_list, sm_ctx *context) = 0;
+
+      /* Reorder storage list after querying all storages in the list for needed information */
+      virtual void reorder_list(alist *list, dlist *d_list) = 0;
+
+   public:
+      void apply_policy(bool write_store);
+
+   QueryStore (const char *policy="VirtualPolicy_QueryStore"): StorageManager(policy)  {
+   }
+
+   ~QueryStore() {
+   }
+};
+
+/*
+ * Policy which reorders storage list based on FreeSpace available on each Storage
+ */
+class FreeSpaceStore : public QueryStore {
+   private:
+      /* Private helper struct */
+      struct store_free_size {
+         STORE *store;
+         uint64_t free_size;
+         dlink link;
+      };
+
+      bool query(BSOCK *sd, dlist *d_list, sm_ctx *context);
+
+      /* Comparator for easy list ordering */
+      static int cmp(void *item1, void *item2) {
+         sm_ctx *ctx1 = (sm_ctx *) item1;
+         sm_ctx *ctx2 = (sm_ctx *) item2;
+         uint64_t s1 = ctx1->number;
+         uint64_t s2 = ctx2->number;
+
+         if (s1 < s2) {
+            return 1;
+         } else if (s1 > s2) {
+            return -1;
+         } else {
+            return 0;
+         }
+      }
+
+      void reorder_list(alist *list, dlist *d_list);
+
+   public:
+      void apply_write_policy() {
+         return apply_policy(true);
+      }
+      void apply_read_policy() {
+         return apply_policy(false);
+      }
+
+   FreeSpaceStore(): QueryStore("FreeSpace") {
+   }
+
+   ~FreeSpaceStore() {
    }
 };
 

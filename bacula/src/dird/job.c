@@ -1661,6 +1661,12 @@ static void init_store_manager(JCR *jcr, const char *policy)
       } else if (strcmp(policy, "ListedOrder") == 0) {
          Dmsg1(dbglvl_store_mngr, "Setting ListedOrder storage group policy for JobId: %d\n", jcr->JobId);
          jcr->store_mngr = New(ListedOrderStore());
+      } else if (strcmp(policy, "FreeSpace") == 0) {
+         Dmsg1(dbglvl_store_mngr, "Setting FreeSpace storage group policy for JobId: %d\n", jcr->JobId);
+         jcr->store_mngr = New(FreeSpaceStore());
+      } else {
+         Dmsg1(dbglvl_store_mngr, "Invalid policy for JobId: %d, setting default (ListedOrder)\n", jcr->JobId);
+         jcr->store_mngr = New(ListedOrderStore());
       }
    } else {
       Dmsg1(dbglvl_store_mngr, "Setting ListedOrder storage group policy for JobId: %d\n", jcr->JobId);

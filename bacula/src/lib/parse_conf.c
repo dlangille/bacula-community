@@ -1017,6 +1017,7 @@ void store_coll_type(LEX *lc, RES_ITEM *item, int index, int pass)
 static char const *storage_mngmt_policy[] = {
    "LeastUsed",
    "ListedOrder",
+   "FreeSpace",
    NULL
 };
 
