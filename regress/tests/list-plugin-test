@@ -1,0 +1,102 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test the plugin list of the Client
+#
+TestName="list-plugin-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+make -C $cwd/build/src/plugins/fd install-test-plugin
+
+mkdir -p $tmp/empty
+
+cp $conf/bacula-fd.conf $tmp
+disable_plugins
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+estimate job=$JobName
+llist clients
+@$out $tmp/log2.out
+status client
+@$out $tmp/log3.out
+.api 2 api_opts=j
+.status client header
+quit
+END_OF_DATA
+
+run_bacula
+
+mv $tmp/log*out $tmp/empty
+
+mv $tmp/bacula-fd.conf $conf/
+
+$bin/bacula-ctl-fd restart
+run_bconsole
+stop_bacula
+
+perl -ne '/plugin: ([\w\d-]+\([0-9.]+\))(,([\w\d-]+\([0-9.]+\)))+/i && exit 10' $tmp/log1.out
+
+if [ $? != 10 ]; then
+    print_debug "ERROR: Unable to find plugin string in $tmp/log1.out"
+    estat=1
+fi
+
+perl -ne '/Plugin: ([\w\d-]+\([0-9.]+\))( ([\w\d-]+\([0-9.]+\)))+/i && exit 10' $tmp/log2.out
+
+if [ $? != 10 ]; then
+    print_debug "ERROR: Unable to find plugin string in $tmp/log2.out"
+    estat=1
+fi
+
+perl -ne '/plugins=[\w\d-]+(,[\w\d-]+)+/i && exit 10' $tmp/log3.out
+
+if [ $? != 10 ]; then
+    print_debug "ERROR: Unable to find plugin string in $tmp/log3.out"
+    estat=1
+fi
+
+################################################################
+
+perl -ne '/plugin: *$/i && exit 10' $tmp/empty/log1.out
+
+if [ $? != 10 ]; then
+    print_debug "ERROR: Unable to find plugin string in $tmp/empty/log1.out"
+    estat=1
+fi
+
+perl -ne '/Plugin:/i && exit 10' $tmp/empty/log2.out
+
+if [ $? = 10 ]; then
+    print_debug "ERROR: Should not find plugin string in $tmp/empty/log2.out"
+    estat=1
+fi
+
+perl -ne '/plugins=$/i && exit 10' $tmp/empty/log3.out
+
+if [ $? != 10 ]; then
+    print_debug "ERROR: Unable to find plugin string in $tmp/empty/log3.out"
+    estat=1
+fi
+
+end_test
