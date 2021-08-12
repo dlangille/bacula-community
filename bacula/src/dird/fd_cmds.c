@@ -194,7 +194,15 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
           cr.AutoPrune = jcr->client->AutoPrune;
           cr.FileRetention = jcr->client->FileRetention;
           cr.JobRetention = jcr->client->JobRetention;
+
+          /* information about plugins can be found after the Uname */
+          char *pos = strchr(fd->msg+strlen(OKjob)+1, ';');
+          if (pos) {
+             *pos = 0;
+             bstrncpy(cr.Plugin, pos+1, sizeof(cr.Plugin));
+          }
           bstrncpy(cr.Uname, fd->msg+strlen(OKjob)+1, sizeof(cr.Uname));
+
           if (!db_update_client_record(jcr, jcr->db, &cr)) {
              Jmsg(jcr, M_WARNING, 0, _("Error updating Client record. ERR=%s\n"),
                 db_strerror(jcr->db));

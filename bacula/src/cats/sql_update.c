@@ -204,7 +204,8 @@ int BDB::bdb_update_client_record(JCR *jcr, CLIENT_DBR *cr)
    int stat;
    char ed1[50], ed2[50];
    char esc_name[MAX_ESCAPE_NAME_LENGTH];
-   char esc_uname[MAX_ESCAPE_NAME_LENGTH];
+   char esc_uname[MAX_ESCAPE_UNAME_LENGTH];
+   char esc_plugin[MAX_ESCAPE_PLUGIN_LENGTH];
    CLIENT_DBR tcr;
 
    bdb_lock();
@@ -216,13 +217,15 @@ int BDB::bdb_update_client_record(JCR *jcr, CLIENT_DBR *cr)
 
    bdb_escape_string(jcr, esc_name, cr->Name, strlen(cr->Name));
    bdb_escape_string(jcr, esc_uname, cr->Uname, strlen(cr->Uname));
+   bdb_escape_string(jcr, esc_plugin, cr->Plugin, strlen(cr->Plugin));
+
    Mmsg(cmd,
 "UPDATE Client SET AutoPrune=%d,FileRetention=%s,JobRetention=%s,"
-"Uname='%s' WHERE Name='%s'",
+"Uname='%s',Plugin='%s' WHERE Name='%s'",
       cr->AutoPrune,
       edit_uint64(cr->FileRetention, ed1),
       edit_uint64(cr->JobRetention, ed2),
-      esc_uname, esc_name);
+      esc_uname, esc_plugin, esc_name);
 
    stat = UpdateDB(jcr, cmd, false);
    bdb_unlock();

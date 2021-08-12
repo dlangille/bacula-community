@@ -110,7 +110,7 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
 {
    bdb_lock();
    if (type == VERT_LIST || type == JSON_LIST) {
-      Mmsg(cmd, "SELECT ClientId,Name,Uname,AutoPrune,FileRetention,"
+      Mmsg(cmd, "SELECT ClientId,Name,Uname,Plugin,AutoPrune,FileRetention,"
          "JobRetention "
            "FROM Client %s ORDER BY ClientId", get_acls(DB_ACL_BIT(DB_ACL_RBCLIENT), true));
    } else {

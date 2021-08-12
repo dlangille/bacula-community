@@ -515,7 +515,7 @@ void list_dir_status_header(UAContext *ua)
       POOL_MEM msg(PM_FNAME);
       pm_strcpy(msg, " Plugin: ");
       foreach_alist(plugin, b_plugin_list) {
-         len = pm_strcat(msg, plugin->file);
+         len = pm_strcat(msg, plugin->name);
          if (len > 80) {
             pm_strcat(msg, "\n   ");
          } else {

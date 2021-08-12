@@ -470,6 +470,12 @@ public:
    bool    set_label_date;
 };
 
+#define MAX_UNAME_LENGTH 256
+#define MAX_ESCAPE_UNAME_LENGTH MAX_UNAME_LENGTH*2+1
+
+#define MAX_PLUGIN_LENGTH 1024
+#define MAX_ESCAPE_PLUGIN_LENGTH MAX_PLUGIN_LENGTH*2+1
+
 /* Client record -- same as the database */
 struct CLIENT_DBR {
    DBId_t ClientId;                   /* Unique Client id */
@@ -477,7 +483,8 @@ struct CLIENT_DBR {
    utime_t FileRetention;
    utime_t JobRetention;
    char Name[MAX_NAME_LENGTH];        /* Client name */
-   char Uname[256];                   /* Uname for client */
+   char Uname[MAX_UNAME_LENGTH];      /* Uname for client */
+   char Plugin[MAX_PLUGIN_LENGTH];    /* Plugin list for this client */
 };
 
 /* Counter record as in database */

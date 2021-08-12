@@ -1225,9 +1225,8 @@ static void list_plugins(STATUS_PKT *sp)
       Plugin *plugin;
       pm_strcpy(msg, " Plugin: ");
       foreach_alist(plugin, b_plugin_list) {
-         len = pm_strcat(msg, plugin->file);
-         /* Print plugin version when debug activated */
-         if (debug_level > 0 && plugin->pinfo) {
+         len = pm_strcat(msg, plugin->name);
+         if (plugin->pinfo) {
             pm_strcat(msg, "(");
             pm_strcat(msg, NPRT(sdplug_info(plugin)->plugin_version));
             len = pm_strcat(msg, ")");

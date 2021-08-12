@@ -381,6 +381,7 @@ CREATE TABLE client
     clientid	      serial	  not null,
     name	      text	  not null,
     uname	      text	  not null,
+    plugin            text        default '',
     autoprune	      smallint	  default 0,
     fileretention     bigint	  default 0,
     jobretention      bigint	  default 0,

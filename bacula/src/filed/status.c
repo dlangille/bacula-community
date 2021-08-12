@@ -245,8 +245,7 @@ static void  list_status_header(STATUS_PKT *sp)
       int len, maxlen=80;
       pm_strcpy(msg, " Plugin: ");
       foreach_alist(plugin, b_plugin_list) {
-         len = pm_strcat(msg, plugin->file);
-         /* Print plugin version when debug activated */
+         len = pm_strcat(msg, plugin->name);
          if (plugin->pinfo) {
             pInfo *info = (pInfo *)plugin->pinfo;
             pm_strcat(msg, "(");

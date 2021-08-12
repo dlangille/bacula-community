@@ -418,6 +418,7 @@ CREATE TABLE Client (
    ClientId INTEGER UNSIGNED NOT NULL AUTO_INCREMENT,
    Name TINYBLOB NOT NULL,
    Uname TINYBLOB NOT NULL,	  /* full uname -a of client */
+   Plugin TINYBLOB DEFAULT '',
    AutoPrune TINYINT DEFAULT 0,
    FileRetention BIGINT UNSIGNED DEFAULT 0,
    JobRetention  BIGINT UNSIGNED DEFAULT 0,

@@ -198,7 +198,7 @@ static char OKrestore[]   = "2000 OK restore\n";
 static char OKsession[]   = "2000 OK session\n";
 static char OKstore[]     = "2000 OK storage\n";
 static char OKstoreend[]  = "2000 OK storage end\n";
-static char OKjob[]       = "2000 OK Job %s (%s) %s,%s,%s";
+static char OKjob[]       = "2000 OK Job %s (%s) %s,%s,%s;%s";
 static char OKsetdebug[]  = "2000 OK setdebug=%ld trace=%d hangup=%d"
                             " blowup=%d options=%s tags=%s\n";
 static char BADjob[]      = "2901 Bad Job\n";
@@ -1097,10 +1097,30 @@ static int job_cmd(JCR *jcr)
    Mmsg(jcr->errmsg, "JobId=%d Job=%s", jcr->JobId, jcr->Job);
    new_plugins(jcr);                  /* instantiate plugins for this jcr */
    generate_plugin_event(jcr, bEventJobStart, (void *)jcr->errmsg);
+
+   POOL_MEM msg;
+   if (b_plugin_list) {
+      bool first=true;
+      Plugin *plugin;
+      foreach_alist(plugin, b_plugin_list) {
+         if (!first) {
+            pm_strcat(msg, ",");
+         }
+         first = false;
+         pm_strcat(msg, plugin->name);
+         if (plugin->pinfo) {
+            pInfo *info = (pInfo *)plugin->pinfo;
+            pm_strcat(msg, "(");
+            pm_strcat(msg, NPRT(info->plugin_version));
+            pm_strcat(msg, ")");
+         }
+      }
+   }
+
 #ifdef HAVE_WIN32
-   return dir->fsend(OKjob, VERSION, LSMDATE, win_os, DISTNAME, DISTVER);
+   return dir->fsend(OKjob, VERSION, LSMDATE, win_os, DISTNAME, DISTVER, msg.c_str());
 #else
-   return dir->fsend(OKjob, VERSION, LSMDATE, HOST_OS, DISTNAME, DISTVER);
+   return dir->fsend(OKjob, VERSION, LSMDATE, HOST_OS, DISTNAME, DISTVER, msg.c_str());
 #endif
 }
 

@@ -266,7 +266,7 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
                if (i++ > 0) {
                   pm_strcat(tmp, ",");
                }
-               pm_strcat(tmp, plug->file);
+               pm_strcat(tmp, plug->name);
             }
          }
          pm_strcat(tmp, separator_str);

@@ -146,6 +146,8 @@ bool load_plugins(void *binfo, void *bfuncs, const char *plugin_dir,
 
       plugin = new_plugin();
       plugin->file = bstrdup(dname.c_str());
+      dname.c_str()[len-type_len] = 0;
+      plugin->name = bstrdup(dname.c_str());
       plugin->file_len = strstr(plugin->file, type) - plugin->file;
       plugin->pHandle = dlopen(fname.c_str(), RTLD_NOW);
       if (!plugin->pHandle) {
@@ -220,6 +222,9 @@ void unload_plugins()
       dlclose(plugin->pHandle);
       if (plugin->file) {
          free(plugin->file);
+      }
+      if (plugin->name) {
+         free(plugin->name);
       }
       free(plugin);
    }
