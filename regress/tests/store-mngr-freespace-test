@@ -1,0 +1,253 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test for the 'FreeSpace' storage policy.
+# We create 3 devices, each of different size and assing them to storage group.
+# During first backup, Disk3 device should be used since it's the biggest one.
+# Later we use some more space on Disk2 and Disk3 so that Disk1 has the biggest free space amount
+# and it should be used during second backup.
+#
+
+TestName="store-mngr-freespace-test"
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+# Cleanup of mounted dirs
+trap mount_cleanup err exit
+
+function mount_cleanup() {
+   sudo umount -ql $tmp/dev*
+}
+
+
+dev1="${tmp}/dev1"
+dev2="${tmp}/dev2"
+dev3="${tmp}/dev3"
+
+dd if=/dev/zero of=$tmp/disk1 bs=1M count=200 > /dev/null
+dd if=/dev/zero of=$tmp/disk2 bs=1M count=400 > /dev/null
+dd if=/dev/zero of=$tmp/disk3 bs=1M count=600 > /dev/null
+
+mkfs.ext2 -F $tmp/disk1 > /dev/null
+mkfs.ext2 -F $tmp/disk2 > /dev/null
+mkfs.ext2 -F $tmp/disk3 > /dev/null
+
+mkdir -p $dev1
+mkdir -p $dev2
+mkdir -p $dev3
+
+user=`whoami`
+
+sudo mount -o loop $tmp/disk1 $dev1
+sudo mount -o loop $tmp/disk2 $dev2
+sudo mount -o loop $tmp/disk3 $dev3
+
+#TODO add some err handling here
+
+sudo chown -R $user:$user $dev1
+sudo chown -R $user:$user $dev2
+sudo chown -R $user:$user $dev3
+
+# Get SD password
+sd_pass=`grep -i password ${bin}/bacula-sd.conf | head -n 1`
+
+# Add simple job with store group
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Pool {
+  Name = FreeSpacePool
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 50G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+  Storage = Disk3, Disk2, Disk1
+  Storage Group Policy = Free Space
+}
+
+Job {
+  Name = "FreeSpaceJob"
+  Type = Backup
+  Messages = Standard
+  JobDefs = DefaultJob
+  FileSet = "Full Set"
+  Pool = FreeSpacePool
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk1
+  Address = VBox                # N.B. Use a fully qualified name here
+  SDPort = 8112
+${sd_pass}
+  Device = Disk1
+  Media Type = Disk1
+  Autochanger = Disk1                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk2
+  Address = VBox                # N.B. Use a fully qualified name here
+  SDPort = 8112
+${sd_pass}
+  Device = Disk2
+  Media Type = Disk2
+  Autochanger = Disk2                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk3
+  Address = VBox                # N.B. Use a fully qualified name here
+  SDPort = 8112
+${sd_pass}
+  Device = Disk3
+  Media Type = Disk3
+  Autochanger = Disk3                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+END_OF_DATA
+
+cat <<END_OF_DATA >> $bin/bacula-sd.conf
+Autochanger {
+  Name = Disk1
+  Device = Disk1-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk1-Dev
+  Media Type = Disk1
+  Archive Device = ${dev1}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 5
+}
+
+Autochanger {
+  Name = Disk2
+  Device = Disk2-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk2-Dev
+  Media Type = Disk2
+  Archive Device = ${dev2}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 5
+}
+
+Autochanger {
+  Name = Disk3
+  Device = Disk3-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk3-Dev
+  Media Type = Disk3
+  Archive Device = ${dev3}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 5
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumConcurrentJobs", "10", "Client")'
+
+start_test
+
+run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out  ${cwd}/tmp/log1.out
+label volume=TestVolume001 storage=Disk1 pool=FreeSpacePool slot=1 drive=0
+label volume=TestVolume002 storage=Disk2 pool=FreeSpacePool slot=1 drive=0
+label volume=TestVolume003 storage=Disk3 pool=FreeSpacePool slot=1 drive=0
+run job=FreeSpaceJob level=Full yes
+wait
+@$out  ${cwd}/tmp/log2.out
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+
+# Disk3 has the biggest amount of free space hence it should be used now
+n_disk1=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk1\"" | wc -l`
+if [ $n_disk1 -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Disk1 Storage should not be used for backup, see: ${tmp}/log2.out"
+fi
+
+n_disk2=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk2\"" | wc -l`
+if [ $n_disk2 -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Disk2 Storage should not be used for backup, see: ${tmp}/log2.out"
+fi
+
+n_disk3=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk3\"" | wc -l`
+if [ $n_disk3 -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Disk3 Storage was not used for backup as expected, see: ${tmp}/log2.out"
+fi
+
+# Use most of Disk3 and Disk2 devices space so that Disk1 should be used next
+dd if=/dev/urandom of=$dev2/data bs=1M count=350
+dd if=/dev/urandom of=$dev3/data bs=1M count=400
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+run job=FreeSpaceJob level=Full yes
+@sleep 3
+wait
+@$out  ${cwd}/tmp/log3.out
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+n_disk1=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk1\"" | wc -l`
+if [ $n_disk1 -ne 1 ]; then
+   print_debug "ERROR: Disk1 Storage was not used for backup as expected, see: ${tmp}/log2.out"
+   estat=1
+fi
+
+n_disk2=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk2\"" | wc -l`
+if [ $n_disk2 -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Disk2 Storage should not be used for backup, see: ${tmp}/log2.out"
+fi
+
+n_disk3=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk3\"" | wc -l`
+if [ $n_disk3 -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Disk3 Storage should not be used for backup, see: ${tmp}/log2.out"
+fi
+
+stop_bacula
+
+
+end_test
