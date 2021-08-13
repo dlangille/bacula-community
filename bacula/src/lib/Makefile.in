@@ -50,7 +50,7 @@ INCLUDE_FILES = ../baconfig.h ../bacula.h ../bc_types.h \
 #
 # libbac
 #
-LIBBAC_SRCS = attr.c base64.c berrno.c bsys.c binflate.c bget_msg.c \
+LIBBAC_SRCS = attr.c base64.c base32.c berrno.c bsys.c binflate.c bget_msg.c \
       authenticatebase.cc \
       bnet.c bnet_server.c bsock.c bpipe.c bsnprintf.c bstat.c btime.c \
       cram-md5.c crypto.c daemon.c edit.c fnmatch.c \
@@ -171,6 +171,14 @@ base64_test: Makefile libbac.la base64.c unittests.o
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 	$(RMF) base64.o
 	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) base64.c
+
+base32_test: Makefile libbac.la base32.c unittests.o
+	$(RMF) base32.o
+	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) base32.c
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L. -o $@ base32.o unittests.o $(DLIB) -lbac -lm $(LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+	$(RMF) base32.o
+	$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) base32.c
 
 edit_test: Makefile libbac.la edit.c unittests.o
 	$(RMF) edit.o

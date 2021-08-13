@@ -36,6 +36,9 @@ int       unpack_attributes_record(JCR *jcr, int32_t stream, char *rec, int32_t 
 void      build_attr_output_fnames(JCR *jcr, ATTR *attr);
 void      print_ls_output(JCR *jcr, ATTR *attr, int message_type=M_RESTORED);
 
+/* base32.c */
+int bin_to_base32(const uint8_t *buf, int buflen, char *bin, int binlen);
+
 /* base64.c */
 void      base64_init            (void);
 int       to_base64              (int64_t value, char *where);
