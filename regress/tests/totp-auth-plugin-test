@@ -1,0 +1,267 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a couple of tests with bconsole and the totp auth plugin
+#
+TestName="totp-auth-plugin-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+echo "$cwd/build/po" > $tmp/file-list
+
+make -C $cwd/build/src/plugins/dir/totp install install-test
+rm -rf $conf/conf.d/totp/
+
+change_jobname NightlySave $JobName
+
+cat <<EOF >> $conf/bacula-dir.conf
+Console {
+  Name = cons1
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+  Authentication Plugin = "totp"
+}
+Console {
+  Name = cons2
+  Password = yyy
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+  Authentication Plugin = "totp: no_qrcode"
+}
+Console {
+  Name = cons3
+  Password = zzz
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+  Authentication Plugin = "totp"
+  TLS Enable = No
+  TLS PSK Enable = No
+}
+Console {
+  Name = cons4
+  Password = a111
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+  Authentication Plugin = "totp: keydir=$tmp/key"
+}
+Console {
+  Name = cons5
+  Password = a111
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+  # Authentication Plugin = "totp: sendcommand=\"mpack -s 'Bacula Console Access for %d' -d $tmp/template %a  eric@localhost\""
+  Authentication Plugin = "totp: sendcommand=\"$rscripts/dummy_bsmtp /dev/null cons=%d img=%a\""
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf1
+Console {
+  Name = cons1
+  Password = xxx
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = 8101
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf2
+Console {
+  Name = cons2
+  Password = yyy
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = 8101
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf3
+# This console will not work because TLS is not set
+Console {
+  Name = cons3
+  Password = zzz
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = 8101
+  address = 127.0.0.1
+  Password = notused
+  TLS Enable = No
+  TLS PSK Enable = No
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf4
+Console {
+  Name = cons4
+  Password = a  111
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = 8101
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf5
+Console {
+  Name = cons5
+  Password = a111
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = 8101
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
+start_test
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 pool=Default storage=File
+run job=Simple level=full yes
+wait
+messages
+EOF
+
+# start the director
+run_bacula
+
+# Will not work and will generate the code
+echo aaaa | $bin/bconsole -c $tmp/bconsole.conf1 > $tmp/log1.out 2>&1
+
+# Compute the code ourself
+c=`$bin/btotp -n cons1 | awk -F = '{print $2}'`
+cat <<EOF > $tmp/bcmd
+$c
+status dir
+quit
+EOF
+
+# Will work
+cat $tmp/bcmd | $bin/bconsole -c $tmp/bconsole.conf1 > $tmp/log11.out 2>&1
+
+grep "Console connected using TLS" $tmp/log11.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find correct status dir output in $tmp/log11.out"
+    estat=1
+fi
+
+# Will not generate a qr code
+echo aaaa | $bin/bconsole -c $tmp/bconsole.conf2 > $tmp/log2.out 2>&1
+
+# Will not work, incorrect code
+cat $tmp/bcmd | $bin/bconsole -c $tmp/bconsole.conf3 > $tmp/log3.out 2>&1
+
+grep "Director authorization problem" $tmp/log3.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find authorization problem in $tmp/log3.out without TLS"
+    estat=1
+fi
+
+# Will generate the key in keydir
+echo aaaa | $bin/bconsole -c $tmp/bconsole.conf4 > $tmp/log4.out 2>&1
+c=`$bin/btotp -n cons4 -k $tmp/key | awk -F = '{print $2}'`
+cat <<EOF > $tmp/bcmd
+$c
+status dir
+@sleep 5
+quit
+EOF
+
+cat $tmp/bcmd | $bin/bconsole -c $tmp/bconsole.conf4 > $tmp/log44.out 2>&1
+grep "Console connected using TLS" $tmp/log44.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find correct status dir output in $tmp/log44.out"
+    estat=1
+fi
+
+$bin/btotp -n cons1 -u > $tmp/log5.out
+grep "otpauth://totp/Bacula:cons1?secret=" $tmp/log5.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find url in $tmp/log5.out"
+    estat=1
+fi
+
+$bin/btotp -n cons1 -q > $tmp/log6.out
+grep "Scan the QR code into your TOTP client and close this screen" $tmp/log6.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find QRcode in $tmp/log6.out (install qrencode?)"
+    estat=1
+fi
+
+# Will not work, incorrect code, but will call the program
+cat $tmp/bcmd | $bin/bconsole -c $tmp/bconsole.conf5 > $tmp/log7.out 2>&1
+
+if [ ! -f $tmp/dummy_bsmtp.out ]; then
+    print_debug "ERROR: Should find command output in $tmp/log7.out and $tmp/dummy_bsmtp.out"
+    estat=1
+fi
+
+stop_bacula
+end_test
