@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Attempt to backup a local folder using the sample Hello plugin, which is based on MetaPlugin
+#
+# HOWTO:
+# Add to your ./config
+#
+# BEE_PLUGINS_REPO=/home/user/yourbeepath/bee-plugins
+#
+#
+
+# ==== Test inizialization =======================
+TestName="hello-simple-test"
+. scripts/functions
+. scripts/hello-helpers.sh
+
+MY_BACKUP_DIR="${working}/hello-test"
+MY_RESTORE_DIR="${working}/hello-restore"
+
+hello_init_test
+# ================================================
+
+# ==== Test prepare ===============================
+mkdir -p ${MY_BACKUP_DIR}
+for i in 1 2 3 4 5
+do
+   echo "hello${i}" > ${MY_BACKUP_DIR}/hello${i}
+done
+
+HELLO_FILES="${MY_BACKUP_DIR}"
+# =================================================
+
+
+# ==== Run backup ================================
+hello_setup_job
+run_job_and_check "Full"
+# ================================================
+
+
+# ==== Run restore ===============================
+HELLO_DESTINATION_PATH="${MY_RESTORE_DIR}"
+RESTORE_SOURCE="/@hello/"
+
+hello_run_restore_and_check ${BACKUPID} ${RESTORE_SOURCE} "log-session.out"
+# ================================================
+
+# ==== End and cleaning=============================
+stop_bacula
+end_test
+# ==================================================
