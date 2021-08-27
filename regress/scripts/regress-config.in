@@ -41,6 +41,7 @@ fi
     --with-smtp-host=${SMTP_HOST} \
     --with-db-name=@db_name@ \
     --with-db-user=@db_user@ \
+    --with-aws \
     ${PASSWD} \
     ${OPENSSL} \
     ${TCPWRAPPERS} \
