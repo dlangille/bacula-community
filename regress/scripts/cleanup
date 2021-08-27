@@ -84,6 +84,9 @@ if [ x$FORCE_CLOUD = xyes ]; then
 
       shopt -s nocasematch
       case "${cloud_attr}" in
+         "aws") 
+            args="${args} -c ${cwd}/bin/plugins/aws_cloud_driver"
+         ;;
          "google") 
             args="${args} -c ${cwd}/bin/plugins/google_cloud_driver"
          ;;
