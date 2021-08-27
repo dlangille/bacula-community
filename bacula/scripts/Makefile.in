@@ -93,6 +93,25 @@ uninstall:
 	(cd $(DESTDIR)$(scriptdir); $(RMF) btraceback.mdb)
 	(cd $(DESTDIR)$(scriptdir); $(RMF) breload)
 	(cd $(DESTDIR)$(sbindir);   $(RMF) btraceback)
+	(cd $(DESTDIR)$(sbindir);   $(RMF) generic_cloud_driver)
+	(cd $(DESTDIR)$(sbindir);   $(RMF) aws_cloud_driver)
+
+
+aws_cloud_driver.C: aws_cloud_driver
+	$(CYTHON) --embed -o aws_cloud_driver.C aws_cloud_driver
+
+aws_cloud_driver.bin: aws_cloud_driver.C
+	$(CC) -o aws_cloud_driver.bin aws_cloud_driver.C $(CYTHON_INC) $(CYTHON_LIBS)
+	strip aws_cloud_driver.bin
+
+install-aws-cloud: aws_cloud_driver.bin
+	$(INSTALL_SCRIPT) aws_cloud_driver.bin $(DESTDIR)$(plugindir)/aws_cloud_driver
+
+install-generic-cloud:
+	$(INSTALL_SCRIPT) generic_cloud_driver $(DESTDIR)$(plugindir)/generic_cloud_driver
+
+install-regress-drivers:
+	$(INSTALL_SCRIPT) aws_cloud_driver $(DESTDIR)$(plugindir)/aws_cloud_driver
 
 Makefile: Makefile.in
 	cd $(topdir) \
