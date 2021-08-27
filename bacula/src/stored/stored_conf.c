@@ -324,6 +324,7 @@ s_kw cloud_drivers[] = {
    {"Oracle",       C_ORACLE_DRIVER},
    {"Generic",      C_GEN_DRIVER},
    {"Swift",        C_SWIFT_DRIVER},
+   {"Amazon",       C_AWS_DRIVER},
 #endif
    {NULL,           0}
 };

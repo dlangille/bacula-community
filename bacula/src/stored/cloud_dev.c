@@ -134,6 +134,7 @@ static cloud_driver_item driver_tab[] = {
    {"oci",     NULL, NULL,    false, false},
    {"generic", NULL, NULL,    false, false},
    {"swift",   NULL, NULL,    false, false},
+   {"aws",     NULL, NULL,    false, false},
    {NULL,      NULL, NULL,    false, false}
 };
 
@@ -146,6 +147,7 @@ static const char* cloud_driver_type_name[] = {
    "Oracle",
    "Generic",
    "Swift",
+   "Amazon",
    NULL
 };
 
@@ -922,6 +924,17 @@ cloud_dev::cloud_dev(JCR *jcr, DEVRES *device)
       switch (device->cloud->driver_type) {
       case C_S3_DRIVER:
          driver = load_driver(jcr, C_S3_DRIVER);
+         break;
+      case C_AWS_DRIVER:
+         if (!device->cloud->driver_command) {
+            POOL_MEM tmp(PM_FNAME);
+            Mmsg(tmp, "%s/aws_cloud_driver", me->plugin_directory);
+            device->cloud->driver_command = bstrdup(tmp.c_str());
+         }
+         struct stat mstatp;
+         if (lstat(device->cloud->driver_command, &mstatp) == 0) {
+            driver = load_driver(jcr, C_AWS_DRIVER);
+         }
          break;
       case C_WAS_DRIVER:
       {

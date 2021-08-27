@@ -45,7 +45,8 @@ enum {
    C_GOOGLE_DRIVER= 4,
    C_ORACLE_DRIVER= 5,
    C_GEN_DRIVER   = 6,
-   C_SWIFT_DRIVER = 7
+   C_SWIFT_DRIVER = 7,
+   C_AWS_DRIVER   = 8
 };
 
 
