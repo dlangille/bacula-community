@@ -37,7 +37,7 @@ def vol_ls():
       output,err = proc.communicate()
       logging.debug("vol_ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
-      if "Exception" in err:
+      if err:
          logging.error("vol_ls got error {0}".format(err))
          sys.stderr.write(err)
       if output:
@@ -46,6 +46,9 @@ def vol_ls():
          logging.info("vol_ls got ouput")
          logging.info("vol_ls outputing {0}".format(output))
          sys.stdout.write(output)
+      if proc.returncode == 1:
+         # possible to ls unexisting path. In this case, return code will be 1.
+         return 0
       return proc.returncode
    except OSError as o:
       logging.exception("vol_ls OSError exception")
@@ -66,7 +69,7 @@ def ls():
       output,err = proc.communicate()
       logging.debug("ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
-      if "Exception" in err:
+      if err:
          logging.error("ls got error {0}".format(err))
          sys.stderr.write(err)
       if output:
@@ -82,6 +85,9 @@ def ls():
          # forward out stds
          logging.info("ls outputing {0}".format(output))
          sys.stdout.write(output)
+      if proc.returncode == 1:
+         # possible to ls unexisting path. In this case, return code will be 1.
+         return 0
       return proc.returncode
    except OSError as o:
       logging.exception("ls OSError exception")
@@ -118,7 +124,7 @@ def delete():
       output,err = proc.communicate()
       logging.debug("delete proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr (yuck!)
-      if "Exception" in err:
+      if err:
          logging.error("delete got error {0}".format(err))
          sys.stderr.write(err)
       if output:
@@ -144,14 +150,14 @@ def upload():
       output,err = proc.communicate()
       logging.debug("upload proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr (yuck!)
-      if "Exception" in err:
+      if err:
          sys.stderr.write(err)
       proc = Popen(["aws", "s3", "ls",
          os.path.join(cloud_path, volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
-      if "Exception" in err:
+      if err:
          logging.error("ls got error {0}".format(err))
          sys.stderr.write(err)
       if output:
@@ -192,12 +198,11 @@ def move():
          sys.stdout.write("{0}\0".format(local_part))
          return 0
       else:
-         if err.find("No URLs matched") != -1:
+         if err.find("Key \"{0}\" does not exist".format(os.path.join(volume, part))) != -1:
             logging.debug("move cant find source {0}. OK.".format(part))
             return 0
-         else:
-            logging.error("move got error {0}".format(err))
-            sys.stderr.write("{0}\0".format(err.split("\n\n")[1].split("\n")[0]))
+         logging.error("move got error {0}".format(err))
+         sys.stderr.write(err)
       return ret
    except NameError as c:
       logging.exception("move NameError exception")
@@ -247,8 +252,12 @@ if __name__ == '__main__':
       region=os.environ['CLOUD_REGION']
       protocol=os.environ['CLOUD_PROTOCOL']
       uri_type=os.environ['CLOUD_URI_TYPE']
+      
+      os.environ['AWS_DEFAULT_REGION'] = region
+      os.environ['AWS_ACCESS_KEY_ID'] = access_key
+      os.environ['AWS_SECRET_ACCESS_KEY'] = secret_key
 
-      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}".format(bucket, cloud_path, access_key, secret_key, region, protocol, uri_type))
+      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type))
 
       switcher = {
          "vol_ls":vol_ls,
