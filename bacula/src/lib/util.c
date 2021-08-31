@@ -897,7 +897,11 @@ POOLMEM *edit_job_codes(JCR *jcr, POOLMEM *&omsg, char *imsg, const char *to, jo
             }
             break;
          case 'E':                    /* Job Errors */
-            str = edit_uint64(jcr->getErrors(), add);
+            if (jcr) {
+               str = edit_uint64(jcr->getErrors(), add);
+            } else {
+               str = _("*none*");
+            }
             break;
          case 'i':
             if (jcr) {
@@ -946,10 +950,18 @@ POOLMEM *edit_job_codes(JCR *jcr, POOLMEM *&omsg, char *imsg, const char *to, jo
             }
             break;
          case 'F':                    /* Job Files */
-            str = edit_uint64(jcr->JobFiles, add);
+            if (jcr) {
+               str = edit_uint64(jcr->JobFiles, add);
+            } else {
+               str = _("*none*");
+            }
             break;
          case 'b':                    /* Job Bytes */
-            str = edit_uint64(jcr->JobBytes, add);
+            if (jcr) {
+               str = edit_uint64(jcr->JobBytes, add);
+            } else {
+               str = _("*none*");
+            }
             break;
          case 't':
             if (jcr) {
@@ -970,15 +982,23 @@ POOLMEM *edit_job_codes(JCR *jcr, POOLMEM *&omsg, char *imsg, const char *to, jo
             }
             break;
          case 'o':
-            edit_uint64(jcr->JobPriority, add);
-            str = add;
+            if (jcr) {
+               edit_uint64(jcr->JobPriority, add);
+               str = add;
+            } else {
+               str = _("*none*");
+            }
             break;
          case 'P':
             edit_uint64(getpid(), add);
             str = add;
             break;
          case 'R':                    /* Job ReadBytes */
-            str = edit_uint64(jcr->ReadBytes, add);
+            if (jcr) {
+               str = edit_uint64(jcr->ReadBytes, add);
+            } else {
+               str = _("*none*");
+            }
             break;
          default:
             str = NULL;
