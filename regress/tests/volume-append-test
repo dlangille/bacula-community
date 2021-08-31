@@ -1,0 +1,165 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test if Volume used for backup is being set with the APPEND flag,
+# so that it cannot be overwritten accidentally (while working fine
+# with commands like 'relabel').
+# This test creates temporary bacula-sd.service file so that we can run SD
+# as systemd service.
+#
+TestName="volume-append-test"
+JobName=append
+
+. scripts/functions
+
+require_linux
+
+scripts/cleanup
+scripts/copy-confs
+
+cleanup()
+{
+   #Stop the daemon if the test was interrupted in the middle of a run
+   sudo systemctl stop test-bacula-sd > /dev/null 2>&1
+   #Disable the service
+   sudo systemctl disable test-bacula-sd
+   #Clear volume attributes if needed
+   sudo chattr -ia tmp/*
+}
+
+trap 'cleanup' EXIT INT TERM
+
+# Create temporary bacula-sd.service file so that we can run SD as systemd service
+scripts/create_sed
+sed -f ${tmp}/sed_tmp ${cwd}/build/platforms/systemd/bacula-sd.service.in > ${tmp}/test-bacula-sd.service
+sudo systemctl enable ${tmp}/test-bacula-sd.service
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+
+start_test
+
+# Run FD and DIR the usual way, SD has to be run with systemd
+${bin}/bacula-ctl-fd start
+if test $? -ne 0; then
+      print_debug "ERROR: Failed to start the FD!"
+         dstat=1
+fi
+sudo systemctl start test-bacula-sd
+if test $? -ne 0; then
+      print_debug "ERROR: Failed to start the SD!"
+      dstat=1
+fi
+${bin}/bacula-ctl-dir start
+if test $? -ne 0; then
+      print_debug "ERROR: Failed to start the DIR!"
+      dstat=1
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+@$out $tmp/log2.out
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log3.out
+restore where=$tmp/bacula-restores select all done yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+label_res=`cat $tmp/log1.out| grep '3000 OK label' | wc -l`
+if [ ${label_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Failed to label volume, see ${tmp}/log1.out!"
+fi
+
+vol_res=`cat $tmp/log2.out| grep 'Volume name(s):' | grep 'TestVolume001' | wc -l`
+if [ ${vol_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Wrong volume used for backup, see ${tmp}/log2.out!"
+fi
+
+backup_res=`cat $tmp/log2.out| grep 'Termination:' | grep 'Backup OK' | wc -l`
+if [ ${backup_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: JobId 1 did not succed, see ${tmp}/log2.out!"
+fi
+
+vol_res=`cat $tmp/log3.out| grep 'Ready to read from volume "TestVolume001"' | wc -l`
+if [ ${vol_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: TestVolume001 not mentioned in restore log, see ${tmp}/log3.out!"
+fi
+
+restore_res=`cat $tmp/log3.out| grep 'Termination:' | grep 'Restore OK' | wc -l`
+if [ ${restore_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Restoring job 1 did not succed, see ${tmp}/log3.out!"
+fi
+
+# Check if Volume has the flag set
+append_find=`lsattr ${tmp}/TestVolume001 -l | grep 'Append_Only' | wc -l`
+if [ ${append_find} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: TestVolume001 does not have the 'Append' flag set!"
+fi
+
+# It should not be possible to overwrtie beginning of the Volume now
+dd if=/dev/urandom of=$tmp/TestVolume001 bs=1M count=20
+if [ $? -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Volume could be ovewritten from the beginning using dd!"
+fi
+
+# As well as with some offset
+dd if=/dev/urandom of=$tmp/TestVolume001 bs=1M count=20 skip=10
+if [ $? -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Volume could be ovewritten from the 10M offset using dd!"
+fi
+
+# Check if Bacula is still able to relabel Volume
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log4.out
+purge volume=TestVolume001
+relabel oldvolume=TestVolume001 volume=TestVolume002 slot=0 pool=Default storage=File1 drive=0
+list volumes
+END_OF_DATA
+
+run_bconsole
+
+# Check if volume is relabeled and has correct state
+label_res=`cat $tmp/log4.out| grep '3000 OK label' | grep 'TestVolume002' | wc -l`
+if [ ${label_res} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Failed to relabel volume, see ${tmp}/log4.out!"
+fi
+
+new_vol=`cat $tmp/log4.out| grep 'TestVolume002' | grep 'Append' | wc -l`
+if [ ${new_vol} -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Failed to relabel volume, see ${tmp}/log3.out"
+fi
+
+sudo systemctl stop test-bacula-sd
+${bin}/bacula-ctl-fd stop
+${bin}/bacula-ctl-dir stop
+
+end_test

@@ -1,0 +1,15 @@
+#!/bin/sh
+#
+# Append and Immutable volumes test suite
+#
+echo " "
+echo " " >>test.out
+echo "Start Append Immutable Volume tests "
+echo "Start Append Immutable Volume tests" >>test.out
+
+./run tests/volume-append-test
+./run tests/volume-append-many-vols-test
+./run tests/volume-immutable-test
+
+echo "End Append Immutable Volume tests "
+echo "End Append Immutable Volume tests" >>test.out

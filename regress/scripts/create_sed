@@ -44,6 +44,10 @@ win32_wsep_file=`echo $WIN32_FILE | sed -e 's=/=\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 echo "s%@remotehostaddr@%${REMOTE_HOST_ADDR}%g" >${out}
 echo "s%@remotedirname@%${REMOTE_DIR_NAME}%g" >>${out}
 echo "s%@sbindir@%${bin}%g" >>${out}
+echo "s%@libdir@%${bin}%g" >>${out}
+echo "s%@sysconfdir@%${bin}%g" >>${out}
+echo "s%@sd_user@%`whoami`%g" >>${out}
+echo "s%@sd_group@%`id -g -n`%g" >>${out}
 echo "s%@scriptdir@%${scripts}%g" >>${out}
 echo "s%@working_dir@%${working}%g" >>${out}
 echo "s%@piddir@%${working}%g" >>${out}
