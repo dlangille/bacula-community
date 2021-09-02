@@ -28,6 +28,10 @@
 #include "bacula.h"
 #include "stored.h"
 
+#ifdef HAVE_LINUX_OS
+#include <linux/fs.h>
+#endif
+
 static const int dbglvl = 100;
 
 /* Imported functions */
@@ -179,11 +183,15 @@ bool file_dev::open_device(DCR *dcr, int omode)
    mount(1);                          /* do mount if required */
 
    set_mode(omode);
+
+   /* Check if volume needs to be opened with O_APPEND */
+   int append = append_open_needed(getVolCatName()) ? O_APPEND : 0;
+
    /* If creating file, give 0640 permissions */
    Dmsg3(100, "open disk: mode=%s open(%s, 0x%x, 0640)\n", mode_to_str(omode),
          archive_name.c_str(), mode);
    /* Use system open() */
-   if ((m_fd = ::open(archive_name.c_str(), mode|O_CLOEXEC, 0640)) < 0) {
+   if ((m_fd = ::open(archive_name.c_str(), mode|O_CLOEXEC|append, 0640)) < 0) {
       berrno be;
       dev_errno = errno;
       Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
@@ -236,6 +244,14 @@ bool DEVICE::truncate(DCR *dcr)
    }
 
    Dmsg2(100, "Truncate adata=%d fd=%d\n", dev->adata, dev->m_fd);
+
+   /* Need to clear the APPEND flag before truncating */
+   if (!clear_append_only(dcr->VolumeName)) {
+      Mmsg2(errmsg, _("Unable to clear append_only flag for volume %s on device %s.\n"),
+            dcr->VolumeName, print_name());
+      return false;
+   }
+
    if (ftruncate(dev->m_fd, 0) != 0) {
       berrno be;
       Mmsg2(errmsg, _("Unable to truncate device %s. ERR=%s\n"),
@@ -488,6 +504,267 @@ bool file_dev::is_eod_valid(DCR *dcr)
    return true;
 }
 
+/* Check if attribute is supported for current platform */
+bool file_dev::is_attribute_supported(int attr)
+{
+   int supported = false;
+
+   switch (attr) {
+#ifdef HAVE_APPEND_FL
+      case FS_APPEND_FL:
+         supported = true;
+         break;
+#endif // HAVE_APPEND_FL
+#ifdef HAVE_IMMUTABLE_FL
+      case FS_IMMUTABLE_FL:
+         supported = true;
+         break;
+#endif // HAVE_IMMUTABLE_FL
+      default:
+         break;
+   }
+
+   return supported;
+}
+
+/* Get full volume path (archive dir + volume name) */
+void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
+{
+   pm_strcpy(fname, dev_name);
+   if (!IsPathSeparator((*fname)[strlen(*fname)-1])) {
+      pm_strcat(fname, "/");
+   }
+
+   pm_strcat(fname, vol_name);
+
+   if (is_adata()) {
+      pm_strcat(fname, ADATA_EXTENSION);
+   }
+}
+
+/* Check if volume can be reused or not yet.
+ * Used in the truncate path.
+ * This method is based on the 'MinimumVolumeProtection' time directive,
+ * current system time is compared against m_time of volume file.
+ *
+ * @return true  if volume can be reused
+ * @return false if volume's protection time hasn't expired yet,
+ *               hence volume cannot be reused now
+ */
+bool file_dev::check_volume_protection_time(const char *vol_name)
+{
+   if (!device->protect_vols) {
+      return true;
+   }
+
+   struct stat sp;
+   POOL_MEM fname(PM_FNAME);
+
+   if (device->min_volume_protection_time == 0) {
+      Mmsg(errmsg, _("Immutable flag cannot be cleared for volume: %s, "
+                    "because Minimum Volume Protection Time is set to 0\n"),
+                    vol_name);
+      return false;
+   }
+
+   get_volume_fpath(vol_name, fname.handle());
+
+   if (stat(fname.c_str(), &sp)) {
+      berrno be;
+      Mmsg2(errmsg, "Failed to stat %s, ERR=%s", fname.c_str(), be.bstrerror());
+      return false;
+   }
+
+   /* Check if enough time elapsed since last file's modification and compare it with current */
+   time_t expiration_time = sp.st_mtime + device->min_volume_protection_time;
+   time_t now = time(NULL);
+   char dt[50], dt2[50];
+   bstrftime(dt, sizeof(dt), expiration_time);
+   bstrftime(dt2, sizeof(dt2), now);
+   if (expiration_time > now) {
+      Mmsg1(errmsg, _("Immutable flag cannot be cleared for volume: %s, "
+                      "because Minimum Volume Protection Time hasn't expired yet.\n"),
+            vol_name);
+      Dmsg3(dbglvl, "Immutable flag cannot be cleared for volume: %s, "
+                    "because:\nexpiration time: %s\nnow: %s\n",
+                    vol_name, dt, dt2);
+      return false;
+   }
+
+   return true;
+}
+
+bool file_dev::check_for_attr(const char *vol_name, int attr)
+{
+   int tmp_fd, ioctl_ret, get_attr;
+   bool ret = false;
+   POOL_MEM fname(PM_FNAME);
+
+   if (!is_attribute_supported(attr)) {
+      Mmsg1(errmsg, "File attribute 0x%0x is not supported\n", attr);
+      return ret;
+   }
+
+   get_volume_fpath(vol_name, fname.handle());
+
+   if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
+      berrno be;
+      Mmsg2(errmsg, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
+      return ret;
+   }
+
+   ioctl_ret = d_ioctl(tmp_fd, FS_IOC_GETFLAGS, (char *)&get_attr);
+   if (ioctl_ret < 0) {
+      berrno be;
+      Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+   } else {
+      ret = get_attr & attr;
+      const char *msg_str = ret ? "set" : "not set";
+      Dmsg3(dbglvl, "Attribute: 0x%08x is %s for volume: %s\n",
+            attr, msg_str, fname.c_str());
+   }
+
+   d_close(tmp_fd);
+
+   return ret;
+}
+
+bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
+{
+   bool ret = false;
+   int tmp_fd, ioctl_ret, get_attr, set_attr;
+   const char *msg_str = set ? "set" : "cleared";
+   POOL_MEM fname(PM_FNAME);
+
+   if (!got_caps_needed) {
+      return true; /* We cannot set needed attributes, no work here */
+   }
+
+   if (!is_attribute_supported(attr)) {
+      Mmsg1(errmsg, "File attribute 0x%0x is not supported\n", attr);
+      return ret;
+   }
+
+   get_volume_fpath(vol_name, fname.handle());
+
+   if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
+      berrno be;
+      Mmsg2(errmsg, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
+      return false;
+   }
+
+   ioctl_ret = d_ioctl(tmp_fd, FS_IOC_GETFLAGS, (char *)&get_attr);
+   if (ioctl_ret < 0) {
+      berrno be;
+      Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+      goto bail_out;
+   }
+
+   if (set) {
+      /* Add new attribute to the currently set ones */
+      set_attr = get_attr | attr;
+   } else {
+      /* Inverse the desired attribute and later and it with the current state
+       * so that we clear only desired flag and do not touch all the rest */
+      int rev_mask = ~attr;
+      set_attr = get_attr & rev_mask;
+   }
+
+   ioctl_ret = d_ioctl(tmp_fd, FS_IOC_SETFLAGS, (char *)&set_attr);
+   if (ioctl_ret < 0) {
+      berrno be;
+      if (set) {
+         Mmsg3(errmsg, "Failed to set 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+      } else {
+         Mmsg3(errmsg, "Failed to clear 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+      }
+      goto bail_out;
+   }
+
+   Dmsg3(dbglvl, "Attribute: 0x%08x was %s for volume: %s\n",
+         attr, msg_str, fname.c_str());
+
+   ret = true;
+
+bail_out:
+   if (tmp_fd >= 0) {
+      d_close(tmp_fd);
+   }
+   return ret;
+}
+
+bool file_dev::set_fattr(const char *vol_name, int attr)
+{
+   return modify_fattr(vol_name, attr, true);
+}
+
+bool file_dev::clear_fattr(const char *vol_name, int attr)
+{
+   return modify_fattr(vol_name, attr, false);
+}
+
+#ifdef HAVE_APPEND_FL
+bool file_dev::append_open_needed(const char *vol_name)
+{
+   return check_for_attr(vol_name, FS_APPEND_FL);
+}
+
+bool file_dev::set_append_only(const char *vol_name)
+{
+   return set_fattr(vol_name, FS_APPEND_FL);
+}
+
+bool file_dev::clear_append_only(const char *vol_name)
+{
+   return clear_fattr(vol_name, FS_APPEND_FL);
+}
+#else
+bool file_dev::append_open_needed(const char *vol_name)
+{
+   return false;
+}
+bool file_dev::set_append_only(const char *vol_name)
+{
+   return true;
+}
+
+bool file_dev::clear_append_only(const char *vol_name)
+{
+   return true;
+}
+#endif // HAVE_APPEND_FL
+
+#ifdef HAVE_IMMUTABLE_FL
+bool file_dev::set_immutable(const char *vol_name)
+{
+   return set_fattr(vol_name, FS_IMMUTABLE_FL);
+}
+
+bool file_dev::clear_immutable(const char *vol_name)
+{
+   return clear_fattr(vol_name, FS_IMMUTABLE_FL);
+}
+
+bool file_dev::check_for_immutable(const char* vol_name)
+{
+   return check_for_attr(vol_name, FS_IMMUTABLE_FL);
+}
+#else
+bool file_dev::set_immutable(const char *vol_name)
+{
+   return true;
+}
+
+bool file_dev::clear_immutable(const char *vol_name)
+{
+   return true;
+}
+
+bool file_dev::check_for_immutable(const char* vol_name)
+{
+   return true;
+}
+#endif // HAVE_IMMUTABLE_FL
 
 /*
  * Position device to end of medium (end of data)

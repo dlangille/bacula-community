@@ -294,6 +294,13 @@ read_volume:
          mark_volume_in_error();
          goto mount_next_vol;
       }
+
+      /* Set the append flag on the volume */
+      if (!dev->set_append_only(getVolCatName())) {
+         Jmsg(jcr, M_WARNING, 0, _("Unable to set the APPEND flag on the volume: %s, err: %s\n"),
+              getVolCatName(), dev->bstrerror());
+         goto mount_next_vol;
+      }
    } else {
       /*
        * OK, at this point, we have a valid Bacula label, but

@@ -596,6 +596,14 @@ public:
    virtual bool end_of_job(DCR *dcr, uint32_t truncate) {return true; };
    virtual bool is_indexed() { return true; };
    virtual void set_ateof();                    /* in dev.c */
+   /* Methods below are responsible for managing
+    * the append and immutable flags on device-specific volumes */
+   virtual bool set_append_only(const char *vol_name) { return true; };
+   virtual bool clear_append_only(const char *vol_name) { return true; };
+   virtual bool set_immutable(const char *vol_name) { return true; };
+   virtual bool clear_immutable(const char *vol_name) { return true; };
+   virtual bool check_volume_protection_time(const char *vol_name) { return true; };
+   virtual bool check_for_immutable(const char *vol_name) { return true; };
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};
    virtual const char *print_full_type() { return print_type();};

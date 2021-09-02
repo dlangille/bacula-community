@@ -619,6 +619,16 @@ bool is_user_volume_size_reached(DCR *dcr, bool quiet)
             edit_uint64_with_commas(max_size, ed1),  dev->print_name(),
             dev->getVolCatName());
       }
+
+      if (dev->device->protect_vols) {
+         /* Set volume as immutable */
+         if (!dev->set_immutable(dev->getVolCatName())) {
+            /* We may proceed with that but warn the user */
+            Jmsg(dcr->jcr, M_WARNING, 0, _("Failed to set the volume %s on device %s as immutable, ERR=%s.\n"),
+                 dev->getVolCatName(), dev->print_name(), dev->errmsg);
+         }
+      }
+
       Dmsg4(100, "Maximum volume size %s exceeded Vol=%s device=%s.\n"
          "Marking Volume \"%s\" as Full.\n",
          edit_uint64_with_commas(max_size, ed1), dev->getVolCatName(),

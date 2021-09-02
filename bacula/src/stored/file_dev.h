@@ -24,6 +24,16 @@
 #define __FILE_DEV_
 
 class file_dev : public DEVICE {
+private:
+   void get_volume_fpath(const char *vol_name, POOLMEM **buf);
+   bool modify_fattr(const char *vol_name, int attr, bool set);
+   bool check_for_attr(const char *vol_name, int attr);
+   bool set_fattr(const char *vol_name, int attr);
+   bool clear_fattr(const char *vol_name, int attr);
+   bool check_for_immutable(const char *vol_name);
+   bool append_open_needed(const char *vol_name);
+   bool is_attribute_supported(int attr);
+
 public:
 
    file_dev() { };
@@ -33,6 +43,11 @@ public:
    bool open_device(DCR *dcr, int omode);
    const char *print_type();
    virtual int device_specific_init(JCR *jcr, DEVRES *device);
+   bool set_append_only(const char *vol_name);
+   bool clear_append_only(const char *vol_name);
+   bool set_immutable(const char *vol_name);
+   bool clear_immutable(const char *vol_name);
+   bool check_volume_protection_time(const char *vol_name);
 };
 
 #endif /* __FILE_DEV_ */

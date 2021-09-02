@@ -1004,6 +1004,7 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
    int mode;
    const char *volname = (relabel == 1) ? oldname : newname;
    uint64_t volCatBytes;
+   bool opened = false;
 
    if (!obtain_device_block(dev,
                             &hold,
@@ -1038,11 +1039,32 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
    } else {
       mode = CREATE_READ_WRITE;
    }
-   if (!dev->open_device(dcr, mode)) {
-      dir->fsend(_("3929 Unable to open device \"%s\": ERR=%s\n"),
-         dev->print_name(), dev->bstrerror());
-      goto bail_out;
+
+   if (dev->check_volume_protection_time(volname)) {
+      if (!dev->open_device(dcr, mode)) {
+         /* Open with 'READ_WRITE' fails if immutable flag is set, check if that's the case */
+         if (dev->check_for_immutable(volname)) {
+            /* Volume has immutable flag set, we need to clear it */
+            if (dev->clear_immutable(volname)) {
+               /* It should be now possible to open the device with desired mode */
+               if (dev->open_device(dcr, mode)) {
+                  opened = true;
+               }
+            } else {
+               dir->fsend(_("3929 Unable to clear immutable flag for device: \"%s\". ERR=%s\n"),
+                     dev->bstrerror());
+            }
+         }
+      } else {
+         opened = true;
+      }
    }
+
+      if (!opened) {
+         dir->fsend(_("3929 Unable to open device \"%s\": ERR=%s\n"),
+               dev->print_name(), dev->bstrerror());
+         goto bail_out;
+      }
 
    /* See what we have for a Volume */
    label_status = dev->read_dev_volume_label(dcr);

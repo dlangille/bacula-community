@@ -223,6 +223,8 @@ public:
    bool enabled;                      /* Set when enabled (default) */
    bool autoselect;                   /* Automatically select from AutoChanger */
    bool read_only;                    /* Drive is read only */
+   bool protect_vols;                 /* Protect Volumes */
+   utime_t min_volume_protection_time;         /* Minimum Volume Protection Time */
    uint32_t drive_index;              /* Autochanger drive index */
    uint32_t cap_bits;                 /* Capabilities of this device */
    utime_t max_changer_wait;          /* Changer timeout */

@@ -32,6 +32,10 @@ ExecStart=@sbindir@/bacula-sd -dt -c @sysconfdir@/bacula-sd.conf
 StandardError=syslog
 TimeoutStopSec=3min
 LimitMEMLOCK=infinity
+LimitNOFILE=10000
+LimitNPROC=10000
+OOMScoreAdjust=-1000
+AmbientCapabilities=CAP_LINUX_IMMUTABLE
 
 [Install]
 WantedBy=multi-user.target
