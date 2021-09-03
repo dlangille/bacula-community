@@ -345,8 +345,8 @@ public:
       bfree_and_null(sendcommand);
    };
 
-   POOLMEM *edit_codes(POOLMEM *&omsg, char *imsg, char *qrcode_file) {
-      char *p;
+   POOLMEM *edit_codes(POOLMEM *&omsg, const char *imsg, const char *name, const char *qrcode_file) {
+      const char *p;
       const char *str;
       char add[50];
       extern char my_name[];    /* From libbac */
@@ -363,6 +363,9 @@ public:
                break;
             case 'd':
                str = my_name;            /* Director's name */
+               break;
+            case 'c':
+               str = name;               /* Console name */
                break;
             case 'P':
                edit_uint64(getpid(), add);
@@ -543,7 +546,7 @@ public:
          goto bail_out;
       }
 
-      edit_codes(tmp.addr(), sendcommand, pngfile);
+      edit_codes(tmp.addr(), sendcommand, name, pngfile);
 
       if (run_program_full_output (tmp.c_str(), 10, *ret, NULL) != 0) {
          Dmsg1(0, "Unable to call the mail program to send the totp key %s\n", *ret);
