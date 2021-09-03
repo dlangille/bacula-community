@@ -105,7 +105,7 @@ Console {
   DirectoryAcl = *all*
   UserIdAcl = *all*
   # Authentication Plugin = "totp: sendcommand=\"mpack -s 'Bacula Console Access for %d' -d $tmp/template %a  eric@localhost\""
-  Authentication Plugin = "totp: sendcommand=\"$rscripts/dummy_bsmtp /dev/null cons=%d img=%a\""
+  Authentication Plugin = "totp: sendcommand=\"$rscripts/dummy_bsmtp /dev/null dir=%d cons=%c img=%a\""
 }
 EOF
 
@@ -183,10 +183,12 @@ cat <<EOF > $tmp/bconcmds
 @output /dev/null
 messages
 @$out $tmp/log1.out
+status dir
 label volume=TestVolume001 pool=Default storage=File
 run job=Simple level=full yes
 wait
 messages
+quit
 EOF
 
 # start the director
@@ -229,8 +231,8 @@ echo aaaa | $bin/bconsole -c $tmp/bconsole.conf4 > $tmp/log4.out 2>&1
 c=`$bin/btotp -n cons4 -k $tmp/key | awk -F = '{print $2}'`
 cat <<EOF > $tmp/bcmd
 $c
+messages
 status dir
-@sleep 5
 quit
 EOF
 
@@ -255,13 +257,28 @@ if [ $? != 0 ]; then
     estat=1
 fi
 
-# Will not work, incorrect code, but will call the program
+# Will not work, incorrect code, but will call the program and send the code via dummy_bsmtp
 cat $tmp/bcmd | $bin/bconsole -c $tmp/bconsole.conf5 > $tmp/log7.out 2>&1
 
 if [ ! -f $tmp/dummy_bsmtp.out ]; then
     print_debug "ERROR: Should find command output in $tmp/log7.out and $tmp/dummy_bsmtp.out"
     estat=1
 fi
+
+if ! grep cons=cons5 $tmp/dummy_bsmtp.out > /dev/null
+then
+    print_debug "ERROR: Should find console name in $tmp/dummy_bsmtp.out"
+    estat=1
+fi
+
+cat <<EOF > $tmp/bconcmds
+messages
+status dir
+@sleep 5
+quit
+EOF
+
+run_bconsole
 
 stop_bacula
 end_test
