@@ -387,6 +387,6 @@ bool catreq_get_pool_info(JCR *jcr, BSOCK *bs);
 bool is_dedup_ref(DEV_RECORD *rec, bool lazy);
 
 /* dir_authplugins.c */
-void *dir_authplugin_getauthenticationData(JCR *jcr, const char *param);
+void * dir_authplugin_getauthenticationData(JCR *jcr, const char *console, const char *param);
 bRC dir_authplugin_do_interaction(JCR *jcr, BSOCK *bsock, const char *pluginname, void *data, bool pluginall = false);
 bRC dir_authplugin_authenticate(JCR *jcr, BSOCK *bsock, const char *pluginname);

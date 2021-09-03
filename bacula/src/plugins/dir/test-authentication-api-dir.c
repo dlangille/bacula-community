@@ -42,8 +42,8 @@ static bRC freePlugin(bpContext *ctx);
 static bRC getPluginValue(bpContext *ctx, pDirVariable var, void *value);
 static bRC setPluginValue(bpContext *ctx, pDirVariable var, void *value);
 static bRC handlePluginEvent(bpContext *ctx, bDirEvent *event, void *value);
-static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data);
-static bRC getAuthorizationData(bpContext *ctx, const char *param, void **data);
+static bRC getAuthenticationData(bpContext *ctx, const char *console, const char *param, void **data);
+static bRC getAuthorizationData(bpContext *ctx, const char *console, const char *param, void **data);
 
 /* Plugin compile time variables */
 #define PLUGINPREFIX                "authapi:"
@@ -268,14 +268,14 @@ static bRC handlePluginEvent(bpContext *ctx, bDirEvent *event, void *value)
    return bRC_OK;
 }
 
-static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data)
+static bRC getAuthenticationData(bpContext *ctx, const char *console, const char *param, void **data)
 {
    test_api *self = (test_api *)ctx->pContext;
    bDirAuthenticationRegister **padata = (bDirAuthenticationRegister **)data;
 
    self->mode = 0;   // this is a default
 
-   DMSG1(ctx, DINFO, "registering with: %s\n", NPRT(param));
+   DMSG2(ctx, DINFO, "registering with: console=%s %s\n", console, NPRT(param));
    sscanf(param, PLUGIN_NAME ":%d", &self->mode);
    switch (self->mode)
    {
@@ -292,7 +292,7 @@ static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data)
    return bRC_OK;
 }
 
-static bRC getAuthorizationData(bpContext *ctx, const char *param, void **data)
+static bRC getAuthorizationData(bpContext *ctx, const char *console, const char *param, void **data)
 {
 
    return bRC_OK;

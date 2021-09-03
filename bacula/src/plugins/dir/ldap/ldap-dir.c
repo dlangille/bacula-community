@@ -63,8 +63,8 @@ extern "C" {
 static bRC newPlugin(bpContext *ctx);
 static bRC freePlugin(bpContext *ctx);
 static bRC handlePluginEvent(bpContext *ctx, bDirEvent *event, void *value);
-static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data);
-static bRC getAuthorizationData(bpContext *ctx, const char *param, void **data);
+static bRC getAuthenticationData(bpContext *ctx, const char *console, const char *param, void **data);
+static bRC getAuthorizationData(bpContext *ctx, const char *console, const char *param, void **data);
 
 /* Pointers to Bacula functions */
 bDirFuncs *bfuncs = NULL;
@@ -146,14 +146,14 @@ static bRC handlePluginEvent(bpContext *ctx, bDirEvent *event, void *value)
    return self->handlePluginEvent(event, value);
 }
 
-static bRC getAuthenticationData(bpContext *ctx, const char *param, void **data)
+static bRC getAuthenticationData(bpContext *ctx, const char *console, const char *param, void **data)
 {
    DMSG(ctx, D1, "getAuthenticationData (%s)\n", param);
    BPAMLDAP *self = (BPAMLDAP*)ctx->pContext;
    return self->getAuthenticationData(param, data);
 }
 
-static bRC getAuthorizationData(bpContext *ctx, const char *param, void **data)
+static bRC getAuthorizationData(bpContext *ctx, const char *console, const char *param, void **data)
 {
    DMSG(ctx, D1, "getAuthorizationData (%s)\n", param);
    BPAMLDAP *self = (BPAMLDAP*)ctx->pContext;

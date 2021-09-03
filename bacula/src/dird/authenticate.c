@@ -335,6 +335,7 @@ int UAAuthenticate::authenticate_user_agent()
       if (cons->authenticationplugin){
          legacy_auth = false;
          Dmsg1(dbglvl, "authenticate with Plugin=%s\n", cons->authenticationplugin);
+         // TLS will be started during the plugin authentication process
          if (ua_version < UA_VERSION_PLUGINAUTH || !authenticate_with_plugin(cons)){
             auth_success = false;
             goto auth_done;
@@ -378,6 +379,8 @@ auth_done:
  * @brief This function perform user authentication procedure augmented with Auth Plugin API.
  *        All bconsole network chatting and interaction is forwarded to dir_authplugins module
  *        and we just provide a required framework and resources, i.e. jcr or bsock to ua.
+ *        TLS is started before the authentication exchange. If TLS is not available, the
+ *        authentication exchange is aborted.
  *
  * @param cons a Console resource required for auth plugin registration
  * @return true when authentication process finish with success and we can proceed next operations
@@ -397,10 +400,9 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
     * 4. when all interactions were handled without problem then do authenticate with plugin
     * 5. if plugin return authentication OK? return true, Not? return false
     */
-
    bDirAuthenticationRegister *authData;
 
-   authData = (bDirAuthenticationRegister*) dir_authplugin_getauthenticationData(uac->jcr, cons->authenticationplugin);
+   authData = (bDirAuthenticationRegister*) dir_authplugin_getauthenticationData(uac->jcr, cons->hdr.name, cons->authenticationplugin);
    if (authData == NULL)
    {
       return false;
@@ -411,9 +413,12 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
    {
       return false;
    }
-
+   // We require to have TLS setup to use authentication plugins
+   if (!tls_started) {
+      Dmsg0(dbglvl, "Unable to use Plugin Authentication because TLS is not available\n");
+      return false;
+   }
    // send auth plugin start packet and optional welcome string to console
-   Dmsg1(dbglvl, "send: auth interactive %s\n", NPRT(authData->welcome));
    if (!bsock->fsend("auth interactive %s\n", NPRTB(authData->welcome))) {
       Dmsg1(dbglvl, "Send interactive start comm error. ERR=%s\n", bsock->bstrerror());
       return false;

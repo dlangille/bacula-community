@@ -153,7 +153,7 @@ static bRC dir_authplugin_generate_plugin_event(JCR *jcr, const char * pluginnam
  * @return void* a `NULL` is returned on any error and a pointer to bDirAuthenticationRegister
  *         struct (casted to void*) on success
  */
-void * dir_authplugin_getauthenticationData(JCR *jcr, const char * param)
+void *dir_authplugin_getauthenticationData(JCR *jcr, const char *console, const char *param)
 {
    bpContext *plugin_ctx;
    Plugin *plugin;
@@ -176,7 +176,7 @@ void * dir_authplugin_getauthenticationData(JCR *jcr, const char * param)
          continue;
       }
 
-      if (dirplug_func(plugin)->getPluginAuthenticationData(plugin_ctx, param, (void**)&data) != bRC_OK){
+      if (dirplug_func(plugin)->getPluginAuthenticationData(plugin_ctx, console, param, (void**)&data) != bRC_OK){
          // getting authdata operations failed
          return NULL;
       }

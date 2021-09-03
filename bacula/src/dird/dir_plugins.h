@@ -155,7 +155,7 @@ typedef enum {
 
 
 #define DIR_PLUGIN_MAGIC     "*DirPluginData*"
-#define DIR_PLUGIN_INTERFACE_VERSION  1
+#define DIR_PLUGIN_INTERFACE_VERSION  2
 
 typedef struct s_dirpluginInfo {
    uint32_t size;
@@ -177,8 +177,8 @@ typedef struct s_dirpluginFuncs
    bRC (*getPluginValue)(bpContext *ctx, pDirVariable var, void *value);
    bRC (*setPluginValue)(bpContext *ctx, pDirVariable var, void *value);
    bRC (*handlePluginEvent)(bpContext *ctx, bDirEvent *event, void *value);
-   bRC (*getPluginAuthenticationData)(bpContext *ctx, const char *param, void **data);
-   bRC (*getPluginAuthorizationData)(bpContext *ctx, const char *param, void **data);
+   bRC (*getPluginAuthenticationData)(bpContext *ctx, const char *console, const char *param, void **data);
+   bRC (*getPluginAuthorizationData)(bpContext *ctx, const char *console, const char *param, void **data);
 } pDirFuncs;
 
 #define dirplug_func(plugin) ((pDirFuncs *)(plugin->pfuncs))

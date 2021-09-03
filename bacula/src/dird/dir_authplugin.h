@@ -77,29 +77,29 @@ typedef enum {
  */
 typedef struct s_bDirAuthenticationData {
    const bDirAuthenticationOperation operation;
-   const char * question;
+   const char *question;
    const uint32_t seqdata;
 } bDirAuthenticationData;
 
 typedef struct s_bDirAuthenticationRegister {
-   const char * name;
-   const char * welcome;
-   const uint32_t num;
-   const bDirAuthenticationData *data;
-   const int32_t nsTTL;
+   const char *name;
+   const char *welcome;
+   uint32_t num;
+   bDirAuthenticationData *data;
+   int32_t nsTTL;
 } bDirAuthenticationRegister;
 
 typedef struct s_bDirAuthenticationValue {
    union {
-      void * rawdata;                              // future extension
-      const bDirAuthenticationData * authdata;     // a pointer to single bDirAuthenticationData as a dynamic operation
+      void *rawdata;                        // future extension
+      bDirAuthenticationData *authdata;     // a pointer to single bDirAuthenticationData as a dynamic operation
       const char *response;
    };
    uint32_t seqdata;
 } bDirAuthValue;
 
 typedef struct s_bDirAuthorizationACLRegister {
-   const char * name;
+   const char *name;
    // *TBD* - Incomplete
    const int32_t nsTTL;
 } bDirAuthorizationACLRegister;
