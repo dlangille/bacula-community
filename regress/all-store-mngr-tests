@@ -14,6 +14,8 @@ echo "Start Storage Manager tests" >>test.out
 ./run tests/store-mngr-invalid-dev-test
 ./run tests/store-mngr-connection-err-test
 ./run tests/store-mngr-many-read-devs-test
+./run tests/store-mngr-freespace-test
+./run tests/store-mngr-freespace-device-dup-test
 
 echo "End Storage Manager tests "
 echo "End Storage Manager tests" >>test.out
