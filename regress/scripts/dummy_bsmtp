@@ -8,8 +8,11 @@
 if [ $# -ne 0 ]; then
    echo "$@" >> $tmp/dummy_bsmtp.out
 fi
-while read line ; do
-   echo "${line}" >> $tmp/dummy_bsmtp.out
-done
+
+if [ "$1" != /dev/null ]; then
+	while read line ; do
+	   echo "${line}" >> $tmp/dummy_bsmtp.out
+	done
+fi
 
 exit 0
