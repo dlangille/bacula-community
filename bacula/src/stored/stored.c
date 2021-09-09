@@ -37,6 +37,10 @@
  */
 #include "sd_plugins.h"
 
+#if defined(HAVE_LINUX_OS) && defined(HAVE_LIBCAP)
+#include <sys/capability.h>
+#endif
+
 /* Imported functions and variables */
 extern bool parse_sd_config(CONFIG *config, const char *configfile, int exit_code);
 
@@ -111,6 +115,49 @@ static void sd_debug_print(JCR *jcr, FILE *fp)
       fprintf(fp, "dcr=*None*\n");
    }
 }
+
+#if defined(HAVE_LINUX_OS) && defined(HAVE_LIBCAP)
+static bool get_needed_caps()
+{
+   /* Storage Daemon must be running with following capabilities to be able to set/clear
+    * APPEND and IMMUTABLE flags on volumes. */
+   const char *caps_needed = "cap_linux_immutable";
+   cap_t caps = NULL;
+   char *cap_text = NULL;
+   bool ret = false;
+
+   caps = cap_get_proc();
+   if (!caps) {
+      Dmsg1(90, "Calling cap_get_proc() failed, errno: %d!\n", errno);
+      goto bail_out;
+   }
+
+   cap_text = cap_to_text(caps, NULL);
+   if (!cap_text) {
+      Dmsg1(90, "Calling cap_get_proc() failed, errno: %d!\n", errno);
+      goto bail_out;
+   }
+
+   /* Check if we are running with capabilities needed */
+   ret = strstr(cap_text, caps_needed) == NULL ? false : true;
+
+bail_out:
+      if (cap_text) {
+         cap_free(cap_text);
+      }
+      if (caps) {
+         cap_free(caps);
+      }
+      if (ret) {
+         Dmsg0(90, "Have needed caps, APPEND and IMMUTABLE flags can be used for volumes.\n");
+      } else {
+         Dmsg0(90, "Do not have needed caps, APPEND and IMMUTABLE flags cannot be used for volumes.\n");
+      }
+      return ret;
+}
+#else
+static bool get_needed_caps() { return false; }
+#endif   // HAVE_LINUX_OS && HAVE_LIBCAP
 
 /*********************************************************************
  *
@@ -296,6 +343,8 @@ int main (int argc, char *argv[])
    /* Make sure on Solaris we can run concurrent, watch dog + servers + misc */
    set_thread_concurrency(me->max_concurrent_jobs * 2 + 4);
    lmgr_init_thread(); /* initialize the lockmanager stack */
+
+   got_caps_needed = get_needed_caps();
 
    load_sd_plugins(me->plugin_directory);
 

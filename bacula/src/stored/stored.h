@@ -123,5 +123,6 @@ extern pthread_cond_t wait_device_release; /* wait for any device to be released
 extern bool update_permanent_stats(void *data);
 extern bstatcollect *statcollector;
 extern sdstatmetrics_t sdstatmetrics;
+extern bool got_caps_needed;
 
 #endif /* __STORED_H_ */
