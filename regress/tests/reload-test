@@ -48,6 +48,8 @@ EOF
 
 start_test
 
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'catalog', 'all,events', 'Messages')"
+
 # should be ok
 $bin/bacula-dir -t $conf/bacula-dir.conf
 if [ $? != 0 ]; then
