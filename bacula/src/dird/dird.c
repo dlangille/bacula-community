@@ -758,6 +758,10 @@ void reload_config(int sig)
       /* Now restore old resource pointer */
       res_head = reload_table[table].res_head;
       table = rtable;           /* release new, bad, saved table below */
+      events_send_msg(NULL, "DD0004",
+                      EVENTS_TYPE_DAEMON, "*Director*",
+                      (intptr_t)get_first_port_host_order(director->DIRaddrs), "Error while reloading Director configuration");
+
    } else {
       invalidate_schedules();
 
@@ -778,6 +782,9 @@ void reload_config(int sig)
       }
       endeach_jcr(jcr);
       connect_and_init_globals();
+      events_send_msg(NULL, "DD0005",
+                      EVENTS_TYPE_DAEMON, "*Director*",
+                      (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director configuration reloaded");
    }
 
    /* Reset other globals */

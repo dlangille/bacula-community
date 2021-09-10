@@ -1822,6 +1822,7 @@ extern "C" void reload_config(int sig);
 
 static int reload_cmd(UAContext *ua, const char *cmd)
 {
+   ua->send_events("DC0019", EVENTS_TYPE_COMMAND, "reload");
    reload_config(1);
    return 1;
 }
