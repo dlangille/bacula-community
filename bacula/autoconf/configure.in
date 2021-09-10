@@ -2568,6 +2568,20 @@ AC_CHECK_DECL(
 )
 
 AC_CHECK_DECL(
+    FS_APPEND_FL,
+    AC_DEFINE(HAVE_APPEND_FL, 1, [Set if append_only file flag can be used]),
+    ,
+    [#include <linux/fs.h>]
+)
+
+AC_CHECK_DECL(
+    FS_IMMUTABLE_FL,
+    AC_DEFINE(HAVE_IMMUTABLE_FL, 1, [Set if immutable file flag can be used]),
+    ,
+    [#include <linux/fs.h>]
+)
+
+AC_CHECK_DECL(
     F_SETLK,
     AC_DEFINE(HAVE_FCNTL_LOCK, 1, [Set if fcntl supports file locking]),
     ,

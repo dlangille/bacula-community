@@ -1125,6 +1125,12 @@
 /* Define to 1 if you have NODUMP file flag supported */
 #undef HAVE_NODUMP
 
+/* Define to 1 if you have APPEND file flag supported */
+#undef HAVE_APPEND_FL
+
+/* Define to 1 if you have IMMUTABLE file flag supported */
+#undef HAVE_IMMUTABLE_FL
+
 /* Define to 1 if you have working ldap libraries */
 #undef HAVE_LDAP
 
