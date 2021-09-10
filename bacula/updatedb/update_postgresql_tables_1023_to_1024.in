@@ -34,7 +34,6 @@ commit;
 END-OF-DATA
 then
    echo "Update of Bacula PostgreSQL tables 1023 to 1024 succeeded."
-   getVersion
 else
    echo "Update of Bacula PostgreSQL tables 1023 to 1024 failed."
    exit 1
