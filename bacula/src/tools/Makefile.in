@@ -39,8 +39,8 @@ EXTRAOBJS = @OBJLIST@
 
 DIRCONFOBJS = ../dird/dird_conf.o ../dird/run_conf.o ../dird/inc_conf.o ../dird/ua_acl.o
 
-NODIRTOOLS = bsmtp
-DIRTOOLS = bsmtp dbcheck drivetype fstype testfind testls bregex bwild bbatch bregtest bvfs_test
+NODIRTOOLS = bsmtp bjoblist
+DIRTOOLS = bsmtp dbcheck drivetype fstype testfind testls bregex bwild bbatch bregtest bvfs_test bjoblist
 TOOLS = $(@DIR_TOOLS@)
 
 INSNODIRTOOLS = bsmtp
@@ -82,6 +82,9 @@ joblist_test: joblist.o
 	make -C ../lib/ alist_test
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -L../findlib -o $@ joblist.o ../lib/unittests.o -lbac -lbacfind $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+
+bjoblist: bjoblist.o
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -L../findlib -o $@ bjoblist.o -lbac -lbacfind $(DLIB) $(LIBS) $(GETTEXT_LIBS)
 
 bsock_meeting_test: bsock_meeting_test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bsock_meeting_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
