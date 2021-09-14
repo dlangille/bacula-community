@@ -114,6 +114,7 @@ inline void operator delete(void *buf, char const * file, int line)
    sm_free(file, line, buf);
 }
 
+
 #endif
 #endif  /* !SMARTALLOC */
 
@@ -124,9 +125,18 @@ inline void operator delete(void *buf, char const * file, int line)
 
 #else
 
+#ifdef COMMAND_LINE_TOOL
+
+int dbglvl = debug_level;
+#define Dmsg(context, level,  ...) if (level <= debug_level) printf( __VA_ARGS__ )
+#define Jmsg(context, level,  ...) if (level <= debug_level) printf( __VA_ARGS__ )
+
+#else
+
 #define Dmsg(context, level,  ...) bfuncs->DebugMessage(context, __FILE__, __LINE__, level, __VA_ARGS__ )
 #define Jmsg(context, type,  ...) bfuncs->JobMessage(context, __FILE__, __LINE__, type, 0, __VA_ARGS__ )
 
+#endif
 #endif
 
 #ifdef USE_CMD_PARSER

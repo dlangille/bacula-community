@@ -24,42 +24,42 @@
 static const char *working="./";
 
 #define USE_JOB_LIST
-#define UNITTESTS
-#define MAX_PATH 512
+#define COMMAND_LINE_TOOL // See in src/plugin/fd/fd_common.h
+#define MAX_RETURN_PRUNE 10
 
 #include "plugins/fd/fd_common.h"
 
 void *start_heap;
 
-int main(int argc, char *argv[]) {
-	
+int main(int argc, char *argv[]) 
+{
 	int opt;
-	POOL_MEM tmp;
-	alist tmp_list(10, owned_by_alist); // define magick number
-	BFILE *file;
+	POOLMEM *tmp = get_pool_memory(PM_FNAME);
+	alist tmp_list(MAX_RETURN_PRUNE, owned_by_alist); 
+	bool store_return = true;
+	bool search_return = true;
 
+	// Args to be received by the command line
 	char *dat_file = NULL;
 	char *key = NULL;
 	char *prev_job = NULL;
 	char *curr_job = NULL;
-	char level;
+	char level = 0;
 	char *data = NULL;
-	char *search_query = NULL;
 	bool is_store = false;
+	bool is_search = false;
+	debug_level = 0;
 
-	// Array holding all command line args for easy for loop free memory
 
 	// Parsing of command line arguments
-	while ((opt = getopt(argc, argv, "w:d:f:k:p:j:l:D:sSh")) != -1) {
+	while ((opt = getopt(argc, argv, "w:f:k:p:j:l:D:sSd:h")) != -1) {
 		switch(opt) {
 		case 'w': // Working dir
-			working_directory = optarg;
+			working_directory = optarg; // global var
 			break;
-
 
 		case 'f': // datfile
 			dat_file = optarg;
-
 			break;
 
 		case 'k': // key (hostname + volume name)
@@ -88,7 +88,11 @@ int main(int argc, char *argv[]) {
 			break;
 
 		case 'S': // Search
-			is_store = false;
+			is_search = true;
+			break;
+
+		case 'd': // Debug-level
+			debug_level = atoi(optarg); // global var
 			break;
 
 		case 'h': // help default is help as well
@@ -97,7 +101,7 @@ int main(int argc, char *argv[]) {
 					"USAGE: bjoblist [OPTIONS]\n"
 					"Options-styles: -option\n\n"
 					"\t-w\tWorking directory\n"
-					"\t-d\tDat file with job hierarchy info\n"
+					"\t-f\tDat file with job hierarchy info\n"
 					"\t-k\tKey (hostname + volume name)\n"
 					"\t-p\tPrevious job\n"
 					"\t-j\tCurrent job\n"
@@ -105,31 +109,72 @@ int main(int argc, char *argv[]) {
 					"\t-D\tData XXX-XXX-XXX-XXX-XXX\n"
 					"\t-s\tStore-mode\n"
 					"\t-S\tSearch-mode\n"
+					"\t-d\tDebug-level\n"
 					"\t-h\t display this text\n\n");
 		}
 	}
 	
+	// Check for correctly initialized variables
+	// Prev job can eventually be NULL
+	if (working_directory == NULL) {
+		printf("Working directory not set EXIT\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Check if data_file has been initilaized
+	if (dat_file == NULL) {
+		printf("Data file not set EXIT\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Check that current job is not null
+	if (curr_job == NULL) {
+		printf("Current job not sell EXIT\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// Check if key = either F/I/D
+	if (level != 'F' && level != 'I' && level != 'D') {
+		printf("Bad key has to be either F/I/D\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// If data is null set it to current job
+	if (data == NULL) {
+		data = curr_job;
+	}
+
+	// Check if there is a search and or store to do
+	if (!is_store && !is_search) {
+		printf("Store or search not called. Nothing to do EXIT\n");
+		exit(EXIT_SUCCESS);
+	}
+
 	joblist job_history(NULL, key, curr_job, prev_job, level); // context can be null
 	job_history.set_base(dat_file);
 
-	int ret1 = 0;
 	if (is_store) {
-		ret1 = job_history.store_job(data);
-		job_history.prune_jobs(NULL, NULL, &tmp_list);
+		store_return = job_history.store_job(data); // return boolean
+		job_history.prune_jobs(NULL, NULL, &tmp_list); // retrun void
 
+		// print all deletable jobs
 		char *buf;
-
-		printf("ret1 %d\n", ret1);
-
 		foreach_alist(buf, &tmp_list) {
 			printf("%s\n", buf); 
 		}
-	} else {
-		job_history.find_job(curr_job, tmp.handle());
-		printf("Search out %s\n", curr_job);
+	} 
+	
+	if (is_search) {
+		search_return = job_history.find_job(curr_job, &tmp); // return bool
+		printf("Search out %s\n", tmp);
 	}
 
-	
-	return 1;	
+	// Check that search/store op returned correctly (true if not called)
+	if (store_return && search_return) { 
+		exit(EXIT_SUCCESS);
+	} else {
+		printf("Store return : %d, Search return %d\n", store_return, search_return);
+		exit(EXIT_FAILURE);
+	}	
 }
 
