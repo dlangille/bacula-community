@@ -114,6 +114,8 @@ ADD_TEST(misc:daemons-connection-virt_full-log-test "@regressdir@/tests/daemons-
 
 ADD_TEST(misc:query-subst-test "@regressdir@/tests/query-subst-test")
 # ADD_TEST(misc:priority-test "@regressdir@/tests/priority-test")
+ADD_TEST(misc:accurate-only-meta-test "@regressdir@/tests/accurate-only-meta-test")
+ADD_TEST(misc:accurate-only-meta-virtual-full-test "@regressdir@/tests/accurate-only-meta-virtual-full-test")
 ADD_TEST(misc:bscan-purged-files-test "@regressdir@/tests/bscan-purged-files-test")
 ADD_TEST(misc:bscan-many-volumes-test "@regressdir@/tests/bscan-many-volumes-test")
 ADD_TEST(misc:bscan-restore-objects-test "@regressdir@/tests/bscan-restore-objects-test")
