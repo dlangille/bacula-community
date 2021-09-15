@@ -14,11 +14,10 @@ scripts/copy-confs
 
 bjoblist=${bin}/bjoblist
 
+result_file=$(mktemp)
+
 # Various key setup
 key1="netapp:/vol/vol1"
-key2="netapp:/vol/vol2"
-key3="netapp:/vol/vol2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-key4="netapp:/vol/vol2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxz"
 
 #vVarious data setup
 data1="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=1:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
@@ -34,14 +33,108 @@ jobI2="Test1.2020-03-12_09.45.31_26"
 jobD="Test1.2020-03-12_09.45.31_27"
 jobI3="Test1.2020-03-12_09.45.31_28"
 
-#vData file
+# Data file
 data_file="nutanixfiler.dat"
 
 # Working dir
-working_dir="/opt/bacula/working"
+working_dir="/tmp"
 
-"$bjoblist" -h
+start_test
 
+estat=0
 
-exit 1
+# Store jobF with key 1
+print_debug "Store jobF"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobF" -l F -D "$data1" -s -L > /dev/null
 
+# See if jobF is stored
+print_debug "Search jobF"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobF" -l F -D "$data1" -S > "$result_file"
+grep -e "$data1" "$result_file" > /dev/null
+
+if [ $? != 0 ]; then
+	print_debug "Did not found jobF"
+	$estat=1
+fi
+
+# Empty tmp file
+> "$result_file"
+
+# Store jobI
+print_debug "Store jobI"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI" -p "$jobF" -l I -D "$data2" -s -L > /dev/null 
+
+# See if jobI is stored
+print_debug "Search jobI"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI" -l I -D "$data2" -S > "$result_file"
+grep -e "$data2" "$result_file" > /dev/null
+
+if [ $? != 0 ]; then 
+	print_debug "Did not find jobI"
+	$estat=1
+fi
+
+# Empty file
+> "$result_file"
+
+# Store jobI2 
+print_debug "Store jobI2"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI2" -p "$jobI" -l I -D "$data3" -s -L > /dev/null
+
+# Store jobD
+print_debug "Store jobD"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobD" -p "$jobF" -l D -D "$data4" -s -L > /dev/null
+
+# Store job I3 from jobD
+print_debug "Store jobI3"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI3" -p "$jobD" -l I -D "$data5" -s > "$result_file"
+grep -e "$data2" -e "$data3" "$result_file" > /dev/null
+
+if [ $? != 0 ]; then
+	print_debug "Did not received jobI and jobI2 to delete"
+	$estat=1
+fi
+
+# Empty file
+> "$result_file"
+
+# Search jobD 
+print_debug "Search jobD"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobD" -l D -D "$data4" -S > "$result_file"
+grep -e "$data4" "$result_file" > /dev/null
+
+if [ $? != 0 ]; then
+	print_debug "Error file job differential not found"
+	$estat=1
+fi
+
+# Empty file
+> "$result_file"
+
+# Search jobI2
+print_debug "Search jobI2"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI2" -l I -D "$data3" -S > "$result_file"
+grep -e "$data3" "$result_file" > /dev/null 
+	
+if [ $? == 0 ]; then
+	print_debug "Error found file that should be deleted"
+	$estat=1
+fi
+
+# Empty file 
+> "$result_file"
+
+# Search jobI3
+print_debug "Search jobI3"
+"$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI3" -l I -D "$data5" -S > "$result_file"
+grep -e "$data5" "$result_file" > /dev/null
+
+if [ $? != 0 ]; then
+	print_debug "Error file incremental job 3 not found"
+	$estat=1
+fi
+
+rm "$data_file"
+rm "$result_file"
+
+end_test

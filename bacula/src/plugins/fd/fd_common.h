@@ -127,7 +127,7 @@ inline void operator delete(void *buf, char const * file, int line)
 
 #ifdef COMMAND_LINE_TOOL
 
-int dbglvl = debug_level;
+#define dbglvl 10
 #define Dmsg(context, level,  ...) if (level <= debug_level) printf( __VA_ARGS__ )
 #define Jmsg(context, level,  ...) if (level <= debug_level) printf( __VA_ARGS__ )
 
