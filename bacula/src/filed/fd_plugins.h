@@ -168,8 +168,9 @@ struct meta_pkt: public SMARTALLOC {
             unser_uint32((uint32_t&) type);
             unser_uint16(index);
             unser_uint32(buf_len);
-            buf = bmalloc(buf_len);
+            buf = bmalloc(buf_len+1);
             unser_bytes(buf, buf_len);
+            ((char*)buf)[buf_len]=0; /* useful for debug */
          } else {
             total_size = 0;
             total_count = 0;
