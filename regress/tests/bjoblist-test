@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2015 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+TestName="bjoblist-test"
+JobName="bjoblist-test"
+
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+bjoblist=${bin}/bjoblist
+
+# Various key setup
+key1="netapp:/vol/vol1"
+key2="netapp:/vol/vol2"
+key3="netapp:/vol/vol2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+key4="netapp:/vol/vol2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxz"
+
+#vVarious data setup
+data1="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=1:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
+data2="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=2:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
+data3="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=3:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
+data4="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=4:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
+data5="ID=704ba403-fa5d-45f9-8681-859eec950723 DATE=5:15f18c5c-3824-40d2-8843-e6d161f77504:15f18c5c-3824-40d2-8843-e6d161f77504"
+
+# Various job setup
+jobF="Test1.2020-03-12_09.45.31_24"
+jobI="Test1.2020-03-12_09.45.31_25"
+jobI2="Test1.2020-03-12_09.45.31_26"
+jobD="Test1.2020-03-12_09.45.31_27"
+jobI3="Test1.2020-03-12_09.45.31_28"
+
+#vData file
+data_file="nutanixfiler.dat"
+
+# Working dir
+working_dir="/opt/bacula/working"
+
+"$bjoblist" -h
+
+
+exit 1
+

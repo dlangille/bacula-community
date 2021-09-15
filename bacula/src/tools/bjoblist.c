@@ -105,12 +105,14 @@ int main(int argc, char *argv[])
 					"\t-k\tKey (hostname + volume name)\n"
 					"\t-p\tPrevious job\n"
 					"\t-j\tCurrent job\n"
-					"\t-l\tLevel {(f)ull, (d)ifferential, (i)ncremental}\n"
+					"\t-l\tLevel {(F)ull, (D)ifferential, (I)ncremental}\n"
 					"\t-D\tData XXX-XXX-XXX-XXX-XXX\n"
 					"\t-s\tStore-mode\n"
 					"\t-S\tSearch-mode\n"
 					"\t-d\tDebug-level\n"
 					"\t-h\t display this text\n\n");
+			
+			exit(EXIT_SUCCESS);
 		}
 	}
 	
