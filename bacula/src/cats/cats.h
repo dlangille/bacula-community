@@ -731,6 +731,19 @@ public:
    }
 };
 
+class META_JSON: public SMARTALLOC
+{
+public:
+   META_JSON(){};
+
+   virtual ~META_JSON(){};
+   bool parse(JCR *jcr, BDB *db,
+              DBId_t jid, int64_t fidx,
+              const char *value,
+              int len,
+              POOLMEM **dest);
+};
+
 
 /* Functions exported by sql.c for use within the cats directory. */
 void json_list_begin(void *vctx, const char *title);

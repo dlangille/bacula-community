@@ -653,11 +653,29 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
       }
 
    } else if (Stream == STREAM_PLUGIN_META_CATALOG) {
-      //TODO add storing values inside proper catalog table here instead of dummy print
+      Dmsg1(50, "Getting STREAM_PLUGIN_META_CATALOG %d\n", FileIndex);
       meta_pkt mp(p);
-      Dmsg1(100, "[metadata plugin] type: %d\n", mp.type);
-      Dmsg1(100, "[metadata plugin] buffer len: %d\n", mp.buf_len);
-      Dmsg2(100, "[metadata plugin] buf: %.*s\n", mp.buf_len, mp.buf);
+      META_JSON parser;
+      POOL_MEM val;
+      Dmsg3(50, "[metadata plugin] type=%d len=%d buf=[%.*s]\n", mp.type, mp.buf_len, mp.buf);
+      if (parser.parse(jcr,
+                       jcr->db,
+                       jcr->wjcr? jcr->wjcr->JobId : jcr->JobId,
+                       FileIndex,
+                       (char *)mp.buf, mp.buf_len,
+                       val.handle()))
+      {
+         db_lock(jcr->db);
+         if (!db_sql_query(jcr->db, val.c_str(), NULL, NULL)) {
+            // TODO: Make sure the SQL query is correct, else the transaction will fail
+            Jmsg(jcr, M_FATAL, 0, _("Unable to insert Plugin metadata for FileIndex %lld. ERR=%s\n"), (int64_t)FileIndex, jcr->db->errmsg);
+            Dmsg1(50, "Unable to parse Plugin metadata err=%s\n", val.c_str());
+         }
+         db_unlock(jcr->db);
+      } else {
+         Jmsg1(jcr, M_ERROR, 0, _("Unable to parse Plugin metadata for FileIndex %lld\n"), (int64_t)FileIndex);
+         Dmsg1(50, "Unable to parse Plugin metadata err=%s\n", val.c_str());
+      }
 
    } else if (Stream == STREAM_RESTORE_OBJECT) {
       ROBJECT_DBR ro;
@@ -848,7 +866,7 @@ bool despool_attributes_from_file(JCR *jcr, const char *file)
       berrno be;
       Qmsg1(jcr, M_FATAL, 0, _("fread attr spool error. ERR=%s\n"),
             be.bstrerror());
-      Dmsg1(050, "fread attr spool error. ERR=%s\n", be.bstrerror());
+      Dmsg1(50, "fread attr spool error. ERR=%s\n", be.bstrerror());
       goto bail_out;
    }
    ret = true;

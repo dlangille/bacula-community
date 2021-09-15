@@ -264,6 +264,7 @@ bool metadata_save(JCR *jcr, const plugin_metadata *plug_meta)
       /* Send stream header */
       switch (mp->type) {
          case plugin_meta_blob:
+            Dmsg1(50, "Sending STREAM_PLUGIN_META_BLOB %d\n", jcr->JobFiles);
             stat = sd->fsend("%ld %d 0", jcr->JobFiles, STREAM_PLUGIN_META_BLOB);
             if (!stat) {
                if (!jcr->is_canceled() && !jcr->is_incomplete()) {
@@ -274,6 +275,7 @@ bool metadata_save(JCR *jcr, const plugin_metadata *plug_meta)
             }
             break;
          case plugin_meta_catalog_email:
+            Dmsg1(50, "Sending STREAM_PLUGIN_META_CATALOG %d\n", jcr->JobFiles);
             stat = sd->fsend("%ld %d 0", jcr->JobFiles, STREAM_PLUGIN_META_CATALOG);
             if (!stat) {
                if (!jcr->is_canceled() && !jcr->is_incomplete()) {

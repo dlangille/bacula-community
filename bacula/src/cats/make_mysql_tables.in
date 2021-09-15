@@ -31,6 +31,59 @@ USE ${db_name};
 --  sensitive in sorts, which is what we want, and TEXT
 --  is case insensitive.
 --
+-- --------------------------------------------------------------
+-- MetaData Index
+
+CREATE TABLE MetaEmail
+(
+    EmailTenant       TINYBLOB,
+    EmailOwner        TINYBLOB,
+    EmailId           TINYBLOB,
+    EmailTime         DATETIME,
+    EmailTags         BLOB,
+    EmailSubject      BLOB,
+    EmailFolderName   BLOB,
+    EmailFrom         TINYBLOB,
+    EmailTo           BLOB,
+    EmailCc           BLOB,
+    EmailInternetMessageId TINYBLOB,
+    EmailBodyPreview  BLOB,
+    EmailImportance   TINYBLOB,
+    EmailConversationId    TINYBLOB,
+    EmailIsRead       TINYINT,
+    EmailIsDraft      TINYINT,
+    EmailHasAttachement TINYINT,
+    Plugin       TINYBLOB,
+    FileIndex    int,
+    JobId        int
+);
+
+CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant, EmailOwner);
+CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId);
+CREATE INDEX meta_emailsubjectbody ON MetaEmail (EmailSubject);
+CREATE INDEX meta_emailbodypreview ON MetaEmail (EmailBodyPreview);
+CREATE INDEX meta_emailto ON MetaEmail (EmailTo);
+CREATE INDEX meta_emailfrom ON MetaEmail (EmailFrom);
+CREATE INDEX meta_emailcc ON MetaEmail (EmailCc);
+CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
+CREATE INDEX meta_emailhasattachement on MetaEmail (EmailHasAttachement);
+CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
+
+CREATE TABLE MetaAttachement
+{
+    AttachementName     BLOB,
+    AttachementEmailId  TINYBLOB,
+    AttachementContentType TINYBLOB,
+    AttachementIsInline SMALLINT,
+    Plugin       TINYBLOB,
+    FileIndex    INTEGER,
+    JobId        INTEGER
+};
+
+CREATE INDEX meta_attachementemailid ON MetaAttachement USING HASH (AttachementEmailId);
 
 CREATE TABLE TagJob
 (

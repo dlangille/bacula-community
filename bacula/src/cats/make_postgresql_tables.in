@@ -15,6 +15,78 @@ db_name=${db_name:-@db_name@}
 
 psql -f - -d ${db_name} $* <<END-OF-DATA
 
+-- --------------------------------------------------------------
+-- MetaData Index
+
+CREATE TABLE MetaEmail
+(
+    EmailTenant       text,
+    EmailOwner        text,
+    EmailId           text,
+    EmailTime timestamp without time zone,
+    EmailTags         text,
+    EmailSubject      text,
+    EmailFolderName   text,
+    EmailFrom         text,
+    EmailTo           text,
+    EmailCc           text,
+    EmailInternetMessageId text,  -- no index
+    EmailBodyPreview  text,
+    EmailImportance   text,
+    EmailConversationId    text,
+    EmailIsRead       smallint,
+    EmailIsDraft      smallint,
+    EmailHasAttachment smallint,
+    Plugin       text,
+    FileIndex    int,
+    JobId        int
+);
+
+-- Need to add postgresql-contrib to the dependency list
+
+do \$\$
+declare
+  selected_ext pg_extension%rowtype;
+begin  
+
+  select 1 from pg_extension
+    into selected_ext
+  where extname = 'pg_trgm';
+  
+  if not found then
+     CREATE EXTENSION pg_trgm;
+  end if;
+end \$\$;
+
+CREATE INDEX meta_emailowner on MetaEmail (EmailTenant, EmailOwner);
+CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailsenttime on MetaEmail (EmailSentTime);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
+-- CREATE INDEX meta_emailsender on MetaEmail (EmailSender);
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId);
+CREATE INDEX meta_emailsubjectbody ON MetaEmail 
+       USING GIN (EmailSubject gin_trgm_ops, EmailBodyPreview gin_trgm_ops, EmailTo gin_trgm_ops, EmailCc gin_trgm_ops, EmailFrom gin_trgm_ops);
+CREATE INDEX meta_emailimportance on MetaEmail (EmailImportance);
+CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
+CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
+CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
+
+CREATE TABLE MetaAttachment
+(
+    AttachmentName     text,
+    AttachmentEmailId  text,
+    AttachmentContentType text,
+    AttachmentIsInline smallint,
+    Plugin       text,
+    FileIndex    int,
+    JobId        int
+);
+
+CREATE INDEX meta_attachmentemailid ON MetaAttachment USING HASH (AttachmentEmailId);
+
+-- --------------------------------------------------------------
+
 CREATE TABLE TagJob
 (
    JobId integer not null,

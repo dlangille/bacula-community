@@ -336,7 +336,10 @@ bail_out:
  *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
+ *  list metadata type=email [search=<str> where=<from|to|cc|tags|subject|bodypreview|attachement> importance=<str> isread=<yes|no> isdraft=<yes|no> hasattachement=<yes|no> limit=<int> offset=<int> receivedtime=<time> senttime=<time> order=<asc|desc>]
  *
+ *  list metadata type=email where="(EmailFrom ILIKE '%test%' OR EmailTo ILIKE '%test%' OR EmailCc ILIKE '%test%') AND EmailReceivedtime > '2021-09-01 00:00:00'" limit=10
+ *  
  *  Note: keyword "long" is before the first command on the command 
  *    line results in doing a llist (long listing).
  */

@@ -23,6 +23,8 @@ create user ${db_user} ${pass};
 alter database ${db_name} owner to ${db_user} ;
 
 -- for tables
+grant all on MetaEmail    to ${db_user};
+grant all on MetaAttachment to ${db_user};
 grant all on TagJob       to ${db_user};
 grant all on TagClient    to ${db_user};
 grant all on TagMedia     to ${db_user};

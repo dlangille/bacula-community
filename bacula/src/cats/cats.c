@@ -374,4 +374,262 @@ void parse_restore_object_string(char **r_obj_str, ROBJECT_DBR *robj_r)
       robj_r->object_len, robj_r->object);
 }
 
-#endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */
+/****************************************************************
+ * Interface to the MetaXXX tables (MetaEmail, MetaAttachments
+ *
+ * The main idea is to get a JSON object fron the FD/SD that represents data to
+ * index in our catalog. We need to verify the input and convert/insert the
+ * data into the right table.
+ * 
+ ****************************************************************/
+
+/* The cJSON lib is a small JSON parser/writer */
+#include "lib/cJSON.h"
+
+/* We need one scanner per type and per version of data */
+struct json_sql {
+   const char *json_name;
+   const char *sql_name;
+   OutputType  type;
+};
+
+/* This class is the common interface for all JSON parser. It can be used in
+ * simple mapping. For more complex handling, we can subclass it
+ * 
+ * We will have a specific implementation for email, attachments, ...
+ * Each JSON input must be very carefully checked!!
+ */
+class META_JSON_SCANNER: public SMARTALLOC
+{
+public:
+   const char      *m_table;
+   struct json_sql *m_j2s;
+
+   META_JSON_SCANNER(const char *table, struct json_sql *j2s):
+      m_table(table), m_j2s(j2s) {};
+
+   virtual ~META_JSON_SCANNER(){};
+
+   /* Parse a JSON node and validate the input */
+   virtual bool parse(JCR *jcr, BDB *db,
+                      DBId_t jid, int64_t fidx,
+                      cJSON *root,
+                      POOLMEM **dest);
+};
+
+/* Email JSON data
+
+ {
+   "Version": 1,
+   "Type" : "EMAIL",
+   "EmailBodyPreview" : "-------- Forwarded Message --------\r\nSubject: Re: [Bacula-devel] When 5.1?\r\nDate: Sun, 5 Jun 2011 17:36:33 +0200\r\nFrom: Bastian Friedrich <bastian.friedrich@collax.com>\r\nTo: bacula-devel@lists.sourceforge.net\r\nCC: Kern Sibbald <kern@sibbald.com>",
+   "EmailCc" : "",
+   "EmailConversationId" : "AAQkADkzMjFhOGZjLTM4NWQtNDU1OC1iODA0LWRmNzRiOTRkZjEzMgAQAFu5M6Q-lKhMhvlmDMcwbug=",
+   "EmailFolderName" : "Inbox",
+   "EmailFrom" : "eric.bollengier@baculasystems.com",
+   "EmailId" : "AAMkADkzMjFhOGZjLTM4NWQtNDU1OC1iODA0LWRmNzRiOTRkZjEzMgBGAAAAAACLSt6kXFgwSaU_laiYbZmvBwBUvb47c4T-R5BYeUNUiTxqAADsn4zsAABUvb47c4T-R5BYeUNUiTxqAADsn8WxAAA=",
+   "EmailImportance" : "NORMAL",
+   "EmailInternetMessageId" : "<2fe3fc53-e83d-70e6-ebcf-38859c84ec26@baculasystems.com>",
+   "EmailIsDraft" : 0,
+   "EmailIsRead" : 0,
+   "EmailTime" : "Sep 10, 2021, 2:44:36 PM",
+   "EmailSubject" : "Fwd: [Bacula-devel] When 5.1?",
+   "EmailTags" : "category1, category2",
+   "EmailTo" : "jorgegea@jorgegea.onmicrosoft.com",
+   "EmailHasAttachment" : 0,
+   "Plugin" : "m365"
+}
+*/
+
+#define SAME_KW(keyword, type) {keyword, keyword, type}
+
+static struct json_sql email_json_v1[] = {
+   SAME_KW("EmailTenant", OT_STRING),
+   SAME_KW("EmailOwner", OT_STRING),
+   SAME_KW("EmailBodyPreview", OT_STRING),
+   SAME_KW("EmailCc", OT_STRING),
+   SAME_KW("EmailConversationId", OT_STRING),
+   SAME_KW("EmailFolderName", OT_STRING),
+   SAME_KW("EmailFrom", OT_STRING),
+   SAME_KW("EmailId", OT_STRING),
+   SAME_KW("EmailImportance", OT_STRING),
+   SAME_KW("EmailInternetMessageId", OT_STRING),
+   SAME_KW("EmailIsRead", OT_BOOL),
+   SAME_KW("EmailTime", OT_STRING),
+   SAME_KW("EmailSubject", OT_STRING),
+   SAME_KW("EmailTags", OT_STRING),
+   SAME_KW("EmailTo", OT_STRING),
+   SAME_KW("EmailHasAttachment", OT_INT),
+   SAME_KW("Plugin", OT_STRING),
+   {NULL, NULL, OT_END}
+};
+
+/*
+{
+   "AttachmentContentType" : "application/octet-stream",
+   "AttachmentEmailId" : "AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKybAAB-S4yOymgVRpR5CA4-eilAAABABUnfAAA=",
+   "AttachmentId" : "AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKybAAB-S4yOymgVRpR5CA4-eilAAABABUnfAAABEgAQAKT86cEi1S9PgA8I5xS0vKA=",
+   "AttachmentIsInline" : 0,
+   "AttachmentName" : "Ancillae.gen",
+   "Plugin" : "m365",
+   "Type" : "ATTACHMENT",
+   "Version" : 1
+}
+ */
+static struct json_sql email_attachment_json_v1[] = {
+   SAME_KW("AttachmentContentType", OT_STRING),
+   SAME_KW("AttachmentEmailId", OT_STRING),
+   //SAME_KW("AttachmentId", OT_STRING),
+   SAME_KW("AttachmentIsInline", OT_BOOL),
+   SAME_KW("AttachmentName", OT_STRING),
+   SAME_KW("Plugin", OT_STRING),
+   {NULL, NULL, OT_END}
+};
+
+bool META_JSON_SCANNER::parse(JCR *jcr, BDB *db,
+                              DBId_t jid, int64_t fidx,
+                              cJSON *root,
+                              POOLMEM **dest)
+{
+   POOL_MEM values, tmp, esc;
+   bool status = false;
+   bool first = true;
+   cJSON *val;
+   int len;
+   Mmsg(dest, "INSERT INTO %s (", m_table);
+   for (int i=0; m_j2s[i].json_name ; i++) {
+      if (!first) {
+         pm_strcat(dest, ",");
+      }
+      pm_strcat(dest, m_j2s[i].sql_name);
+
+      val = cJSON_GetObjectItemCaseSensitive(root, m_j2s[i].json_name);
+      switch(m_j2s[i].type) {
+      case OT_BOOL:
+         if (!cJSON_IsNumber(val)) {
+            Mmsg(dest, "JSON Error: Unable to find %s", m_j2s[i].json_name);
+            goto bail_out;
+         }
+         Mmsg(tmp, "%c%d",
+              first?' ':',',
+              val->valuedouble == 0 ? 0 : 1);
+         break;
+      case OT_STRING:
+         if (!cJSON_IsString(val) || (val->valuestring == NULL)) {
+            Mmsg(dest, "JSON Error: Unable to find %s", m_j2s[i].json_name);
+            goto bail_out;
+         }
+         len = strlen(val->valuestring);
+         esc.check_size(len*2+1);
+         db_escape_string(jcr, db, esc.c_str(), val->valuestring, len);
+
+         Mmsg(tmp, "%c'%s'",
+              first?' ':',',
+              esc.c_str());
+
+         break;
+      case OT_INT:
+         if (!cJSON_IsNumber(val)) {
+            Mmsg(dest, "JSON Error: Unable to find %s", m_j2s[i].json_name);
+            goto bail_out;
+         }
+         Mmsg(tmp, "%c%lld",
+              first?' ':',',
+              (int64_t)val->valuedouble);
+         break;
+      default:
+         Mmsg(dest, "Implenentation issue with type %d", m_j2s[i].type);
+         goto bail_out;
+      }
+      first = false;
+      pm_strcat(values, tmp.c_str());
+   }
+   /* Finish the query with job information */
+   pm_strcat(dest, ",JobId,FileIndex) VALUES (");
+   pm_strcat(dest, values.c_str());
+   Mmsg(tmp, ", %lld, %lld)", jid, fidx);
+   pm_strcat(dest, tmp.c_str());
+   status = true;
+
+bail_out:
+   return status;
+}
+
+static void *cats_malloc(size_t size)
+{
+   return malloc(size);
+}
+
+/****************************************************************
+ * The META_JSON class is here to initilize and find the META_XXX_JSON
+ * implementation to use to decode the JSON stream.
+ ****************************************************************/
+bool META_JSON::parse(JCR *jcr, BDB *db,
+                      DBId_t jid, int64_t fidx,
+                      const char *string,
+                      int len,
+                      POOLMEM **dest)
+{
+   bool status = false;
+   cJSON *type = NULL;
+   cJSON *version = NULL;
+   META_JSON_SCANNER *impl = NULL;
+
+   /* We use our own memory allocator to track orphan buffers */
+   cJSON_Hooks hook;
+   hook.malloc_fn = cats_malloc;
+   hook.free_fn = bfree;
+   cJSON_InitHooks(&hook);
+
+   cJSON *json = cJSON_ParseWithLength(string, len);
+   if (json == NULL) {
+      const char *error_ptr = cJSON_GetErrorPtr();
+      if (error_ptr != NULL) {
+         Mmsg(dest, "JSON Error before: %s\n", error_ptr);
+      }
+      goto bail_out;
+   }
+   type = cJSON_GetObjectItemCaseSensitive(json, "Type");
+   if (!cJSON_IsString(type) || (type->valuestring == NULL))
+   {
+      Mmsg(dest, "JSON Error: Unable to find Type");
+      goto bail_out;
+   }
+   version = cJSON_GetObjectItemCaseSensitive(json, "Version");
+   if (!cJSON_IsNumber(version) || (version->valueint == 0))
+   {
+      Mmsg(dest, "JSON Error: Unable to find Version");
+      goto bail_out;
+   }
+   if (strcmp(type->valuestring, "EMAIL") == 0) {
+      if (version->valueint >= 1) {
+         /* If the parser cannot handle a new format, adjust it */
+         impl = New(META_JSON_SCANNER("MetaEmail", email_json_v1));
+      }
+   } else if (strcmp(type->valuestring, "ATTACHMENT") == 0) {
+      if (version->valueint >= 1) {
+         impl = New(META_JSON_SCANNER("MetaAttachment", email_attachment_json_v1));
+      }
+   }
+   if (!impl) {
+      Mmsg(dest, "JSON Error: Incorrect Type");
+      goto bail_out;
+   }
+   if (!impl->parse(jcr, db, jid, fidx, json, dest)) {
+      goto bail_out;
+   }
+   status = true;
+
+bail_out:
+   if (impl) {
+      delete impl;
+   }
+   /* TODO: Need to see if we need to free all members */
+   if (json) {
+      cJSON_Delete(json);
+   }
+   return status;
+}
+
+
+#endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */ 
