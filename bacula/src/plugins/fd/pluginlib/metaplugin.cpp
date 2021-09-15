@@ -1567,10 +1567,10 @@ bRC METAPLUGIN::perform_read_metadata_info(bpContext *ctx, metadata_type type, s
 
    // Bacula API for metadata requires that a plugin
    // handle metadata buffer allocation
-   POOLMEM *ptr = (POOLMEM *)bmalloc(len);
+   char *ptr = (char *)bmalloc(len);
    memcpy(ptr, data.addr(), len);
 
-   // add it to the list for reference to not lot it
+   // add it to the list for reference to not loose it
    metadatas_list.append(ptr);
    metadatas.add_packet(type, len, ptr);
    sp->plug_meta = &metadatas;
