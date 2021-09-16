@@ -9,12 +9,18 @@
 
 @MCOMMON@
 
+.PHONY: all
+first_rule: all
+
 topdir = @BUILD_DIR@
 working_dir = @working_dir@
 LIBTOOL_CLEAN_TARGET = @LIBTOOL_CLEAN_TARGET@
 LIBTOOL_UNINSTALL_TARGET = @LIBTOOL_UNINSTALL_TARGET@
 
 SYSCONFDIR=@sysconfdir@
+
+_GIT := $(shell eval $(topdir)/scripts/getgitcommit)
+VERSIONGIT = "/git-$(_GIT)"
 
 SYBASE_TMPDIR = @sybase_tmpdir@
 SYBASE_CONFIG = @sysconfdir@/sbt.conf
@@ -38,10 +44,13 @@ FDPLUGDIR = $(SRCDIR)/plugins/fd
 PLUGINLIBDIR = $(FDPLUGDIR)/pluginlib
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
-LIBBACOBJ = $(LIBDIR)/libbac.la
 INIOBJ = $(LIBDIR)/ini.lo
-PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
+LIBBACOBJ = $(LIBDIR)/libbac.la
+LIBBACCFGOBJ = $(LIBDIR)/libbaccfg.la
+INIOBJ = $(LIBDIR)/ini.lo
 METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_attributes.lo $(PLUGINLIBDIR)/metaplugin_accurate.lo $(PLUGINLIBDIR)/metaplugin_metadata.lo
+PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
+PLUGINBASE = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/pluginclass.lo $(PLUGINLIBDIR)/pluginbase.lo $(PLUGINLIBDIR)/pluginctx.lo
 
 EXTRA_INSTALL_TARGET = @FD_PLUGIN_INSTALL@
 
@@ -50,11 +59,17 @@ EXTRA_INSTALL_TARGET = @FD_PLUGIN_INSTALL@
 $(UNITTESTSOBJ):
 	$(MAKE) -C $(LIBDIR) unittests.lo
 
+$(INIOBJ):
+	$(MAKE) -C $(LIBDIR) ini.lo
+
 $(LIBBACOBJ):
 	$(MAKE) -C $(LIBDIR) libbac.la
 
 $(INIOBJ):
 	$(MAKE) -C $(LIBDIR) ini.lo
+
+$(LIBBACCFGOBJ):
+	$(MAKE) -C $(LIBDIR) libbaccfg.la
 
 $(PLUGINLIBDIR)/test_metaplugin_backend.lo:
 	$(MAKE) -C $(PLUGINLIBDIR) test_metaplugin_backend.lo
@@ -82,3 +97,12 @@ $(PLUGINLIBDIR)/iso8601.lo: $(PLUGINLIBDIR)/iso8601.cpp $(PLUGINLIBDIR)/iso8601.
 
 $(PLUGINLIBDIR)/execprog.lo: $(PLUGINLIBDIR)/execprog.cpp $(PLUGINLIBDIR)/execprog.h
 	$(MAKE) -C $(PLUGINLIBDIR) execprog.lo
+
+$(PLUGINLIBDIR)/pluginclass.lo: $(PLUGINLIBDIR)/pluginclass.cpp $(PLUGINLIBDIR)/pluginclass.h
+	$(MAKE) -C $(PLUGINLIBDIR) pluginclass.lo
+
+$(PLUGINLIBDIR)/pluginbase.lo: $(PLUGINLIBDIR)/pluginbase.cpp $(PLUGINLIBDIR)/pluginbase.h
+	$(MAKE) -C $(PLUGINLIBDIR) pluginbase.lo
+
+$(PLUGINLIBDIR)/pluginctx.lo: $(PLUGINLIBDIR)/pluginctx.cpp $(PLUGINLIBDIR)/pluginctx.h
+	$(MAKE) -C $(PLUGINLIBDIR) pluginctx.lo

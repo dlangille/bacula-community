@@ -9,11 +9,6 @@
 
 include ../Makefile.inc
 
-_GIT := $(shell eval $(topdir)/scripts/getgitcommit)
-VERSIONGIT = "/git-$(_GIT)"
-
-LIBBACCFGOBJ = $(LIBDIR)/libbaccfg.la
-
 PLUGINLIBSSRC = pluginlib.cpp pluginlib.h
 PLUGINLIBSOBJ = $(filter %.lo,$(PLUGINLIBSSRC:.cpp=.lo))
 ISO8601SRC = iso8601.cpp iso8601.h
@@ -22,6 +17,12 @@ EXECPROGSRC = execprog.cpp execprog.h
 EXECPROGOBJ = $(filter %.lo,$(EXECPROGSRC:.cpp=.lo))
 PTCOMMSRC = ptcomm.cpp ptcomm.h
 PTCOMMOBJ = $(filter %.lo,$(PTCOMMSRC:.cpp=.lo))
+PLUGINBASESRC = pluginbase.h   # pluginbase.cpp
+PLUGINBASEOBJ = $(filter %.lo,$(PLUGINBASESRC:.cpp=.lo))
+PLUGINCLASSSRC = pluginclass.h # pluginclass.cpp
+PLUGINCLASSOBJ = $(filter %.lo,$(PLUGINCLASSSRC:.cpp=.lo))
+PLUGINCTXSRC = pluginctx.h pluginctx.cpp
+PLUGINCTXOBJ = $(filter %.lo,$(PLUGINCTXSRC:.cpp=.lo))
 COMMCTXSRC = commctx.h
 SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartptr.h
@@ -30,27 +31,27 @@ SMARTLOCKSRC = smartlock.h
 METAPLUGINSRC = metaplugin.cpp metaplugin.h metaplugin_attributes.cpp metaplugin_attributes.h metaplugin_accurate.cpp metaplugin_accurate.h metaplugin_metadata.cpp metaplugin_metadata.h $(SMARTMUTEXSRC) $(SMARTLOCKSRC) $(COMMCTXSRC)
 METAPLUGINOBJ = $(filter %.lo,$(METAPLUGINSRC:.cpp=.lo))
 
-PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC)
-PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo)) $(INIOBJ) $(UNITTESTSOBJ)
-ISO8601TEST = iso8601_test.cpp $(ISO8601SRC)
-ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo)) $(UNITTESTSOBJ)
-COMMCTXTEST = commctx_test.cpp $(COMMCTXSRC) $(SMARTALISTSRC)
-COMMCTXTESTOBJ = $(filter %.lo,$(COMMCTXTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC)
-SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC)
-SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-SMARTLOCKTEST = smartlock_test.cpp $(SMARTLOCKSRC)
-SMARTLOCKTESTOBJ = $(filter %.lo,$(SMARTLOCKTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ) $(INIOBJ)
+PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
+ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
+ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
+COMMCTXTEST = commctx_test.cpp $(COMMCTXSRC) $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ) $(INIOBJ)
+COMMCTXTESTOBJ = $(filter %.lo,$(COMMCTXTEST:.cpp=.lo))
+SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ) $(INIOBJ)
+SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
+SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ) $(INIOBJ)
+SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo))
+SMARTLOCKTEST = smartlock_test.cpp $(SMARTLOCKSRC) $(SMARTMUTEXSRC) $(UNITTESTSOBJ)
+SMARTLOCKTESTOBJ = $(filter %.lo,$(SMARTLOCKTEST:.cpp=.lo))
 
 METAPLUGINTEST = metaplugin_test.cpp $(METAPLUGINSRC)
-METAPLUGINTESTOBJ = $(filter %.lo,$(METAPLUGINTEST:.cpp=.lo)) $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) $(UNITTESTSOBJ)
+METAPLUGINTESTOBJ = $(filter %.lo,$(METAPLUGINTEST:.cpp=.lo)) $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) $(UNITTESTSOBJ) $(LIBBACOBJ) $(LIBBACCFGOBJ)
 
 TESTMETAPLUGINBACKENDSRC = test_metaplugin_backend.c
 TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
-COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ) $(METAPLUGINOBJ)
+COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ) $(METAPLUGINOBJ) $(PLUGINCLASSOBJ) $(PLUGINBASEOBJ)
 # COMMONPLUGINTESTS = iso8601_test
 COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test
 
@@ -100,9 +101,9 @@ commctx_test: $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 
 iso8601_test: $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(ISO8601TESTOBJ) -o $@
 
-metaplugin_test: $(METAPLUGINTESTOBJ) $(LIBBACOBJ)
+metaplugin_test: $(METAPLUGINTESTOBJ)
 	@echo "Building $@ ..."
 	$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) $(LIBBACCFGOBJ) $(LIBBACOBJ) $(METAPLUGINTESTOBJ) -o $@
 
