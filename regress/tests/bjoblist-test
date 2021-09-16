@@ -54,7 +54,7 @@ grep -e "$data1" "$result_file" > /dev/null
 
 if [ $? != 0 ]; then
 	print_debug "Did not found jobF"
-	$estat=1
+	estat=1
 fi
 
 # Empty tmp file
@@ -71,7 +71,7 @@ grep -e "$data2" "$result_file" > /dev/null
 
 if [ $? != 0 ]; then 
 	print_debug "Did not find jobI"
-	$estat=1
+	estat=1
 fi
 
 # Empty file
@@ -88,11 +88,11 @@ print_debug "Store jobD"
 # Store job I3 from jobD
 print_debug "Store jobI3"
 "$bjoblist" -w "$working_dir" -f "$data_file" -k "$key1" -j "$jobI3" -p "$jobD" -l I -D "$data5" -s > "$result_file"
-grep -e "$data2" -e "$data3" "$result_file" > /dev/null
+grep -e "$jobI" -e "$jobI2" "$result_file" > /dev/null
 
 if [ $? != 0 ]; then
 	print_debug "Did not received jobI and jobI2 to delete"
-	$estat=1
+	estat=1
 fi
 
 # Empty file

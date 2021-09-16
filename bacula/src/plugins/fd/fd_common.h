@@ -183,6 +183,7 @@ class joblist: public SMARTALLOC
 {
 private:
    bpContext *ctx;
+   bool return_jobname_on_prune;
 
 public:
    char level;                  /* level of the job */
@@ -210,10 +211,16 @@ public:
       *key = *name = *prev = *root = *rootdiff = 0;
       set_base("jobs.dat");
       ctx = NULL;
+      return_jobname_on_prune = false;
    }
 
    void set_base(const char *b) {
       pm_strcpy(base, b);
+   }
+
+   /* If true when prune_job is called return jobnanme instead of job data in alist */
+   void set_return_jobname_on_prune(bool value) {
+      return_jobname_on_prune = value;
    }
 
    joblist(bpContext *actx): ctx(NULL), level(0), base(NULL), key(NULL), name(NULL), prev(NULL), root(NULL), rootdiff(NULL), job_time(0)
@@ -717,7 +724,11 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
          jobs->append(bstrdup(build_cmd(arg, p2, curjobname)));
 
       } else if (jobs) {
-         jobs->append(bstrdup(data));
+         if (return_jobname_on_prune) {
+	    jobs->append(bstrdup(curjobname));	
+	 } else {
+	    jobs->append(bstrdup(data));
+	 }
       }
    }
 
