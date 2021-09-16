@@ -1,7 +1,7 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2022 Kern Sibbald
+   Copyright (C) 2000-2023 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -41,7 +41,7 @@ extern "C" {
 
 static const int dbglvl = 000;
 
-#define PLUGIN_LICENSE      "AGPLv3"
+#define PLUGIN_LICENSE      "Bacula Systems(R) SA"
 #define PLUGIN_AUTHOR       "Kern Sibbald"
 #define PLUGIN_DATE         "September 2017"
 #define PLUGIN_VERSION      "4"
@@ -707,7 +707,6 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       if (p_ctx->job_level == 'F') {
          sp->type = FT_REG;
          sp->link = sp->fname = (char *)"/@testplugin/test1.zero";
-         stat("/etc/passwd", &sp->statp);
 
          /* Assign some metadata for the fake file */
          p_ctx->meta_mgr->reset();
@@ -720,34 +719,19 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
          }";
 
          /*TODO change payload to catalog packet when it's defined*/
-         const char *m2 = "{\n   \"EmailBodyPreview\" : \"pretium sollicitudin vocent vulputate te semper partiendo mi cu consectetur antiopam commodo nominavi facilis iaculis montes veniam congue vitae eam ponderum idque doctus condimentum patrioque epicurei amet nominavi possit ancillae quo bibendum definition\",\n   \"EmailCc\" : \"\",\n   \"EmailConversationId\" : \"AAQkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQAQAE9i5o-JJZ5HvgNdGUT4uEA=\",\n   \"EmailFolderName\" : \"jorgegea/users/jonis@jorgegea.onmicrosoft.com/email/REGRESS_20210915123756\",\n   \"EmailFrom\" : \"eric@bacula\",\n   \"EmailHasAttachment\" : 0,\n   \"EmailId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKyCAAB-S4yOymgVRpR5CA4-eilAAABABPgVAAA=\",\n   \"EmailImportance\" : \"NORMAL\",\n   \"EmailInternetMessageId\" : \"<AM9P190MB144311378E81EB6E8400641689DB9@AM9P190MB1443.EURP190.PROD.OUTLOOK.COM>\",\n   \"EmailIsDraft\" : 0,\n   \"EmailIsRead\" : 1,\n   \"EmailReceivedTime\" : \"Sep 15, 2021, 12:39:19 PM\",\n   \"EmailSentTime\" : \"Sep 15, 2021, 12:39:19 PM\",\n   \"EmailSubject\" : \"Elaboraret Tellus - t\",\n   \"EmailTags\" : \"\",\n   \"EmailTo\" : \"jorge@bacula\",\n   \"Plugin\" : \"m365\",\n   \"Type\" : \"EMAIL\",\n   \"Version\" : 1\n }";
+         const char *m2 = "{\n   \"EmailBodyPreview\" : \"pretium sollicitudin vocent vulputate te semper partiendo mi cu consectetur antiopam commodo nominavi facilis iaculis montes veniam congue vitae eam ponderum idque doctus condimentum patrioque epicurei amet nominavi possit ancillae quo bibendum definition\",\n   \"EmailCc\" : \"\",\n   \"EmailConversationId\" : \"AAQkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQAQAE9i5o-JJZ5HvgNdGUT4uEA=\",\n   \"EmailFolderName\" : \"jorgegea/users/jonis@jorgegea.onmicrosoft.com/email/REGRESS_20210915123756\",\n   \"EmailFrom\" : \"eric@bacula\",\n   \"EmailHasAttachment\" : 0,\n   \"EmailId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKyCAAB-S4yOymgVRpR5CA4-eilAAABABPgVAAA=\",\n   \"EmailImportance\" : \"NORMAL\",\n   \"EmailInternetMessageId\" : \"<AM9P190MB144311378E81EB6E8400641689DB9@AM9P190MB1443.EURP190.PROD.OUTLOOK.COM>\",\n   \"EmailIsDraft\" : 0,\n   \"EmailIsRead\" : 1,\n   \"EmailTime\" : \"Sep 15, 2021, 12:39:19 PM\",\n   \"EmailOwner\" : \"xxxx\",\n \"EmailTenant\": \"xxxxxx-xxxxxx-xxxxxx-xxxx\",\n  \"EmailSubject\" : \"Elaboraret Tellus - t\",\n   \"EmailTags\" : \"\",\n   \"EmailTo\" : \"jorge@bacula\",\n   \"Plugin\" : \"m365\",\n   \"Type\" : \"EMAIL\",\n   \"Version\" : 1\n }";
+
+         const char *m3 = "{\n   \"AttachmentContentType\" : \"application/octet-stream\",\n   \"AttachmentEmailId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKybAAB-S4yOymgVRpR5CA4-eilAAABABUnfAAA=\",\n   \"AttachmentId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKybAAB-S4yOymgVRpR5CA4-eilAAABABUnfAAABEgAQAKT86cEi1S9PgA8I5xS0vKA=\",\n   \"AttachmentIsInline\" : 0,\n   \"AttachmentName\" : \"Ancillae.gen\",\n   \"Plugin\" : \"m365\",\n   \"Type\" : \"ATTACHMENT\",\n   \"Version\" : 1\n}";
          p_ctx->meta_mgr->add_packet(plugin_meta_blob, strlen(m1)+1, (void *)m1);
          p_ctx->meta_mgr->add_packet(plugin_meta_catalog_email, strlen(m2)+1, (void *)m2);
+         p_ctx->meta_mgr->add_packet(plugin_meta_catalog_email, strlen(m3)+1, (void *)m3);
 
          sp->plug_meta = p_ctx->meta_mgr;
          Dmsg0(0, "Insert metadata!!!!!!\n");
-         return bRC_OK;
+
+      } else {
+         return bRC_Stop;
       }
-   } else if (p_ctx->nb_obj == 8) {
-      p_ctx->nb_obj++;
-      sp->type = FT_REG;
-      sp->link = sp->fname = (char *)"/@testplugin/test2.zero";
-      stat("/etc/passwd", &sp->statp);
-
-      /* Assign some metadata for the fake file */
-      p_ctx->meta_mgr->reset();
-
-      /*TODO change payload to catalog packet when it's defined*/
-      const char *m2 = "{\n   \"EmailBodyPreview\" : \"Hello John, say hello to Veronica. Best Regards\",\n   \"EmailCc\" : \"veronica@gmail.com\",\n   \"EmailConversationId\" : \"AAQkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQAQAE9i5o-JJZ5HvgNdGUTddEA=\",\n   \"EmailFolderName\" : \"jorgegea/users/jonis@jorgegea.onmicrosoft.com/email/REGRESS_20210915123756\",\n   \"EmailFrom\" : \"eric@bacula\",\n   \"EmailHasAttachment\" : 1,\n   \"EmailId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx\",\n   \"EmailImportance\" : \"IMPORTANT\",\n   \"EmailInternetMessageId\" : \"<AM9P190MB144311378E81EB6E8400641689Ddd@AM9P190MB1443.EURP190.PROD.OUTLOOK.COM>\",\n   \"EmailIsDraft\" : 1,\n   \"EmailIsRead\" : 0,\n   \"EmailTime\" : \"Sep 15, 2021, 12:40:19 PM\",\n   \"EmailOwner\" : \"xxxx\",\n \"EmailSize\" : 4096,\n \"EmailTenant\": \"xxxx\",\n  \"EmailSubject\" : \"Hello From regress\",\n   \"EmailTags\" : \"draft,important,work\",\n   \"EmailTo\" : \"john@bacula\",\n   \"Plugin\" : \"m365\",\n   \"Type\" : \"EMAIL\",\n   \"Version\" : 1\n }";
-      const char *m3 = "{\n   \"AttachmentOwner\" : \"xxxx\", \"AttachmentTenant\" : \"xxxx\", \"AttachmentContentType\" : \"application/octet-stream\",\n   \"AttachmentEmailId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx\",\n   \"AttachmentId\" : \"AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2YxLWEzNjI5MjY4M2JkMQBGAAAAAAChUr1sDFmcSYm7PK3nvLVxBwB-S4yOymgVRpR5CA4-eilAAABABKybAAB-S4yOymgVRpR5CA4-eilAAABABUnfAAABEgAQAKT86cEi1S9PgA8I5xS0vKA=\",\n   \"AttachmentIsInline\" : 0,\n   \"AttachmentName\" : \"CV.pdf\",\n  \"AttachmentSize\" : 81920,\n   \"Plugin\" : \"m365\",\n   \"Type\" : \"ATTACHMENT\",\n   \"Version\" : 1\n}";
-      p_ctx->meta_mgr->add_packet(plugin_meta_catalog_email, strlen(m2)+1, (void *)m2);
-      p_ctx->meta_mgr->add_packet(plugin_meta_catalog_email, strlen(m3)+1, (void *)m3);
-      sp->plug_meta = p_ctx->meta_mgr;
-      Dmsg0(0, "Insert metadata!!!!!! CV.pdf\n");
-      return bRC_OK;
-
-   } else {
-      return bRC_Stop;
    }
 
    if (p_ctx->nb_obj < 2) {
@@ -788,7 +772,11 @@ static bRC endBackupFile(bpContext *ctx)
     * We would return bRC_More if we wanted startBackupFile to be
     * called again to backup another file
     */
-   return bRC_More;
+   if (p_ctx->nb_obj >= 8) {
+      return bRC_OK;
+   } else {
+      return bRC_More;
+   }
 }
 
 
