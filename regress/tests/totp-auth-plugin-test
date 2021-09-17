@@ -198,7 +198,7 @@ run_bacula
 echo aaaa | $bin/bconsole -c $tmp/bconsole.conf1 > $tmp/log1.out 2>&1
 
 # Compute the code ourself
-c=`$bin/btotp -n cons1 | awk -F = '{print $2}'`
+c=`BTOTP_NAME=cons1 $bin/btotp`
 cat <<EOF > $tmp/bcmd
 $c
 status dir
@@ -228,7 +228,7 @@ fi
 
 # Will generate the key in keydir
 echo aaaa | $bin/bconsole -c $tmp/bconsole.conf4 > $tmp/log4.out 2>&1
-c=`$bin/btotp -n cons4 -k $tmp/key | awk -F = '{print $2}'`
+c=`$bin/btotp -n cons4 -k $tmp/key`
 cat <<EOF > $tmp/bcmd
 $c
 messages
