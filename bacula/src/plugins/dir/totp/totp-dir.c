@@ -507,10 +507,6 @@ public:
       char pngfile[128];
       POOL_MEM tmp, tmp2;
 
-      if (sendcommand  == NULL) {
-         return false;
-      }
-      
       if (totp_get_url(name, k64, strlen(k64), ret) == NULL) {
          Dmsg0(DINFO, "Unable to generate the totp url from the key\n");
          return false;
@@ -546,18 +542,25 @@ public:
          goto bail_out;
       }
 
-      edit_codes(tmp.addr(), sendcommand, name, pngfile);
+      if (sendcommand) {
+         edit_codes(tmp.addr(), sendcommand, name, pngfile);
 
-      if (run_program_full_output (tmp.c_str(), 10, *ret, NULL) != 0) {
-         Dmsg1(0, "Unable to call the mail program to send the totp key %s\n", *ret);
-         goto bail_out;
+         if (run_program_full_output (tmp.c_str(), 10, *ret, NULL) != 0) {
+            Dmsg1(0, "Unable to call the mail program to send the totp key %s\n", *ret);
+            goto bail_out;
+         }
+      } else {
+         pm_strcpy(ret, pngfile);
       }
       rcode = true;
 
    bail_out:
       // Run the email command
       unlink(urlfile);
-      unlink(pngfile);
+      /* cleanup if we are in error or if we have send the file */
+      if (!rcode || sendcommand) {
+         unlink(pngfile);
+      }
       return rcode;
    };
 
@@ -744,7 +747,7 @@ static void usage(int ret)
 "Usage: btotp [-k /path/to/keydir] [-d100] [-c] [-u] [-q] -n name\n"
 "       -d int            Set debug level\n"
 "       -c                Create a key if needed\n"
-"       -n name           Name of the console\n"
+"       -n name           Name of the console (or via BTOTP_NAME env)\n"
 "       -u                Display otpauth URL\n"
 "       -q                Display qrcode\n"
 "       -k dir            Path to the keydir\n\n"));
@@ -804,6 +807,10 @@ int main(int argc, char **argv)
    argc -= optind;
    argv += optind;
 
+   if (!name) {
+      name = getenv("BTOTP_NAME");
+   }
+   
    if (argc != 0 || !name) {
       Pmsg0(0, _("Wrong number of arguments: \n"));
       usage(1);
@@ -812,11 +819,11 @@ int main(int argc, char **argv)
    if (!totp.has_key(name)) {
       if (docreate) {
          if (!totp.gen_key(name)) {
-            Pmsg0(0, "Unable to generate the key\n");
+            Pmsg0(0, _("Unable to generate the key\n"));
             usage(2);
          }
       } else {
-         Pmsg0(0, "Unable to generate the key. Use -c to create a key.\n");
+         Pmsg0(0, _("Unable to read the key. Use -c to create a key.\n"));
          usage(2);
       }
    }
@@ -825,12 +832,12 @@ int main(int argc, char **argv)
       char buf[512];
       uint32_t len;
       if (!totp.compute_keyfile(name, tmp.handle())) {
-         Pmsg0(0, "Unable to find the key file\n");
+         Pmsg0(0, _("Unable to find the key file\n"));
          usage(2);
       }
       if (!totp_read_secretfile(tmp.c_str(), buf, sizeof(buf), &len)) {
          berrno be;
-         Pmsg1(0, "Unable to read the key. ERR=%s\n", be.bstrerror());
+         Pmsg1(0, _("Unable to read the key. ERR=%s\n"), be.bstrerror());
          usage(2);
       }
       if (displayURL) {
@@ -838,6 +845,7 @@ int main(int argc, char **argv)
             Pmsg1(0, "\n%s\n", tmp.c_str());
          } else {
             Pmsg0(0, "Unable to generate the totp url from the key\n");
+            usage(2);
          }
       }
       if (displayQR) {
@@ -845,15 +853,18 @@ int main(int argc, char **argv)
             Pmsg1(0, "\n%s\n", tmp.c_str());
          } else {
             Pmsg0(0, "Unable to generate the QRcode from the key\n");
+            usage(2);
          }
       }
    }
 
    uint32_t c=99;
    if (totp_from_secretfile(totp.keyname, &c)) {
-      Pmsg1(0, "code=%06ld\n", c);
+      printf("%06u\n", (unsigned int)c);
+
    } else {
-      Pmsg0(0, "Unable to generate the code from the key\n");
+      Pmsg0(0, _("Unable to generate the code from the key\n"));
+      return 2;
    }
    return 0;
 }
