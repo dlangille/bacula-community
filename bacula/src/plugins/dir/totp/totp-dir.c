@@ -822,10 +822,15 @@ int main(int argc, char **argv)
             Pmsg0(0, _("Unable to generate the key\n"));
             usage(2);
          }
+
       } else {
          Pmsg0(0, _("Unable to read the key. Use -c to create a key.\n"));
          usage(2);
       }
+   }
+   if (docreate) {
+      printf("%s\n", totp.keyname);
+      return 0;
    }
    if (displayURL || displayQR) {
       POOL_MEM tmp;
@@ -856,6 +861,7 @@ int main(int argc, char **argv)
             usage(2);
          }
       }
+      return 0;
    }
 
    uint32_t c=99;
