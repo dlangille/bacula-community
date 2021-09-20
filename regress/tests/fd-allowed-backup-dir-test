@@ -1,0 +1,205 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test for the 'AllowedBackuDir' FD directive
+#
+TestName="allowed-backup-dir"
+JobName=allowed-dir
+
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+change_jobname BackupClient1 $JobName
+start_test
+
+verify_backup_ok()
+{
+nb=`grep 'Backup OK' $1 | wc -l`
+if [ $nb -lt 1 ]; then
+    print_debug "ERROR: should have found Backup OK message"
+    bstat=1
+fi
+}
+
+# Set Allowed-to-be-backed-up directories
+allowed_dir1="$cwd/build/autoconf"
+allowed_dir2="$cwd/build/src/filed"
+allowed_dirs="${allowed_dir1} ${allowed_dir2}"
+
+# Try to backup and restore only 2 selected directories
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedBackupDirectories", "'$allowed_dir1','$allowed_dir2'", "Director")'
+
+# Create directory with only allowed dirs - we expect to see twin directory after the restore
+mkdir $tmp/expected
+tar -cP $allowed_dirs | tar -xC $tmp/expected
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+@$out ${tmp}/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+@$out ${tmp}/log2.out
+llist files jobid=1
+@$out ${tmp}/log3.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+verify_backup_ok ${tmp}/log1.out
+
+diff -r ${tmp}/expected ${tmp}/bacula-restores
+if test $? -ne 0; then
+   print_debug "ERROR: Restored tree different than expected one!"
+   dstat=1
+fi
+
+# Allow only 1 directory which is outside of Fileset under backup - we expect 0 files in the end
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedBackupDirectories", "/usr", "Director")'
+
+# Restart FD to reload config
+$bin/bacula-ctl-fd restart
+if test $? -ne 0; then
+   print_debug "ERROR: Failed to restart the FD!"
+   dstat=1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${tmp}/log4.out
+run job=$JobName level=Full yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+# We should see 'Backup OK' with 0 files written
+verify_backup_ok ${tmp}/log4.out
+
+n_files=`cat tmp/log4.out | grep 'FD Files Written:' | tr -s ' ' | cut -d ':' -f 2`
+if [ ${n_files} -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Wrong number of files backed up: ${n_files}, expected: 0, check $tmp/log4.out"
+fi
+
+# Now try to backup also 1 directory which is inside of Fileset's scope
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedBackupDirectories", "/usr, '$allowed_dir1'", "Director")'
+
+# Restart FD to reload config
+$bin/bacula-ctl-fd restart
+if test $? -ne 0; then
+   print_debug "ERROR: Failed to restart the FD!"
+   dstat=1
+fi
+
+rm -rf $tmp/bacula-restores
+rm -rf $tmp/expected/*
+tar -cP $allowed_dir1 | tar -xC $tmp/expected
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${tmp}/log5.out
+run job=$JobName level=Full yes
+wait
+messages
+@$out ${tmp}/log6.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+diff -r ${tmp}/expected ${tmp}/bacula-restores
+if test $? -ne 0; then
+   print_debug "ERROR: Restored tree different than expected one!"
+   dstat=1
+fi
+
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedBackupDirectories", "/invalid-path, /another/path/build", "Director")'
+
+# Restart FD to reload config
+$bin/bacula-ctl-fd restart
+if test $? -ne 0; then
+   print_debug "ERROR: Failed to restart the FD!"
+   dstat=1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${tmp}/log7.out
+run job=$JobName level=Full yes
+wait
+messages
+llist files jobid=6
+END_OF_DATA
+
+run_bconsole
+
+# We should see 'Backup OK' with 0 files written
+verify_backup_ok ${tmp}/log7.out
+
+n_files=`cat tmp/log7.out | grep 'FD Files Written:' | tr -s ' ' | cut -d ':' -f 2`
+if [ ${n_files} -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Wrong number of files backed up: ${n_files}, expected: 0, check $tmp/log7.out"
+fi
+
+# In the fileset we have something like:
+# File = /home/bacula_user/bacula-bee/regress/build
+# Try to use allowed backup dir with part of valid path from the fileset.
+# In that case, we expect that no file is backed up, because Fileset does not point to the same root ('/home/...')
+# as the AllowedBackupDirectories ('/regress/...)j
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedBackupDirectories", "/regress/build", "Director")'
+
+# Restart FD to reload config
+$bin/bacula-ctl-fd restart
+if test $? -ne 0; then
+   print_debug "ERROR: Failed to restart the FD!"
+   dstat=1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${tmp}/log8.out
+run job=$JobName level=Full yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+# We should see 'Backup OK' with 0 files written
+verify_backup_ok ${tmp}/log8.out
+
+n_files=`cat tmp/log8.out | grep 'FD Files Written:' | tr -s ' ' | cut -d ':' -f 2`
+if [ ${n_files} -ne 0 ]; then
+   estat=1
+   print_debug "ERROR: Wrong number of files backed up: ${n_files}, expected: 0, check $tmp/log8.out"
+fi
+
+# We expect to have message about 1 (only top-level) directory skipped - bacula should not descend into it
+grep 'Warning: Skipped 1 directories which were out of backup allowed directories' $tmp/log8.out > /dev/null
+if test $? -ne 0; then
+   print_debug "ERROR: Failed to find err message about skipping 1 directory, check $tmp/log8.out"
+   estat=1
+fi
+
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+end_test
