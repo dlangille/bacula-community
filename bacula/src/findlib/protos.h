@@ -45,7 +45,7 @@ int   find_files(JCR *jcr, FF_PKT *ff, int file_sub(JCR *, FF_PKT *ff_pkt, bool)
 int   match_files(JCR *jcr, FF_PKT *ff, int sub(JCR *, FF_PKT *ff_pkt, bool));
 int   term_find_files(FF_PKT *ff);
 bool  is_in_fileset(FF_PKT *ff);
-bool accept_file(FF_PKT *ff);
+bool accept_file(JCR *jcr, FF_PKT *ff);
 
 /* From match.c */
 void  init_include_exclude_files(FF_PKT *ff);

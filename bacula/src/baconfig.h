@@ -583,14 +583,16 @@ int  m_msg(const char *file, int line, POOLMEM **msgbuf, const char *fmt,...);
 int  m_msg(const char *file, int line, POOLMEM *&pool_buf, const char *fmt, ...);
 void t_msg(const char *file, int line, int64_t level, const char *fmt,...);
 
-/* To be fully implemented. To use bstrncpy(), then it's only when we
- * want to copy up to the container size, sometime strcpy() is used
- * with a number of bytes to copy, then the result is incorrect.
- * ex: char buf[200]; bstrncpy(buf, "hello", strlen("hello")); buf -> "hell"
- *
- * Use bstrncpy instead of strncpy because it ensures last char is a 0 
- */
-/* #define strncpy bad_call_on_strncpy_use_bstrncpy */
+/* Helper macro e.g. for comparison of file patch with allowed directory
+ * On Linux/Unix OSes, paths are case sensitive while on Windows it is not the case */
+#ifdef HAVE_WIN32
+#define b_path_match strstr
+#else
+#define b_path_match strcasestr
+#endif // HAVE_WIN32
+
+/* Use bstrncpy instead of strncpy because it ensures last char is a 0 */
+#define strncpy bad_call_on_strncpy_use_bstrncpy
 
 /** Use our strdup with smartalloc */
 #ifdef HAVE_WXCONSOLE

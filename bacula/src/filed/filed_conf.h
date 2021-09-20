@@ -117,6 +117,7 @@ struct DIRRES {
    CONSRES *console;
    SCHEDRES *schedule;                /* Know when to connect the Director */
    int reconnection_time;             /* Reconnect after a given time */
+   alist *allowed_backup_dirs;        /* Allowed to-be-backed-up directory list */
 };
 
 struct CLIENT {

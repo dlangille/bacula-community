@@ -160,6 +160,7 @@ struct FF_PKT {
    POOLMEM *fname_save;               /* save when stripping path */
    POOLMEM *link_save;                /* save when stripping path */
    POOLMEM *ignoredir_fname;          /* used to ignore directories */
+   alist *allowed_backup_dirs;        /* List of allowed directories with absolute paths */
    char *digest;                      /* set to file digest when the file is a hardlink */
    struct stat statp;                 /* stat packet */
    bool stat_update;                  /* Only file's metada needds to be updated */

@@ -272,6 +272,7 @@ public:
    uint64_t ReadBytes;                /* Bytes read -- before compression */
    uint64_t CommBytes;                /* FD comm line bytes sent to SD */
    uint64_t CommCompressedBytes;      /* FD comm line compressed bytes sent to SD */
+   uint32_t num_dirs_skipped;         /* directories skipped by this job (see 'Allowed Backup Dir' directive */
    FileId_t FileId;                   /* Last FileId used */
    volatile int32_t JobStatus;        /* ready, running, blocked, terminated */
    int32_t JobPriority;               /* Job priority */

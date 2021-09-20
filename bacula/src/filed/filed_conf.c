@@ -156,6 +156,7 @@ static RES_ITEM dir_items[] = {
    {"ConnectToDirector",    store_bool,     ITEM(res_dir.connect_to_dir), 0, 0, 0},
    {"Schedule", store_res, ITEM(res_dir.schedule), R_SCHEDULE, 0, 0},
    {"ReconnectionTime", store_time,ITEM(res_dir.reconnection_time), 0, ITEM_DEFAULT, 60 * 45},
+   {"AllowedBackupDirectories",   store_alist_str,     ITEM(res_dir.allowed_backup_dirs), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -536,6 +537,9 @@ void free_resource(RES *sres, int type)
       if (res->res_dir.disabled_cmds_array) {
          free(res->res_dir.disabled_cmds_array);
       }
+      if (res->res_dir.allowed_backup_dirs) {
+         delete res->res_dir.allowed_backup_dirs;
+      }
       break;
    case R_CONSOLE:
       if (res->res_cons.dirinfo.password) {
@@ -776,6 +780,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
             }
             res->res_dir.dirinfo.tls_allowed_cns = res_all.res_dir.dirinfo.tls_allowed_cns;
             res->res_dir.disable_cmds = res_all.res_dir.disable_cmds;
+            res->res_dir.allowed_backup_dirs = res_all.res_dir.allowed_backup_dirs;
             res->res_dir.console = res_all.res_dir.console;
             res->res_dir.schedule = res_all.res_dir.schedule;
             break;

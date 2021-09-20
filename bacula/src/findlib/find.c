@@ -40,6 +40,7 @@ int32_t path_max;              /* path name max length */
 #undef bmalloc
 #define bmalloc(x) sm_malloc(__FILE__, __LINE__, x)
 #endif
+
 static int our_callback(JCR *jcr, FF_PKT *ff, bool top_level);
 
 static const int fnmode = 0;
@@ -263,8 +264,49 @@ bool is_in_fileset(FF_PKT *ff)
    return false;
 }
 
+/**
+ *  Check if the file being processed is inside allowed directories or not.
+ *
+ *  Returns: true if OK to backup
+ *           false to ignore file/directory
+ */
+static int check_allowed_dirs(JCR *jcr, FF_PKT *ff_pkt)
+{
+   bool ret = true;
+   char *dir, *pp;
 
-bool accept_file(FF_PKT *ff)
+   if (ff_pkt->allowed_backup_dirs) {
+      foreach_alist(dir, ff_pkt->allowed_backup_dirs) {
+         /* The b_path_match check can be done twice here:
+          * For the 1st time we check if current file path contains exactly the allowed dir - if it does
+          *    then file/directory can be backed up
+          * For the 2nd time we check if current file is a part of allowed dir - if it does
+          *    then we know we can descend into directories below to continue checking.
+          *    If it does not then we can skip this file as well as all directories below.
+          */
+         pp =  b_path_match(dir, ff_pkt->fname);
+         if (pp == dir) {
+            ret = true;
+            break;
+         } else if ((pp = b_path_match(ff_pkt->fname, dir)) == ff_pkt->fname) {
+            ret = true;
+            break;
+         } else {
+            ret = false;
+         }
+      }
+
+      if (ret == false && S_ISDIR(ff_pkt->statp.st_mode)) {
+         Dmsg1(dbglvl, "Skipping directory %s, it's out of allowed ones\n", ff_pkt->fname);
+         Jmsg(jcr, M_SKIPPED, 0, _("Skipping directory %s, it's out of allowed ones\n"), ff_pkt->fname);
+         jcr->num_dirs_skipped++;
+      }
+   }
+
+   return ret;
+}
+
+bool accept_file(JCR *jcr, FF_PKT *ff)
 {
    int i, j, k;
    int fnm_flags;
@@ -284,6 +326,10 @@ bool accept_file(FF_PKT *ff)
    } else {
       match_func = fnmatch;
       basename = ff->fname;
+   }
+
+   if (!check_allowed_dirs(jcr, ff)) {
+      return false;
    }
 
    for (j = 0; j < incexe->opts_list.size(); j++) {
@@ -432,8 +478,21 @@ bool accept_file(FF_PKT *ff)
 static int our_callback(JCR *jcr, FF_PKT *ff, bool top_level)
 {
    if (top_level) {
-      return ff->file_save(jcr, ff, top_level);   /* accept file */
+      /* Check if we want descend at all - we may not want to backup files from the top directory
+       * but maybe something below */
+      if (check_allowed_dirs(jcr, ff)) {
+         Dmsg1(dbglvl, "Descending into top-level directory %s, it's part of allowed directories paths\n",
+               ff->fname);
+         return ff->file_save(jcr, ff, top_level);   /* accept file */
+      } else {
+         Dmsg1(dbglvl, "Will not descend into top-level directory %s, "
+               "it's not within allowed directories paths\n",
+               ff->fname);
+         /* Skip top dir and anything below */
+         return -1;
+      }
    }
+
    switch (ff->type) {
    case FT_NOACCESS:
    case FT_NOFOLLOW:
@@ -460,7 +519,7 @@ static int our_callback(JCR *jcr, FF_PKT *ff, bool top_level)
    case FT_DIRNOCHG:
    case FT_REPARSE:
    case FT_JUNCTION:
-      if (accept_file(ff)) {
+      if (accept_file(jcr, ff)) {
          return ff->file_save(jcr, ff, top_level);
       } else {
          Dmsg1(dbglvl, "Skip file %s\n", ff->fname);
@@ -497,6 +556,9 @@ term_find_files(FF_PKT *ff)
    }
    if (ff->mtab_list) {
       delete ff->mtab_list;
+   }
+   if (ff->allowed_backup_dirs) {
+      delete ff->allowed_backup_dirs;
    }
    hard_links = term_find_one(ff);
    free(ff);

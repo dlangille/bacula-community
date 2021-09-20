@@ -288,6 +288,46 @@ JCR *new_fd_jcr()
    return jcr;
 }
 
+static bool setup_allowed_dirs(FF_PKT *ff, alist *directories)
+{
+   bool ret = true;
+   char *dir;
+
+   if (!ff->allowed_backup_dirs) {
+      ff->allowed_backup_dirs = New(alist(10, owned_by_alist));
+   }
+
+   POOL_MEM rpath(PM_FNAME);
+   rpath.check_size(PATH_MAX);
+
+   foreach_alist(dir, directories) {
+         /* Add resolved directory path to the find packet list */
+         ff->allowed_backup_dirs->append(bstrdup(dir));
+   }
+
+   return ret;
+}
+
+/* Setup Director-related find files packet fileds.
+ * Currently supported directive:
+ * - Allowed Backup Directories
+ *
+ * TODO: add Exlude Directories
+ */
+static bool setup_find_files(JCR *jcr, DIRRES *director)
+{
+   FF_PKT *ff = jcr->ff;
+
+   if (director->allowed_backup_dirs) {
+      if (!setup_allowed_dirs(ff, director->allowed_backup_dirs)) {
+         Jmsg0(jcr, M_WARNING, 0, _("Unable to resolve some of the Allowed Directories.\n"));
+         return false;
+      }
+   }
+
+   return true;
+}
+
 /*
  * Accept requests from a Director
  *
@@ -2405,6 +2445,8 @@ static int estimate_cmd(JCR *jcr)
       return 0;
    }
 
+   setup_find_files(jcr, jcr->director);
+
    /* On windows, the fileset can be completed by this function (File=/ => File=C:/ + File=E:/) */
    get_win32_driveletters(jcr, jcr->ff, NULL, NULL);
 
@@ -2872,6 +2914,8 @@ static int backup_cmd(JCR *jcr)
       Dmsg1(100, "JobFiles=%ld\n", jcr->JobFiles);
    }
 
+   setup_find_files(jcr, jcr->director);
+
    /*
     * If explicitly requesting FO_ACL or FO_XATTR, fail job if it
     *  is not available on Client machine
@@ -3043,6 +3087,11 @@ static int backup_cmd(JCR *jcr)
          Jmsg(jcr, M_FATAL, 0, _("Bad status %d %c returned from Storage Daemon.\n"),
             SDJobStatus, (char)SDJobStatus);
       }
+   }
+
+   /* Warn the user if some directories were skipped because of invalid (not-allowed) location */
+   if (jcr->num_dirs_skipped) {
+      Jmsg(jcr, M_WARNING, 0, _("Skipped %d directories which were out of backup allowed directories.\n"), jcr->num_dirs_skipped);
    }
 
 cleanup:

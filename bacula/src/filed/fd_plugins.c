@@ -2523,7 +2523,7 @@ static bRC baculaAcceptFile(bpContext *ctx, struct save_pkt *sp)
    ff_pkt->fname = sp->fname;
    ff_pkt->statp = sp->statp;
 
-   if (accept_file(ff_pkt)) {
+   if (accept_file(jcr, ff_pkt)) {
       ret = bRC_OK;
    } else {
       ret = bRC_Skip;
