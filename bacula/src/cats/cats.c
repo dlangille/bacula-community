@@ -459,6 +459,7 @@ static struct json_sql email_json_v1[] = {
    SAME_KW("EmailSubject", OT_STRING),
    SAME_KW("EmailTags", OT_STRING),
    SAME_KW("EmailTo", OT_STRING),
+   SAME_KW("EmailSize", OT_INT),
    SAME_KW("EmailHasAttachment", OT_INT),
    SAME_KW("Plugin", OT_STRING),
    {NULL, NULL, OT_END}
@@ -482,6 +483,7 @@ static struct json_sql email_attachment_json_v1[] = {
    //SAME_KW("AttachmentId", OT_STRING),
    SAME_KW("AttachmentIsInline", OT_BOOL),
    SAME_KW("AttachmentName", OT_STRING),
+   SAME_KW("AttachmentSize", OT_INT),
    SAME_KW("Plugin", OT_STRING),
    {NULL, NULL, OT_END}
 };

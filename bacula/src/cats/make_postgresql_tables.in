@@ -20,26 +20,27 @@ psql -f - -d ${db_name} $* <<END-OF-DATA
 
 CREATE TABLE MetaEmail
 (
-    EmailTenant       text,
-    EmailOwner        text,
-    EmailId           text,
-    EmailTime timestamp without time zone,
-    EmailTags         text,
-    EmailSubject      text,
-    EmailFolderName   text,
-    EmailFrom         text,
-    EmailTo           text,
-    EmailCc           text,
-    EmailInternetMessageId text,  -- no index
-    EmailBodyPreview  text,
-    EmailImportance   text,
-    EmailConversationId    text,
-    EmailIsRead       smallint,
-    EmailIsDraft      smallint,
-    EmailHasAttachment smallint,
-    Plugin       text,
-    FileIndex    int,
-    JobId        int
+    EmailTenant       		text,
+    EmailOwner        		text,
+    EmailId           		text,
+    EmailTime 				timestamp without time zone,
+    EmailTags         		text,
+    EmailSubject      		text,
+    EmailFolderName   		text,
+    EmailFrom         		text,
+    EmailTo           		text,
+    EmailCc     		    text,
+    EmailInternetMessageId 	text,  -- no index
+    EmailBodyPreview  		text,
+    EmailImportance   		text,
+    EmailConversationId    	text,
+    EmailIsRead       		smallint,
+    EmailIsDraft      		smallint,
+    EmailHasAttachment	 	smallint,
+    EmailSize    			integer,
+    Plugin      			text,
+    FileIndex  				int,
+    JobId        			int
 );
 
 -- Need to add postgresql-contrib to the dependency list
@@ -74,13 +75,14 @@ CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
 
 CREATE TABLE MetaAttachment
 (
-    AttachmentName     text,
-    AttachmentEmailId  text,
-    AttachmentContentType text,
-    AttachmentIsInline smallint,
-    Plugin       text,
-    FileIndex    int,
-    JobId        int
+    AttachmentName     		text,
+    AttachmentEmailId  		text,
+    AttachmentContentType 	text,
+    AttachmentIsInline 		smallint,
+    AttachmentSize    		int,
+    Plugin       			text,
+    FileIndex    			int,
+    JobId        			int
 );
 
 CREATE INDEX meta_attachmentemailid ON MetaAttachment USING HASH (AttachmentEmailId);

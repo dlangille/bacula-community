@@ -36,26 +36,27 @@ USE ${db_name};
 
 CREATE TABLE MetaEmail
 (
-    EmailTenant       TINYBLOB,
-    EmailOwner        TINYBLOB,
-    EmailId           TINYBLOB,
-    EmailTime         DATETIME,
-    EmailTags         BLOB,
-    EmailSubject      BLOB,
-    EmailFolderName   BLOB,
-    EmailFrom         TINYBLOB,
-    EmailTo           BLOB,
-    EmailCc           BLOB,
-    EmailInternetMessageId TINYBLOB,
-    EmailBodyPreview  BLOB,
-    EmailImportance   TINYBLOB,
-    EmailConversationId    TINYBLOB,
-    EmailIsRead       TINYINT,
-    EmailIsDraft      TINYINT,
-    EmailHasAttachement TINYINT,
-    Plugin       TINYBLOB,
-    FileIndex    int,
-    JobId        int
+    EmailTenant     		TINYBLOB,
+    EmailOwner       		TINYBLOB,
+    EmailId          		TINYBLOB,
+    EmailTime         		DATETIME,
+    EmailTags         		BLOB,
+    EmailSubject      		BLOB,
+    EmailFolderName   		BLOB,
+    EmailFrom         		TINYBLOB,
+    EmailTo           		BLOB,
+    EmailCc           		BLOB,
+    EmailInternetMessageId 	TINYBLOB,
+    EmailBodyPreview  		BLOB,
+    EmailImportance   		TINYBLOB,
+    EmailConversationId    	TINYBLOB,
+    EmailIsRead       		TINYINT,
+    EmailIsDraft      		TINYINT,
+    EmailHasAttachment 		TINYINT,
+    EmailSize	 			INTEGER,
+    Plugin       			TINYBLOB,
+    FileIndex   	 		INTEGER,
+    JobId        			INTEGER
 );
 
 CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant, EmailOwner);
@@ -69,21 +70,22 @@ CREATE INDEX meta_emailto ON MetaEmail (EmailTo);
 CREATE INDEX meta_emailfrom ON MetaEmail (EmailFrom);
 CREATE INDEX meta_emailcc ON MetaEmail (EmailCc);
 CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
-CREATE INDEX meta_emailhasattachement on MetaEmail (EmailHasAttachement);
+CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
 CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
 
-CREATE TABLE MetaAttachement
+CREATE TABLE MetaAttachment
 {
-    AttachementName     BLOB,
-    AttachementEmailId  TINYBLOB,
-    AttachementContentType TINYBLOB,
-    AttachementIsInline SMALLINT,
-    Plugin       TINYBLOB,
-    FileIndex    INTEGER,
-    JobId        INTEGER
+    AttachmentName     		BLOB,
+    AttachmentEmailId  		TINYBLOB,
+    AttachmentContentType 	TINYBLOB,
+    AttachmentIsInline 		SMALLINT,
+    AttachmentSize	 		INTEGER,
+    Plugin      			TINYBLOB,
+    FileIndex    			INTEGER,
+    JobId        			INTEGER
 };
 
-CREATE INDEX meta_attachementemailid ON MetaAttachement USING HASH (AttachementEmailId);
+CREATE INDEX meta_attachmentemailid ON MetaAttachment USING HASH (AttachmentEmailId);
 
 CREATE TABLE TagJob
 (
