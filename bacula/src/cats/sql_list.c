@@ -1,7 +1,7 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2022 Kern Sibbald
+   Copyright (C) 2000-2023 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -39,7 +39,7 @@
 /*
  * Submit general SQL query
  */
-int BDB::bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_LIST_HANDLER *sendit,
+int BDB::bdb_list_sql_query(JCR *jcr, const char *query, DB_LIST_HANDLER *sendit,
                       void *ctx, int verbose, e_list_type type)
 {
    bdb_lock();
@@ -52,7 +52,7 @@ int BDB::bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_L
       return 0;
    }
 
-   list_result(jcr,this, title, sendit, ctx, type);
+   list_result(jcr,this, sendit, ctx, type);
    sql_free_result();
    bdb_unlock();
    return 1;
@@ -100,7 +100,7 @@ void BDB::bdb_list_pool_records(JCR *jcr, POOL_DBR *pdbr,
       return;
    }
 
-   list_result(jcr, this, "pool", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -110,19 +110,19 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
 {
    bdb_lock();
    if (type == VERT_LIST || type == JSON_LIST) {
-      Mmsg(cmd, "SELECT ClientId,Name,Uname,Plugin,AutoPrune,FileRetention,"
+      Mmsg(cmd, "SELECT ClientId,Name,Uname,Plugins,AutoPrune,FileRetention,"
          "JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acls(DB_ACL_BIT(DB_ACL_RBCLIENT), true));
+           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_CLIENT, true));
    } else {
       Mmsg(cmd, "SELECT ClientId,Name,FileRetention,JobRetention "
-           "FROM Client %s ORDER BY ClientId", get_acls(DB_ACL_BIT(DB_ACL_RBCLIENT), true));
+           "FROM Client %s ORDER BY ClientId", get_acl(DB_ACL_CLIENT, true));
    }
    if (!QueryDB(jcr, cmd)) {
       bdb_unlock();
       return;
    }
 
-   list_result(jcr, this, "client", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -144,7 +144,7 @@ void BDB::bdb_list_plugin_object_types(JCR *jcr, DB_LIST_HANDLER *sendit, void *
       return;
    }
 
-   list_result(jcr, this, "objecttype", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -204,7 +204,7 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
       return;
    }
 
-   list_result(jcr, this, "object", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -244,7 +244,7 @@ void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *
       return;
    }
 
-   list_result(jcr, this, "object", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -296,7 +296,7 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
       return;
    }
 
-   list_result(jcr, this, "restoreobject", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -385,7 +385,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
       return;
    }
 
-   list_result(jcr, this, "media", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -396,30 +396,25 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
 {
    POOL_MEM where2;
    bdb_lock();
-   const char *where_and = "WHERE";
-
    /* Get some extra SQL parameters if needed */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_BCLIENT), true);
+                                DB_ACL_BIT(DB_ACL_CLIENT), (JobId == 0 || volume != NULL));
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
-                                                   DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
+                                                   DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
-   if (*where) {
-      where_and = "AND";
-   }
    if (JobId) {
-      Mmsg(where2, " %s JobMedia.JobId=%lu ", where_and, JobId);
-      where_and = "AND";
+      Mmsg(where2, " WHERE JobMedia.JobId=%lu ", JobId);
    }
+   
    if (volume) {
       POOL_MEM tmp, tmp2;
       int len = strlen(volume);
       tmp.check_size(len*2+1);
       db_escape_string(jcr, this, tmp.c_str(), volume, len);
-      Mmsg(tmp2, " %s Media.VolumeName = '%s' ", where_and, tmp.c_str());
+      Mmsg(tmp2, " %s Media.VolumeName = '%s' ", JobId == 0 ?"WHERE": "AND", tmp.c_str());
       pm_strcat(where2, tmp2.c_str());
    }
 
@@ -430,15 +425,15 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
            "FROM JobMedia JOIN Media USING (MediaId) %s "
            "%s %s ORDER BY JobMediaId ASC",
            join,
-           where,
-           where2.c_str());
+           where2.c_str(),
+           where);
 
    } else {
       Mmsg(cmd, "SELECT JobId,Media.VolumeName,FirstIndex,LastIndex "
            "FROM JobMedia JOIN Media USING (MediaId) %s %s %s ORDER BY JobMediaId ASC",
            join,
-           where,
-           where2.c_str());
+           where2.c_str(),
+           where);
    }
    Dmsg1(DT_SQL|50, "q=%s\n", cmd);
 
@@ -447,7 +442,7 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
       return;
    }
 
-   list_result(jcr, this, "jobmedia", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
@@ -484,11 +479,12 @@ void BDB::bdb_list_filemedia_records(JCR *jcr, uint32_t JobId, uint32_t FileInde
       return;
    }
 
-   list_result(jcr, this, "filemedia", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
    bdb_unlock();
 }
+
 
 void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
                             DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
@@ -506,8 +502,8 @@ void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
    }
 
    bdb_lock();
-   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) | DB_ACL_BIT(DB_ACL_BCLIENT), false);
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) | DB_ACL_BIT(DB_ACL_CLIENT), false);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
    Mmsg(cmd,
    "SELECT DISTINCT Job.PriorJobId AS JobId, Job.Job, "
@@ -529,7 +525,7 @@ void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
          sendit(ctx, _("The catalog contains copies as follows:\n"));
       }
 
-      list_result(jcr, this, "copy", sendit, ctx, type);
+      list_result(jcr, this, sendit, ctx, type);
    }
 
    sql_free_result();
@@ -631,7 +627,7 @@ void BDB::bdb_list_events_records(JCR *jcr, EVENTS_DBR *rec,
    if (!QueryDB(jcr, cmd)) {
       goto bail_out;
    }
-   list_result(jcr, this, "event", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
 bail_out:
    bdb_unlock();
@@ -649,13 +645,12 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
 
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_RBCLIENT) 
-                                , false);
+                                DB_ACL_BIT(DB_ACL_CLIENT), false);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
-                                                   DB_ACL_BIT(DB_ACL_RBCLIENT)) : "";
-   
+                                                   DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+
    if (type == VERT_LIST || type == JSON_LIST) {
       Mmsg(cmd, "SELECT Time,LogText FROM Log %s "
            "WHERE Log.JobId=%s %s ORDER BY LogId ASC",
@@ -675,7 +670,7 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
       goto bail_out;
    }
 
-   list_result(jcr, this, "joblog", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
    sql_free_result();
 
@@ -773,7 +768,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    pm_strcat(where, where_tmp);
 
    if (*where_tmp) {
-      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_RBCLIENT)  |
+      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
                                  DB_ACL_BIT(DB_ACL_FILESET));
    }
 
@@ -785,7 +780,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
            "Job.ClientId,Client.Name as ClientName,JobStatus,SchedTime,"
            "StartTime,EndTime,RealEndTime,JobTDate,"
            "VolSessionId,VolSessionTime,JobFiles,JobBytes,ReadBytes,JobErrors,"
-           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,PriorJob,"
+           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,"
            "Job.FileSetId,FileSet.FileSet,Job.HasCache,Comment,Reviewed "
            "FROM Job JOIN Client USING (ClientId) LEFT JOIN Pool USING (PoolId) "
            "LEFT JOIN FileSet USING (FileSetId) %s "
@@ -802,13 +797,6 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
              "FROM Job %s %s ORDER BY StartTime %s,JobId %s %s",
            join, where, order, order, limit);
       break;
-   case LAST_JOBS:
-      Mmsg(cmd,
-           "SELECT JobId,Client1.Name as Client,Job.Name as Name,StartTime,Level as "
-           "JobLevel,JobFiles,JobBytes "
-           "FROM Client AS Client1 JOIN Job USING (ClientId) %s %s AND JobStatus IN ('T','W') "
-           "ORDER BY StartTime %s %s", join, where, order, limit);
-
    default:
       break;
    }
@@ -830,7 +818,7 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       }
    }
    sql_data_seek(0);
-   list_result(jcr, this, "job", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
    sql_free_result();
    bdb_unlock();
    return list;
@@ -839,13 +827,12 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
 /*
  * List Job totals
  *
- * TODO: Adapt for JSON
  */
 void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, void *ctx)
 {
    bdb_lock();
-   const char *where = get_acls(DB_ACL_BIT(DB_ACL_BCLIENT) | DB_ACL_BIT(DB_ACL_JOB), true);
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_BCLIENT)) : "";
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_CLIENT) | DB_ACL_BIT(DB_ACL_JOB), true);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
    /* List by Job */
    Mmsg(cmd, "SELECT  count(*) AS Jobs,sum(JobFiles) "
@@ -857,7 +844,7 @@ void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, vo
       return;
    }
 
-   list_result(jcr, this, "jobtotal", sendit, ctx, HORZ_LIST);
+   list_result(jcr, this, sendit, ctx, HORZ_LIST);
 
    sql_free_result();
 
@@ -871,7 +858,7 @@ void BDB::bdb_list_job_totals(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit, vo
       return;
    }
 
-   list_result(jcr, this, "jobtotal", sendit, ctx, HORZ_LIST);
+   list_result(jcr, this, sendit, ctx, HORZ_LIST);
 
    sql_free_result();
    bdb_unlock();
@@ -901,11 +888,11 @@ void BDB::bdb_list_files_for_job(JCR *jcr, JobId_t jobid, int deleted, DB_LIST_H
    bdb_lock();
    /* Get optional filters for the SQL query */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                DB_ACL_BIT(DB_ACL_CLIENT) |
                                 DB_ACL_BIT(DB_ACL_FILESET), true);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
-                                                   DB_ACL_BIT(DB_ACL_BCLIENT) |
+                                                   DB_ACL_BIT(DB_ACL_CLIENT) |
                                                    DB_ACL_BIT(DB_ACL_FILESET)) : "";
 
    /*
@@ -990,7 +977,7 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
    char ed1[50];
 
    bdb_lock();
-   const char *where = get_acl(DB_ACL_BCLIENT, false);
+   const char *where = get_acl(DB_ACL_CLIENT, false);
 
    *filter = 0;
    if (sdbr->Name[0]) {
@@ -1068,7 +1055,7 @@ void BDB::bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
       goto bail_out;
    }
 
-   list_result(jcr, this, "snapshot", sendit, ctx, type);
+   list_result(jcr, this, sendit, ctx, type);
 
 bail_out:
    sql_free_result();
@@ -1142,60 +1129,79 @@ void BDB::bdb_list_tag_records(JCR *jcr, TAG_DBR *tag, DB_LIST_HANDLER *result_h
          }
       }
       Dmsg1(DT_SQL|50, "q=%s\n", tmp.c_str());
-      bdb_list_sql_query(jcr, "tag", tmp.c_str(), result_handler, ctx, 0, type);
+      bdb_list_sql_query(jcr, tmp.c_str(), result_handler, ctx, 0, type);
    }
    bdb_unlock();
 }
 
-/* List all file records from a job
- * "deleted" values are described just below
+/*
+ * List plugin objects (search is based on object provided)
  */
-void BDB::bdb_list_jobs_for_file(JCR *jcr, const char *client, const char *fname, DB_LIST_HANDLER *sendit, void *ctx,  e_list_type type)
+void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   if (!client || !*client || !fname || !*fname) {
-      return;
-   }
-   const char *concat="Path.Path||File.Filename";
-
-   if (bdb_get_type_index() == SQL_TYPE_MYSQL) {
-      concat = " CONCAT(Path.Path,File.Filename) ";
-   }
+   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
 
    bdb_lock();
-   /* Get optional filters for the SQL query */
-   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
-                                DB_ACL_BIT(DB_ACL_BCLIENT) |
-                                DB_ACL_BIT(DB_ACL_FILESET), false);
 
-   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_FILESET)) : "";
-   
-   int len = strlen(fname);
-   char *esc = (char *)malloc(len * 2 + 1);
-   bdb_escape_string(jcr, esc, (char *)fname, len);
+   //TODO add ACL part
+   meta_r->create_db_filter(jcr, this, where.handle());
+   Dmsg1(DT_SQL|50, "where=[%s]\n", where.c_str());
 
-   len = strlen(client);
-   char *esc2 = (char *)malloc(len * 2 + 1);
-   bdb_escape_string(jcr, esc2, (char *)client, len);
-
-   Mmsg(cmd,    "SELECT Job.JobId as JobId,"
-        "%s as Name, "          // Concat of the filename
-        "StartTime, Type as JobType, JobStatus,JobFiles,JobBytes "
-        "FROM Client JOIN Job USING (ClientId) JOIN File USING (JobId) JOIN Path USING (PathId) %s "
-        "WHERE Client.Name = '%s' "
-        "AND File.FileIndex > 0 "
-        "AND File.Filename='%s' %s ORDER BY StartTime DESC LIMIT 20", concat, join, esc2, esc, where);
-
-   free(esc);
-   free(esc2);
-   Dmsg1(DT_SQL|50, "q=%s\n", cmd);
-   if (!QueryDB(jcr, cmd)) {
-      goto bail_out;
+   if (meta_r->ClientName[0] != 0) {
+      bdb_escape_string(jcr, esc.c_str(), meta_r->ClientName, strlen(meta_r->ClientName));
+      Mmsg(tmp, " Client.Name='%s'", esc.c_str());
+      append_filter(where.handle(), tmp.c_str());
+      Mmsg(join, " JOIN Job USING (JobId) JOIN Client USING (ClientId) ");
    }
 
-   list_result(jcr, this, "job", sendit, ctx, HORZ_LIST);
-bail_out:
+   if (meta_r->orderby == 1) {
+      Mmsg(tmp, " ORDER BY EmailTime %s ", meta_r->order ? "DESC" : "ASC");
+   } else {
+      Mmsg(tmp, " ORDER BY JobId, FileIndex %s ", meta_r->order ? "DESC" : "ASC");
+   }
+
+   pm_strcat(where, tmp.c_str());
+
+   if (meta_r->limit > 0) {
+      Mmsg(tmp, " LIMIT %d ", meta_r->limit);
+      pm_strcat(where, tmp.c_str());
+   }
+
+   if (meta_r->offset > 0) {
+      Mmsg(tmp, " OFFSET %ld ", meta_r->offset);
+      pm_strcat(where, tmp.c_str());
+   }
+
+   switch (type) {
+   case JSON_LIST:
+   case VERT_LIST:
+      meta_r->get_all_keys(tmp.handle());
+      Mmsg(cmd,
+           "SELECT %s "
+           "FROM Meta%s %s %s", tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
+         break;
+   case HORZ_LIST:
+      meta_r->get_important_keys(tmp.handle());
+         Mmsg(cmd,
+            "SELECT %s "
+              "FROM Meta%s %s %s", tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
+         break;
+   default:
+         break;
+   }
+   Dmsg1(DT_SQL|50, "%s\n", cmd);
+   if (!QueryDB(jcr, cmd)) {
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      bdb_unlock();
+      return;
+   }
+
+   list_result(jcr, this, sendit, ctx, type);
+
    sql_free_result();
    bdb_unlock();
+
 }
+
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */

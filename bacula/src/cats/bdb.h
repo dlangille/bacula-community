@@ -149,6 +149,7 @@ public:
    bool bdb_check_settings(JCR *jcr, int64_t *starttime, int val1, int64_t val2);
    bool bdb_open_batch_connexion(JCR *jcr);
    bool bdb_check_max_connections(JCR *jcr, uint32_t max_concurrent_jobs);
+   virtual const char *search_op(JCR *jcr, const char *table_col, char *value, POOLMEM **esc, POOLMEM **dest);
 
    /* Acl parts for various SQL commands */
    void  free_acl();             /* Used internally, free acls tab */
@@ -279,7 +280,7 @@ public:
    void bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_files(JCR *jcr, FILE_DBR *fr, DB_RESULT_HANDLER *sendit, void *ctx);
-
+   void bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    /* sql_update.c */
    bool bdb_update_job_start_record(JCR *jcr, JOB_DBR *jr);
    int  bdb_update_job_end_record(JCR *jcr, JOB_DBR *jr);

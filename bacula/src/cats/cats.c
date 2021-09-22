@@ -1,7 +1,7 @@
-/*
+/* 
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2022 Kern Sibbald
+   Copyright (C) 2000-2023 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -14,26 +14,26 @@
    This notice must be preserved when any source code is
    conveyed and/or propagated.
 
-   Bacula(R) is a registered trademark of Kern Sibbald.
-*/
-/*
- * Generic catalog class methods.
- *
- * Note: at one point, this file was assembled from parts of other files
- *  by a programmer, and other than "wrapping" in a class, which is a trivial
- *  change for a C++ programmer, nothing substantial was done, yet all the
- *  code was recommitted under this programmer's name.  Consequently, we
- *  undo those changes here.
- */
-
-#include "bacula.h"
-
-#if HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL
-
-#include "cats.h"
+   Bacula(R) is a registered trademark of Kern Sibbald. 
+*/ 
+/* 
+ * Generic catalog class methods. 
+ * 
+ * Note: at one point, this file was assembled from parts of other files 
+ *  by a programmer, and other than "wrapping" in a class, which is a trivial  
+ *  change for a C++ programmer, nothing substantial was done, yet all the  
+ *  code was recommitted under this programmer's name.  Consequently, we  
+ *  undo those changes here.  
+ */ 
+ 
+#include "bacula.h" 
+ 
+#if HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL 
+ 
+#include "cats.h" 
 
 static int dbglvl=100;
-
+ 
 void append_filter(POOLMEM **buf, char *cond)
 {
    if (*buf[0] != '\0') {
@@ -45,122 +45,141 @@ void append_filter(POOLMEM **buf, char *cond)
    pm_strcat(buf, cond);
 }
 
-bool BDB::bdb_match_database(const char *db_driver, const char *db_name,
-                             const char *db_address, int db_port)
+static void append_AND_OR_filter(bool and_or, POOLMEM **buf, char *cond)
 {
-   BDB *mdb = this;
-   bool match;
-
-   if (db_driver) {
-      match = strcasecmp(mdb->m_db_driver, db_driver) == 0 &&
-              bstrcmp(mdb->m_db_name, db_name) &&
-              bstrcmp(mdb->m_db_address, db_address) &&
-              mdb->m_db_port == db_port &&
-              mdb->m_dedicated == false;
+   if (*buf[0] != '\0') {
+      if (and_or) {
+         pm_strcat(buf, " OR ");
+      } else {
+         pm_strcat(buf, " AND ");
+      }
    } else {
-      match = bstrcmp(mdb->m_db_name, db_name) &&
-              bstrcmp(mdb->m_db_address, db_address) &&
-              mdb->m_db_port == db_port &&
-              mdb->m_dedicated == false;
+      if (and_or) {
+         pm_strcpy(buf, " WHERE ( ");
+      } else {
+         pm_strcat(buf, " WHERE ");
+      }
    }
-   return match;
+
+   pm_strcat(buf, cond);
 }
 
-BDB *BDB::bdb_clone_database_connection(JCR *jcr, bool mult_db_connections)
-{
-   BDB *mdb = this;
-   /*
-    * See if its a simple clone e.g. with mult_db_connections set to false
-    * then we just return the calling class pointer.
-    */
-   if (!mult_db_connections) {
-      mdb->m_ref_count++;
-      return mdb;
-   }
-
-   /*
-    * A bit more to do here just open a new session to the database.
-    */
-   return db_init_database(jcr, mdb->m_db_driver, mdb->m_db_name,
+bool BDB::bdb_match_database(const char *db_driver, const char *db_name, 
+                             const char *db_address, int db_port) 
+{ 
+   BDB *mdb = this; 
+   bool match; 
+ 
+   if (db_driver) { 
+      match = strcasecmp(mdb->m_db_driver, db_driver) == 0 && 
+              bstrcmp(mdb->m_db_name, db_name) && 
+              bstrcmp(mdb->m_db_address, db_address) && 
+              mdb->m_db_port == db_port && 
+              mdb->m_dedicated == false; 
+   } else { 
+      match = bstrcmp(mdb->m_db_name, db_name) && 
+              bstrcmp(mdb->m_db_address, db_address) && 
+              mdb->m_db_port == db_port && 
+              mdb->m_dedicated == false; 
+   } 
+   return match; 
+} 
+ 
+BDB *BDB::bdb_clone_database_connection(JCR *jcr, bool mult_db_connections) 
+{ 
+   BDB *mdb = this; 
+   /* 
+    * See if its a simple clone e.g. with mult_db_connections set to false 
+    * then we just return the calling class pointer. 
+    */ 
+   if (!mult_db_connections) { 
+      mdb->m_ref_count++; 
+      return mdb; 
+   } 
+ 
+   /* 
+    * A bit more to do here just open a new session to the database. 
+    */ 
+   return db_init_database(jcr, mdb->m_db_driver, mdb->m_db_name, 
              mdb->m_db_user, mdb->m_db_password, mdb->m_db_address,
              mdb->m_db_port, mdb->m_db_socket,
              mdb->m_db_ssl_mode, mdb->m_db_ssl_key,
              mdb->m_db_ssl_cert, mdb->m_db_ssl_ca,
              mdb->m_db_ssl_capath, mdb->m_db_ssl_cipher,
              true, mdb->m_disabled_batch_insert);
-}
-
-const char *BDB::bdb_get_engine_name(void)
-{
-   BDB *mdb = this;
-   switch (mdb->m_db_driver_type) {
-   case SQL_DRIVER_TYPE_MYSQL:
-      return "MySQL";
-   case SQL_DRIVER_TYPE_POSTGRESQL:
-      return "PostgreSQL";
-   case SQL_DRIVER_TYPE_SQLITE3:
-      return "SQLite3";
-   default:
-      return "Unknown";
-   }
-}
-
-/*
- * Lock database, this can be called multiple times by the same
- * thread without blocking, but must be unlocked the number of
- * times it was locked using db_unlock().
- */
-void BDB::bdb_lock(const char *file, int line)
-{
-   int errstat;
-   BDB *mdb = this;
-
-   if ((errstat = rwl_writelock_p(&mdb->m_lock, file, line)) != 0) {
-      berrno be;
-      e_msg(file, line, M_FATAL, 0, "rwl_writelock failure. stat=%d: ERR=%s\n",
-            errstat, be.bstrerror(errstat));
-   }
-}
-
-/*
- * Unlock the database. This can be called multiple times by the
- * same thread up to the number of times that thread called
- * db_lock()/
- */
-void BDB::bdb_unlock(const char *file, int line)
-{
-   int errstat;
-   BDB *mdb = this;
-
-   if ((errstat = rwl_writeunlock(&mdb->m_lock)) != 0) {
-      berrno be;
-      e_msg(file, line, M_FATAL, 0, "rwl_writeunlock failure. stat=%d: ERR=%s\n",
-            errstat, be.bstrerror(errstat));
-   }
-}
-
-bool BDB::bdb_sql_query(const char *query, int flags)
-{
-   bool retval;
-   BDB *mdb = this;
-
-   bdb_lock();
-   retval = sql_query(query, flags);
-   if (!retval) {
-      Mmsg(mdb->errmsg, _("Query failed: %s: ERR=%s\n"), query, sql_strerror());
-   }
-   bdb_unlock();
-   return retval;
-}
-
-void BDB::print_lock_info(FILE *fp)
-{
-   BDB *mdb = this;
-   if (mdb->m_lock.valid == RWLOCK_VALID) {
-      fprintf(fp, "\tRWLOCK=%p w_active=%i w_wait=%i\n",
-         &mdb->m_lock, mdb->m_lock.w_active, mdb->m_lock.w_wait);
-   }
-}
+} 
+ 
+const char *BDB::bdb_get_engine_name(void) 
+{ 
+   BDB *mdb = this; 
+   switch (mdb->m_db_driver_type) { 
+   case SQL_DRIVER_TYPE_MYSQL: 
+      return "MySQL"; 
+   case SQL_DRIVER_TYPE_POSTGRESQL: 
+      return "PostgreSQL"; 
+   case SQL_DRIVER_TYPE_SQLITE3: 
+      return "SQLite3"; 
+   default: 
+      return "Unknown"; 
+   } 
+} 
+ 
+/* 
+ * Lock database, this can be called multiple times by the same 
+ * thread without blocking, but must be unlocked the number of 
+ * times it was locked using db_unlock(). 
+ */ 
+void BDB::bdb_lock(const char *file, int line) 
+{ 
+   int errstat; 
+   BDB *mdb = this; 
+ 
+   if ((errstat = rwl_writelock_p(&mdb->m_lock, file, line)) != 0) { 
+      berrno be; 
+      e_msg(file, line, M_FATAL, 0, "rwl_writelock failure. stat=%d: ERR=%s\n", 
+            errstat, be.bstrerror(errstat)); 
+   } 
+} 
+ 
+/* 
+ * Unlock the database. This can be called multiple times by the 
+ * same thread up to the number of times that thread called 
+ * db_lock()/ 
+ */ 
+void BDB::bdb_unlock(const char *file, int line) 
+{ 
+   int errstat; 
+   BDB *mdb = this; 
+ 
+   if ((errstat = rwl_writeunlock(&mdb->m_lock)) != 0) { 
+      berrno be; 
+      e_msg(file, line, M_FATAL, 0, "rwl_writeunlock failure. stat=%d: ERR=%s\n", 
+            errstat, be.bstrerror(errstat)); 
+   } 
+} 
+ 
+bool BDB::bdb_sql_query(const char *query, int flags) 
+{ 
+   bool retval; 
+   BDB *mdb = this; 
+ 
+   bdb_lock(); 
+   retval = sql_query(query, flags); 
+   if (!retval) { 
+      Mmsg(mdb->errmsg, _("Query failed: %s: ERR=%s\n"), query, sql_strerror()); 
+   } 
+   bdb_unlock(); 
+   return retval; 
+} 
+ 
+void BDB::print_lock_info(FILE *fp) 
+{ 
+   BDB *mdb = this; 
+   if (mdb->m_lock.valid == RWLOCK_VALID) { 
+      fprintf(fp, "\tRWLOCK=%p w_active=%i w_wait=%i\n",  
+         &mdb->m_lock, mdb->m_lock.w_active, mdb->m_lock.w_wait); 
+   } 
+} 
 
 bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
 {
@@ -245,8 +264,7 @@ bool OBJECT_DBR::parse_plugin_object_string(char **obj_str)
    if (!tmp) {
       goto bail_out;
    }
-   val = str_to_uint64(tmp);
-   ObjectCount = (val > 9223372036854775808ULL /*2^63 */) ? 0 : val;
+   ObjectCount = str_to_uint64(*obj_str);
 
    ret = true;
 
@@ -336,7 +354,6 @@ void OBJECT_DBR::create_db_filter(JCR *jcr, POOLMEM **where)
          append_filter(where, tmp.c_str());
       }
    }
-
 }
 
 void parse_restore_object_string(char **r_obj_str, ROBJECT_DBR *robj_r)
@@ -455,6 +472,7 @@ static struct json_sql email_json_v1[] = {
    SAME_KW("EmailImportance", OT_STRING),
    SAME_KW("EmailInternetMessageId", OT_STRING),
    SAME_KW("EmailIsRead", OT_BOOL),
+   SAME_KW("EmailIsDraft", OT_BOOL),
    SAME_KW("EmailTime", OT_STRING),
    SAME_KW("EmailSubject", OT_STRING),
    SAME_KW("EmailTags", OT_STRING),
@@ -633,5 +651,153 @@ bail_out:
    return status;
 }
 
+void META_DBR::get_important_keys(POOLMEM **where)
+{
+   if (bstrcasecmp(Type, "email")) {
+      Mmsg(where, "EmailTenant, EmailOwner, EmailFrom, EmailTo, EmailTime, EmailSubject, FileIndex, JobId");
+   } else {
+      Mmsg(where, "AttachmentEmailId, AttachmentSize, AttachmentName, FileIndex, JobId");
+   }
+}
+
+void META_DBR::get_all_keys(POOLMEM **where)
+{
+   struct json_sql *p;
+   if (bstrcasecmp(Type, "email")) {
+      p = email_json_v1;
+   } else {
+      p = email_attachment_json_v1;
+   }
+
+   Mmsg(where, "JobId,FileIndex");
+   for (int i = 0; p[i].sql_name ; i++) {
+      pm_strcat(where, ",");
+      pm_strcat(where, p[i].sql_name);
+   }
+}
+
+void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
+{
+   const char *prefix;
+   bool and_or = false;
+   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE);
+
+   if (bstrcasecmp(Type, "email")) {
+      prefix = "Email";
+   } else {
+      prefix = "Attachment";
+   }
+
+   if (bstrcasecmp(Type, "email"))
+   {
+      if (all && (*From || *To || *Cc || *Subject || *Tags || *BodyPreview || *Category)) {
+         and_or = true;
+      }
+
+      if (Id[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailId", Id, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (From[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailFrom", From, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (To[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailTo", To, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (Cc[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailCc", Cc, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (Subject[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailSubject", Subject, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (Tags[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailTags", Tags, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+
+      if (BodyPreview[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailBodyPreview", BodyPreview, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+#if 0
+      if (Category[0] != 0) {
+         db->search_op(jcr, "MetaEmail.EmailCategory", Category, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+#endif
+
+      if (and_or) {
+         pm_strcat(where, ") ");
+      }
+
+      if (ConversationId[0] != 0) {
+         db_escape_string(jcr, jcr->db, esc.c_str(), ConversationId, strlen(ConversationId));
+         Mmsg(tmp, " MetaEmail.EmailConversationId = '%s'", esc.c_str());
+         append_filter(where, tmp.c_str());
+      }
+
+      if (HasAttachment > 0) {
+         Mmsg(tmp, " MetaEmail.EmailHasAttachment = %d", HasAttachment);
+         append_filter(where, tmp.c_str());
+      }
+
+      if (isDraft > 0) {
+         Mmsg(tmp, " MetaEmail.EmailIsDraft = %d", isDraft);
+         append_filter(where, tmp.c_str());
+      }
+
+      if (isRead > 0) {
+         Mmsg(tmp, " MetaEmail.EmailIsRead = %d", isRead);
+         append_filter(where, tmp.c_str());
+      }
+
+      if (MinTime[0]) {
+         db_escape_string(jcr, jcr->db, esc.c_str(), MinTime, strlen(MinTime));
+         Mmsg(tmp, " MetaEmail.EmailTime >= '%s'", esc.c_str());
+         append_filter(where, tmp.c_str());
+      }
+
+      if (MaxTime[0]) {
+         db_escape_string(jcr, jcr->db, esc.c_str(), MaxTime, strlen(MaxTime));
+         Mmsg(tmp, " MetaEmail.EmailTime <= '%s'", esc.c_str());
+         append_filter(where, tmp.c_str());
+      }
+   } else {
+      if (Id[0] != 0) {
+         db->search_op(jcr, "MetaAttachment.AttachmentEmailId", Id, esc.handle(), tmp.handle());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+   }
+
+   if (MinSize > 0) {
+      Mmsg(tmp, " Meta%s.%sSize >= %llu", prefix, prefix, MinSize);
+      append_filter(where, tmp.c_str());
+   }
+
+   if (MaxSize > 0) {
+      Mmsg(tmp, " Meta%s.%sSize <= %llu", prefix, prefix, MaxSize);
+      append_filter(where, tmp.c_str());
+   }
+
+   if (Plugin[0] != 0) {
+      db_escape_string(jcr, jcr->db, esc.c_str(), Plugin, strlen(Plugin));
+      Mmsg(tmp, " Meta%s.Plugin='%s'", prefix, esc.c_str());
+      append_filter(where, tmp.c_str());
+   }
+
+   if (JobId != 0) {
+      Mmsg(tmp, " Meta%s.JobId=%lu", prefix, JobId);
+      append_filter(where, tmp.c_str());
+   }
+}
 
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */ 

@@ -309,6 +309,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_files(jcr, filedbr, sendit, ua);
 #define db_list_tag_records(jcr, mdb, tagdbr, sendit, ua, llist)     \
            mdb->bdb_list_tag_records(jcr, tagdbr, sendit, ua, llist);
+#define db_list_metadata_records(jcr, mdb, dbr, sendit, ua, llist)     \
+           mdb->bdb_list_metadata_records(jcr, dbr, sendit, ua, llist);
 
 /* sql_update.c */
 #define db_update_job_start_record(jcr, mdb, jr) \

@@ -1413,6 +1413,15 @@ void TAG_DBR::gen_sql(JCR *jcr, BDB *db,
    *aclbits_extra_ = aclbits_extra;
 }
 
+const char *BDB::search_op(JCR *jcr, const char *table_col, char *value, POOLMEM **esc, POOLMEM **dest)
+{
+   int len = strlen(value);
+   *esc = check_pool_memory_size(*esc, len*2+1);
+   bdb_escape_string(jcr, *esc, (char*)value, len);
+   Mmsg(dest, " %s ILIKE '%%%s%%'", table_col, value);
+   return *dest;
+}
+
 #ifdef COMMUNITY
 bool BDB::bdb_check_settings(JCR *jcr, int64_t *starttime, int val, int64_t val2) 
 {

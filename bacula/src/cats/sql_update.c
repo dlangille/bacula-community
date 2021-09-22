@@ -217,11 +217,11 @@ int BDB::bdb_update_client_record(JCR *jcr, CLIENT_DBR *cr)
 
    bdb_escape_string(jcr, esc_name, cr->Name, strlen(cr->Name));
    bdb_escape_string(jcr, esc_uname, cr->Uname, strlen(cr->Uname));
-   bdb_escape_string(jcr, esc_plugin, cr->Plugin, strlen(cr->Plugin));
+   bdb_escape_string(jcr, esc_plugin, cr->Plugins, strlen(cr->Plugins));
 
    Mmsg(cmd,
 "UPDATE Client SET AutoPrune=%d,FileRetention=%s,JobRetention=%s,"
-"Uname='%s',Plugin='%s' WHERE Name='%s'",
+"Uname='%s',Plugins='%s' WHERE Name='%s'",
       cr->AutoPrune,
       edit_uint64(cr->FileRetention, ed1),
       edit_uint64(cr->JobRetention, ed2),

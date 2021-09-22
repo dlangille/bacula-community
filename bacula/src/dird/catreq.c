@@ -657,7 +657,7 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
       meta_pkt mp(p);
       META_JSON parser;
       POOL_MEM val;
-      Dmsg3(50, "[metadata plugin] type=%d len=%d buf=[%.*s]\n", mp.type, mp.buf_len, mp.buf);
+      Dmsg4(150, "[metadata plugin] type=%d len=%d buf=[%.*s]\n", mp.type, mp.buf_len, mp.buf_len, mp.buf);
       if (parser.parse(jcr,
                        jcr->db,
                        jcr->wjcr? jcr->wjcr->JobId : jcr->JobId,
@@ -673,7 +673,7 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
          }
          db_unlock(jcr->db);
       } else {
-         Jmsg1(jcr, M_ERROR, 0, _("Unable to parse Plugin metadata for FileIndex %lld\n"), (int64_t)FileIndex);
+         Jmsg(jcr, M_ERROR, 0, _("Unable to parse Plugin metadata for FileIndex %lld\n"), (int64_t)FileIndex);
          Dmsg1(50, "Unable to parse Plugin metadata err=%s\n", val.c_str());
       }
 

@@ -484,7 +484,7 @@ struct CLIENT_DBR {
    utime_t JobRetention;
    char Name[MAX_NAME_LENGTH];        /* Client name */
    char Uname[MAX_UNAME_LENGTH];      /* Uname for client */
-   char Plugin[MAX_PLUGIN_LENGTH];    /* Plugin list for this client */
+   char Plugins[MAX_PLUGIN_LENGTH];   /* Plugin list for this client */
 };
 
 /* Counter record as in database */
@@ -628,6 +628,57 @@ public:
                 char *esc_name,     /* Escaped name of the tag */
                 uint64_t *aclbits,  /* ACL used */
                 uint64_t *aclbits_extra); /* Extra ACL used */
+};
+
+
+
+/* Used to search in MetaEmail and MetaAttachment table */
+#define MAX_SEARCH_LENGTH 256
+#define MAX_SEARCH_LENGTH_ESCAPED (MAX_SEARCH_LENGTH * 2 + 1)
+
+class META_DBR: public SMARTALLOC
+{
+public:
+   JobId_t JobId;
+   int64_t MinSize;
+   int64_t MaxSize;
+   int     HasAttachment;
+   int     isDraft;
+   int     isRead;
+   uint64_t offset;
+   uint32_t limit;
+   int     order;
+   int     orderby;             // 0: JobId, FileIndex  1: EmailTime
+   bool    all;
+
+   char    Id[MAX_SEARCH_LENGTH];
+   char    Tenant[MAX_SEARCH_LENGTH];
+   char    Owner[MAX_SEARCH_LENGTH];
+   char    ClientName[MAX_NAME_LENGTH];
+   char    From[MAX_SEARCH_LENGTH];
+   char    To[MAX_SEARCH_LENGTH];
+   char    Cc[MAX_SEARCH_LENGTH];
+   char    Tags[MAX_SEARCH_LENGTH];
+   char    Subject[MAX_SEARCH_LENGTH];
+   char    BodyPreview[MAX_SEARCH_LENGTH];
+   char    Type[16];            // Email or Attachment
+   char    ConversationId[MAX_NAME_LENGTH];
+   char    Category[MAX_SEARCH_LENGTH];
+   char    MinTime[MAX_NAME_LENGTH];
+   char    MaxTime[MAX_NAME_LENGTH];
+   char    Plugin[MAX_NAME_LENGTH];
+   META_DBR(): JobId(0), MinSize(-1), MaxSize(-1), HasAttachment(-1),
+               isDraft(-1), isRead(-1), offset(0), limit(512), order(0), orderby(0), all(false)
+   {
+      *Id = *Tenant = *Owner = 0;
+      *ClientName = *From = *To = *Cc = *Subject = *Tags = 0;
+      *BodyPreview = *Type = *ConversationId = *Category = 0;
+      *MinTime = *MaxTime = *Plugin = 0;
+   };
+   ~META_DBR() {};
+   void get_important_keys(POOLMEM **dest);
+   void get_all_keys(POOLMEM **dest);
+   void create_db_filter(JCR *jcr, BDB *db, POOLMEM **dest);
 };
 
 /* Call back context for getting a 32/64 bit value from the database */

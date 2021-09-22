@@ -336,10 +336,14 @@ bail_out:
  *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
- *  list metadata type=email [search=<str> where=<from|to|cc|tags|subject|bodypreview|attachement> importance=<str> isread=<yes|no> isdraft=<yes|no> hasattachement=<yes|no> limit=<int> offset=<int> receivedtime=<time> senttime=<time> order=<asc|desc>]
+ *  list metadata type=[email|attachment] from=<str> to=<str> cc=<str> tags=<str> 
+ *             subject=<str> bodypreview=<str> all=<str> minsize=<int> maxsize=<int> 
+ *             importance=<str> isread=<0|1> isdraft=<0|1>
+ *             categories=<str> conversationid=<str> hasattachment=<0|1>
+ *             starttime=<time> endtime=<time>
+ *             limit=<int> offset=<int>  order=<Asc|desc>
+ *             emailid=<str>
  *
- *  list metadata type=email where="(EmailFrom ILIKE '%test%' OR EmailTo ILIKE '%test%' OR EmailCc ILIKE '%test%') AND EmailReceivedtime > '2021-09-01 00:00:00'" limit=10
- *  
  *  Note: keyword "long" is before the first command on the command 
  *    line results in doing a llist (long listing).
  */
@@ -877,7 +881,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
             } else if (strcasecmp(ua->argk[j], NT_("order")) == 0 && ua->argv[j]) {
                /* Other order are tested before */
-               event.order = bstrcasecmp(ua->argv[j], "DESC") == 0;
+               event.order = bstrcasecmp(ua->argv[j], "DESC");
 
             } else if (strcasecmp(ua->argk[j], NT_("days")) == 0 && ua->argv[j]) {
                if (!setup_start_date(ua->argv[j], true, event.start, sizeof(event.start))) {
@@ -909,6 +913,114 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
       } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0) {
          return tag_cmd(ua, cmd);
+
+      /* List Emails/Attachments */
+      } else if (strcasecmp(ua->argk[i], NT_("metadata")) == 0) {
+         META_DBR meta_r;
+
+         for (j=i+1; j<ua->argc; j++) {
+            if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
+               if (is_a_number(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
+                  meta_r.JobId = str_to_uint64(ua->argv[j]);
+                } else {
+                  ua->error_msg(_("Invalid jobid argument\n"));
+                  return 1;
+               }
+
+            } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
+               if (!acl_access_ok(ua, Client_ACL, ua->argk[j])) {
+                  ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argk[j]);
+                  return 0;
+               }
+               bstrncpy(meta_r.ClientName, ua->argv[j], sizeof(meta_r.ClientName));
+
+            } else if (strcasecmp(ua->argk[j], NT_("from")) == 0) {
+               bstrncpy(meta_r.From, ua->argv[j], sizeof(meta_r.From));
+
+            } else if (strcasecmp(ua->argk[j], NT_("emailid")) == 0) {
+               bstrncpy(meta_r.Id, ua->argv[j], sizeof(meta_r.Id));
+
+            } else if (strcasecmp(ua->argk[j], NT_("to")) == 0) {
+               bstrncpy(meta_r.To, ua->argv[j], sizeof(meta_r.To));
+
+            } else if (strcasecmp(ua->argk[j], NT_("cc")) == 0) {
+               bstrncpy(meta_r.Cc, ua->argv[j], sizeof(meta_r.Cc));
+
+            } else if (strcasecmp(ua->argk[j], NT_("tags")) == 0) {
+               bstrncpy(meta_r.Tags, ua->argv[j], sizeof(meta_r.Tags));
+
+            } else if (strcasecmp(ua->argk[j], NT_("subject")) == 0) {
+               bstrncpy(meta_r.Subject, ua->argv[j], sizeof(meta_r.Subject));
+
+            } else if (strcasecmp(ua->argk[j], NT_("bodypreview")) == 0) {
+               bstrncpy(meta_r.BodyPreview, ua->argv[j], sizeof(meta_r.BodyPreview));
+
+            } else if (strcasecmp(ua->argk[j], NT_("type")) == 0) {
+               bstrncpy(meta_r.Type, ua->argv[j], sizeof(meta_r.Type));
+
+            } else if (strcasecmp(ua->argk[j], NT_("conversationid")) == 0) {
+               bstrncpy(meta_r.ConversationId, ua->argv[j], sizeof(meta_r.ConversationId));
+
+            } else if (strcasecmp(ua->argk[j], NT_("category")) == 0) {
+               bstrncpy(meta_r.Category, ua->argv[j], sizeof(meta_r.Category));
+
+            } else if (strcasecmp(ua->argk[j], NT_("all")) == 0) {
+               bstrncpy(meta_r.Tags, ua->argv[j], sizeof(meta_r.Tags));
+               bstrncpy(meta_r.From, ua->argv[j], sizeof(meta_r.From));
+               bstrncpy(meta_r.To, ua->argv[j], sizeof(meta_r.To));
+               bstrncpy(meta_r.Cc, ua->argv[j], sizeof(meta_r.Cc));
+               bstrncpy(meta_r.Subject, ua->argv[j], sizeof(meta_r.Subject));
+               bstrncpy(meta_r.BodyPreview, ua->argv[j], sizeof(meta_r.BodyPreview));
+               bstrncpy(meta_r.Category, ua->argv[j], sizeof(meta_r.Category));
+               meta_r.all = true;
+
+            } else if (strcasecmp(ua->argk[j], NT_("minsize")) == 0) {
+               uint64_t v;
+               if (size_to_uint64(ua->argv[j], strlen(ua->argv[j]), &v)) {
+                  meta_r.MinSize = v;
+               }
+
+            } else if (strcasecmp(ua->argk[j], NT_("maxsize")) == 0) {
+               uint64_t v;
+               if (size_to_uint64(ua->argv[j], strlen(ua->argv[j]), &v)) {
+                  meta_r.MaxSize = v;
+               }
+
+            } else if (strcasecmp(ua->argk[j], NT_("mintime")) == 0) {
+               bstrncpy(meta_r.MinTime, ua->argv[j], sizeof(meta_r.MinTime));
+
+            } else if (strcasecmp(ua->argk[j], NT_("maxtime")) == 0) {
+               bstrncpy(meta_r.MaxTime, ua->argv[j], sizeof(meta_r.MaxTime));
+
+            } else if (strcasecmp(ua->argk[j], NT_("isread")) == 0) {
+               meta_r.isRead = str_to_uint64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("isdraft")) == 0) {
+               meta_r.isDraft = str_to_uint64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("hasattachment")) == 0) {
+               meta_r.HasAttachment = str_to_uint64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("offset")) == 0 && ua->argv[j]) {
+               meta_r.offset = atoi(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
+               meta_r.limit = atoi(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("orderby")) == 0 && ua->argv[j]) {
+               meta_r.orderby = bstrcasecmp(ua->argv[j], "Time") == 1;
+
+            } else if (strcasecmp(ua->argk[j], NT_("order")) == 0 && ua->argv[j]) {
+               /* Other order are tested before */
+               meta_r.order = bstrcasecmp(ua->argv[j], "DESC");
+            }
+         }
+         if (*meta_r.Type == 0) {
+            ua->error_msg(_("Invalid type argument\n"));
+            return 1;
+         }
+         db_list_metadata_records(ua->jcr, ua->db, &meta_r, prtit, ua, llist);
+         return 1;
 
       } else if (strcasecmp(ua->argk[i], NT_("limit")) == 0
                  || strcasecmp(ua->argk[i], NT_("days")) == 0

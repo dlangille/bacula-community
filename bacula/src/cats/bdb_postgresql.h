@@ -59,6 +59,7 @@ public:
    bool sql_batch_start(JCR *jcr);
    bool sql_batch_end(JCR *jcr, const char *error);
    bool sql_batch_insert(JCR *jcr, ATTR_DBR *ar);
+   const char *search_op(JCR *jcr, const char *table_col, char *value, POOLMEM **esc, POOLMEM **dest);
 };
 
 #endif /* __BDB_POSTGRESQL_H_ */

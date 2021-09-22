@@ -199,7 +199,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
           char *pos = strchr(fd->msg+strlen(OKjob)+1, ';');
           if (pos) {
              *pos = 0;
-             bstrncpy(cr.Plugin, pos+1, sizeof(cr.Plugin));
+             bstrncpy(cr.Plugins, pos+1, sizeof(cr.Plugins));
           }
           bstrncpy(cr.Uname, fd->msg+strlen(OKjob)+1, sizeof(cr.Uname));
 
