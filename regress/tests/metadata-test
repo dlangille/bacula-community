@@ -53,6 +53,34 @@ SELECT EmailSubject, EmailFrom, EmailTo, JobId, FileIndex FROM MetaEmail;
 sql
 SELECT AttachmentName, JobId, FileIndex FROM MetaAttachment;
 
+setdebug level=50 tags=sql trace=1 dir
+@$out $tmp/log4.out
+.jlist metadata type=email all="eric iaculis"
+@$out $tmp/log5.out
+.jlist metadata type=email all="eric iaculis" jobid=10
+@$out $tmp/log6.out
+.jlist metadata type=email all="eric iaculis" limit=1
+@$out $tmp/log8.out
+.jlist metadata type=email all=eric orderby=time
+@$out $tmp/log9.out
+.jlist metadata type=email all=eric orderby=time order=desc
+@$out $tmp/log10.out
+.jlist metadata type=email from=eric to=john subject=regress bodypreview=regards
+@$out $tmp/log11.out
+.jlist metadata type=email bodypreview=veronica
+@$out $tmp/log12.out
+.jlist metadata type=email hasattachment=1
+@$out $tmp/log13.out
+.jlist metadata type=email minsize=10 maxsize=100000
+@$out $tmp/log14.out
+.jlist metadata type=email minsize=100000 hasattachment=1
+@$out $tmp/log15.out
+.jlist metadata type=email client=test1-fd
+@$out $tmp/log16.out
+.jlist metadata type=email client=$HOST-fd
+@$out $tmp/log17.out
+.jlist metadata type=email tags=important
+setdebug level=0 tags= dir
 quit
 END_OF_DATA
 
@@ -61,10 +89,152 @@ stop_bacula
 
 # Temporary check, to replace with list command
 nb=`grep eric@bacula $tmp/log2.out | wc -l`
-if [ $nb != 2 ]; then
+if [ $nb != 4 ]; then
     print_debug "ERROR: Should find two emails in the catalog"
     estat=1
 fi
 
+# Should find 2 mails with both words
+grep '{' $tmp/log4.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log4.out"
+    estat=1
+fi
+
+# Should find nothing (jobid=10)
+grep '\[' $tmp/log5.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log5.out"
+    estat=1
+fi
+
+# Should find one line (limit=1)
+grep '{' $tmp/log6.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log6.out"
+    estat=1
+fi
+
+# Should find 4 emails sorted by time ASC
+grep '{' $tmp/log8.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 4 && $j->[0]->{emailtime} eq "2021-09-15 12:39:19");'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log8.out"
+    estat=1
+fi
+
+# Should find 4 emails sorted by time DESC
+grep '{' $tmp/log9.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 4 && $j->[0]->{emailtime} eq "2021-09-15 12:40:19");'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log9.out"
+    estat=1
+fi
+
+# Should find 2 emails, matching all criteria
+grep '{' $tmp/log10.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log10.out"
+    estat=1
+fi
+
+# Should find 2 emails, matching bodypreview criteria
+grep '{' $tmp/log11.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log11.out"
+    estat=1
+fi
+
+# Should find 2 emails, matching hasattachment
+grep '{' $tmp/log12.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log12.out"
+    estat=1
+fi
+
+# Should find 4 emails, size filter
+grep '{' $tmp/log13.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 4 && $j->[0]->{emailsize} < 100000);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log13.out"
+    estat=1
+fi
+
+# Should find 0 email, size filter
+grep '\[' $tmp/log14.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log14.out"
+    estat=1
+fi
+
+# Should find 0 email, client filter
+grep '\[' $tmp/log15.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log15.out"
+    estat=1
+fi
+
+# Should find 4 email, client filter OK
+grep '{' $tmp/log16.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 4);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log16.out"
+    estat=1
+fi
+
+# Should find 2 email, tags filter
+grep '{' $tmp/log17.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log17.out"
+    estat=1
+fi
 
 end_test
