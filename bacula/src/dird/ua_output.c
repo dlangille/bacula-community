@@ -937,6 +937,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("from")) == 0) {
                bstrncpy(meta_r.From, ua->argv[j], sizeof(meta_r.From));
 
+            } else if (strcasecmp(ua->argk[j], NT_("name")) == 0) {
+               bstrncpy(meta_r.Name, ua->argv[j], sizeof(meta_r.Name));
+
             } else if (strcasecmp(ua->argk[j], NT_("emailid")) == 0) {
                bstrncpy(meta_r.Id, ua->argv[j], sizeof(meta_r.Id));
 

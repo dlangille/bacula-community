@@ -138,6 +138,11 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> |\n"
        "\t\t source=<str> | code=<str> | type=<str> ]\n"
        "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | status=<S> | limit=<int> | order=<asc|desc> ]\n"
+       "\tmetadata type=<email|attachment> [jobid=<nn> client=<cc> order=<Asc|desc> limit=<nn> orderby=<time> offset=<nn>]\n"
+       "\t   [from=<str> to=<str> cc=<str> tags=<str> subject=<str> bodypreview=<str> all=<str>\n"
+       "\t    minsize=<int> maxsize=<int> importance=<str> isread=<0|1> isdraft=<0|1> categories=<str>\n"
+       "\t    conversationid=<str> hasattachment=<0|1> starttime=<time> endtime=<time>\n"
+       "\t    emailid=<str>]\n"
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),
@@ -146,7 +151,15 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot |\n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> ]\n"
-       "\tobject [jobid=<jobid> client=<cli> type=<name> category=<str> order=<asc/desc> limit=<n>\n"), false},
+       "\tobject [jobid=<jobid> client=<cli> type=<name> category=<str> order=<asc/desc> limit=<n>\n"
+       "\tmetadata type=<email|attachment> [jobid=<nn> client=<cc> order=<Asc|desc> limit=<nn> orderby=<time>\n"
+       "\t                                  minsize=<nn> maxsize=<nn> offset=<nn>]\n"
+       "\t   [ from=<str> to=<str> cc=<str> tags=<str> subject=<str> bodypreview=<str> all=<str>\n"
+       "\t    importance=<str> isread=<0|1> isdraft=<0|1> categories=<str>\n"
+       "\t    conversationid=<str> hasattachment=<0|1> starttime=<time> endtime=<time>\n"
+       "\t    emailid=<str> ]\n"
+       "\t   [ name=<str> emailid=<str> ]\n"
+      ), false},
 
  { NT_("messages"),   messagescmd,   _("Display pending messages"),   NT_(""),    false},
  { NT_("memory"),     memory_cmd,    _("Print current memory usage"), NT_(""),    true},

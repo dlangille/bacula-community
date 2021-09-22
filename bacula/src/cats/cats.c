@@ -773,7 +773,12 @@ void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
       }
    } else {
       if (Id[0] != 0) {
-         db->search_op(jcr, "MetaAttachment.AttachmentEmailId", Id, esc.handle(), tmp.handle());
+         db_escape_string(jcr, jcr->db, esc.c_str(), Id, strlen(Id));
+         Mmsg(tmp, " MetaAttachment.AttachmentEmailId = '%s'", esc.c_str());
+         append_AND_OR_filter(and_or, where, tmp.c_str());
+      }
+      if (Name[0] != 0) {
+         db->search_op(jcr, "MetaAttachment.AttachmentName", Name, esc.handle(), tmp.handle());
          append_AND_OR_filter(and_or, where, tmp.c_str());
       }
    }
