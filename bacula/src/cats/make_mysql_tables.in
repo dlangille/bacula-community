@@ -41,38 +41,36 @@ CREATE TABLE MetaEmail
     EmailOwner       		TINYTEXT,
     EmailId          		TINYTEXT,
     EmailTime         		DATETIME,
-    EmailTags         		BLOB,
-    EmailSubject      		BLOB,
-    EmailFolderName   		BLOB,
-    EmailFrom         		TINYBLOB,
-    EmailTo           		BLOB,
-    EmailCc           		BLOB,
-    EmailInternetMessageId 	TINYBLOB,
-    EmailBodyPreview  		BLOB,
-    EmailImportance   		TINYBLOB,
-    EmailConversationId    	TINYBLOB,
+    EmailTags         		TEXT,
+    EmailSubject      		TEXT,
+    EmailFolderName   		TEXT,
+    EmailFrom         		TINYTEXT,
+    EmailTo           		TEXT,
+    EmailCc           		TEXT,
+    EmailInternetMessageId 	TINYTEXT,
+    EmailBodyPreview  		TEXT,
+    EmailImportance   		TINYTEXT,
+    EmailConversationId    	TINYTEXT,
     EmailIsRead       		TINYINT,
     EmailIsDraft      		TINYINT,
     EmailHasAttachment 		TINYINT,
     EmailSize	 			INTEGER,
-    Plugin       			TINYBLOB,
+    Plugin       			TINYTEXT,
     FileIndex   	 		INTEGER,
     JobId        			INTEGER
 );
 
-CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant, EmailOwner);
+-- Requires TEXT instead of BLOB
+CREATE FULLTEXT INDEX meta_emailsubjectbody ON MetaEmail 
+       (EmailSubject, EmailBodyPreview, EmailTo, EmailCc, EmailFrom);
+CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant(255), EmailOwner(255));
 CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
-CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
-CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
-CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId);
-CREATE INDEX meta_emailsubjectbody ON MetaEmail (EmailSubject);
-CREATE INDEX meta_emailbodypreview ON MetaEmail (EmailBodyPreview);
-CREATE INDEX meta_emailto ON MetaEmail (EmailTo);
-CREATE INDEX meta_emailfrom ON MetaEmail (EmailFrom);
-CREATE INDEX meta_emailcc ON MetaEmail (EmailCc);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags(255));
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName(255));
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId(255));
 CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
 CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
-CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
+CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
 
 CREATE TABLE MetaAttachment
 {
@@ -84,12 +82,14 @@ CREATE TABLE MetaAttachment
     AttachmentContentType 	TINYTEXT,
     AttachmentIsInline 		SMALLINT,
     AttachmentSize	 		INTEGER,
-    Plugin      			TINYBLOB,
+    Plugin      			TINYTEXT,
     FileIndex    			INTEGER,
     JobId        			INTEGER
 };
 
-CREATE INDEX meta_attachmentemailid ON MetaAttachment USING HASH (AttachmentEmailId);
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
+CREATE INDEX meta_attachmentjobid on MetaAttachment (Jobid);
 
 CREATE TABLE TagJob
 (

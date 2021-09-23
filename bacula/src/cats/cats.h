@@ -645,7 +645,6 @@ public:
 class META_DBR: public SMARTALLOC
 {
 public:
-   JobId_t JobId;
    int64_t MinSize;
    int64_t MaxSize;
    int     HasAttachment;
@@ -656,6 +655,7 @@ public:
    int     order;
    int     orderby;             // 0: JobId, FileIndex  1: EmailTime
    bool    all;
+   char   *JobIds;
 
    char    Id[MAX_SEARCH_LENGTH];
    char    Tenant[MAX_SEARCH_LENGTH];
@@ -674,18 +674,22 @@ public:
    char    MaxTime[MAX_NAME_LENGTH];
    char    Plugin[MAX_NAME_LENGTH];
    char    Name[MAX_SEARCH_LENGTH];
-   META_DBR(): JobId(0), MinSize(-1), MaxSize(-1), HasAttachment(-1),
+   char    errmsg[MAX_NAME_LENGTH];
+   META_DBR(): MinSize(-1), MaxSize(-1), HasAttachment(-1),
                isDraft(-1), isRead(-1), offset(0), limit(512), order(0), orderby(0), all(false)
    {
+      JobIds = NULL;
       *Id = *Tenant = *Owner = 0;
       *ClientName = *From = *To = *Cc = *Subject = *Tags = 0;
       *BodyPreview = *Type = *ConversationId = *Category = 0;
       *Name = *MinTime = *MaxTime = *Plugin = 0;
+      *errmsg = 0;
    };
    ~META_DBR() {};
    void get_important_keys(POOLMEM **dest);
    void get_all_keys(POOLMEM **dest);
    void create_db_filter(JCR *jcr, BDB *db, POOLMEM **dest);
+   bool check();                /* check if valid */
 };
 
 /* Call back context for getting a 32/64 bit value from the database */

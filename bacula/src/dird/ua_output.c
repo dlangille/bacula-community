@@ -930,8 +930,8 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
-               if (is_a_number(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
-                  meta_r.JobId = str_to_uint64(ua->argv[j]);
+               if (is_a_number_list(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
+                  meta_r.JobIds = ua->argv[j];
                 } else {
                   ua->error_msg(_("Invalid jobid argument\n"));
                   return 1;
@@ -970,6 +970,12 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
             } else if (strcasecmp(ua->argk[j], NT_("type")) == 0) {
                bstrncpy(meta_r.Type, ua->argv[j], sizeof(meta_r.Type));
+
+            } else if (strcasecmp(ua->argk[j], NT_("owner")) == 0) {
+               bstrncpy(meta_r.Owner, ua->argv[j], sizeof(meta_r.Owner));
+
+            } else if (strcasecmp(ua->argk[j], NT_("tenant")) == 0) {
+               bstrncpy(meta_r.Tenant, ua->argv[j], sizeof(meta_r.Tenant));
 
             } else if (strcasecmp(ua->argk[j], NT_("conversationid")) == 0) {
                bstrncpy(meta_r.ConversationId, ua->argv[j], sizeof(meta_r.ConversationId));

@@ -303,7 +303,7 @@ void BDB::bdb_list_plugin_objects(JCR *jcr, OBJECT_DBR *obj_r, DB_LIST_HANDLER *
    case JSON_LIST:
    case VERT_LIST:
          Mmsg(cmd,
-            "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
+              "SELECT Object.ObjectId, Object.JobId, Object.Path, Object.Filename, Object.PluginName, Object.ObjectCategory, "
                     "Object.ObjectType, Object.ObjectName, Object.ObjectSource, "
                     "Object.ObjectUUID, Object.ObjectSize, Object.ObjectStatus, Object.ObjectCount "
             "FROM Object %s %s", join.c_str(), where.c_str());
@@ -1299,24 +1299,44 @@ void BDB::bdb_list_tag_records(JCR *jcr, TAG_DBR *tag, DB_LIST_HANDLER *result_h
 void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
    POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
-
    bdb_lock();
-
    //TODO add ACL part
    meta_r->create_db_filter(jcr, this, where.handle());
    Dmsg1(DT_SQL|50, "where=[%s]\n", where.c_str());
+
+   const char *where_filter = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
+                                       DB_ACL_BIT(DB_ACL_CLIENT), strcmp(where.c_str(), "") == 0);
+
+   const char *join_filter = (*where_filter && meta_r->ClientName[0] == 0) ?
+      get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
    if (meta_r->ClientName[0] != 0) {
       bdb_escape_string(jcr, esc.c_str(), meta_r->ClientName, strlen(meta_r->ClientName));
       Mmsg(tmp, " Client.Name='%s'", esc.c_str());
       append_filter(where.handle(), tmp.c_str());
-      Mmsg(join, " JOIN Job USING (JobId) JOIN Client USING (ClientId) ");
+      Mmsg(join, " JOIN Job ON (Job.JobId = Meta%s.JobId) JOIN Client USING (ClientId) ", meta_r->Type);
+
+   } else if (*where_filter) {  // We add manually the Job join filter part
+      Mmsg(join, " JOIN Job ON (Job.JobId = Meta%s.JobId) ", meta_r->Type);
    }
 
+   if (strcmp(meta_r->Type, "Attachment") == 0) {
+      pm_strcat(join, " JOIN MetaEmail ON (EmailId = AttachmentEmailId AND MetaEmail.JobId = MetaAttachment.JobId) ");
+   }
+   
+   if (where_filter && *where_filter) {
+      pm_strcat(where, where_filter);
+   }
+
+   if (join_filter && *join_filter) {
+      pm_strcat(join, join_filter);
+   }
+   
    if (meta_r->orderby == 1) {
       Mmsg(tmp, " ORDER BY EmailTime %s ", meta_r->order ? "DESC" : "ASC");
    } else {
-      Mmsg(tmp, " ORDER BY JobId, FileIndex %s ", meta_r->order ? "DESC" : "ASC");
+      Mmsg(tmp, " ORDER BY Meta%s.JobId, Meta%s.FileIndex %s ",
+           meta_r->Type, meta_r->Type, meta_r->order ? "DESC" : "ASC");
    }
 
    pm_strcat(where, tmp.c_str());
@@ -1331,19 +1351,24 @@ void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER 
       pm_strcat(where, tmp.c_str());
    }
 
+
    switch (type) {
    case JSON_LIST:
    case VERT_LIST:
       meta_r->get_all_keys(tmp.handle());
       Mmsg(cmd,
-           "SELECT %s "
-           "FROM Meta%s %s %s", tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
+           "SELECT %s %s "
+           "FROM Meta%s %s %s",
+           (strcmp(meta_r->Type, "Email") == 0) ? "" : "DISTINCT",
+           tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
          break;
    case HORZ_LIST:
       meta_r->get_important_keys(tmp.handle());
          Mmsg(cmd,
-            "SELECT %s "
-              "FROM Meta%s %s %s", tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
+            "SELECT %s %s "
+              "FROM Meta%s %s %s",
+              (strcmp(meta_r->Type, "Email") == 0) ? "" : "DISTINCT",
+              tmp.c_str(), meta_r->Type, join.c_str(), where.c_str());
          break;
    default:
          break;

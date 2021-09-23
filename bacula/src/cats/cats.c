@@ -496,6 +496,8 @@ static struct json_sql email_json_v1[] = {
 }
  */
 static struct json_sql email_attachment_json_v1[] = {
+   SAME_KW("AttachmentTenant", OT_STRING),
+   SAME_KW("AttachmentOwner", OT_STRING),
    SAME_KW("AttachmentContentType", OT_STRING),
    SAME_KW("AttachmentEmailId", OT_STRING),
    //SAME_KW("AttachmentId", OT_STRING),
@@ -654,24 +656,27 @@ bail_out:
 void META_DBR::get_important_keys(POOLMEM **where)
 {
    if (bstrcasecmp(Type, "email")) {
-      Mmsg(where, "EmailTenant, EmailOwner, EmailFrom, EmailTo, EmailTime, EmailSubject, FileIndex, JobId");
+      Mmsg(where, "EmailTenant, EmailOwner, EmailFrom, EmailTo, EmailTime, EmailSubject, MetaEmail.FileIndex, MetaEmail.JobId");
    } else {
-      Mmsg(where, "AttachmentEmailId, AttachmentSize, AttachmentName, FileIndex, JobId");
+      Mmsg(where, "AttachmentEmailId, AttachmentSize, AttachmentName, MetaAttachment.FileIndex, MetaAttachment.JobId");
    }
 }
 
 void META_DBR::get_all_keys(POOLMEM **where)
 {
    struct json_sql *p;
+   const char *sep=NULL;
    if (bstrcasecmp(Type, "email")) {
       p = email_json_v1;
+      sep = ",MetaEmail.";
    } else {
       p = email_attachment_json_v1;
+      sep = ",MetaAttachment.";
    }
 
-   Mmsg(where, "JobId,FileIndex");
+   Mmsg(where, "Meta%s.JobId,Meta%s.FileIndex", Type, Type);
    for (int i = 0; p[i].sql_name ; i++) {
-      pm_strcat(where, ",");
+      pm_strcat(where, sep);
       pm_strcat(where, p[i].sql_name);
    }
 }
@@ -697,17 +702,16 @@ bool META_DBR::check()
 
 void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
 {
-   const char *prefix;
    bool and_or = false;
    POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE);
 
    if (bstrcasecmp(Type, "email")) {
-      prefix = "Email";
+      bstrncpy(Type, "Email", sizeof(Type));
    } else {
-      prefix = "Attachment";
+      bstrncpy(Type, "Attachment", sizeof(Type));
    }
 
-   if (bstrcasecmp(Type, "email"))
+   if (strcmp(Type, "Email") == 0)
    {
       if (all && (*From || *To || *Cc || *Subject || *Tags || *BodyPreview || *Category)) {
          and_or = true;
@@ -802,24 +806,36 @@ void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
       }
    }
 
+   if (Owner[0]) {
+      db_escape_string(jcr, jcr->db, esc.c_str(), Owner, strlen(Owner));
+      Mmsg(tmp, " Meta%s.%sOwner = '%s'", Type, Type, esc.c_str());
+      append_filter(where, tmp.c_str());
+   }
+
+   if (Tenant[0]) {
+      db_escape_string(jcr, jcr->db, esc.c_str(), Tenant, strlen(Tenant));
+      Mmsg(tmp, " Meta%s.%sTenant = '%s'", Type, Type, esc.c_str());
+      append_filter(where, tmp.c_str());
+   }
+
    if (MinSize > 0) {
-      Mmsg(tmp, " Meta%s.%sSize >= %llu", prefix, prefix, MinSize);
+      Mmsg(tmp, " Meta%s.%sSize >= %llu", Type, Type, MinSize);
       append_filter(where, tmp.c_str());
    }
 
    if (MaxSize > 0) {
-      Mmsg(tmp, " Meta%s.%sSize <= %llu", prefix, prefix, MaxSize);
+      Mmsg(tmp, " Meta%s.%sSize <= %llu", Type, Type, MaxSize);
       append_filter(where, tmp.c_str());
    }
 
    if (Plugin[0] != 0) {
       db_escape_string(jcr, jcr->db, esc.c_str(), Plugin, strlen(Plugin));
-      Mmsg(tmp, " Meta%s.Plugin='%s'", prefix, esc.c_str());
+      Mmsg(tmp, " Meta%s.Plugin='%s'", Type, esc.c_str());
       append_filter(where, tmp.c_str());
    }
 
-   if (JobId != 0) {
-      Mmsg(tmp, " Meta%s.JobId=%lu", prefix, JobId);
+   if (is_a_number_list(JobIds)) {
+      Mmsg(tmp, " Meta%s.JobId IN (%s)", Type, JobIds);
       append_filter(where, tmp.c_str());
    }
 }

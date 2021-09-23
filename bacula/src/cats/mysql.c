@@ -853,5 +853,13 @@ bool BDB_MYSQL::sql_batch_insert(JCR *jcr, ATTR_DBR *ar)
    return true; 
 } 
  
+const char *BDB_MYSQL::search_op(JCR *jcr, const char *table_col, char *value, POOLMEM **esc, POOLMEM **dest)
+{
+   int len = strlen(value);
+   *esc = check_pool_memory_size(*esc, len*2+1);
+   bdb_escape_string(jcr, *esc, value, len);
+   Mmsg(dest, " MATCH(%s) AGAINST ('%s') ", table_col, *esc);
+   return *dest;
+}
  
 #endif /* HAVE_MYSQL */ 
