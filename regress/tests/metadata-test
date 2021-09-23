@@ -80,6 +80,10 @@ setdebug level=50 tags=sql trace=1 dir
 .jlist metadata type=email client=$HOST-fd
 @$out $tmp/log17.out
 .jlist metadata type=email tags=important
+@$out $tmp/log18.out
+.jlist metadata type=attachment name=CV
+@$out $tmp/log19.out
+.jlist metadata type=attachment name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
 setdebug level=0 tags= dir
 quit
 END_OF_DATA
@@ -234,6 +238,28 @@ exit (scalar(@$j) == 2);'
 
 if [ $? != 1 ]; then
     print_debug "ERROR: Incorrect data in $tmp/log17.out"
+    estat=1
+fi
+
+# Should find 2 attachments
+grep '{' $tmp/log18.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log18.out"
+    estat=1
+fi
+
+# Should find 2 attachments
+grep '{' $tmp/log19.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log19.out"
     estat=1
 fi
 
