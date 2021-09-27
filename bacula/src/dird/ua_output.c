@@ -745,7 +745,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
             } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
                if (!acl_access_ok(ua, Client_ACL, ua->argk[j])) {
-                  ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argk[j]);
+                  ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argv[j]);
                   return 0;
                }
                bstrncpy(obj_r.ClientName, ua->argv[j], sizeof(obj_r.ClientName));
@@ -929,7 +929,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
             } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
                if (!acl_access_ok(ua, Client_ACL, ua->argk[j])) {
-                  ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argk[j]);
+                  ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argv[j]);
                   return 0;
                }
                bstrncpy(meta_r.ClientName, ua->argv[j], sizeof(meta_r.ClientName));
