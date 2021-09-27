@@ -35,12 +35,42 @@ cd ${cwd}
 
 start_test
 
+cat <<EOF >> $conf/bacula-dir.conf
+Console {
+  Name = cons1
+  Password = xxx
+  JobAcl    = $JobName
+  ClientAcl = $HOST-fd
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf1
+Console {
+  Name = cons1
+  Password = xxx
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = $BASEPORT
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
 @$out $tmp/log1.out
 label storage=File1 volume=TestVolume001
-run job=$JobName storage=File1 yes
+run job=$JobName storage=File1 fileset=TestPluginSet2 yes
 wait
 messages
 @$out $tmp/log2.out
@@ -54,212 +84,314 @@ sql
 SELECT AttachmentName, JobId, FileIndex FROM MetaAttachment;
 
 setdebug level=50 tags=sql trace=1 dir
-@$out $tmp/log4.out
-.jlist metadata type=email all="eric iaculis"
-@$out $tmp/log5.out
-.jlist metadata type=email all="eric iaculis" jobid=10
-@$out $tmp/log6.out
-.jlist metadata type=email all="eric iaculis" limit=1
-@$out $tmp/log8.out
-.jlist metadata type=email all=eric orderby=time
-@$out $tmp/log9.out
-.jlist metadata type=email all=eric orderby=time order=desc
-@$out $tmp/log10.out
-.jlist metadata type=email from=eric to=john subject=regress bodypreview=regards
-@$out $tmp/log11.out
-.jlist metadata type=email bodypreview=veronica
-@$out $tmp/log12.out
-.jlist metadata type=email hasattachment=1
-@$out $tmp/log13.out
-.jlist metadata type=email minsize=10 maxsize=100000
-@$out $tmp/log14.out
-.jlist metadata type=email minsize=100000 hasattachment=1
-@$out $tmp/log15.out
-.jlist metadata type=email client=test1-fd
-@$out $tmp/log16.out
-.jlist metadata type=email client=$HOST-fd
-@$out $tmp/log17.out
-.jlist metadata type=email tags=important
-@$out $tmp/log18.out
-.jlist metadata type=attachment name=CV
-@$out $tmp/log19.out
-.jlist metadata type=attachment name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
+@$out $tmp/log_console.4.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis"
+@$out $tmp/log_console.5.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis" jobid=10
+@$out $tmp/log_console.6.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis" limit=1
+@$out $tmp/log_console.8.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all=eric orderby=time
+@$out $tmp/log_console.9.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all=eric orderby=time order=desc
+@$out $tmp/log_console.10.out
+.jlist metadata type=email owner=xxxx tenant=xxxx from=eric to=john subject=regress bodypreview=regards
+@$out $tmp/log_console.11.out
+.jlist metadata type=email owner=xxxx tenant=xxxx bodypreview=veronica
+@$out $tmp/log_console.12.out
+.jlist metadata type=email owner=xxxx tenant=xxxx hasattachment=1
+@$out $tmp/log_console.13.out
+.jlist metadata type=email owner=xxxx tenant=xxxx minsize=10 maxsize=100000
+@$out $tmp/log_console.14.out
+.jlist metadata type=email owner=xxxx tenant=xxxx minsize=100000 hasattachment=1
+@$out $tmp/log_console.15.out
+.jlist metadata type=email owner=xxxx tenant=xxxx client=test1-fd
+@$out $tmp/log_console.16.out
+.jlist metadata type=email owner=xxxx tenant=xxxx client=$HOST-fd
+@$out $tmp/log_console.17.out
+.jlist metadata type=email owner=xxxx tenant=xxxx tags=important
+@$out $tmp/log_console.18.out
+.jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV
+@$out $tmp/log_console.19.out
+.jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
+@$out $tmp/log_console.20.out
+.jlist metadata type=email owner=yyyy tenant=yyyy all="eric"
 setdebug level=0 tags= dir
+run job=NightlySave fileset=TestPluginSet2 pool=Default storage=File1 yes
+wait
+messages
+@$out $tmp/log.21.out
+.jlist metadata type=email owner=xxxx tenant=xxxx
 quit
 END_OF_DATA
 
 run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+setdebug level=50 tags=sql dir
+@$out $tmp/log_restricted.4.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis"
+@$out $tmp/log_restricted.5.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis" jobid=10
+@$out $tmp/log_restricted.6.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all="eric iaculis" limit=1
+@$out $tmp/log_restricted.8.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all=eric orderby=time
+@$out $tmp/log_restricted.9.out
+.jlist metadata type=email owner=xxxx tenant=xxxx all=eric orderby=time order=desc
+@$out $tmp/log_restricted.10.out
+.jlist metadata type=email owner=xxxx tenant=xxxx from=eric to=john subject=regress bodypreview=regards
+@$out $tmp/log_restricted.11.out
+.jlist metadata type=email owner=xxxx tenant=xxxx bodypreview=veronica
+@$out $tmp/log_restricted.12.out
+.jlist metadata type=email owner=xxxx tenant=xxxx hasattachment=1
+@$out $tmp/log_restricted.13.out
+.jlist metadata type=email owner=xxxx tenant=xxxx minsize=10 maxsize=100000
+@$out $tmp/log_restricted.14.out
+.jlist metadata type=email owner=xxxx tenant=xxxx minsize=100000 hasattachment=1
+@$out $tmp/log_restricted.15.out
+.jlist metadata type=email owner=xxxx tenant=xxxx client=test1-fd
+@$out $tmp/log_restricted.16.out
+.jlist metadata type=email owner=xxxx tenant=xxxx client=$HOST-fd
+@$out $tmp/log_restricted.17.out
+.jlist metadata type=email owner=xxxx tenant=xxxx tags=important
+@$out $tmp/log_restricted.18.out
+.jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV
+@$out $tmp/log_restricted.19.out
+.jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
+@$out $tmp/log_restricted.20.out
+.jlist metadata type=email owner=yyyy tenant=yyyy all="eric"
+setdebug level=0 tags= dir
+quit
+END_OF_DATA
+
+$bin/bconsole -c $tmp/bconsole.conf1 < $tmp/bconcmds
+
 stop_bacula
 
 # Temporary check, to replace with list command
 nb=`grep eric@bacula $tmp/log2.out | wc -l`
-if [ $nb != 4 ]; then
+if [ $nb != 2 ]; then
     print_debug "ERROR: Should find two emails in the catalog"
     estat=1
 fi
 
-# Should find 2 mails with both words
-grep '{' $tmp/log4.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log4.out"
-    estat=1
-fi
-
-# Should find nothing (jobid=10)
-grep '\[' $tmp/log5.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 0);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log5.out"
-    estat=1
-fi
-
-# Should find one line (limit=1)
-grep '{' $tmp/log6.out | perl -MJSON -e '
+for mode in console restricted
+do
+    # Should find 1 mails with both words
+    grep '{' $tmp/log_$mode.4.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
 exit (scalar(@$j) == 1);'
 
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log6.out"
-    estat=1
-fi
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.4.out"
+        estat=1
+    fi
 
-# Should find 4 emails sorted by time ASC
-grep '{' $tmp/log8.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 4 && $j->[0]->{emailtime} eq "2021-09-15 12:39:19");'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log8.out"
-    estat=1
-fi
-
-# Should find 4 emails sorted by time DESC
-grep '{' $tmp/log9.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 4 && $j->[0]->{emailtime} eq "2021-09-15 12:40:19");'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log9.out"
-    estat=1
-fi
-
-# Should find 2 emails, matching all criteria
-grep '{' $tmp/log10.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log10.out"
-    estat=1
-fi
-
-# Should find 2 emails, matching bodypreview criteria
-grep '{' $tmp/log11.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log11.out"
-    estat=1
-fi
-
-# Should find 2 emails, matching hasattachment
-grep '{' $tmp/log12.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log12.out"
-    estat=1
-fi
-
-# Should find 4 emails, size filter
-grep '{' $tmp/log13.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 4 && $j->[0]->{emailsize} < 100000);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log13.out"
-    estat=1
-fi
-
-# Should find 0 email, size filter
-grep '\[' $tmp/log14.out | perl -MJSON -e '
+    if [ $mode = console ]; then
+        # Should find nothing (jobid=10)
+        grep '\[' $tmp/log_$mode.5.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
 exit (scalar(@$j) == 0);'
 
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log14.out"
-    estat=1
-fi
+        if [ $? != 1 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.5.out"
+            estat=1
+        fi
+    else
+        # TODO: Get the error in JSON?
+        grep -i "invalid jobid argument" $tmp/log_$mode.5.out > /dev/null
+        if [ $? != 0 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.5.out"
+            estat=1
+        fi
+    fi
 
-# Should find 0 email, client filter
-grep '\[' $tmp/log15.out | perl -MJSON -e '
+    # Should find one line (limit=1)
+    grep '{' $tmp/log_$mode.6.out | perl -MJSON -e '
+$l = <>; 
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.6.out"
+        estat=1
+    fi
+
+    # Should find 2 emails sorted by time ASC
+    grep '{' $tmp/log_$mode.8.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2 && $j->[0]->{emailtime} eq "2021-09-15 12:39:19");'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.8.out"
+        estat=1
+    fi
+
+    # Should find 2 emails sorted by time DESC
+    grep '{' $tmp/log_$mode.9.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2 && $j->[0]->{emailtime} eq "2021-09-15 12:40:19");'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.9.out"
+        estat=1
+    fi
+
+    # Should find 1 emails, matching all criteria
+    grep '{' $tmp/log_$mode.10.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.10.out"
+        estat=1
+    fi
+
+    # Should find 1 emails, matching bodypreview criteria
+    grep '{' $tmp/log_$mode.11.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.11.out"
+        estat=1
+    fi
+
+    # Should find 1 emails, matching hasattachment
+    grep '{' $tmp/log_$mode.12.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.12.out"
+        estat=1
+    fi
+
+    # Should find 2 emails, size filter
+    grep '{' $tmp/log_$mode.13.out | perl -MJSON -e '
+$l = <>; 
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2 && $j->[0]->{emailsize} < 100000);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.13.out"
+        estat=1
+    fi
+
+    # Should find 0 email, size filter
+    grep '\[' $tmp/log_$mode.14.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
 exit (scalar(@$j) == 0);'
 
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log15.out"
-    estat=1
-fi
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.14.out"
+        estat=1
+    fi
 
-# Should find 4 email, client filter OK
-grep '{' $tmp/log16.out | perl -MJSON -e '
+    if [ $mode = console ]; then
+    # Should find 0 email, client filter
+        grep '\[' $tmp/log_$mode.15.out | perl -MJSON -e '
+$l = <>; 
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 0);'
+
+        if [ $? != 1 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.15.out"
+            estat=1
+        fi
+    else
+        # TODO: Get the error in JSON?
+        grep -i "No authorization" $tmp/log_$mode.15.out > /dev/null
+        if [ $? != 0 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.15.out"
+            estat=1
+        fi
+    fi
+
+    if [ $mode = console ]; then
+        
+        # Should find 2 email, client filter OK
+        grep '{' $tmp/log_$mode.16.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 2);'
+
+        if [ $? != 1 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.16.out"
+            estat=1
+        fi
+
+    else
+        # TODO: Get the error in JSON?
+        grep -i "Access to Client" $tmp/log_$mode.16.out > /dev/null
+        if [ $? != 0 ]; then
+            print_debug "ERROR: Incorrect data in $tmp/log_$mode.16.out"
+            estat=1
+        fi
+    fi
+
+    # Should find 1 email, tags filter
+    grep '{' $tmp/log_$mode.17.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.17.out"
+        estat=1
+    fi
+
+    # Should find 1 attachments
+    grep '{' $tmp/log_$mode.18.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.18.out"
+        estat=1
+    fi
+
+    # Should find 1 attachments
+    grep '{' $tmp/log_$mode.19.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.19.out"
+        estat=1
+    fi
+
+    # Should find 0 email, owner/tenant filter
+    grep '\[' $tmp/log_$mode.20.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@$j) == 0);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.20.out"
+        estat=1
+    fi
+done
+
+    # Should find 4 email, owner/tenant filter. Same query for both
+grep '\[' $tmp/log.21.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
 exit (scalar(@$j) == 4);'
 
 if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log16.out"
-    estat=1
-fi
-
-# Should find 2 email, tags filter
-grep '{' $tmp/log17.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log17.out"
-    estat=1
-fi
-
-# Should find 2 attachments
-grep '{' $tmp/log18.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log18.out"
-    estat=1
-fi
-
-# Should find 2 attachments
-grep '{' $tmp/log19.out | perl -MJSON -e '
-$l = <>;
-$j = JSON::decode_json($l) ;
-exit (scalar(@$j) == 2);'
-
-if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log19.out"
+    print_debug "ERROR: Incorrect data in $tmp/log.21.out"
     estat=1
 fi
 

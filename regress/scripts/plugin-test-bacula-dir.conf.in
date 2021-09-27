@@ -159,6 +159,17 @@ Job {
   Write Bootstrap = "@working_dir@/NightlySave.bsr"
 }
 
+Job {
+  Name = "DedupPluginTest"
+  Type = Backup
+  Client=@hostname@-fd
+  FileSet="DedupPluginSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+}
+
 # Backup the catalog database (after the nightly save)
 Job {
   Name = "BackupCatalog"
@@ -215,6 +226,31 @@ Job {
   Where = @tmpdir@/bacula-restores
 }
 
+FileSet {
+  Name = LDAP
+  Include {
+     Options { signature=MD5 }
+     Plugin = "ldap:config=@tmpdir@/ldap.conf"
+  }
+}
+
+FileSet {
+  Name = LDAP-pass
+  Include {
+     Options { signature=MD5 }
+     Plugin = "ldap:config=@tmpdir@/ldap.conf hbindpass=NTgwOjU4ODo2KyswNisrMAA"
+  }
+}
+
+FileSet {
+  Name = MSAD
+  Include {
+     Options { signature=MD5 }
+     Plugin = "ldap:config=@tmpdir@/msad.conf"
+  }
+}
+
+
 # List of files to be backed up
 FileSet {
   Name = "Full Set"
@@ -237,6 +273,392 @@ FileSet {
   }
 }
 
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDump"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "DB2Dump"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "db2: ctl_dir=@db2_database_dir@/tmp instance=db2inst1 database=db2"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "DB2DumpNotFound"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "db2: ctl_dir=@db2_database_dir@/tmp instance=db2inst1 database=testXXX abort_on_error"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "DB2DumpStop"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "db2: ctl_dir=@db2_database_dir@/tmp instance=db2inst1 database=db[13] can_stop"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "DB2DumpInstanceError"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "db2: ctl_dir=@db2_database_dir@/tmp instance=db2inst2 abort_on_error"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLPrepareFD"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin  mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf prepare=fd"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLPrepareFDExtract"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin  mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf prepare=fd restore_extract=true"
+  }
+}
+
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLPrepareSD"
+  Include {  
+     Options {  
+       signature=MD5
+       # GZIP not supported by stored/prepare.c
+       # compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf prepare=sd"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLPrepareSDExtract"
+  Include {  
+     Options {  
+       signature=MD5
+       # GZIP not supported by stored/prepare.c
+       # compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin  mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf prepare=sd restore_extract=true"
+  }
+}
+
+
+FileSet {
+  Name = "MySQLPrepareSDXtrabackup"
+  Include {  
+     Options {  
+       signature=MD5
+       # GZIP not supported by stored/prepare.c
+       # compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf prepare=sd xtrabackup_args=\"--parallel=4 --use-memory=1000000000\""
+  }
+}
+
+FileSet {
+  Name = "MySQLDumpExtraFile"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: extra_file=@tmpdir@/db0/extra.cnf config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+FileSet {
+  Name = "MySQLDumpUser"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: password=root user=root config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDumpAll"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: all_databases mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDumpOne"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: database=mysql user=root mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDumpError"
+  Include {
+     Options {
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: database=xxx abort_on_error user=root mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDumpBacula"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: database=bacula* user=root mycnf_dir=@tmpdir@/db0 config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLDumpTwo"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: database=bacula* service=test mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+     Plugin = "mysql: database=mysql mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+     Plugin = "mysql: database=weird* mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+
+     Plugin = "mysql: database=mysql mycnf_dir=@tmpdir@/db0/ config_file=@tmpdir@/db0/my.cnf"
+  }
+}
+
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLBin"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin config_file=@tmpdir@/db0/my.cnf user=root mycnf_dir=@tmpdir@/db0/"
+  }
+}
+
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLBin2"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: mode=bin bin_format=xbstream config_file=@tmpdir@/db0/my.cnf user=root mycnf_dir=@tmpdir@/db0/"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLBin3"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: service=srv1 mode=bin bin_format=xbstream config_file=@tmpdir@/db1/my.cnf mycnf_dir=@tmpdir@/db1/ extra_file=@tmpdir@/db1/my.cnf"
+     Plugin = "mysql: service=srv2 mode=bin bin_format=xbstream config_file=@tmpdir@/db2/my.cnf mycnf_dir=@tmpdir@/db2/ extra_file=@tmpdir@/db2/my.cnf"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "MySQLBin4"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "mysql: service=srv3 mode=bin bin_format=xbstream config_file=@tmpdir@/db1/my.cnf mycnf_dir=@tmpdir@/db1/ extra_file=@tmpdir@/db1/my.cnf"
+  }
+}
+
+
+FileSet {
+  Name = OracleSBT
+  Include {  
+     Options {  
+       signature=MD5
+     }
+     Plugin = "oracle-sbt: ctrlfile=/tmp/sbt"
+  }
+}
+
+
+FileSet {
+  Name = OracleSBTTest
+  Include {  
+     Options {  
+       signature=MD5
+     }
+     Plugin = "oracle-sbt: ctrlfile=@tmpdir@/sbt"
+  }
+}
+
+FileSet {
+  Name = OracleSQLRMAN
+  Include {  
+     Options {  
+       signature=MD5
+     }
+     Plugin = "oracle: mode=rman"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "OracleSQLDump"
+  Include {  
+     Options {  
+       signature=MD5
+     }
+     Plugin = "oracle"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "SAP"
+  Include {  
+     Options {  
+       signature=MD5
+     }
+     Plugin = "sap: ctrlfile=@tmpdir@/sap"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "PostgreSQLDump"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: use_sudo"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "PostgreSQLDumpDb"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: database=@db_name@ use_sudo"
+  }
+}
+
+# List of files to be backed up
+FileSet {
+  Name = "PostgreSQLDumpDbGlob"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: database=database* use_sudo"
+  }
+}
+
+FileSet {
+  Name = "PostgreSQLDumpDb2"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: database=@db_name@ use_sudo"
+     Plugin = "postgresql: database=postgres use_sudo"
+  }
+}
+
+FileSet {
+  Name = "PostgreSQLDumpService"
+  Include {
+     Options {
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: database=dbmain  user=postgres service=main"
+     Plugin = "postgresql: database=dbmain2 user=postgres service=main2"
+  }
+}
+
+FileSet {
+  Name = "PostgreSQLDumpPITR"
+  Include {  
+     Options {  
+       signature=MD5
+       compression = GZIP1
+     }
+     Plugin = "postgresql: service=main mode=pitr"
+  }
+}
+
 FileSet {
   Name = "SparseSet"
   Include {
@@ -256,6 +678,57 @@ FileSet {
       compression=GZIP 
     }
     File = <@tmpdir@/file-list
+  }
+}
+
+FileSet {
+  Name = "KVMSet"
+  Include {
+    Options {
+      signature=MD5 
+    }
+    Plugin = "kvm: host=@kvm_host1@ include=/etc"
+  }
+}
+
+FileSet {
+  Name = "KVMsudo"
+  Include {
+    Options {
+      signature=MD5 
+    }
+    Plugin = "kvm: unix_user=@kvm_sudo@ host=@kvm_host1@ include=/etc"
+  }
+}
+
+FileSet {
+  Name = "KVMSetPrefix"
+  Include {
+    Options {
+      signature=MD5 
+    }
+    Plugin = "kvm: host_prefix host=@kvm_host1@ include=/etc"
+  }
+}
+
+FileSet {
+  Name = "KVMSetHost"
+  Include {
+    Options {
+      signature=MD5 
+    }
+    Plugin = "kvm: host=@kvm_host1@,@kvm_host2@ include=/etc/passwd"
+  }
+}
+
+
+FileSet {
+  Name = "KVMSetAuto"
+  Include {
+    Options {
+      signature=MD5 
+    }
+    Plugin = "kvm: uri=qemu:///session include=/etc"
   }
 }
 
@@ -319,6 +792,30 @@ FileSet {
     Plugin = "test-plugin:/@test-plugin@/de.po:@builddir@/po/de.po:/dev/null"
   }
 }
+
+FileSet {
+  Name = "TestPluginSet2"
+  Include {
+    Options {
+      readfifo = yes
+      signature=MD5 
+    }
+    File = <@tmpdir@/file-list
+    Plugin = "test-plugin:/@test-plugin@/de.po:@builddir@/po/de.po:/dev/null"
+  }
+}
+
+FileSet {
+  Name = "DedupPluginSet"
+  Include {
+    Options {
+#      signature=MD5 
+    }
+#    File = <@tmpdir@/file-list
+    Plugin = "test-dedup:@tmpdir@/dedupstreams.conf"
+  }
+}
+
 
 FileSet {
   Name = "TestPluginSetAcceptFile1"
