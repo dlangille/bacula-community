@@ -470,10 +470,10 @@ fi
 
 RET=$(grep "jobstatus:" ${cwd}/tmp/log6.out | awk '{print $2}')
 COMME=$(grep -c COMM_STDERR ${cwd}/tmp/log6.out)
-BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log6.out)
-if [ "x$RET" != "xT" ] || [ "$COMME" -ne 1 ] || [ "$BEND" -ne 1 ]
+#BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log6.out)
+if [ "x$RET" != "xT" ] || [ "$COMME" -ne 1 ]
 then
-   echo "log6" "$RET" "$COMME" "$BEND"
+   echo "log6" "$RET" "$COMME"
    bstat=$((bstat+16))
 fi
 

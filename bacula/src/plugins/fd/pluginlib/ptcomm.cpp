@@ -79,8 +79,39 @@ void PTCOMM::terminate(bpContext *ctx)
       return;
    }
 
+   _timeout.tv_sec = 0;
+   _timeout.tv_usec = 1000;
+
+   fd_set rfds;
+   FD_ZERO(&rfds);
+   FD_SET(efd, &rfds);
+
+   int status = select(maxfd, &rfds, NULL, NULL, &_timeout);
+   if (status != 0)
+   {
+      // no timeout waiting for data, so its plausible that some data are available
+      if (FD_ISSET(efd, &rfds))
+      {
+         // do read of error channel
+         status = read(efd, errmsg.c_str(), errmsg.size() - 1);
+         errmsg.c_str()[status] = '\0'; // terminate string
+         strip_trailing_junk(errmsg.c_str());
+         if (status < 0)
+         {
+            /* show any error during message read */
+            berrno be;
+            DMSG(ctx, DERROR, "BPIPE read error on error channel: ERR=%s\n", be.bstrerror());
+            JMSG(ctx, M_ERROR, "BPIPE read error on error channel: ERR=%s\n", be.bstrerror());
+         } else {
+            // got data on error channel, report it
+            DMSG1(ctx, DERROR, "Backend reported error: %s\n", errmsg.c_str());
+            JMSG1(ctx, M_ERROR, "Backend reported error: %s\n", errmsg.c_str());
+         }
+      }
+   }
+
    pid_t worker_pid = bpipe->worker_pid;
-   int status = close_bpipe(bpipe);
+   status = close_bpipe(bpipe);
 
    bpipe = NULL;     // indicate closed bpipe
 
@@ -124,7 +155,7 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
    _timeout.tv_sec = PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
 
-   while (nbytes)
+   while (nbytes > 0)
    {
       fd_set rfds;
 
@@ -142,8 +173,11 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
          return false;
       }
 
-      // check if any data on error channel
-      if (FD_ISSET(efd, &rfds))
+      // check if data descriptor is ready
+      bool rfd_isset = FD_ISSET(rfd, &rfds);
+
+      // check if any messages on error channel when data channel is empty
+      if (FD_ISSET(efd, &rfds) && !rfd_isset)
       {
          // do read of error channel
          f_error = true;
@@ -163,8 +197,8 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
          }
       }
 
-      // check if data descriptor is ready
-      if (FD_ISSET(rfd, &rfds))
+      // handle data read
+      if (rfd_isset)
       {
          // do read of data
          status = read(rfd, buf + rbytes, nbytes);
@@ -193,13 +227,18 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
 }
 
 /**
- * @brief
+ * @brief Sends `nbytes` of data to backend from the buffer `buf`.
  *
- * @param ctx
- * @param buf
- * @param nbytes
- * @return true
- * @return false
+ * This is a dedicated method for sending raw data to backend.
+ * It writes exact `nbytes` number of bytes from `buf`.
+ * It will not return until all requested data is sent or got error.
+ * The method handles errors and timeout writing data.
+ *
+ * @param ctx - for Bacula debug jobinfo messages
+ * @param buf - the memory buffer from we will read data
+ * @param nbytes - the exact number of bytes to send to backend
+ * @return true - when send was successful
+ * @return false - on any error
  */
 bool PTCOMM::sendbackend_data(bpContext *ctx, const char *buf, int32_t nbytes)
 {
@@ -437,9 +476,10 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char *cmd, bool any)
 /**
  * @brief Handles a receive (read) packet header.
  *
- * @param ctx bpContext - for Bacula debug jobinfo messages
- * @param cmd
- * @return int32_t
+ * @param ctx for Bacula debug jobinfo messages
+ * @param cmd the expected command to receive or received
+ * @param any when true then it accepts any command received and saves it in `cmd`
+ * @return int32_t the packet length encoded in header
  */
 int32_t PTCOMM::handle_read_header(bpContext *ctx, char *cmd, bool any)
 {

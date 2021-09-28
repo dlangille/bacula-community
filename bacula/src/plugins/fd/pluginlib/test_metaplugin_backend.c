@@ -191,6 +191,8 @@ void read_plugin_data_stream()
    }
 }
 
+// #define USE_PRINTF
+
 /**
  * @brief Sends/writes the data to plugin with assembling the raw packet.
  *
@@ -201,6 +203,7 @@ void write_plugin(const char cmd, const char *str)
 {
    int len;
    const char * out;
+   char header[9];
 
    if (str){
       len = strlen(str);
@@ -209,9 +212,15 @@ void write_plugin(const char cmd, const char *str)
       len = 0;
       out = "";
    }
+#ifdef USE_PRINTF
    printf("%c%06d\n", cmd, len);
    printf("%s", out);
    fflush(stdout);
+#else
+   snprintf(header, 9, "%c%06d\n", cmd, len);
+   write(STDOUT_FILENO, header, 8);
+   write(STDOUT_FILENO, out, len);
+#endif
    snprintf(buflog, BUFLEN, "<< %c%06d:%s", cmd, len, out);
    LOG(buflog);
 }
