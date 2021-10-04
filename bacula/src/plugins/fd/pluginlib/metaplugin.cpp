@@ -1683,19 +1683,13 @@ bRC METAPLUGIN::perform_write_xattr(bpContext* ctx, const xacl_pkt* xacl)
    return bRC_OK;
 }
 
-/*
- * The method works as a dispatcher for expected commands received from backend.
- *    It handles a three commands associated with file attributes/metadata:
- *    - FNAME:... - the next file to backup
- *    - ACL - next data will be acl data, so perform_read_acl()
- *    - XATTR - next data will be xattr data, so perform_read_xattr()
- *    and additionally when no more files to backup it handles EOD.
+/**
+ * @brief The method works as a dispatcher for expected commands received from backend.
+ *    It handles a number of commands available at main dispatcher loop.
  *
- * in:
- *    bpContext - for Bacula debug and jobinfo messages
- * out:
- *    bRC_OK - when plugin read the command, dispatched a work and setup flags
- *    bRC_Error - on any error during backup
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK - when plugin read the command, dispatched a work and setup flags
+ *             bRC_Error - on any error during backup
  */
 bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
 {
@@ -1739,6 +1733,11 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
          if (scan_parameter_str(cmd, "CHECKGET:", fname)){
             /* got accurate get query */
             perform_accurate_check_get(ctx);
+            continue;
+         }
+         if (scan_parameter_str(cmd, "ACCEPT:", fname)){
+            /* got AcceptFile() query */
+            perform_accept_file(ctx);
             continue;
          }
          if (bstrcmp(cmd.c_str(), "ACL")){
@@ -1939,6 +1938,62 @@ bRC METAPLUGIN::perform_accurate_check_get(bpContext *ctx)
          return bRC_Error;
       }
       break;
+   }
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Perform a check if selected file should be accepted to backup.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC bRC_OK when success, bRC_Error if not
+ */
+bRC METAPLUGIN::perform_accept_file(bpContext *ctx)
+{
+   if (strlen(fname.c_str()) == 0){
+      // input variable is not valid
+      return bRC_Error;
+   }
+
+   DMSG0(ctx, DDEBUG, "perform_accept_file()\n");
+
+   POOL_MEM cmd(PM_FNAME);
+   struct save_pkt sp;
+   memset(&sp, 0, sizeof(sp));
+
+   metaplugin::attributes::Status status = metaplugin::attributes::read_attributes_command(ctx, backend.ctx, cmd, &sp);
+   switch(status)
+   {
+   case metaplugin::attributes::Invalid_File_Type:
+      JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", sp.type, fname.c_str());
+      return bRC_Error;
+
+   case metaplugin::attributes::Invalid_Stat_Packet:
+      JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
+      return bRC_Error;
+
+   case metaplugin::attributes::Status_OK:
+      {
+         // success we can perform accurate check for stat packet
+         sp.fname = fname.c_str();
+         bRC rc = bfuncs->AcceptFile(ctx, &sp);
+
+         POOL_MEM checkstatus(PM_NAME);
+         Mmsg(checkstatus, "%s\n", rc == bRC_Skip ? "SKIP" : "OK");
+         DMSG1(ctx, DINFO, "perform_accept_file(): %s", checkstatus.c_str());
+
+         if (!backend.ctx->write_command(ctx, checkstatus)) {
+            DMSG0(ctx, DERROR, "Cannot send AcceptFile() response to backend\n");
+            JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot send AcceptFile() response to backend\n");
+            return bRC_Error;
+         }
+      }
+      break;
+
+   default:
+      JMSG2(ctx, M_ERROR, "Invalid accept file protocol: %d for %s\n", status, fname.c_str());
+      return bRC_Error;
    }
 
    return bRC_OK;

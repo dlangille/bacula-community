@@ -80,6 +80,9 @@ FileSet {
     Plugin = "kubernetes:"
     Plugin = "kubernetes: regress_backup_other_file"
   }
+  Exclude {
+    File = "/exclude/file1"
+  }
 }
 
 Job {

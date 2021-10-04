@@ -79,6 +79,9 @@ FileSet {
     Plugin = "openshift:"
     Plugin = "openshift: regress_backup_other_file"
   }
+  Exclude {
+    File = "/exclude/file1"
+  }
 }
 
 Job {

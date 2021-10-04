@@ -116,6 +116,9 @@ FileSet {
     Plugin = "rhv:"
     Plugin = "rhv: regress_backup_other_file"
   }
+  Exclude {
+    File = "/exclude/file1"
+  }
 }
 
 Job {

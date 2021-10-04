@@ -789,6 +789,41 @@ void perform_backup()
       write_plugin('D', "/* here comes another file line    */");
       write_plugin('I', "TEST7-Other-End");
       signal_eod();
+
+      // check acceptfile() skip
+      write_plugin('C', "ACCEPT:/exclude/file1\n");
+      write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      read_plugin(buf);
+      write_plugin('I', "TEST ACCEPT Response\n");
+      write_plugin('I', buf);
+      if (strncmp(buf, "SKIP", 4) == 0)
+      {
+         write_plugin('I', "TEST ACCEPT Response OK (ACCEPT_FILE_OK)\n");
+      }
+
+      // check acceptfile() ok
+      write_plugin('C', "ACCEPT:/etc/passwd\n");
+      write_plugin('C', "STAT:F 1048576 200 200 100640 1\n");
+      write_plugin('C', "TSTAMP:1504271937 1504271937 1504271937\n");
+      read_plugin(buf);
+      write_plugin('I', "TEST ACCEPT Response\n");
+      write_plugin('I', buf);
+      if (strncmp(buf, "OK", 2) == 0)
+      {
+         write_plugin('I', "TEST ACCEPT Response OK (ACCEPT_FILE_OK)\n");
+      }
+
+      // check acceptfile() with STAT(2) on file
+      write_plugin('C', "ACCEPT:/etc/passwd\n");
+      write_plugin('C', "STAT:/etc/passwd\n");
+      read_plugin(buf);
+      write_plugin('I', "TEST ACCEPT Response\n");
+      write_plugin('I', buf);
+      if (strncmp(buf, "OK", 2) == 0)
+      {
+         write_plugin('I', "TEST ACCEPT Response OK (ACCEPT_FILE_OK)\n");
+      }
    }
 
    bool seen = false;

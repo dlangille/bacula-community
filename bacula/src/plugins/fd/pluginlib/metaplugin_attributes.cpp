@@ -17,7 +17,7 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
  */
 /**
- * @file metaplugin_stat.cpp
+ * @file metaplugin_attributes.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Backend attributes (STAT, TSTAMP) command handling subroutines for metaplugin.
  * @version 1.0.0
@@ -41,6 +41,16 @@ namespace metaplugin
 {
 namespace attributes
 {
+   /**
+    * @brief Scans an input command and handles STAT sttributes.
+    *
+    * @param ctx bpContext - for Bacula debug and jobinfo messages
+    * @param cmd a command buffer to scan and analyze
+    * @param sp save packet to fill - output
+    * @return Status Status_OK when data managed
+    *                Status_Handled when data managed and TSTAMP command is not required
+    *                Not_Command when it was not this command
+    */
    Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp)
    {
       char type;
@@ -53,10 +63,10 @@ namespace attributes
 
       if (strncmp(cmd.c_str(), "STAT:/", 6) == 0)
       {
-         DMSG0(ctx, DDEBUG, "read_scan_stat_command():new stat(2)\n");
          POOL_MEM param(PM_FNAME);
          // handle stat(2) for this file
          scan_parameter_str(cmd, "STAT:", param);
+         DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat:%s\n", param.c_str());
          int rc = stat(param.c_str(), &sp->statp);
          if (rc < 0)
          {
@@ -65,7 +75,7 @@ namespace attributes
             return Invalid_Stat_Packet;
          }
          // stat is working as expected
-         DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat: %o\n", sp->statp.st_mode & S_IFMT);
+         DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat: %o\n", sp->statp.st_mode);
          switch (sp->statp.st_mode & S_IFMT)
          {
          case S_IFDIR:
@@ -134,6 +144,15 @@ namespace attributes
       return Not_Command;
    }
 
+   /**
+    * @brief Scans an input command and handles TSTAMP sttributes.
+    *
+    * @param ctx bpContext - for Bacula debug and jobinfo messages
+    * @param cmd a command buffer to scan and analyze
+    * @param sp save packet to fill - output
+    * @return Status Status_OK when data managed
+    *                Not_Command when it was not this command
+    */
    Status read_scan_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp)
    {
       time_t _atime;
@@ -158,6 +177,14 @@ namespace attributes
       return Not_Command;
    }
 
+   /**
+    * @brief Prepare a STAT command based on selected data.
+    *
+    * @param ctx bpContext - for Bacula debug and jobinfo messages
+    * @param cmd the command buffer - output
+    * @param rp restore packet to use
+    * @return Status Status_OK
+    */
    Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp)
    {
       /* STAT:... */
@@ -193,6 +220,14 @@ namespace attributes
       return Status_OK;
    }
 
+   /**
+    * @brief Prepares a TSTAMP command based on selected data.
+    *
+    * @param ctx bpContext - for Bacula debug and jobinfo messages
+    * @param cmd the command buffer - output
+    * @param rp restore packet to use
+    * @return Status Status_OK
+    */
    Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp)
    {
       /* TSTAMP:... */
@@ -201,6 +236,48 @@ namespace attributes
 
       return Status_OK;
    }
-}  // attributes
-}  // metaplugin
 
+   /**
+    * @brief Reads a file attributes sequence (STAT, TSTAMP) used at different sections.
+    *
+    * @param ctx bpContext - for Bacula debug and jobinfo messages
+    * @param ptcomm backend communication class - the current context
+    * @param cmd the buffer for command handled
+    * @param sp save packet to fill when file attributes handled
+    * @return Status Status_OK when file attributes commands handled, Status_Error on any error, other depends on enum.
+    */
+   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp)
+   {
+      DMSG0(ctx, DDEBUG, "read_attributes_command()\n");
+
+      // supported sequence is `STAT` followed by `TSTAMP`
+      if (ptcomm->read_command(ctx, cmd) < 0) {
+         // error
+         return Status_Error;
+      }
+
+      Status status = read_scan_stat_command(ctx, cmd, sp);
+      switch(status)
+      {
+      case Status_OK:
+         // go with TSATMP command
+         if (ptcomm->read_command(ctx, cmd) < 0) {
+            // error
+            return Status_Error;
+         }
+         status = read_scan_tstamp_command(ctx, cmd, sp);
+         break;
+
+      case Status_Handled:
+         status = Status_OK;
+         break;
+
+      default:
+         break;
+      }
+
+      return status;
+   }
+
+}  // namespace attributes
+}  // namespace metaplugin

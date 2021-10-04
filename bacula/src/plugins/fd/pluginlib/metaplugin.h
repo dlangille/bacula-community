@@ -282,6 +282,7 @@ private:
    bRC perform_file_index_query(bpContext *ctx);
    bRC perform_accurate_check(bpContext *ctx);
    bRC perform_accurate_check_get(bpContext *ctx);
+   bRC perform_accept_file(bpContext *ctx);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
    metadata_type scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);

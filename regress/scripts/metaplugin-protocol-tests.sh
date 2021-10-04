@@ -461,10 +461,11 @@ BFILE3=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c lockfile)
 BFILE4=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c file.xattr)
 BFILE5=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c vmsnap.iso)
 BFILE6=$(grep "$Plugin/bucket" ${cwd}/tmp/log5.out | grep -c vm222-other-file.iso)
+BACCEPT=$(grep -c "ACCEPT_FILE_OK" ${cwd}/tmp/log5.out)
 BEND=$(grep -w -c "TESTEND" ${cwd}/tmp/log5.out)
-if [ "x$RET" != "xT" ] || [ "$BFILE1" -ne 2 ] || [ "$BFILE2" -ne 2 ] || [ "$BFILE3" -ne 2 ] || [ "$BFILE4" -ne 2 ] || [ "$BFILE5" -ne 2 ] || [ "$BFILE6" -ne 1 ] || [ "$BEND" -ne 2 ]
+if [ "x$RET" != "xT" ] || [ "$BFILE1" -ne 2 ] || [ "$BFILE2" -ne 2 ] || [ "$BFILE3" -ne 2 ] || [ "$BFILE4" -ne 2 ] || [ "$BFILE5" -ne 2 ] || [ "$BFILE6" -ne 1 ] || [ "$BEND" -ne 2 ] || [ "$BACCEPT" -ne 3 ]
 then
-   echo "log5" "$RET" "$BFILE1" "$BFILE2" "$BFILE3" "$BFILE4" "$BFILE5" "$BFILE6" "$BEND"
+   echo "log5" "$RET" "$BFILE1" "$BFILE2" "$BFILE3" "$BFILE4" "$BFILE5" "$BFILE6" "$BACCEPT" "$BEND"
    bstat=$((bstat+8))
 fi
 

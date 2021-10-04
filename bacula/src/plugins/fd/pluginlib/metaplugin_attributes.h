@@ -17,7 +17,7 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
  */
 /**
- * @file metaplugin_stat.h
+ * @file metaplugin_attributes.h
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Backend `STAT` command handling subroutines for metaplugin.
  * @version 1.0.0
@@ -26,10 +26,11 @@
  * @copyright Copyright (c) 2021 All rights reserved. IP transferred to Bacula Systems according to agreement.
  */
 
-#ifndef _METAPLUGIN_STAT_H_
-#define _METAPLUGIN_STAT_H_
+#ifndef _METAPLUGIN_ATTRIBUTES_H_
+#define _METAPLUGIN_ATTRIBUTES_H_
 
 #include "pluginlib.h"
+#include "ptcomm.h"
 
 
 namespace metaplugin
@@ -43,13 +44,15 @@ namespace attributes
       Invalid_File_Type,
       Status_Handled,
       Not_Command,
+      Status_Error,
    } Status;
 
    Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
    Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
    Status read_scan_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
    Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
+   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp);
 }  // attributes
 }  // metaplugin
 
-#endif   // _METAPLUGIN_STAT_H_
+#endif   // _METAPLUGIN_ATTRIBUTES_H_

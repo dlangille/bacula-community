@@ -79,6 +79,9 @@ FileSet {
     Plugin = "swift:"
     Plugin = "swift: regress_backup_other_file"
   }
+  Exclude {
+    File = "/exclude/file1"
+  }
 }
 
 Job {
