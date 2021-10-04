@@ -43,7 +43,6 @@ static char DotStatusJob[] = "JobId=%d JobStatus=%c JobErrors=%d\n";
 /* Forward referenced functions */
 static void sendit(POOL_MEM &msg, int len, STATUS_PKT *sp);
 static void sendit(const char *msg, int len, void *arg);
-static void dbg_sendit(const char *msg, int len, void *arg);
 static void send_blocked_status(DEVICE *dev, STATUS_PKT *sp);
 static void send_device_status(DEVICE *dev, STATUS_PKT *sp);
 static void list_running_jobs(STATUS_PKT *sp);
@@ -193,9 +192,8 @@ void list_shstore(DEVICE *dev, OutputWriter *ow) {}
 bool list_shstore(DEVICE *dev, POOLMEM **msg, int *len) { return false;}
 #endif
 
-static void api_list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
+static void api_list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp, OutputWriter *ow)
 {
-   OutputWriter ow(sp->api_opts);
    int zero=0;
    int blocked=0;
    uint64_t f, t;
@@ -207,37 +205,37 @@ static void api_list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
 
    dev->get_freespace(&f, &t);
 
-   ow.get_output(OT_START_OBJ,
-                 OT_STRING, "name", dev->device->hdr.name,
-                 OT_STRING, "archive_device", dev->archive_name(),
-                 OT_STRING, "type", dev->print_type(),
-                 OT_STRING, "driver", dev->print_driver_type(),
-                 OT_STRING, "media_type", dev->device->media_type,
-                 OT_INT,    "open", (int)dev->is_open(),
-                 OT_INT,    "writers",      dev->num_writers,
-                 OT_INT32,  "maximum_concurrent_jobs", dev->max_concurrent_jobs,
-                 OT_INT64,  "maximum_volume_size", dev->max_volume_size,
-                 OT_INT,    "read_only", dev->device->read_only,
-                 OT_INT,    "autoselect", dev->device->autoselect,
-                 OT_INT,    "enabled", dev->enabled,
-                 OT_INT64,  "free_space", f,
-                 OT_INT64,  "total_space", t,
-                 OT_INT64,  "devno",     dev->devno,
-                 OT_END);
+   ow->get_output(OT_START_OBJ,
+                  OT_STRING, "name", dev->device->hdr.name,
+                  OT_STRING, "archive_device", dev->archive_name(),
+                  OT_STRING, "type", dev->print_type(),
+                  OT_STRING, "driver", dev->print_driver_type(),
+                  OT_STRING, "media_type", dev->device->media_type,
+                  OT_INT,    "open", (int)dev->is_open(),
+                  OT_INT,    "writers",      dev->num_writers,
+                  OT_INT32,  "maximum_concurrent_jobs", dev->max_concurrent_jobs,
+                  OT_INT64,  "maximum_volume_size", dev->max_volume_size,
+                  OT_INT,    "read_only", dev->device->read_only,
+                  OT_INT,    "autoselect", dev->device->autoselect,
+                  OT_INT,    "enabled", dev->enabled,
+                  OT_INT64,  "free_space", f,
+                  OT_INT64,  "total_space", t,
+                  OT_INT64,  "devno",     dev->devno,
+                  OT_END);
 
    if (dev->is_open()) {
       if (dev->is_labeled()) {
-         ow.get_output(OT_STRING, "mounted", dev->blocked()?"0":"1",
-                       OT_STRING, "waiting", dev->blocked()?"1":"0",
-                       OT_STRING, "volume",  dev->VolHdr.VolumeName,
-                       OT_STRING, "pool",    NPRTB(dev->pool_name),
-                       OT_END);
+         ow->get_output(OT_STRING, "mounted", dev->blocked()?"0":"1",
+                        OT_STRING, "waiting", dev->blocked()?"1":"0",
+                        OT_STRING, "volume",  dev->VolHdr.VolumeName,
+                        OT_STRING, "pool",    NPRTB(dev->pool_name),
+                        OT_END);
       } else {
-         ow.get_output(OT_INT,    "mounted", zero,
-                       OT_INT,    "waiting", zero,
-                       OT_STRING, "volume",  "",
-                       OT_STRING, "pool",    "",
-                       OT_END);
+         ow->get_output(OT_INT,    "mounted", zero,
+                        OT_INT,    "waiting", zero,
+                        OT_STRING, "volume",  "",
+                        OT_STRING, "pool",    "",
+                        OT_END);
       }
 
       blocked = 1;
@@ -265,29 +263,29 @@ static void api_list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
       /* TODO: give more information about blocked status
        * and the volume needed if WAITING for SYSOP
        */
-      ow.get_output(OT_STRING, "blocked_desc", NPRTB(p),
-                    OT_INT,    "blocked",      blocked,
-                    OT_END);
+      ow->get_output(OT_STRING, "blocked_desc", NPRTB(p),
+                     OT_INT,    "blocked",      blocked,
+                     OT_END);
 
-      ow.get_output(OT_INT, "append", (int)dev->can_append(),
-                    OT_END);
+      ow->get_output(OT_INT, "append", (int)dev->can_append(),
+                     OT_END);
 
       if (dev->can_append()) {
-         ow.get_output(OT_INT64, "bytes",  dev->VolCatInfo.VolCatBytes,
-                       OT_INT32, "blocks", dev->VolCatInfo.VolCatBlocks,
-                       OT_END);
+         ow->get_output(OT_INT64, "bytes",  dev->VolCatInfo.VolCatBytes,
+                        OT_INT32, "blocks", dev->VolCatInfo.VolCatBlocks,
+                        OT_END);
 
       } else {  /* reading */
-         ow.get_output(OT_INT64, "bytes",  dev->VolCatInfo.VolCatRBytes,
-                       OT_INT32, "blocks", dev->VolCatInfo.VolCatReads, /* might not be blocks */
-                       OT_END);
+         ow->get_output(OT_INT64, "bytes",  dev->VolCatInfo.VolCatRBytes,
+                        OT_INT32, "blocks", dev->VolCatInfo.VolCatReads, /* might not be blocks */
+                        OT_END);
 
       }
-      ow.get_output(OT_INT, "file",  dev->file,
-                    OT_INT, "block", dev->block_num,
-                    OT_END);
+      ow->get_output(OT_INT, "file",  dev->file,
+                     OT_INT, "block", dev->block_num,
+                     OT_END);
    } else {
-      ow.get_output(OT_INT,    "mounted", zero,
+      ow->get_output(OT_INT,    "mounted", zero,
                     OT_INT,    "waiting", zero,
                     OT_STRING, "volume",  "",
                     OT_STRING, "pool",    "",
@@ -301,14 +299,14 @@ static void api_list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
                     OT_END);
    }
 
-   list_shstore(dev, &ow);
+   list_shstore(dev, ow);
 
-   p = ow.get_output(OT_END_OBJ, OT_END);
+   p = ow->get_output(OT_END_OBJ, OT_END);
    sendit(p, strlen(p), sp);
 }
 
 
-static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
+static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp, OutputWriter *ow)
 {
    char b1[35], b2[35], b3[35];
    POOL_MEM msg(PM_MESSAGE);
@@ -316,7 +314,7 @@ static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
    int bpb;
 
    if (sp->api > 1) {
-      api_list_one_device(name, dev, sp);
+      api_list_one_device(name, dev, sp, ow);
       return;
    }
 
@@ -408,44 +406,34 @@ static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp)
    if (!sp->api) sendit("==\n", 4, sp);
 }
 
-void _dbg_list_one_device(char *name, DEVICE *dev, const char *file, int line)
-{
-   STATUS_PKT sp;
-   sp.bs = NULL;
-   sp.callback = dbg_sendit;
-   sp.context = NULL;
-   d_msg(file, line, 0, "Called dbg_list_one_device():");
-   list_one_device(name, dev, &sp);
-   send_device_status(dev, &sp);
-}
-
-static void list_one_autochanger(char *name, AUTOCHANGER *changer, STATUS_PKT *sp)
+static void list_one_autochanger(char *name, AUTOCHANGER *changer, STATUS_PKT *sp, OutputWriter *ow)
 {
    int     len;
    char   *p;
    DEVRES *device;
    POOL_MEM msg(PM_MESSAGE);
-   OutputWriter ow(sp->api_opts);
 
    if (sp->api > 1) {
-      ow.get_output(OT_START_OBJ,
-                    OT_STRING,    "autochanger",  changer->hdr.name,
-                    OT_END);
+      ow->get_output(OT_START_OBJ,
+                     OT_STRING,    "autochanger",  changer->hdr.name,
+                     OT_END);
 
-      ow.start_group("devices");
+      ow->start_list("devices");
 
       foreach_alist(device, changer->device) {
-         ow.get_output(OT_START_OBJ,
-                       OT_STRING, "name",  device->hdr.name,
-                       OT_STRING, "device",device->device_name,
-                       OT_END_OBJ,
-                       OT_END);
+         // We build a list here with a CLEAR 
+         ow->get_output(OT_START_OBJ,
+                        OT_STRING, "name",  device->hdr.name,
+                        OT_STRING, "device",device->device_name,
+                        OT_END_OBJ,
+                        OT_END);
       }
 
-      ow.end_group();
+      ow->end_list();
 
-      p = ow.get_output(OT_END_OBJ, OT_END);
+      p = ow->get_output(OT_END_OBJ, OT_END);
       sendit(p, strlen(p), sp);
+      ow->get_output(OT_CLEAR, OT_END);
 
    } else {
 
@@ -470,23 +458,51 @@ static void list_devices(STATUS_PKT *sp, char *name)
    int len;
    DEVRES *device;
    AUTOCHANGER *changer;
-   POOL_MEM msg(PM_MESSAGE);
+   OutputWriter ow(sp->api_opts);
+   char *buf=NULL;
+   bool first;
 
    if (!sp->api) {
+      POOL_MEM msg(PM_MESSAGE);
       len = Mmsg(msg, _("\nDevice status:\n"));
       sendit(msg, len, sp);
+
+   } else if (sp->api > 1) {
+      ow.start_group("devices");
+      ow.get_output(OT_START_OBJ, OT_END);
+      buf = ow.start_list("autochanger");
+      sendit(buf, strlen(buf), sp);
    }
 
+   first = true;
    foreach_res(changer, R_AUTOCHANGER) {
       if (!name || strcmp(changer->hdr.name, name) == 0) {
-         list_one_autochanger(changer->hdr.name, changer, sp);
+         ow.get_output(OT_CLEAR, first? OT_NOP : OT_SEP, OT_END);
+         list_one_autochanger(changer->hdr.name, changer, sp, &ow);
+         first = false;
       }
    }
 
+   if (sp->api > 1) {
+      ow.get_output(OT_CLEAR, OT_END);
+      ow.end_list();
+      buf = ow.start_list("device");
+      sendit(buf, strlen(buf), sp);
+   }
+
+   first = true;
    foreach_res(device, R_DEVICE) {
       if (!name || strcmp(device->hdr.name, name) == 0) {
-         list_one_device(device->hdr.name, device->dev, sp);
+         ow.get_output(OT_CLEAR, first? OT_NOP : OT_SEP, OT_END);
+         list_one_device(device->hdr.name, device->dev, sp, &ow);
+         first = false;
       }
+   }
+   if (sp->api > 1) {
+      ow.end_list();
+      ow.get_output(OT_END_OBJ, OT_END);
+      buf = ow.end_group();
+      sendit(buf, strlen(buf), sp);
    }
    if (!sp->api) sendit("====\n\n", 6, sp);
 }
@@ -495,18 +511,25 @@ static void list_cloud_transfers(STATUS_PKT *sp, bool verbose)
 {
    if (sp->api) {
       DEVRES *device;
+
       foreach_res(device, R_DEVICE) {
          if (device->dev && device->dev->is_cloud()) {
-            cloud_dev *cdev = (cloud_dev*)device->dev;
+            char *p;
             OutputWriter ow(sp->api_opts);
-            ow.start_group(device->hdr.name);
+            cloud_dev *cdev = (cloud_dev*)device->dev;
+
+            ow.start_group("cloud");
+            ow.get_output(OT_START_OBJ, OT_END);
             cdev->get_api_cloud_upload_transfer_status(ow, verbose);
             cdev->get_api_cloud_download_transfer_status(ow, verbose);
-            ow.end_group();
-            char *p = ow.get_output(OT_END_OBJ, OT_END);
+            ow.get_output(OT_END_OBJ, OT_END);
+            p = ow.end_group();
             sendit(p, strlen(p), sp);
+            break;              // One transfer manager?
          }
       }
+
+
    } else {
       bool first=true;
       int len;
@@ -545,6 +568,7 @@ static void api_list_sd_status_header(STATUS_PKT *sp)
    sd_list_loaded_drivers(&drivers);
    wt.start_group("header");
    wt.get_output(
+      OT_START_OBJ,
       OT_STRING, "name",        my_name,
       OT_STRING, "version",     VERSION " (" BDATE ")",
       OT_STRING, "uname",       HOST_OS " " DISTNAME " " DISTVER,
@@ -561,6 +585,7 @@ static void api_list_sd_status_header(STATUS_PKT *sp)
       OT_INT64,  "debug",       debug_level,
       OT_INT,    "trace",       get_trace(),
       OT_ALIST_STR, "tags",     debug_get_tags_list(&tlist, debug_level_tags),
+      OT_END_OBJ,
       OT_END);
    p = wt.end_group();
    sendit(p, strlen(p), sp);
@@ -799,23 +824,31 @@ static void api_list_running_jobs(STATUS_PKT *sp)
    JCR *jcr;
    DCR *dcr, *rdcr;
    time_t now = time(NULL);
+   bool add_sep=false;
+   char *p;
+
+   ow.start_group("running");
+   p = ow.get_output(OT_START_ARRAY, OT_END);
+   sendit(p, strlen(p), sp);
 
    foreach_jcr(jcr) {
+      p = ow.get_output(OT_CLEAR, add_sep ? OT_SEP : OT_NOP, OT_START_OBJ, OT_END);
+      add_sep = true;
+
       if (jcr->JobId == 0 && jcr->dir_bsock) {
          int val = (jcr->dir_bsock && jcr->dir_bsock->tls)?1:0;
-         p1 = ow.get_output(OT_CLEAR,
-                            OT_UTIME, "DirectorConnected", (utime_t)jcr->start_time,
+         p1 = ow.get_output(OT_UTIME, "DirectorConnected", (utime_t)jcr->start_time,
                             OT_INT, "DirTLS", val,
+                            OT_END_OBJ,
                             OT_END);
          sendit(p1, strlen(p1), sp);
          continue;
       }
       if (jcr->getJobType() == JT_SYSTEM) {
+         add_sep = false;       // Skip this one, it has been printed already
          continue;
       }
-      ow.get_output(OT_CLEAR,
-                    OT_START_OBJ,
-                    OT_INT32,   "jobid",     jcr->JobId,
+      ow.get_output(OT_INT32,   "jobid",     jcr->JobId,
                     OT_STRING,  "job",       jcr->Job,
                     OT_JOBLEVEL,"level",     jcr->getJobLevel(),
                     OT_JOBTYPE, "type",      jcr->getJobType(),
@@ -901,6 +934,10 @@ static void api_list_running_jobs(STATUS_PKT *sp)
    }
    endeach_jcr(jcr);
 
+   // Finish the JSON output if needed
+   ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+   p = ow.end_group();
+   sendit(p, strlen(p), sp);
 }
 
 static void list_running_jobs(STATUS_PKT *sp)
@@ -1070,13 +1107,6 @@ static void sendit(POOL_MEM &msg, int len, STATUS_PKT *sp)
       bs->send();
    } else {
       sp->callback(msg.c_str(), len, sp->context);
-   }
-}
-
-static void dbg_sendit(const char *msg, int len, void *sp)
-{
-   if (len > 0) {
-      Dmsg0(-1, msg);
    }
 }
 
@@ -1293,7 +1323,9 @@ static void api_collectors_status(STATUS_PKT *sp, char *collname)
    POOLMEM *buf;
 
    Dmsg1(200, "enter api_collectors_status() %s\n", NPRTB(collname));
-   ow.start_group("collector_backends");
+   ow.start_group("collector");
+   ow.get_output(OT_START_OBJ, OT_END);
+   ow.start_list("collector_backends");
    LockRes();
    foreach_res(res, R_COLLECTOR) {
       if (collname && !bstrcmp(collname, res->res_collector.hdr.name)){
@@ -1303,12 +1335,14 @@ static void api_collectors_status(STATUS_PKT *sp, char *collname)
       api_render_collector_status(res->res_collector, ow);
    };
    UnlockRes();
-   buf = ow.end_group();
-   if (!collname){
-      ow.start_group("collector_update");
+   ow.end_list();
+   if (!collname) {
+      ow.get_output(OT_SEP, OT_LABEL, "collector_update", OT_END);
       api_render_updcollector_status(ow);
-      buf = ow.end_group();
+
    }
+   ow.get_output(OT_END_OBJ, OT_END);
+   buf = ow.end_group();
    sendit(buf, strlen(buf), sp);
    Dmsg0(200, "leave api_collectors_status()\n");
 };

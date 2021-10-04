@@ -277,6 +277,7 @@ void transfer::append_api_status(OutputWriter &ow)
                   OT_DURATION, "duration",            m_stat_duration/ONE_SEC,
                   OT_STRING,"message",                NPRTB(m_message),
                   OT_INT32, "retry",                  m_retry,
+                  OT_END_OBJ,
                   OT_END);
    } else {
          ow.get_output(OT_START_OBJ,
@@ -290,6 +291,7 @@ void transfer::append_api_status(OutputWriter &ow)
                   OT_DURATION, "eta",                 m_stat_eta/ONE_SEC,
                   OT_STRING,"message",                NPRTB(m_message),
                   OT_INT32, "retry",                  m_retry,
+                  OT_END_OBJ,
                   OT_END);
    }
 }
@@ -817,4 +819,5 @@ void transfer_manager::append_api_status(OutputWriter &ow, bool verbose)
       }
       ow.end_list();
    }
+   ow.get_output(OT_END_OBJ, OT_END);
 }

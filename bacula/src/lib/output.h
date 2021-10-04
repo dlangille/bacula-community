@@ -43,9 +43,17 @@ enum _OutputType {
    OT_ALIST_STR,
    OT_BOOL,                     /* boolean */
 
+   OT_NL,                       /* Add new line */
+   OT_SEP,                      /* Add a separator */
+   OT_NOP,                      /* do nothing */
    OT_END,                      /* Last operator (no extra arg) */
    OT_START_OBJ,                /* Skip a line to start a new object (no extra arg) */
    OT_END_OBJ,                  /* Skip a line to end current object (no extra arg) */
+   OT_LABEL,                    /* label sep  ("test":) */
+   OT_START_ARRAY,              /* Start array [ */
+   OT_END_ARRAY,                /* End array ] */
+   OT_START_HASH,               /* Start hash { */
+   OT_END_HASH,                 /* End hash */
    OT_CLEAR,                    /* truncate current buffer (no extra arg) */
    OT_DURATION                  /* time duration in second */
 };
@@ -61,6 +69,15 @@ typedef enum {
 
 #define OW_DEFAULT_SEPARATOR  '\n'
 #define OW_DEFAULT_TIMEFORMAT OTT_TIME_ISO
+#define OW_DEFAULT_EQUAL '='
+
+#define OW_DEFAULT_OPEN_HASH ""
+#define OW_DEFAULT_CLOSE_HASH ""
+
+#define OW_DEFAULT_OPEN_TABLE ""
+#define OW_DEFAULT_CLOSE_TABLE ""
+
+#define OW_DEFAULT_LABEL ":\n"
 
 /* If included from output.c, mark the class as export (else, symboles are
  * exported from all files...
@@ -76,24 +93,58 @@ class OUTPUT_EXPORT OutputWriter: public SMARTALLOC
 private:
    void init() {
       buf = NULL;
+      quote_buf = NULL;
+      quote_buf2 = NULL;
       separator  = OW_DEFAULT_SEPARATOR;
       separator_str[0] = OW_DEFAULT_SEPARATOR;
       separator_str[1] = 0;
       timeformat = OW_DEFAULT_TIMEFORMAT;
-      object_separator = 0;
+      object_separator[0] = 0;
+      object_separator[1] = 0;
+      equal = OW_DEFAULT_EQUAL;
+      equal_str[0] = OW_DEFAULT_EQUAL;
+      equal_str[1] = 0;
+
+      open_hash = OW_DEFAULT_OPEN_HASH;
+      close_hash = OW_DEFAULT_CLOSE_HASH;
+      open_table = OW_DEFAULT_OPEN_TABLE;
+      close_table = OW_DEFAULT_CLOSE_TABLE;
+      label = OW_DEFAULT_LABEL;
       flags = 0;
+
+      need_separator=false;
+      will_need_separator=true;
+
+      error = 0;
+      errmsg = NULL; 
    };
 
 protected:
    virtual char   *get_output(va_list ap, POOLMEM **out, OutputType first);
    void            get_buf(bool append); /* Allocate buf if needed */
 
+   bool            quote_str;
    int             flags;
+   char            equal;
+   char            equal_str[2];
    char            separator;
    char            separator_str[2];
-   char            object_separator;
+   char            object_separator[2];
    OutputTimeType  timeformat;
    POOLMEM        *buf;
+   POOLMEM        *quote_buf;   /* Buffer used to quote parameters */
+   POOLMEM        *quote_buf2;
+   const char     *open_table;
+   const char     *close_table;
+   const char     *open_hash;
+   const char     *close_hash;
+   const char     *label;
+
+   int             error;
+   char           *errmsg;
+
+   bool       need_separator;
+   bool       will_need_separator;
 
 public:
    OutputWriter(const char *opts) {
@@ -107,6 +158,9 @@ public:
 
    virtual ~OutputWriter() {
       free_and_null_pool_memory(buf);
+      free_and_null_pool_memory(quote_buf);
+      free_and_null_pool_memory(quote_buf2);
+      bfree_and_null(errmsg);
    };
 
    /* s[ascii code]t[0-3]
@@ -116,7 +170,7 @@ public:
     * "s43t1" => + as separator and time as unix timestamp
     */
    virtual void  parse_options(const char *opts);
-   virtual char *get_options(char *dest_l128); /* MAX_NAME_LENGTH mini  */
+   virtual char *get_options(char *dest_l128, int len); /* MAX_NAME_LENGTH mini  */
 
    /* Make a clear separation in the output*/
    virtual char *start_group(const char *name, bool append=true);
@@ -126,19 +180,48 @@ public:
    virtual char *start_list(const char *name, bool append=true);
    virtual char *end_list(bool append=true);
 
+   void set_label(const char *l) {
+      label = l;
+   };
+
+   void set_error(int errcode, const char *errstr) {
+      error = errcode;
+      errmsg = bstrdup(errstr);
+   };
+   
+   void set_hash(const char *o, const char *c)
+   {
+      open_hash = o;
+      close_hash = c;
+   };
+
+   void set_table(const char *o, const char *c)
+   {
+      open_table = o;
+      close_table = c;
+   };
+   
    /* \n by default, can be \t for example */
    void set_separator(char sep) {
       separator = sep;
       separator_str[0] = sep;
    };
 
-   void set_object_separator(char sep) {
-      object_separator = sep;
+   void set_equal(char eq) {
+      equal = eq;
+      equal_str[0] = eq;
    };
-
+   void set_object_separator(char sep, char esep) {
+      object_separator[0] = sep;
+      object_separator[1] = esep;
+   };
    void set_time_format(OutputTimeType fmt) {
       timeformat = fmt;
    };
+   bool use_json();
+
+   char *start_object(const char *name, bool append=true);
+   char *end_object(bool append=true);
 
 /* Usage:
  *   get_output(&out,
@@ -152,12 +235,21 @@ public:
  *  "name=value\nage=10\nbirt-date=2012-01-12 10:20:00\nweight=100\n"
  *
  */
-
+   
    /* Use a user supplied buffer */
    char *get_output(POOLMEM **out, OutputType first, ...);
 
    /* Use the internal buffer */
    char *get_output(OutputType first, ...);
+
+   /* Quote or not the string, memory allocated in quote_buffer */
+   const char *ow_quote_string(const char *str);
+
+   /* Quote or not the string, memory allocated in quote_buffer2 */
+   const char *ow_quote_string2(const char *str);
+
+   /* Quote or not the string, memory allocated in quote_buffer2 */
+   const char *ow_quote_string(const char *str, POOLMEM *&buffer);
 };
 
 #endif

@@ -440,6 +440,7 @@ static void api_list_dir_status_header(UAContext *ua)
    OutputWriter wt(ua->api_opts);
    wt.start_group("header");
    wt.get_output(
+      OT_START_OBJ,
       OT_STRING, "name",        my_name,
       OT_STRING, "version",     VERSION " (" BDATE ")",
       OT_STRING, "uname",       HOST_OS " " DISTNAME " " DISTVER,
@@ -460,6 +461,7 @@ static void api_list_dir_status_header(UAContext *ua)
       OT_INT64,  "debug",       debug_level,
       OT_INT,    "trace",       get_trace(),
       OT_ALIST_STR, "tags",     debug_get_tags_list(&tlist, debug_level_tags),
+      OT_END_OBJ,
       OT_END);
 
    ua->send_msg("%s", wt.end_group());
@@ -1237,6 +1239,10 @@ static void list_running_jobs(UAContext *ua)
          }
       }
       endeach_jcr(jcr);
+
+   } else if (ua->api > 1) {    // We always return something in APIv2
+      ow.start_group("running");
+      ow.get_output(OT_START_ARRAY, OT_END);
    }
 
    njobs = 0; /* count the number of job really displayed */
@@ -1254,9 +1260,6 @@ static void list_running_jobs(UAContext *ua)
          if (!ua->api) {
             ua->send_msg(_(" JobId  Type Level     Files     Bytes  Name              Status\n"));
             ua->send_msg(_("======================================================================\n"));
-
-         } else if (ua->api > 1) {
-            ua->send_msg(ow.start_group("running", false));
          }
       }
       status = jcr->JobStatus;
@@ -1446,28 +1449,27 @@ static void list_running_jobs(UAContext *ua)
          STORE    *w = wstore;
          STORE    *r = rstore;
          JOB      *j = jcr->job;
-         ua->send_msg("%s", ow.get_output(OT_CLEAR,
-                         OT_START_OBJ,
-                         OT_INT32,   "jobid",     jcr->JobId,
-                         OT_JOBLEVEL,"level",     jcr->getJobLevel(),
-                         OT_JOBTYPE, "type",      jcr->getJobType(),
-                         OT_JOBSTATUS,"status",   status,
-                         OT_STRING,  "status_desc",msg,
-                         OT_STRING,  "comment",   jcr->comment,
-                         OT_SIZE,    "jobbytes",  jcr->JobBytes,
-                         OT_INT32,   "jobfiles",  jcr->JobFiles,
-                         OT_STRING,  "job",       jcr->Job,
-                         OT_STRING,  "name",      j?j->name():"",
-                         OT_STRING,  "clientname",c?c->name():"",
-                         OT_STRING,  "fileset",   f?f->name():"",
-                         OT_STRING,  "storage",   w?w->name():"",
-                         OT_STRING,  "rstorage",  r?r->name():"",
-                         OT_UTIME,   "schedtime", jcr->sched_time,
-                         OT_UTIME,   "starttime", jcr->start_time,
-                         OT_INT32,   "priority",  jcr->JobPriority,
-                         OT_INT32,   "errors",    jcr->JobErrors,
-                         OT_END_OBJ,
-                         OT_END));
+         ow.get_output(OT_START_OBJ,
+                       OT_INT32,   "jobid",     jcr->JobId,
+                       OT_JOBLEVEL,"level",     jcr->getJobLevel(),
+                       OT_JOBTYPE, "type",      jcr->getJobType(),
+                       OT_JOBSTATUS,"status",   status,
+                       OT_STRING,  "status_desc",msg,
+                       OT_STRING,  "comment",   jcr->comment,
+                       OT_SIZE,    "jobbytes",  jcr->JobBytes,
+                       OT_INT32,   "jobfiles",  jcr->JobFiles,
+                       OT_STRING,  "job",       jcr->Job,
+                       OT_STRING,  "name",      j?j->name():"",
+                       OT_STRING,  "clientname",c?c->name():"",
+                       OT_STRING,  "fileset",   f?f->name():"",
+                       OT_STRING,  "storage",   w?w->name():"",
+                       OT_STRING,  "rstorage",  r?r->name():"",
+                       OT_UTIME,   "schedtime", jcr->sched_time,
+                       OT_UTIME,   "starttime", jcr->start_time,
+                       OT_INT32,   "priority",  jcr->JobPriority,
+                       OT_INT32,   "errors",    jcr->JobErrors,
+                       OT_END_OBJ,
+                       OT_END);
 
       } else {
          char b1[50], b2[50], b3[50];
@@ -1488,6 +1490,12 @@ static void list_running_jobs(UAContext *ua)
    }
    endeach_jcr(jcr);
 
+   if (ua->api > 1) {
+      ow.end_list();
+      char *p = ow.end_group();
+      ua->send_msg("%s", p);
+   }
+
    if (njobs == 0) {
       /* Note the following message is used in regress -- don't change */
       ua->send_msg(_("No Jobs running.\n====\n"));
@@ -1497,8 +1505,6 @@ static void list_running_jobs(UAContext *ua)
       /* display a closing header */
       if (!ua->api) {
          ua->send_msg("====\n");
-      } else if (ua->api > 1) {
-         ua->send_msg(ow.end_group(false));
       }
    }
    Dmsg0(200, "leave list_run_jobs()\n");
@@ -1506,12 +1512,25 @@ static void list_running_jobs(UAContext *ua)
 
 static void list_terminated_jobs(UAContext *ua)
 {
-   char dt[MAX_TIME_LENGTH], b1[30], b2[30];
+   char dt[MAX_TIME_LENGTH], b1[30], b2[30], *p;
    char level[10];
+   bool add_sep=false;
    OutputWriter ow(ua->api_opts);
 
+   if (ua->api > 1) {
+      ow.start_group("terminated");
+      p = ow.get_output(OT_START_ARRAY, OT_END);
+      ua->send_msg("%s", p);
+   }
+   
    if (last_jobs->empty()) {
-      if (!ua->api) ua->send_msg(_("No Terminated Jobs.\n"));
+      if (!ua->api) {
+         ua->send_msg(_("No Terminated Jobs.\n"));
+      } else if (ua->api > 1) {
+         ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+         p = ow.end_group();
+         ua->send_msg("%s", p);
+      }
       return;
    }
    lock_last_jobs_list();
@@ -1520,8 +1539,6 @@ static void list_terminated_jobs(UAContext *ua)
       ua->send_msg(_("\nTerminated Jobs:\n"));
       ua->send_msg(_(" JobId  Level     Files      Bytes   Status   Finished        Name \n"));
       ua->send_msg(_("====================================================================\n"));
-   } else if (ua->api > 1) {
-      ua->send_msg(ow.start_group("terminated"));
    }
    foreach_dlist(je, last_jobs) {
       char JobName[MAX_NAME_LENGTH];
@@ -1591,6 +1608,7 @@ static void list_terminated_jobs(UAContext *ua)
       } else if (ua->api > 1) {
          ua->send_msg("%s",
                       ow.get_output(OT_CLEAR,
+                                    add_sep ? OT_SEP : OT_NOP,
                                     OT_START_OBJ,
                                     OT_INT32,   "jobid",     je->JobId,
                                     OT_JOBLEVEL,"level",     je->JobLevel,
@@ -1606,6 +1624,7 @@ static void list_terminated_jobs(UAContext *ua)
                                     OT_END_OBJ,
                                     OT_END));
 
+         add_sep=true;
       } else {
          ua->send_msg(_("%6d  %-7s %8s %10s  %-7s  %-8s %s\n"),
             je->JobId,
@@ -1619,7 +1638,9 @@ static void list_terminated_jobs(UAContext *ua)
    if (!ua->api) {
       ua->send_msg(_("\n"));
    } else if (ua->api > 1) {
-      ua->send_msg(ow.end_group(false));
+      ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+      p = ow.end_group();
+      ua->send_msg("%s", p);
    }
    unlock_last_jobs_list();
 }
@@ -1648,12 +1669,12 @@ static void list_collectors_status(UAContext *ua)
       }
       Dmsg1(500, "processing: %s\n", res->res_collector.hdr.name);
       render_collector_status(res->res_collector, buf);
-      ua->send_msg(buf.c_str());
+      ua->send_msg("%s", buf.c_str());
    };
    UnlockRes();
    if (!collname){
       render_updcollector_status(buf);
-      ua->send_msg(buf.c_str());
+      ua->send_msg("%s", buf.c_str());
    }
    Dmsg0(200, "leave list_collectors_status()\n");
 }
@@ -1665,7 +1686,9 @@ static void api_collectors_status(UAContext *ua, char *collname)
    POOLMEM *buf;
 
    Dmsg1(200, "enter api_collectors_status() %s\n", NPRTB(collname));
-   ow.start_group("collector_backends");
+   ow.start_group("collector");
+   ow.get_output(OT_START_OBJ, OT_END);
+   ow.start_list("collector_backends");
    LockRes();
    foreach_res(res, R_COLLECTOR) {
       if (collname && !bstrcmp(collname, res->res_collector.hdr.name)){
@@ -1675,12 +1698,13 @@ static void api_collectors_status(UAContext *ua, char *collname)
       api_render_collector_status(res->res_collector, ow);
    };
    UnlockRes();
-   buf = ow.end_group();
+   ow.end_list();
    if (!collname){
-      ow.start_group("collector_update");
+      ow.get_output(OT_SEP, OT_LABEL, "collector_update", OT_END);
       api_render_updcollector_status(ow);
-      buf = ow.end_group();
    }
-   ua->send_msg(buf);
+   ow.get_output(OT_END_OBJ, OT_END);
+   buf = ow.end_group();
+   ua->send_msg("%s", buf);
    Dmsg0(200, "leave api_collectors_status()\n");
 };

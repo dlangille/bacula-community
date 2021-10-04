@@ -68,8 +68,8 @@
 #include "guid_to_name.h"
 #include "htable.h"
 #include "sellist.h"
-#include "output.h"
 #include "protos.h"
+#include "output.h"
 #include "bget_msg.h"
 #if BEEF
 #include "bee_lib_dedup.h"

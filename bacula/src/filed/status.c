@@ -103,9 +103,9 @@ static void api_list_status_header(STATUS_PKT *sp)
          }
       }
    }
-   
    wt.start_group("header");
    wt.get_output(
+      OT_START_OBJ,
       OT_STRING, "name",        my_name,
       OT_STRING, "version",     VERSION " (" BDATE ")",
       OT_STRING, "uname",       HOST_OS " " DISTNAME " " DISTVER,
@@ -121,11 +121,12 @@ static void api_list_status_header(STATUS_PKT *sp)
       OT_PLUGINS, "plugins",    b_plugin_list,
       OT_INT,     "pkiencryption", (int)me->pki_encrypt,
       OT_INT,     "pkisignature", (int)me->pki_sign,
-      OT_STRING,     "pkicipher",  NPRTB(cipher),
-      OT_STRING,     "pkidigest",  NPRTB(digest),
+      OT_STRING,  "pkicipher",  NPRTB(cipher),
+      OT_STRING,  "pkidigest",  NPRTB(digest),
       OT_INT32,   "fips",       crypto_get_fips(),
       OT_STRING,  "crypto",     crypto_get_version(),
       OT_BOOL,    "gpfs",       GPFSLIB::enabled(),
+      OT_END_OBJ,
       OT_END);
    p = wt.end_group();
    sendit(p, strlen(p), sp);
@@ -399,10 +400,14 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
 {
    OutputWriter ow(sp->api_opts);
    int sec, bps, brps, val;
+   bool add_sep=false;
    char *p;
    JCR *njcr;
 
    /* API v1, edit with comma, space before the name, sometime ' ' as separator */
+   ow.start_group("running");
+   p = ow.get_output(OT_START_ARRAY, OT_END);
+   sendit(p, strlen(p), sp);
 
    foreach_jcr(njcr) {
       int vss = 0;
@@ -411,12 +416,19 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
          vss = 1;
       }
 #endif
-      p = ow.get_output(OT_CLEAR, OT_START_OBJ, OT_END);
+      if (add_sep) {
+         p = ow.get_output(OT_CLEAR, OT_SEP, OT_START_OBJ, OT_END);
+
+      } else {
+         p = ow.get_output(OT_CLEAR, OT_START_OBJ, OT_END);
+         add_sep = true;
+      }
 
       if (njcr->JobId == 0) {
          val = (njcr->dir_bsock && njcr->dir_bsock->tls)?1:0;
          ow.get_output(OT_UTIME, "DirectorConnected", (utime_t)njcr->start_time,
                        OT_INT, "DirTLS", val,
+                       OT_END_OBJ,
                        OT_END);
       } else {
          ow.get_output(OT_INT32,   "JobId", njcr->JobId,
@@ -429,10 +441,12 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
                        OT_END);
 
       }
+
       sendit(p, strlen(p), sp);
       if (njcr->JobId == 0) {
          continue;
       }
+
       sec = time(NULL) - njcr->start_time;
       if (sec <= 0) {
          sec = 1;
@@ -440,6 +454,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       bps = (int)(njcr->JobBytes / sec);
       brps = (int)(njcr->ReadBytes / sec);
       ow.get_output(OT_CLEAR,
+                    OT_SEP,     // We have started to display info
                     OT_INT32,   "JobFiles",  njcr->JobFiles,
                     OT_SIZE,    "JobBytes",  njcr->JobBytes,
                     OT_INT,     "Bytes/sec", bps,
@@ -458,7 +473,7 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       }
 
       sendit(p, strlen(p), sp);
-      ow.get_output(OT_CLEAR, OT_END);
+      ow.get_output(OT_CLEAR, OT_SEP, OT_END);
 
       if (njcr->JobFiles > 0) {
          njcr->lock();
@@ -483,6 +498,10 @@ static void  list_running_jobs_api(STATUS_PKT *sp)
       sendit(p, strlen(p), sp);
    }
    endeach_jcr(njcr);
+
+   ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+   p = ow.end_group();
+   sendit(p, strlen(p), sp);
 }
 
 static void  list_running_jobs(STATUS_PKT *sp)
@@ -631,7 +650,9 @@ static void api_collectors_status(STATUS_PKT *sp, char *collname)
    POOLMEM *buf;
 
    Dmsg1(200, "enter api_collectors_status() %s\n", NPRTB(collname));
-   ow.start_group("collector_backends");
+   ow.start_group("collector");
+   ow.get_output(OT_START_OBJ, OT_END);
+   ow.start_list("collector_backends");
    LockRes();
    foreach_res(res, R_COLLECTOR) {
       if (collname && !bstrcmp(collname, res->res_collector.hdr.name)){
@@ -641,12 +662,13 @@ static void api_collectors_status(STATUS_PKT *sp, char *collname)
       api_render_collector_status(res->res_collector, ow);
    };
    UnlockRes();
-   buf = ow.end_group();
+   ow.end_list();
    if (!collname){
-      ow.start_group("collector_update");
+      ow.get_output(OT_SEP, OT_LABEL, "collector_update", OT_END);
       api_render_updcollector_status(ow);
-      buf = ow.end_group();
    }
+   ow.get_output(OT_END_OBJ, OT_END);
+   buf = ow.end_group();
    sendit(buf, strlen(buf), sp);
    Dmsg0(200, "leave api_collectors_status()\n");
 };

@@ -62,25 +62,37 @@ static void list_terminated_jobs(STATUS_PKT *sp)
    OutputWriter ow(sp->api_opts);
    char dt[MAX_TIME_LENGTH], b1[30], b2[30];
    char level[10];
+   bool add_sep=false;
    struct s_last_job *je;
    const char *msg;
    char *p;
 
-   msg =  _("\nTerminated Jobs:\n");
-   if (!sp->api) sendit(msg, strlen(msg), sp);
+   if (sp->api > 1) {
+      ow.start_group("terminated");
+      p = ow.get_output(OT_START_ARRAY, OT_END);
+      sendit(p, strlen(p), sp);
+
+   } else if (!sp->api) {
+      msg =  _("\nTerminated Jobs:\n");
+      sendit(msg, strlen(msg), sp);
+   }
    if (last_jobs->size() == 0) {
-      if (!sp->api) sendit("====\n", 5, sp);
+      if (!sp->api) {
+         sendit("====\n", 5, sp);
+
+      } else if (sp->api > 1) {
+         ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+         p = ow.end_group();
+         sendit(p, strlen(p), sp);
+      }
       return;
    }
+
    lock_last_jobs_list();
    msg =  _(" JobId  Level    Files      Bytes   Status   Finished        Name \n");
    if (!sp->api) sendit(msg, strlen(msg), sp);
    msg =  _("===================================================================\n");
    if (!sp->api) sendit(msg, strlen(msg), sp);
-   if (sp->api > 1) {
-      p = ow.start_group("terminated");
-      sendit(p, strlen(p), sp);
-   }
    foreach_dlist(je, last_jobs) {
       char JobName[MAX_NAME_LENGTH];
       const char *termstat;
@@ -134,17 +146,19 @@ static void list_terminated_jobs(STATUS_PKT *sp)
             *p = 0;
          }
       }
+      p = buf;
       if (sp->api == 1) {
          bsnprintf(buf, sizeof(buf), _("%6d\t%-6s\t%8s\t%10s\t%-7s\t%-8s\t%s\n"),
-            je->JobId,
-            level,
-            edit_uint64_with_commas(je->JobFiles, b1),
-            edit_uint64_with_suffix(je->JobBytes, b2),
-            termstat,
-            dt, JobName);
+                   je->JobId,
+                   level,
+                   edit_uint64_with_commas(je->JobFiles, b1),
+                   edit_uint64_with_suffix(je->JobBytes, b2),
+                   termstat,
+                   dt, JobName);
 
       } else if (sp->api > 1) {
          p = ow.get_output(OT_CLEAR,
+                           add_sep? OT_SEP : OT_NOP,
                            OT_START_OBJ,
                            OT_INT,     "jobid",     je->JobId,
                            OT_JOBLEVEL,"level",     je->JobLevel,
@@ -160,23 +174,25 @@ static void list_terminated_jobs(STATUS_PKT *sp)
                            OT_INT,     "errors",    je->Errors,
                            OT_END_OBJ,
                            OT_END);
-         sendit(p, strlen(p), sp);
+         add_sep = true;
+
       } else {
          bsnprintf(buf, sizeof(buf), _("%6d  %-6s %8s %10s  %-7s  %-8s %s\n"),
-            je->JobId,
-            level,
-            edit_uint64_with_commas(je->JobFiles, b1),
-            edit_uint64_with_suffix(je->JobBytes, b2),
-            termstat,
-            dt, JobName);
-         sendit(buf, strlen(buf), sp);
+                   je->JobId,
+                   level,
+                   edit_uint64_with_commas(je->JobFiles, b1),
+                   edit_uint64_with_suffix(je->JobBytes, b2),
+                   termstat,
+                   dt, JobName);
       }
+      sendit(p, strlen(p), sp);
    }
    unlock_last_jobs_list();
    if (!sp->api) {
       sendit("====\n", 5, sp);
    } else if (sp->api > 1) {
-      p = ow.end_group(false);
+      ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+      p = ow.end_group();
       sendit(p, strlen(p), sp);
    }
 }

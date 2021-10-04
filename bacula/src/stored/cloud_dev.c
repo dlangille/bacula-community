@@ -2562,9 +2562,8 @@ uint32_t cloud_dev::get_cloud_upload_transfer_status(POOL_MEM& msg, bool verbose
 
 void cloud_dev::get_api_cloud_upload_transfer_status(OutputWriter &ow, bool verbose)
 {
-   ow.start_group("uploads");
+   ow.get_output(OT_LABEL, "uploads", OT_END);
    upload_mgr.append_api_status(ow, verbose);
-   ow.end_group();
 }
 
 /* format a status message of the cloud transfers. Verbose gives details on each transfer */
@@ -2578,9 +2577,8 @@ uint32_t cloud_dev::get_cloud_download_transfer_status(POOL_MEM& msg, bool verbo
 
 void cloud_dev::get_api_cloud_download_transfer_status(OutputWriter &ow, bool verbose)
 {
-   ow.start_group("downloads");
+   ow.get_output(OT_LABEL, "downloads", OT_END);
    download_mgr.append_api_status(ow, verbose);
-   ow.end_group();
 }
 
 /* for a given volume VolumeName, return parts that is a list of the

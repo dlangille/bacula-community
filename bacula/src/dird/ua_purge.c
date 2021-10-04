@@ -802,8 +802,6 @@ int truncate_cmd(UAContext *ua, const char *cmd)
    if (find_arg(ua, "cache") > 0) {
       return cloud_volumes_cmd(ua, cmd, "truncate cache");
    }
-   
-   bmemset(&pr, 0, sizeof(pr));
 
    /*
     * Look for all Purged volumes that can be recycled, are enabled and

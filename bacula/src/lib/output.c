@@ -26,6 +26,8 @@
 
 /* use new output (lowercase, no special char) */
 #define OF_USE_NEW_OUTPUT  1
+#define OF_USE_QUOTES      2
+#define OF_USE_JSON        4
 
 void OutputWriter::parse_options(const char *options)
 {
@@ -38,10 +40,31 @@ void OutputWriter::parse_options(const char *options)
       nb=0;
 
       switch(*p) {
+      case 'q':
+         flags |= OF_USE_QUOTES;
+         break;
+
+      case 'j':
+         flags |= OF_USE_QUOTES; // q
+         flags |= OF_USE_JSON;   // j
+         flags |= OF_USE_NEW_OUTPUT; /* o lowercase and only isalpha */
+         set_separator(',');         // S44
+         set_equal(':');             // e123
+         set_label(":");             // l
+         set_hash("{", "}");
+         set_table("[", "]");
+         set_object_separator('{', '}');
+         break;
+
       case 'C':
          flags = 0;
          set_time_format(OW_DEFAULT_TIMEFORMAT);
          set_separator(OW_DEFAULT_SEPARATOR);
+         set_equal(OW_DEFAULT_EQUAL);
+         set_hash(OW_DEFAULT_OPEN_HASH, OW_DEFAULT_CLOSE_HASH);
+         set_table(OW_DEFAULT_OPEN_TABLE, OW_DEFAULT_CLOSE_TABLE);
+         set_label(OW_DEFAULT_LABEL);
+         set_object_separator(0, 0);
          break;
 
       case 'S':                 /* object separator */
@@ -49,7 +72,7 @@ void OutputWriter::parse_options(const char *options)
             nb = nb*10 + (*(++p) - '0');
          }
          if (isascii(nb)) {
-            set_object_separator((char) nb);
+            set_object_separator((char) nb, (char)nb);
          }
          break;
 
@@ -72,6 +95,25 @@ void OutputWriter::parse_options(const char *options)
             set_separator((char) nb);
          }
          break;
+      case 'e':
+         while(isdigit(*(p+1))) {
+            nb = nb*10 + (*(++p) - '0');
+         }
+         if (isascii(nb)) {
+            set_equal((char) nb);
+         }
+         break;
+      case 'l':
+         while(isdigit(*(p+1))) {
+            nb = nb*10 + (*(++p) - '0');
+         }
+         if (isascii(nb)) {
+            char ed1[2];
+            ed1[0] = (char) nb;
+            ed1[1] = 0;
+            set_label(ed1);
+         }
+         break;
       default:
          break;
       }
@@ -79,23 +121,57 @@ void OutputWriter::parse_options(const char *options)
    }
 }
 
-char *OutputWriter::get_options(char *dest)
+const char *OutputWriter::ow_quote_string(const char *str, POOLMEM *&b)
+{
+   if (flags & OF_USE_QUOTES) {
+      b = quote_string(b, str);
+      return b;
+   } else {
+      return str;
+   }
+}
+
+const char *OutputWriter::ow_quote_string(const char *str)
+{
+   return ow_quote_string(str, quote_buf);
+}
+
+const char *OutputWriter::ow_quote_string2(const char *str)
+{
+   return ow_quote_string(str, quote_buf2);
+}
+
+char *OutputWriter::get_options(char *dest, int len)
 {
    char ed1[50];
    *dest = *ed1 = 0;
    if (separator != OW_DEFAULT_SEPARATOR) {
       snprintf(dest, 50, "s%d", (int)separator);
    }
-   if (object_separator) {
-      snprintf(ed1, sizeof(ed1), "S%d", (int) object_separator);
-      bstrncat(dest, ed1, sizeof(ed1));
+   if (object_separator[0]) {
+      snprintf(ed1, sizeof(ed1), "S%d", (int) object_separator[0]);
+      bstrncat(dest, ed1, len);
    }
    if (timeformat != OW_DEFAULT_TIMEFORMAT) {
       snprintf(ed1, sizeof(ed1), "t%d", (int) timeformat);
-      bstrncat(dest, ed1, sizeof(ed1));
+      bstrncat(dest, ed1, len);
+   }
+   if (equal != OW_DEFAULT_EQUAL) {
+      snprintf(ed1, sizeof(ed1), "e%d", (int) equal);
+      bstrncat(dest, ed1, len);
+   }
+   if (strcmp(label, OW_DEFAULT_LABEL) != 0) {
+      snprintf(ed1, sizeof(ed1), "l%d", (int)label[0]);
+      bstrncat(dest, ed1, len);
    }
    if (flags & OF_USE_NEW_OUTPUT) {
-      bstrncat(dest, "o", 1);
+      bstrncat(dest, "o", len);
+   }
+   if (flags & OF_USE_QUOTES) {
+      bstrncat(dest, "q", len);
+   }
+   if (flags & OF_USE_JSON) {
+      bstrncat(dest, "j", len);
    }
    return dest;
 }
@@ -103,8 +179,10 @@ char *OutputWriter::get_options(char *dest)
 void OutputWriter::get_buf(bool append)
 {
    if (!buf) {
+      quote_buf = get_pool_memory(PM_MESSAGE);
+      quote_buf2 = get_pool_memory(PM_MESSAGE);
       buf = get_pool_memory(PM_MESSAGE);
-      *buf = 0;
+      *quote_buf2 = *quote_buf = *buf = 0;
 
    } else if (!append) {
       *buf = 0;
@@ -114,31 +192,63 @@ void OutputWriter::get_buf(bool append)
 char *OutputWriter::start_group(const char *name, bool append)
 {
    get_buf(append);
-   pm_strcat(buf, name);
-   pm_strcat(buf, ":\n");
-   return buf;
+   return get_output(OT_START_OBJ, OT_LABEL, name, OT_END);
 }
 
 char *OutputWriter::end_group(bool append)
 {
    get_buf(append);
-   pm_strcat(buf, "\n");
+   return get_output(OT_SEP,
+                     OT_INT32, "error", error,
+                     OT_STRING, "errmsg", NPRTB(errmsg),
+                     OT_END_OBJ,
+                     OT_NL,
+                     OT_END);
+}
 
-   return buf;
+char *OutputWriter::start_object(const char *name, bool append)
+{
+   get_buf(append);
+   return get_output(OT_LABEL, name, OT_START_OBJ, OT_END);
+}
+
+char *OutputWriter::end_object(bool append)
+{
+   get_buf(append);
+   return get_output(OT_END_OBJ, OT_END);
 }
 
 char *OutputWriter::start_list(const char *name, bool append)
 {
    get_buf(append);
-   pm_strcat(buf, name);
-   pm_strcat(buf, ": [\n");
+   if (use_json()) {
+      if (*buf) {
+         int l = strlen(buf);
+         if (buf[l - 1] != ',' && buf[l - 1] != ':' && buf[l - 1] != '{') {
+            pm_strcat(buf, ",");
+         }
+      }
+      pm_strcat(buf, ow_quote_string(name));
+      pm_strcat(buf, ":[");
+      need_separator = false;
+      will_need_separator = false;
+
+   } else {
+      pm_strcat(buf, name);
+      pm_strcat(buf, ": [\n");
+   }
    return buf;
 }
 
 char *OutputWriter::end_list(bool append)
 {
    get_buf(append);
-   pm_strcat(buf, "]\n");
+   if (use_json()) {
+      pm_strcat(buf, "]");
+
+   } else {
+      pm_strcat(buf, "]\n");
+   }
 
    return buf;
 }
@@ -193,6 +303,11 @@ char *OutputWriter::get_output(POOLMEM **out, OutputType first, ...)
    return ret;
 }
 
+bool OutputWriter::use_json()
+{
+   return flags & OF_USE_JSON;
+}
+
 char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
 {
    char       ed1[MAX_TIME_LENGTH];
@@ -205,10 +320,11 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
    char      *s = NULL, *k = NULL;
    alist     *lst;
    Plugin    *plug;
+   POOLMEM   *tmp3 = get_pool_memory(PM_FNAME);
    POOLMEM   *tmp2 = get_pool_memory(PM_FNAME);
    POOLMEM   *tmp = get_pool_memory(PM_FNAME);
    OutputType val = first;
-   *tmp2 = *tmp = 0;
+   *tmp3 = *tmp2 = *tmp = 0;
 
    while (val != OT_END) {
 
@@ -216,13 +332,33 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
 
       /* Some arguments are not using a keyword */
       switch (val) {
-      case OT_END:
-      case OT_START_OBJ:
-      case OT_END_OBJ:
-      case OT_CLEAR:
+      case OT_SEP:
+         need_separator = true;
+         will_need_separator = false;
          break;
-
+      case OT_NOP:
+         need_separator = false;
+         will_need_separator = false;
+         break;
+      case OT_CLEAR:
+         need_separator = false;
+         will_need_separator = false;
+         break;
+      case OT_START_OBJ:
+      case OT_START_ARRAY:
+      case OT_START_HASH:
+         will_need_separator = false;
+         break;
+      case OT_NL:
+      case OT_END:
+      case OT_END_OBJ:
+      case OT_END_ARRAY:
+      case OT_END_HASH:
+         need_separator = false;
+         will_need_separator = true;
+         break;
       default:
+         will_need_separator = true;
          k = va_arg(ap, char *);          /* Get the variable name */
 
          /* If requested, we can put the keyword in lowercase */
@@ -246,47 +382,51 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
       case OT_ALIST_STR:
          lst = va_arg(ap, alist *);
          i = 0;
-         Mmsg(tmp, "%s=", k);
+         Mmsg(tmp, "%s%c%s",
+              ow_quote_string(k), equal,
+              open_table);
          if (lst) {
             foreach_alist(s, lst) {
                if (i++ > 0) {
                   pm_strcat(tmp, ",");
                }
-               pm_strcat(tmp, s);
+               pm_strcat(tmp, ow_quote_string(s));
             }
          }
-         pm_strcat(tmp, separator_str);
+         pm_strcat(tmp, close_table);
          break;
       case OT_PLUGINS:
          lst = va_arg(ap, alist *);
          i = 0;
-         pm_strcpy(tmp, "plugins=");
+         Mmsg(tmp, "%s%c%s",
+              ow_quote_string("plugin"),
+              equal,
+              open_table);
          if (lst) {
             foreach_alist(plug, lst) {
                if (i++ > 0) {
                   pm_strcat(tmp, ",");
                }
-               pm_strcat(tmp, plug->name);
+               pm_strcat(tmp, ow_quote_string(plug->file));
             }
          }
-         pm_strcat(tmp, separator_str);
+         pm_strcat(tmp, close_table);
          break;
       case OT_RATIO:
          d = va_arg(ap, double);
-         Mmsg(tmp, "%s=%.2f%c", k, d, separator);
+         Mmsg(tmp, "%s%c%.2f", ow_quote_string(k), equal, d);
          break;
       case OT_BOOL:
          i = va_arg(ap, int);
-         Mmsg(tmp, "%s=%s%c", k, i?"true":"false", separator);
+         Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, i?"true":"false");
          break;
       case OT_STRING:
          s = va_arg(ap, char *);
-         Mmsg(tmp, "%s=%s%c", k, NPRTB(s), separator) ;
+         Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, ow_quote_string2(NPRTB(s))) ;
          break;
-
       case OT_INT32:
          i32 = va_arg(ap, int32_t);
-         Mmsg(tmp, "%s=%d%c", k, i32, separator);
+         Mmsg(tmp, "%s%c%d", ow_quote_string(k), equal, i32);
          break;
 
       case OT_UTIME:
@@ -310,39 +450,63 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
          default:
             bstrutime(ed1, sizeof(ed1), bt);
          }
-         Mmsg(tmp, "%s_epoch=%lld%c%s=%s%c", k, bt, separator, k, ed1, separator);
+         if (flags & OF_USE_QUOTES) {
+            ow_quote_string(ed1, tmp3);
+            bstrncpy(ed1, tmp3, sizeof(ed1));
+         }
+         Mmsg(tmp3, "%s_epoch", k);
+         Mmsg(tmp,
+              "%s%c%lld"
+              "%c"
+              "%s%c%s",
+              ow_quote_string(tmp3), equal, bt,
+              separator,
+              ow_quote_string2(k), equal, ed1);
          break;
 
       case OT_DURATION:
          bt = va_arg(ap, utime_t);     
-         bstrutime(ed1, sizeof(ed1), bt); 
-         Mmsg(tmp, "%s=%lld%c%s_str=%s%c", k, bt, separator, k, edit_utime(bt, ed1, sizeof(ed1)), separator);
+         bstrutime(ed1, sizeof(ed1), bt);
+         if (flags & OF_USE_QUOTES) {
+            ow_quote_string(edit_utime(bt, ed1, sizeof(ed1)), tmp3);
+            bstrncpy(ed1, tmp3, sizeof(ed1));
+         }
+
+         Mmsg(tmp3, "%s_str", k);
+         Mmsg(tmp, "%s%c%lld"
+              "%c"
+              "%s%c%s",
+              ow_quote_string(k), equal, bt,
+              separator,
+              ow_quote_string2(tmp3), equal, ed1);
          break;
 
       case OT_SIZE:
       case OT_INT64:
          i64 = va_arg(ap, int64_t);
-         Mmsg(tmp, "%s=%lld%c", k, i64, separator);
+         Mmsg(tmp, "%s%c%lld", ow_quote_string(k), equal, i64);
          break;
 
       case OT_PINT64:
          u64 = va_arg(ap, uint64_t);
-         Mmsg(tmp, "%s=%llu%c", k, u64, separator);
+         Mmsg(tmp, "%s%c%llu", ow_quote_string(k), equal, u64);
          break;
 
       case OT_INT:
          i64 = va_arg(ap, int);
-         Mmsg(tmp, "%s=%lld%c", k, i64, separator);
+         Mmsg(tmp, "%s%c%lld", ow_quote_string(k), equal, i64);
          break;
 
       case OT_JOBLEVEL:
       case OT_JOBTYPE:
       case OT_JOBSTATUS:
          i32 = va_arg(ap, int32_t);
-         if (i32 == 0) {
-            Mmsg(tmp, "%s=%c", k, separator);
+         if (i32 == 0) {        // TODO: Check if it's possible
+            Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, ow_quote_string2(""));
          } else {
-            Mmsg(tmp, "%s=%c%c", k, (char)i32, separator);
+            ed1[0] = (char)i32;
+            ed1[1] = 0;
+            Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, ow_quote_string2(ed1));
          }
          break;
 
@@ -351,19 +515,56 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
          break;
 
       case OT_END_OBJ:
-         pm_strcpy(tmp, "\n");
+         i=0;
+         if (object_separator[1]) {
+            tmp[i++] = object_separator[1];
+         } else {
+            tmp[i++] = '\n';
+         }
+         tmp[i] = 0;
+         break;
+
+      case OT_LABEL:
+         Mmsg(tmp, "%s%s", ow_quote_string(k), label);
+         will_need_separator = false;
          break;
 
       case OT_START_OBJ:
          i=0;
-         if (object_separator) {
-            for(; i < 32 ; i++) {
-               tmp[i] = object_separator;
-            }
+         if (object_separator[0]) {
+            tmp[i++] = object_separator[0];
+
+         } else {
+            tmp[i++] = '\n';
          }
-         tmp[i++] = '\n';
          tmp[i] = 0;
          break;
+
+      case OT_START_HASH:
+         pm_strcpy(tmp, open_hash);
+         break;
+
+      case OT_END_HASH:
+         pm_strcpy(tmp, close_hash);
+         break;
+
+      case OT_START_ARRAY:
+         pm_strcpy(tmp, open_table);
+         break;
+
+      case OT_END_ARRAY:
+         pm_strcpy(tmp, close_table);
+         break;
+
+      case OT_NL:
+         pm_strcat(tmp, "\n");
+         break;
+
+      case OT_NOP:
+         break;
+
+      case OT_SEP:
+         break;                 // Will add a separator at the next round
 
       case OT_END:
          /* wanted fallback */
@@ -372,6 +573,11 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
       }
 
       if (val != OT_END) {
+         if (need_separator) {
+            pm_strcat(out, separator_str);
+
+         }
+         need_separator = will_need_separator;
          pm_strcat(out, tmp);
          val = (OutputType) va_arg(ap, int); /* OutputType is promoted to int when using ... */
       }
@@ -379,6 +585,7 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
 
    free_pool_memory(tmp);
    free_pool_memory(tmp2);
+   free_pool_memory(tmp3);
    //Dmsg1(000, "%s", *out);
    return *out;
 }
@@ -405,8 +612,7 @@ int main(int argc, char **argv)
    int64_t     nb64 = -1;
    btime_t     t    = time(NULL);
 
-   ok(strcmp(wt.get_options(ed1), "") == 0, "Default options");
-
+   ok(strcmp(wt.get_options(ed1, sizeof(ed1)), "") == 0, "Default options");
    Pmsg1(000, "%s", wt.start_group("test"));
 
    wt.get_output(&tmp, OT_CLEAR,
@@ -437,7 +643,7 @@ int main(int argc, char **argv)
                  OT_END));
 
    wt.set_time_format(OTT_TIME_UNIX);
-   ok(strcmp("t1", wt.get_options(ed1)) == 0, "Check unix time format");
+   ok(strcmp("t1", wt.get_options(ed1, sizeof(ed1))) == 0, "Check unix time format");
 
    Pmsg1(000, "%s",
          wt.get_output(OT_CLEAR,
@@ -445,7 +651,7 @@ int main(int argc, char **argv)
                  OT_END));
 
    wt.set_time_format(OTT_TIME_NC);
-   ok(strcmp("t2", wt.get_options(ed1)) == 0, "Check NC time format");
+   ok(strcmp("t2", wt.get_options(ed1, sizeof(ed1))) == 0, "Check NC time format");
 
    Pmsg1(000, "%s",
          wt.get_output(OT_CLEAR,
@@ -455,18 +661,18 @@ int main(int argc, char **argv)
    Pmsg1(000, "%s", wt.end_group(false));
 
    wt.parse_options("s43t1O");
-   ok(strcmp(wt.get_options(ed1), "s43t1") == 0, "Check options after parsing");
+   ok(strcmp(wt.get_options(ed1, sizeof(ed1)), "s43t1") == 0, "Check options after parsing");
 
-   ok(strstr(
-         wt.get_output(OT_CLEAR,
-                 OT_BTIME,  "now",  t,
-                 OT_STRING, "brazil", "test",
-                 OT_END),
-         "+brazil=test+") != NULL,
+   char *p = wt.get_output(OT_CLEAR,
+                           OT_BTIME,  "now",  t,
+                           OT_STRING, "brazil", "test",
+                           OT_END);
+   ok(strstr(p, "+brazil=test") != NULL,
       "Check separator");
+   Pmsg1(000, "===> [%s]\n", p);
 
    wt.parse_options("CS35");
-   ok(strcmp(wt.get_options(ed1), "S35") == 0, "Check options after parsing");
+   ok(strcmp(wt.get_options(ed1, sizeof(ed1)), "S35") == 0, "Check options after parsing");
 
    Pmsg1(000, "%s",
          wt.get_output(OT_CLEAR,
@@ -480,8 +686,36 @@ int main(int argc, char **argv)
                  OT_END_OBJ,
                  OT_END));
 
-   free(str);
 
+   wt.parse_options("Cs44e58q");
+   ok(strcmp(wt.get_options(ed1, sizeof(ed1)), "s44e58q") == 0, "Check options after parsing");
+
+   wt.parse_options("Cj");
+   Dmsg1(0, "%s\n", wt.get_options(ed1, sizeof(ed1)));
+   ok(strcmp(wt.get_options(ed1, sizeof(ed1)), "s44S123e58l58oqj") == 0, "Check options after parsing");
+   
+   Pmsg1(000, "%s",
+         wt.get_output(OT_CLEAR,
+                       OT_START_ARRAY,
+                       OT_LABEL, "backup",
+                 OT_START_HASH,
+                 OT_STRING, "test", "my value",
+                 OT_STRING, "test2", ptr,
+                 OT_END_HASH,
+                       OT_LABEL, "restore",
+                 OT_START_HASH,
+                 OT_STRING, "test", "my value",
+                 OT_STRING, "test2", ptr,
+                 OT_END_HASH,
+                 OT_LABEL, "info",
+                 OT_START_HASH,
+                 OT_BTIME, "now", t,
+                 OT_STRING, "test2", ptr,
+                 OT_END_HASH,
+                 OT_END_ARRAY,
+                 OT_END));
+
+   free(str);
    return report();
 }
 #endif   /* TEST_PROGRAM */
