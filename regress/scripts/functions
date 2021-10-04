@@ -617,6 +617,47 @@ stop_bacula()
    if [ x$FORCE_DOT_STATUS = xyes ]; then
       rm -f $tmp/check_dot_status.ctrl
    fi
+   if [ "$CHECK_API2_JSON" != 0 ]; then
+      rm -f $tmp/json.$$.out $tmp/json.$$.list $tmp/1.json
+      cat << EOF > $tmp/json.$$
+@output /dev/null
+message
+@output $tmp/json.$$.out
+gui on
+.api 2 api_opts=j
+.status dir header
+.status dir running
+.status dir terminated
+.status storage header
+.status storage running
+.status storage terminated
+.status client header
+.status client running
+.status client terminated
+quit
+EOF
+      local nb=0
+      cat  $tmp/json.$$ | $bin/bconsole -c $conf/bconsole.conf -u 1 2>&1 > /dev/null
+      grep '{' $tmp/json.$$.out > $tmp/json.$$.list
+      while read line
+      do
+          cat <<EOF > $tmp/1.json
+$line
+EOF
+          $bperl -e 'check_json("$tmp/1.json")'
+          if [ $? -ne 0 ]; then
+             echo "ERROR: Unable to validate json output in $tmp/1.json";
+             cat $tmp/1.json
+             exit 1
+          else
+              nb=`expr $nb + 1`
+          fi
+      done < $tmp/json.$$.list
+      if [ $nb = 0 ]; then
+          echo "ERROR: Unable to find json output in $tmp/json.$$.out"
+          exit 1
+      fi
+   fi
    if [ "$CHECK_OPENFILE" != 0 ]; then
       rm -f $tmp/stop.$$.out
       cat << EOF > $tmp/stop.$$

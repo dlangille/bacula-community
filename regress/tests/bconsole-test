@@ -9,6 +9,9 @@ TestName="bconsole-test"
 JobName=backup
 . scripts/functions
 
+# Disable automatic APIv2 JSON test
+CHECK_API2_JSON=0
+
 scripts/cleanup
 scripts/copy-test-confs
 

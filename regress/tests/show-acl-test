@@ -9,6 +9,9 @@ TestName="show-acl-test"
 JobName=backup
 . scripts/functions
 
+# Disable automatic APIv2 JSON test
+CHECK_API2_JSON=0
+
 scripts/cleanup
 scripts/copy-test-confs
 
@@ -109,7 +112,7 @@ if [ $? != 0 ]; then
 fi
 
 grep name=$job3 $tmp/log1.out > /dev/null
-if [ $? == 0 ]; then
+if [ $? = 0 ]; then
     print_debug "ERROR: should NOT find job definition for $job3 in $tmp/log1.out"
     estat=3
 fi
