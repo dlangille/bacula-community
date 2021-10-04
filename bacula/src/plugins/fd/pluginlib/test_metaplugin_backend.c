@@ -150,11 +150,11 @@ int read_plugin(char * buf)
       while (len < size) {
          int32_t nbytes = 0;
          int rc = ioctl(STDIN_FILENO, FIONREAD, &nbytes);
-         snprintf(buflog, BUFLEN, ">> FIONREAD:%d:%ld", rc, nbytes);
+         snprintf(buflog, BUFLEN, ">> FIONREAD:%d:%ld", rc, (long int)nbytes);
          LOG(buflog);
-         if (nbytes < size){
+         if (size > (size_t)nbytes){
             rc = ioctl(STDIN_FILENO, FIONREAD, &nbytes);
-            snprintf(buflog, BUFLEN, ">> Second FIONREAD:%d:%ld", rc, nbytes);
+            snprintf(buflog, BUFLEN, ">> Second FIONREAD:%d:%ld", rc, (long int)nbytes);
             LOG(buflog);
          }
          size_t bufread = size - len > BIGBUFLEN ? BIGBUFLEN : size - len;
@@ -1105,6 +1105,22 @@ void perform_backup()
    write_plugin('C', buf);
    signal_eod();
    signal_eod();
+
+   // the file with external stat(2) packet
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/java/%d/stat.file\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   write_plugin('C', "STAT:/etc/passwd\n");
+   write_plugin('I', "TEST18");
+   signal_eod();
+   // here comes a file data contents
+   write_plugin('C', "DATA\n");
+   write_plugin('D', "/* here comes a file data contents */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+   write_plugin('I', "TEST18Data");
 
    // this plugin object should be the latest item to backup
    if (regress_backup_plugin_objects)

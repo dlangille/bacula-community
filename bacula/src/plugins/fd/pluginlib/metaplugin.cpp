@@ -2323,6 +2323,9 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
                reqparams--;
             }
             continue;
+         case metaplugin::attributes::Status_Handled:
+            reqparams--;
+            continue;
          default:
             break;
          }

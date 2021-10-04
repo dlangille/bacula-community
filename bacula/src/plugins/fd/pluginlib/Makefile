@@ -12,8 +12,6 @@ include ../Makefile.inc
 _GIT := $(shell eval $(topdir)/scripts/getgitcommit)
 VERSIONGIT = "/git-$(_GIT)"
 
-UNITTESTSOBJ = $(LIBDIR)/unittests.lo
-LIBBACOBJ = $(LIBDIR)/libbac.la
 LIBBACCFGOBJ = $(LIBDIR)/libbaccfg.la
 
 PLUGINLIBSSRC = pluginlib.cpp pluginlib.h
@@ -68,9 +66,6 @@ COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test
 all: $(COMMONPLUGINOBJ) # $(TESTMETAPLUGINBACKENDOBJ)
 
 tests: $(COMMONPLUGINTESTS)
-
-$(LIBBACCFGOBJ):
-	$(MAKE) -C $(LIBDIR) libbaccfg.la
 
 test_metaplugin_backend.lo: $(TESTMETAPLUGINBACKENDSRC)
 	@echo "Compiling backend $< ..."

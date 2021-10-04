@@ -41,6 +41,7 @@ namespace attributes
       Status_OK,
       Invalid_Stat_Packet,
       Invalid_File_Type,
+      Status_Handled,
       Not_Command,
    } Status;
 

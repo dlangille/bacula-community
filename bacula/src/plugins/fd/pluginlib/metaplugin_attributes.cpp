@@ -50,6 +50,38 @@ namespace attributes
       int nlinks;
 
       DMSG0(ctx, DDEBUG, "read_scan_stat_command()\n");
+
+      if (strncmp(cmd.c_str(), "STAT:/", 6) == 0)
+      {
+         DMSG0(ctx, DDEBUG, "read_scan_stat_command():new stat(2)\n");
+         POOL_MEM param(PM_FNAME);
+         // handle stat(2) for this file
+         scan_parameter_str(cmd, "STAT:", param);
+         int rc = stat(param.c_str(), &sp->statp);
+         if (rc < 0)
+         {
+            // error
+            DMSG1(ctx, DERROR, "Invalid path: %s\n", param.c_str());
+            return Invalid_Stat_Packet;
+         }
+         // stat is working as expected
+         DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat: %o\n", sp->statp.st_mode & S_IFMT);
+         switch (sp->statp.st_mode & S_IFMT)
+         {
+         case S_IFDIR:
+            sp->type = FT_DIREND;
+            sp->link = sp->fname;
+            break;
+         case S_IFREG:
+            sp->type = FT_REG;
+            break;
+         default:
+            DMSG1(ctx, DERROR, "Unsupported file type: %o\n", sp->statp.st_mode & S_IFMT);
+            return Invalid_Stat_Packet;
+         }
+         return Status_Handled;
+      }
+
       int32_t nfi = -1;
       int nrscan = sscanf(cmd.c_str(), "STAT:%c %ld %d %d %o %d %d",
                                        &type, &size, &uid, &gid, &perms, &nlinks, &nfi);
