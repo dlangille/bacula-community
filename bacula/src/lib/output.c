@@ -399,7 +399,7 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
          lst = va_arg(ap, alist *);
          i = 0;
          Mmsg(tmp, "%s%c%s",
-              ow_quote_string("plugin"),
+              ow_quote_string("plugins"),
               equal,
               open_table);
          if (lst) {
@@ -407,7 +407,7 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
                if (i++ > 0) {
                   pm_strcat(tmp, ",");
                }
-               pm_strcat(tmp, ow_quote_string(plug->file));
+               pm_strcat(tmp, ow_quote_string(plug->name));
             }
          }
          pm_strcat(tmp, close_table);
