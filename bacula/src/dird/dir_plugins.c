@@ -314,6 +314,9 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
    STORE *rstore = jcr->store_mngr->get_rstore();
    STORE *wstore = jcr->store_mngr->get_wstore();
    switch (var) {
+   case bDirVarWorkingDir:
+      *(void **)value = director->working_directory;
+      break;
    case bDirVarJobId:
       *((int *)value) = jcr->JobId;
       Dmsg1(dbglvl, "dir-plugin: return bDirVarJobId=%d\n", jcr->JobId);
@@ -432,6 +435,9 @@ static bRC baculaGetValue(bpContext *ctx, brDirVariable var, void *value)
    case bDirVarSDJobStatus:
       *((int *)value) = jcr->SDJobStatus;
       Dmsg1(dbglvl, "Bacula: return bDirVarSDJobStatus=%c\n", jcr->SDJobStatus);
+      break;
+   case bDirVarInfo:
+      dir_get_information(jcr, (POOLMEM **) value);
       break;
    default:
       break;

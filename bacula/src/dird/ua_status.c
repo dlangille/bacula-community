@@ -1708,3 +1708,87 @@ static void api_collectors_status(UAContext *ua, char *collname)
    ua->send_msg("%s", buf);
    Dmsg0(200, "leave api_collectors_status()\n");
 };
+
+/* Display only one instance of each plugin */
+struct singleton
+{
+   hlink hp;
+   char  value[1];
+};
+
+static int store_singleton(void *ctx, int num_fields, char **row)
+{
+   htable *h = (htable *) ctx;
+   char *start = row[0];
+   for(char *p = row[0] ; p && *p ; p++) {
+      if (*p == ',' || *(p+1) == 0) {
+         if (*p == ',') {
+            *p = 0;
+         } // else it's already the end
+         strip_trailing_junk(start);
+         if (!h->lookup(start)) {
+            singleton *elt = (singleton *)h->hash_malloc(sizeof(singleton) + strlen(start));
+            bstrncpy(elt->value, start, strlen(start)+1);
+            h->insert(elt->value, elt);
+            start = p+1;
+         }
+      }
+   }
+   return 0;
+}
+   
+static void list_plugins(JCR *jcr, alist *list)
+{
+   if (!jcr->db) {
+      return;
+   }
+
+   singleton *v = NULL;
+   htable h(v, &v->hp, 50);
+   /* stored as plug1,plug2,plug3 */
+   db_sql_query(jcr->db, "SELECT Plugins FROM Client", store_singleton, &h);
+   foreach_htable(v, &h) {
+      list->append(bstrdup(v->value));
+   }
+}
+
+/* Get JSON information about the system */
+char *dir_get_information(JCR *jcr, POOLMEM **mem)
+{
+   if (!jcr->db) {
+      pm_strcpy(mem, "");
+      return *mem;
+   }
+
+   alist lst(10, owned_by_alist);
+   OutputWriter wt("j");
+   int64_t backups[3] = {0,0,0}, volumes[2] = {0,0};
+   db_sql_query(jcr->db,
+                "SELECT SUM(JobBytes), SUM(JobFiles), count(1) FROM Job WHERE Type IN ('B', 'C', 'M') AND JobStatus = 'T'",
+                db_mint64_handler, backups);
+
+   db_sql_query(jcr->db, "SELECT SUM(VolBytes)+SUM(VolABytes), count(1) FROM Media",
+                db_mint64_handler, volumes);
+   list_plugins(jcr, &lst);
+
+   wt.start_group("data");
+   wt.get_output(
+      OT_START_OBJ,
+      OT_STRING, "name",        my_name,
+      OT_STRING, "bacula_version",     VERSION " (" BDATE ")",
+      OT_STRING, "uname",       HOST_OS " " DISTNAME " " DISTVER,
+      OT_INT,    "nclients",    ((rblist *)res_head[R_CLIENT-r_first]->res_list)->size(),
+      OT_ALIST_STR, "plugins",  &lst,
+      OT_INT64,  "backup_size", backups[0],
+      OT_INT64,  "backup_files",backups[1],
+      OT_INT64,  "backup_nb",   backups[2],
+      OT_INT64,  "media_size",  volumes[0],
+      OT_INT64,  "media_nb",    volumes[1],
+      OT_STRING, "customerid",  NPRTB(director->customerid),
+      OT_INT,    "version",     1,
+      OT_END_OBJ,
+      OT_END);
+
+   pm_strcpy(mem,  wt.end_group());
+   return *mem;
+}

@@ -84,7 +84,9 @@ typedef enum {
   bDirVarSDJobFiles = 20,          // int
   bDirVarSDErrors   = 21,          // int
   bDirVarFDJobStatus = 22,         // int
-  bDirVarSDJobStatus = 23          // int
+  bDirVarSDJobStatus = 23,         // int
+  bDirVarWorkingDir  = 24,         // const char *
+  bDirVarInfo        = 25          // must provide POOLMEM **
 } brDirVariable;
 
 typedef enum {

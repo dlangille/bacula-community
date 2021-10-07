@@ -317,6 +317,7 @@ int scan_truncate_cmd(UAContext *ua, const char *cmd,
                      char *truncate_opt);
 /* ua_status.c */
 void list_dir_status_header(UAContext *ua);
+char *dir_get_information(JCR *jcr, POOLMEM **mem);
 
 /* ua_tree.c */
 bool user_select_files_from_tree(TREE_CTX *tree);
