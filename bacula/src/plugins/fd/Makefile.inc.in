@@ -39,8 +39,9 @@ PLUGINLIBDIR = $(FDPLUGDIR)/pluginlib
 
 UNITTESTSOBJ = $(LIBDIR)/unittests.lo
 LIBBACOBJ = $(LIBDIR)/libbac.la
+INIOBJ = $(LIBDIR)/ini.lo
 PLUGINLIBOBJ = $(PLUGINLIBDIR)/pluginlib.lo
-METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_attributes.lo
+METAPLUGINOBJ = $(PLUGINLIBOBJ) $(PLUGINLIBDIR)/ptcomm.lo $(PLUGINLIBDIR)/metaplugin.lo $(PLUGINLIBDIR)/metaplugin_attributes.lo $(PLUGINLIBDIR)/metaplugin_accurate.lo $(PLUGINLIBDIR)/metaplugin_metadata.lo
 
 EXTRA_INSTALL_TARGET = @FD_PLUGIN_INSTALL@
 
@@ -51,6 +52,9 @@ $(UNITTESTSOBJ):
 
 $(LIBBACOBJ):
 	$(MAKE) -C $(LIBDIR) libbac.la
+
+$(INIOBJ):
+	$(MAKE) -C $(LIBDIR) ini.lo
 
 $(PLUGINLIBDIR)/test_metaplugin_backend.lo:
 	$(MAKE) -C $(PLUGINLIBDIR) test_metaplugin_backend.lo
@@ -66,6 +70,12 @@ $(PLUGINLIBDIR)/metaplugin.lo: $(PLUGINLIBDIR)/metaplugin.cpp $(PLUGINLIBDIR)/me
 
 $(PLUGINLIBDIR)/metaplugin_attributes.lo: $(PLUGINLIBDIR)/metaplugin_attributes.cpp $(PLUGINLIBDIR)/metaplugin_attributes.h
 	$(MAKE) -C $(PLUGINLIBDIR) metaplugin_attributes.lo
+
+$(PLUGINLIBDIR)/metaplugin_accurate.lo: $(PLUGINLIBDIR)/metaplugin_accurate.cpp $(PLUGINLIBDIR)/metaplugin_accurate.h
+	$(MAKE) -C $(PLUGINLIBDIR) metaplugin_accurate.lo
+
+$(PLUGINLIBDIR)/metaplugin_metadata.lo: $(PLUGINLIBDIR)/metaplugin_metadata.cpp $(PLUGINLIBDIR)/metaplugin_metadata.h
+	$(MAKE) -C $(PLUGINLIBDIR) metaplugin_metadata.lo
 
 $(PLUGINLIBDIR)/iso8601.lo: $(PLUGINLIBDIR)/iso8601.cpp $(PLUGINLIBDIR)/iso8601.h
 	$(MAKE) -C $(PLUGINLIBDIR) iso8601.lo

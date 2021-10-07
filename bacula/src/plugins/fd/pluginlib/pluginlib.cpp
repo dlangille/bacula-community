@@ -542,19 +542,6 @@ bool parse_param(bool &param, const char *pname, const char *name, const char *v
    return false;
 }
 
-/*
- *
- *
- * in:
- *    param - a pointer to
- *    pname -
- *    name -
- *    value -
- * out:
- *    True if parameter was parsed
- *    False if it was not the parameter required
- */
-
 /**
  * @brief Setup Plugin parameter for integer from string value.
  *
@@ -651,7 +638,8 @@ bool parse_param_add_str(alist &list, const char *pname, const char *name, const
  */
 bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param)
 {
-   if (prefix != NULL){
+   if (prefix != NULL)
+   {
       int len = strlen(prefix);
       if (strncmp(cmd, prefix, len) == 0)
       {
@@ -660,6 +648,19 @@ bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param)
          strip_trailing_newline(param.c_str());
          return true;
       }
+   }
+
+   return false;
+}
+
+bool scan_parameter_int(const char * cmd, const char *prefix, int &param)
+{
+   POOL_MEM tmp;
+
+   if (scan_parameter_str(cmd, prefix, tmp))
+   {
+      param = atoi(tmp.c_str());
+      return true;
    }
 
    return false;

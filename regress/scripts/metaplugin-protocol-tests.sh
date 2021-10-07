@@ -206,6 +206,7 @@ wait
 status client=$CLIENT
 messages
 llist jobid=8
+list files jobid=8
 @output
 quit
 END_OF_DATA
@@ -528,10 +529,16 @@ fi
 RET=$(grep "jobstatus:" ${cwd}/tmp/log10.out | awk '{print $2}')
 SEEN=$(grep -c "SEEN" ${cwd}/tmp/log10.out)
 NONEXIST=$(grep -c "nonexistentok" ${cwd}/tmp/log10.out)
-if [ "x$RET" != "xT" ] || [ "$SEEN" -ne 1 ] || [ "$NONEXIST" -ne 2 ]
+STRIP1=$(grep "passwd" ${cwd}/tmp/log10.out | awk '{print $2}')
+STRIP2=$(grep "bacula/test/split/file" ${cwd}/tmp/log10.out | awk '{print $2}')
+GENIUE1="${cwd}/working/passwd"
+GENIUE2="${cwd}/working/tmp/bacula/test/split/file"
+if [ "x$RET" != "xT" ] || [ "$SEEN" -ne 1 ] || [ "$NONEXIST" -ne 2 ] || [ "$STRIP1" = "$GENIUE1" ] || [ "$STRIP2" = "$GENIUE2" ]
 then
    echo "log10" "$RET" "$SEEN" "$NONEXIST"
    bstat=$((bstat+512))
+   echo "$GENIUE1" >> ${cwd}/tmp/log10.out
+   echo "$GENIUE2" >> ${cwd}/tmp/log10.out
 fi
 
 LFILE1=$(grep "drwxr-xr-x" ${cwd}/tmp/llog1.out | grep -c containers)

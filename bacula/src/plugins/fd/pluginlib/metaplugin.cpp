@@ -20,8 +20,8 @@
  * @file metaplugin.cpp
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula metaplugin interface.
- * @version 2.1.0
- * @date 2020-12-23
+ * @version 3.0.0
+ * @date 2021-10-07
  *
  * @copyright Copyright (c) 2021 All rights reserved.
  *            IP transferred to Bacula Systems according to agreement.
@@ -29,6 +29,7 @@
 
 #include "metaplugin.h"
 #include "metaplugin_attributes.h"
+#include "metaplugin_accurate.h"
 #include <sys/stat.h>
 #include <signal.h>
 #include <sys/select.h>
@@ -782,6 +783,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_standard_error_backup",
       "regress_cancel_backup",
       "regress_cancel_restore",
+      "regress_working_dir",
       NULL,
    };
 #endif
@@ -842,7 +844,8 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
    }
 
    // now send accurate parameter if requested and available
-   if (ACCURATEPLUGINPARAMETER && accurate_mode) {
+   if (ACCURATEPLUGINPARAMETER && accurate_mode)
+   {
       pm_strcpy(cmd, "Accurate=1\n");
       rc = backend.ctx->write_command(ctx, cmd);
       if (rc < 0) {
@@ -850,6 +853,17 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
          return bRC_Error;
       }
    }
+
+#ifdef DEVELOPER
+   const char * regress_working_dir;
+   bfuncs->getBaculaValue(ctx, bVarWorkingDir, &regress_working_dir);
+   Mmsg(cmd, "regress_working_dir=%s\n", regress_working_dir);
+   rc = backend.ctx->write_command(ctx, cmd);
+   if (rc < 0) {
+      /* error */
+      return bRC_Error;
+   }
+#endif
 
    // signal end of parameters block
    backend.ctx->signal_eod(ctx);
@@ -883,11 +897,30 @@ bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
       return bRC_Error;
    }
 
-   if (!backend.ctx->read_ack(ctx)){
-      strip_trailing_newline(cmd.c_str());
-      DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
-      JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
-      return bRC_Error;
+   // if (!backend.ctx->read_ack(ctx)){
+   //    strip_trailing_newline(cmd.c_str());
+   //    DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
+   //    JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
+   //    return bRC_Error;
+   // }
+
+   int32_t status;
+   while ((status = backend.ctx->read_command(ctx, cmd)) != 0)
+   {
+      if (status < 0)
+      {
+         // handle error
+         strip_trailing_newline(cmd.c_str());
+         DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
+         JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
+         return bRC_Error;
+      }
+
+      if (status > 0 && scan_parameter_int(cmd, "STRIP:", strip_path_option))
+      {
+         DMSG1(ctx, DINFO, "set strip path = %d\n", strip_path_option);
+         continue;
+      }
    }
 
    return bRC_OK;
@@ -1702,42 +1735,62 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
    // loop on metadata from backend or EOD which means no more files to backup
    while (true)
    {
-      if (backend.ctx->read_command(ctx, cmd) > 0){
+      if (backend.ctx->read_command(ctx, cmd) > 0)
+      {
          /* yup, should read FNAME, ACL or XATTR from backend, check which one */
          DMSG(ctx, DDEBUG, "read_command(1): %s\n", cmd.c_str());
-         if (scan_parameter_str(cmd, "FNAME:", fname)){
+         if (scan_parameter_str(cmd, "FNAME:", fname))
+         {
             /* got FNAME: */
             nextfile = true;
             object = FileObject;
             return bRC_OK;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ:", fname)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ:", fname))
+         {
             /* got Plugin Object header */
             nextfile = true;
             object = PluginObject;
             // pluginobject = true;
             return bRC_OK;
          }
-         if (scan_parameter_str(cmd, "RESTOREOBJ:", fname)){
+         if (scan_parameter_str(cmd, "RESTOREOBJ:", fname))
+         {
             /* got Restore Object header */
             nextfile = true;
             object = RestoreObject;
             // restoreobject = true;
             return bRC_OK;
          }
-         if (scan_parameter_str(cmd, "CHECK:", fname)){
+         if (scan_parameter_str(cmd, "CHECK:", fname))
+         {
             /* got accurate check query */
-            perform_accurate_check(ctx);
+            metaplugin::accurate::perform_accurate_check(ctx, backend.ctx, fname, accurate_mode, accurate_mode_err);
             continue;
          }
-         if (scan_parameter_str(cmd, "CHECKGET:", fname)){
+         if (scan_parameter_str(cmd, "CHECKGET:", fname))
+         {
             /* got accurate get query */
-            perform_accurate_check_get(ctx);
+            metaplugin::accurate::perform_accurate_check_get(ctx, backend.ctx, fname, accurate_mode, accurate_mode_err);
             continue;
          }
-         if (scan_parameter_str(cmd, "ACCEPT:", fname)){
+         if (scan_parameter_str(cmd, "ACCEPT:", fname))
+         {
             /* got AcceptFile() query */
             perform_accept_file(ctx);
+            continue;
+         }
+         if (scan_parameter_str(cmd, "INCLUDE:", fname))
+         {
+            /* got AddInclude() request */
+            perform_addinclude(ctx);
+            continue;
+         }
+         int split_nr = -1;
+         if (scan_parameter_int(cmd, "STRIP:", split_nr))
+         {
+            /* got Split Option change request */
+            perform_change_split_option(ctx, split_nr);
             continue;
          }
          if (bstrcmp(cmd.c_str(), "ACL")){
@@ -1775,6 +1828,67 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
    return bRC_Error;
 }
 
+struct bacula_ctx {
+   JCR *jcr;                             /* jcr for plugin */
+   bRC  rc;                              /* last return code */
+   bool disabled;                        /* set if plugin disabled */
+   bool restoreFileStarted;
+   bool createFileCalled;
+   bool cancelCalled;                    /* true if the plugin got the cancel event */
+   void *exclude;                  /* pointer to exclude files */
+   void *include;                  /* pointer to include/exclude files */
+};
+
+/**
+ * @brief Perform AddInclude() for change current FileSet.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @return bRC always return bRC_OK
+ */
+bRC METAPLUGIN::perform_addinclude(bpContext *ctx)
+{
+   if (!new_include_created)
+   {
+      DMSG0(ctx, DDEBUG, "perform_addinclude():create new Include\n");
+      bfuncs->NewInclude(ctx);
+      new_include_created = true;
+
+      if (strip_path_option > 0)
+      {
+         POOL_MEM tmp;
+         Mmsg(tmp, "fP%d:", strip_path_option);
+         DMSG1(ctx, DDEBUG, "perform_addinclude():addoption:\"%s\"\n", tmp.c_str());
+         bfuncs->AddOptions(ctx, tmp.c_str()); // Force onefs=no and strip base path
+      }
+   }
+
+   DMSG1(ctx, DDEBUG, "perform_addinclude():%s\n", fname.c_str());
+   bfuncs->AddInclude(ctx, fname.c_str());
+   pm_strcpy(fname, NULL);
+
+   return bRC_OK;
+}
+
+/**
+ * @brief Changes a current split option value and forces new Include creation.
+ *
+ * @param ctx bpContext - for Bacula debug and jobinfo messages
+ * @param nr a new split option to set
+ * @return bRC bRC always return bRC_OK
+ */
+bRC METAPLUGIN::perform_change_split_option(bpContext *ctx, int nr)
+{
+   nr = nr < 0 ? 0 : nr;
+   if (nr != strip_path_option)
+   {
+      DMSG2(ctx, DDEBUG, "perform_change_split_option():%d -> %d\n", strip_path_option, nr);
+      strip_path_option = nr;
+      new_include_created = false;
+   }
+
+   return bRC_OK;
+}
+
 /**
  * @brief Respond to the file index query command from backend.
  *
@@ -1791,153 +1905,6 @@ bRC METAPLUGIN::perform_file_index_query(bpContext *ctx)
    if (backend.ctx->write_command(ctx, cmd) < 0){
       /* error */
       return bRC_Error;
-   }
-
-   return bRC_OK;
-}
-
-/**
- * @brief
- *
- * @param ctx bpContext - for Bacula debug and jobinfo messages
- * @return bRC bRC_OK when success, bRC_Error if not
- */
-bRC METAPLUGIN::perform_accurate_check(bpContext *ctx)
-{
-   if (strlen(fname.c_str()) == 0){
-      // input variable is not valid
-      return bRC_Error;
-   }
-
-   DMSG0(ctx, DDEBUG, "perform_accurate_check()\n");
-
-   POOL_MEM cmd(PM_FNAME);
-   struct save_pkt sp;
-   memset(&sp, 0, sizeof(sp));
-
-   // supported sequence is `STAT` followed by `TSTAMP`
-   if (backend.ctx->read_command(ctx, cmd) < 0) {
-      // error
-      return bRC_Error;
-   }
-
-   metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, &sp);
-   if (status == metaplugin::attributes::Status_OK) {
-      if (backend.ctx->read_command(ctx, cmd) < 0) {
-         // error
-         return bRC_Error;
-      }
-
-      status = metaplugin::attributes::read_scan_tstamp_command(ctx, cmd, &sp);
-      if (status == metaplugin::attributes::Status_OK) {
-         // success we can perform accurate check for stat packet
-         bRC rc = bRC_OK;  // return 'OK' as a default
-         if (accurate_mode) {
-            sp.fname = fname.c_str();
-            rc = checkChanges(&sp);
-         } else {
-            if (!accurate_mode_err) {
-               DMSG0(ctx, DERROR, "Backend CHECK command require accurate mode on!\n");
-               JMSG0(ctx, M_ERROR, "Backend CHECK command require accurate mode on!\n");
-               accurate_mode_err = true;
-            }
-         }
-
-         POOL_MEM checkstatus(PM_NAME);
-         Mmsg(checkstatus, "%s\n", rc == bRC_Seen ? "SEEN" : "OK");
-         DMSG1(ctx, DINFO, "perform_accurate_check(): %s", checkstatus.c_str());
-
-         if (!backend.ctx->write_command(ctx, checkstatus)) {
-            DMSG0(ctx, DERROR, "Cannot send checkChanges() response to backend\n");
-            JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot send checkChanges() response to backend\n");
-            return bRC_Error;
-         }
-
-         return bRC_OK;
-      }
-   } else {
-      // check possible errors
-      switch (status)
-      {
-      case metaplugin::attributes::Invalid_File_Type:
-         JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", sp.type, fname.c_str());
-         return bRC_Error;
-
-      case metaplugin::attributes::Invalid_Stat_Packet:
-         JMSG1(ctx, backend.ctx->jmsg_err_level(), "Invalid stat packet: %s\n", cmd.c_str());
-         return bRC_Error;
-      default:
-         break;
-      }
-      // future extension for `ATTR` command
-      // ...
-   }
-
-   return bRC_Error;
-}
-
-/**
- * @brief Perform accurate query check and resturn accurate data to backend.
- *
- * @param ctx bpContext - for Bacula debug and jobinfo messages
- * @return bRC bRC_OK when success, bRC_Error if not
- */
-bRC METAPLUGIN::perform_accurate_check_get(bpContext *ctx)
-{
-   POOL_MEM cmd(PM_FNAME);
-
-   if (strlen(fname.c_str()) == 0){
-      // input variable is not valid
-      return bRC_Error;
-   }
-
-   DMSG0(ctx, DDEBUG, "perform_accurate_check_get()\n");
-
-   if (!accurate_mode) {
-      // the job is not accurate, so no accurate data will be available at all
-      pm_strcpy(cmd, "NOACCJOB\n");
-      if (!backend.ctx->signal_error(ctx, cmd)) {
-         DMSG0(ctx, DERROR, "Cannot send 'No Accurate Job' info to backend\n");
-         JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot send 'No Accurate Job' info to backend\n");
-         return bRC_Error;
-      }
-      return bRC_OK;
-   }
-
-   accurate_attribs_pkt attribs;
-   memset(&attribs, 0, sizeof(attribs));
-
-   attribs.fname = fname.c_str();
-   bRC rc = getAccurateAttribs(&attribs);
-
-   struct restore_pkt rp;
-
-   switch (rc)
-   {
-   case bRC_Seen:
-      memcpy(&rp.statp, &attribs.statp, sizeof(rp.statp));
-      rp.type = FT_MASK;   // This is a special metaplugin protocol hack
-                           // because the current Bacula accurate code does
-                           // not handle FileType on catalog attributes, yet.
-      // STAT:...
-      metaplugin::attributes::make_stat_command(ctx, cmd, &rp);
-      backend.ctx->write_command(ctx, cmd);
-
-      // TSTAMP:...
-      if (metaplugin::attributes::make_tstamp_command(ctx, cmd, &rp) == metaplugin::attributes::Status_OK) {
-         backend.ctx->write_command(ctx, cmd);
-         DMSG(ctx, DINFO, "createFile:%s", cmd.c_str());
-      }
-
-      break;
-   default:
-      pm_strcpy(cmd, "UNAVAIL\n");
-      if (!backend.ctx->write_command(ctx, cmd)) {
-         DMSG0(ctx, DERROR, "Cannot send 'UNAVAIL' response to backend\n");
-         JMSG0(ctx, backend.ctx->jmsg_err_level(), "Cannot send 'UNAVAIL' response to backend\n");
-         return bRC_Error;
-      }
-      break;
    }
 
    return bRC_OK;

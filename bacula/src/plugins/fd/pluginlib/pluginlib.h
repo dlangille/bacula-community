@@ -241,6 +241,8 @@ bool parse_param_add_str(alist &list, const char *pname, const char *name, const
 
 bool scan_parameter_str(const char * cmd, const char *prefix, POOL_MEM &param);
 inline bool scan_parameter_str(const POOL_MEM &cmd, const char *prefix, POOL_MEM &param) { return scan_parameter_str(cmd.c_str(), prefix, param); }
+bool scan_parameter_int(const char *cmd, const char *prefix, int &param);
+inline bool scan_parameter_int(const POOL_MEM &cmd, const char *prefix, int &param) { return scan_parameter_int(cmd.c_str(), prefix, param); }
 
 void scan_and_terminate_str(POOL_MEM &buf, int msglen);
 

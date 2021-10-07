@@ -130,9 +130,10 @@ int main()
    POOL_MEM param(PM_NAME);
    const char *prefix = "FNAME:";
    const char *fname1 = "/etc/passwd";
-   pm_strcpy(cmd1, prefix);
-   pm_strcat(cmd1, fname1);
-   pm_strcat(cmd1, "\n");
+   Mmsg(cmd1, "%s%s\n", prefix, fname1);
+   // pm_strcpy(cmd1, prefix);
+   // pm_strcat(cmd1, fname1);
+   // pm_strcat(cmd1, "\n");
    ok(scan_parameter_str(cmd1, prefix, param), "check scan parameter str match");
    ok(bstrcmp(param.c_str(), fname1) , "check scan parameter str param");
    nok(scan_parameter_str(cmd1, "prefix", param), "check scan parameter str not match");
@@ -150,20 +151,28 @@ int main()
    ok(bstrcmp(param.c_str(), fname1) , "check scan parameter for char* str param");
    nok(scan_parameter_str(cmd2, "prefix", param), "check scan parameter for char* str not match");
 
+   int value = -1;
+   snprintf(cmd2, 256, "%s10\n", prefix);
+   ok(scan_parameter_int(cmd2, prefix, value), "test scan_parameter_int");
+   ok(value == 10, "test scan_parameter_int value");
+   value = -1;
+   nok(scan_parameter_int(cmd2, "prefix", value), "test scan_parameter_int not match");
+   ok(value == -1, "test scan_parameter_int value unchanged");
+
    const vectstruct testvect1[] = {
-      { "", false, "checking empty" },
-      { "/", false, "checking slash" },
-      { "other", false, "checking other" },
-      { "/tmp", true, "checking local" },
-      { "/tmp/restore", true, "checking local" },
+       {"", false, "checking empty"},
+       {"/", false, "checking slash"},
+       {"other", false, "checking other"},
+       {"/tmp", true, "checking local"},
+       {"/tmp/restore", true, "checking local"},
 #ifdef HAVE_WIN32
-      { "c:", true, "checking local win32" },
-      { "d:/", true, "checking local win32" },
-      { "E:/", true, "checking local win32" },
-      { "F:/test", true, "checking local win32" },
-      { "g:/test/restore", true, "checking local win32" },
+       {"c:", true, "checking local win32"},
+       {"d:/", true, "checking local win32"},
+       {"E:/", true, "checking local win32"},
+       {"F:/test", true, "checking local win32"},
+       {"g:/test/restore", true, "checking local win32"},
 #endif
-      { NULL, false, NULL },
+       {NULL, false, NULL},
    };
 
    for (int i = 0; testvect1[i].path != NULL; i++)
@@ -197,7 +206,6 @@ int main()
       scan_and_terminate_str(ebuf, testvect2[i].msglen);
       ok(memcmp(ebuf.c_str(), testvect2[i].output, testvect2[i].len) == 0, testvect2[i].descr);
    }
-   // scan_and_terminate_str
 
    return report();
 }

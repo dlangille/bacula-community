@@ -74,6 +74,8 @@ bool regress_cancel_restore = false;
 
 bool Job_Level_Incremental = false;
 
+char working_directory[4096];    // it should be no more
+
 #define BUFLEN             4096
 #define BIGBUFLEN          131072
 
@@ -865,6 +867,30 @@ void perform_backup()
       if (strncmp(buf, "UNAVAIL", 7) == 0) {
          write_plugin('I', "TEST CHECK nonexistentok");
       }
+
+      // check addinclude()
+      snprintf(buf, BIGBUFLEN, "%s/passwd", working_directory);
+      creat(buf, 0600);
+      snprintf(buf, BIGBUFLEN, "INCLUDE:%s/passwd", working_directory);
+      write_plugin('C', buf);
+      snprintf(buf, BIGBUFLEN, "%s/group", working_directory);
+      creat(buf, 0600);
+      snprintf(buf, BIGBUFLEN, "INCLUDE:%s/group", working_directory);
+      write_plugin('C', buf);
+
+      write_plugin('C', "STRIP:3\n");
+      snprintf(buf, BIGBUFLEN, "%s/tmp", working_directory);
+      mkdir(buf, 0700);
+      snprintf(buf, BIGBUFLEN, "%s/tmp/bacula", working_directory);
+      mkdir(buf, 0700);
+      snprintf(buf, BIGBUFLEN, "%s/tmp/bacula/test", working_directory);
+      mkdir(buf, 0700);
+      snprintf(buf, BIGBUFLEN, "%s/tmp/bacula/test/split", working_directory);
+      mkdir(buf, 0700);
+      snprintf(buf, BIGBUFLEN, "%s/tmp/bacula/test/split/file", working_directory);
+      creat(buf, 0600);
+      snprintf(buf, BIGBUFLEN, "INCLUDE:%s/tmp/bacula/test/split", working_directory);
+      write_plugin('C', buf);
    }
 
    // backup if full or not seen
@@ -1563,6 +1589,7 @@ int main(int argc, char** argv) {
       exit(EXIT_BACKEND_NOMEMORY);
    }
 
+   working_directory[0] = 0;
    mypid = getpid();
    snprintf(buf, 4096, "%s/%s_backend_%d.log", LOGDIR, PLUGINNAME, mypid);
    logfd = open(buf, O_CREAT|O_TRUNC|O_WRONLY, 0640);
@@ -1678,6 +1705,11 @@ int main(int argc, char** argv) {
          strcpy(query, buf);
          continue;
       }
+      if (sscanf(buf, "regress_working_dir=%s\n", buf) == 1)
+      {
+         strcpy(working_directory, buf);
+         continue;
+      }
    }
    if (regress_cancel_restore || regress_cancel_backup) {
       if (signal(SIGUSR1, catch_function) == SIG_ERR){
@@ -1701,23 +1733,33 @@ int main(int argc, char** argv) {
       goto Term;
    }
 
-   signal_eod();
+   if (Job_Level_Incremental)
+   {
+      write_plugin('C', "STRIP:1\n");
+   }
+
+   signal_eod();  // ACK of the `BackupStart` phase is always required!
 
    /* check what kind of Job we have */
    buf[len] = 0;
-   if (strcmp(buf, "BackupStart\n") == 0){
+   if (strcmp(buf, "BackupStart\n") == 0)
+   {
       perform_backup();
    } else
-   if (strcmp(buf, "EstimateStart\n") == 0){
+   if (strcmp(buf, "EstimateStart\n") == 0)
+   {
       perform_estimate();
    } else
-   if (strcmp(buf, "ListingStart\n") == 0){
+   if (strcmp(buf, "ListingStart\n") == 0)
+   {
       perform_listing(listing);
    } else
-   if (strcmp(buf, "QueryStart\n") == 0){
+   if (strcmp(buf, "QueryStart\n") == 0)
+   {
       perform_queryparam(query);
    } else
-   if (strcmp(buf, "RestoreStart\n") == 0){
+   if (strcmp(buf, "RestoreStart\n") == 0)
+   {
       perform_restore();
    }
 

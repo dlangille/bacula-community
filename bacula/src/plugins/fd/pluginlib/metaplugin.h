@@ -21,7 +21,7 @@
  * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
  * @brief This is a Bacula metaplugin interface.
  * @version 3.0.0
- * @date 2021-08-20
+ * @date 2021-10-07
  *
  * @copyright Copyright (c) 2021 All rights reserved.
  *            IP transferred to Bacula Systems according to agreement.
@@ -69,6 +69,7 @@ extern const char *PLUGINAPI;                /// the plugin api string which sho
 extern const char *BACKEND_CMD;              /// a backend execution command path
 extern const int32_t CUSTOMCANCELSLEEP;      /// custom wait time for backend between USR1 and terminate procedures
 extern const bool ACCURATEPLUGINPARAMETER;   /// accurate parameter for plugin parameter
+extern const int ADDINCLUDESTRIPOPTION;      /// setup precompiled include path strip option
 
 /// defines if metaplugin should handle local filesystem restore with Bacula Core functions
 /// `false` means metaplugin will redirect local restore to backend
@@ -158,12 +159,11 @@ public:
                   openerror(false),
                   object(FileObject),
                   objectsent(false),
-                  // pluginobject(false),
-                  // pluginobjectsent(false),
-                  // restoreobject(false),
                   readacl(false),
                   readxattr(false),
                   skipextract(false),
+                  new_include_created(false),
+                  strip_path_option(ADDINCLUDESTRIPOPTION),
                   last_type(0),
                   fname(PM_FNAME),
                   lname(PM_FNAME),
@@ -223,12 +223,11 @@ private:
    bool openerror;               // show if "openfile" was unsuccessful
    OBJECT object;                //
    bool objectsent;              // set when startBackupFile handled object and endBackupFile has to check for nextfile
-   // bool pluginobject;            // set when got PLUGINOBJ: command
-   // bool pluginobjectsent;        // set when startBackupFile handled plugin object and endBackupFile has to check for nextfile
-   // bool restoreobject;           // set when got RESTOREOBJ: command
    bool readacl;                 // got ACL data from backend
    bool readxattr;               // got XATTR data from backend
    bool skipextract;             // got SKIP response from backend, so we should artificially skip it for backend
+   bool new_include_created;     // when NewInclude() was executed
+   int strip_path_option;        //
    int32_t last_type;            // contains the last restore file type
    COMMCTX<PTCOMM> backend;      // the backend context list for multiple backend execution for a single job
    POOL_MEM fname;               // current file name to backup (grabbed from backend)
@@ -271,7 +270,6 @@ private:
    bRC perform_write_data(bpContext *ctx, struct io_pkt *io);
    bRC perform_write_end(bpContext *ctx, struct io_pkt *io);
    bRC perform_read_metacommands(bpContext *ctx);
-   bRC perform_read_fstatdata(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_restoreobject(bpContext *ctx, struct save_pkt *sp);
    bRC perform_read_acl(bpContext *ctx);
@@ -280,9 +278,9 @@ private:
    bRC perform_write_xattr(bpContext *ctx, const xacl_pkt * xacl);
    bRC perform_read_metadata_info(bpContext *ctx, metadata_type type, struct save_pkt *sp);
    bRC perform_file_index_query(bpContext *ctx);
-   bRC perform_accurate_check(bpContext *ctx);
-   bRC perform_accurate_check_get(bpContext *ctx);
    bRC perform_accept_file(bpContext *ctx);
+   bRC perform_addinclude(bpContext *ctx);
+   bRC perform_change_split_option(bpContext *ctx, int nr);
    // bRC perform_write_metadata_info(bpContext *ctx, struct meta_pkt *mp);
    metadata_type scan_metadata_type(bpContext *ctx, const POOL_MEM &cmd);
    const char *prepare_metadata_type(metadata_type type);

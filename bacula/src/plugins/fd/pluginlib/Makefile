@@ -27,19 +27,22 @@ SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartptr.h
 SMARTMUTEXSRC = smartmutex.h
 SMARTLOCKSRC = smartlock.h
-METAPLUGINSRC = metaplugin.cpp metaplugin.h metaplugin_attributes.cpp metaplugin_attributes.h $(SMARTMUTEXSRC) $(SMARTLOCKSRC) $(COMMCTXSRC)
+METAPLUGINSRC = metaplugin.cpp metaplugin.h metaplugin_attributes.cpp metaplugin_attributes.h metaplugin_accurate.cpp metaplugin_accurate.h metaplugin_metadata.cpp metaplugin_metadata.h $(SMARTMUTEXSRC) $(SMARTLOCKSRC) $(COMMCTXSRC)
 METAPLUGINOBJ = $(filter %.lo,$(METAPLUGINSRC:.cpp=.lo))
 
-PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ)
-PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
-ISO8601TEST = iso8601_test.cpp $(ISO8601SRC) $(UNITTESTSOBJ)
-ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo))
-COMMCTXTEST = commctx_test.cpp $(COMMCTXSRC) $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-COMMCTXTESTOBJ = $(filter %.lo,$(COMMCTXTEST:.cpp=.lo))
-SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo))
-SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
-SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo))
+PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC)
+PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo)) $(INIOBJ) $(UNITTESTSOBJ)
+ISO8601TEST = iso8601_test.cpp $(ISO8601SRC)
+ISO8601TESTOBJ = $(filter %.lo,$(ISO8601TEST:.cpp=.lo)) $(UNITTESTSOBJ)
+COMMCTXTEST = commctx_test.cpp $(COMMCTXSRC) $(SMARTALISTSRC)
+COMMCTXTESTOBJ = $(filter %.lo,$(COMMCTXTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+SMARTALISTTEST = smartalist_test.cpp $(SMARTALISTSRC)
+SMARTALISTTESTOBJ = $(filter %.lo,$(SMARTALISTTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+SMARTPTRTEST = smartptr_test.cpp $(SMARTPTRSRC)
+SMARTPTRTESTOBJ = $(filter %.lo,$(SMARTPTRTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+SMARTLOCKTEST = smartlock_test.cpp $(SMARTLOCKSRC)
+SMARTLOCKTESTOBJ = $(filter %.lo,$(SMARTLOCKTEST:.cpp=.lo)) $(INIOBJ) $(PLUGINLIBSOBJ) $(UNITTESTSOBJ)
+
 METAPLUGINTEST = metaplugin_test.cpp $(METAPLUGINSRC)
 METAPLUGINTESTOBJ = $(filter %.lo,$(METAPLUGINTEST:.cpp=.lo)) $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) $(UNITTESTSOBJ)
 
