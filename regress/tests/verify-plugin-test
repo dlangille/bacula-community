@@ -1,0 +1,121 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run test-verify-fd.  Note, this plugin is for testing
+#   new features and probably should not be run in normal
+#   testing
+#
+TestName="verify-plugin-test"
+JobName=TestPluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo $tmp/file > ${cwd}/tmp/file-list
+echo "${cwd}/build/src" >>${cwd}/tmp/file-list
+echo $tmp/file >> ${cwd}/tmp/file-list
+
+# To see the actual files verified
+#sed -i "s/, !verified//" $conf/bacula-dir.conf
+
+echo "Hello PATTERNTESTVERIFY" > $tmp/file
+
+# Build and install the test plugin
+cd ${cwd}/build/src/plugins/fd
+make install-test-plugin
+if [ $? -ne 0 ]; then
+   print_debug "Failed to build or install test plugin!"
+   exit 1
+fi
+
+cd ${cwd}
+
+start_test
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'PluginOptions', 'test-verify: pattern=PATTERNTESTVERIFY', 'Job', 'VerifyData')"
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=MonsterSave storage=File1 yes
+wait
+status client=$CLIENT
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=VerifyData jobid=1 storage=File1
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'PluginOptions', 'xxx:', 'Job', 'VerifyData')"
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+reload
+run job=VerifyData jobid=1 storage=File1
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+nb=`grep "matching pattern" $tmp/log2.out | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find 2 matching pattern in $tmp/log2.out"
+    estat=2
+fi
+
+grep "$tmp/file matching pattern" $tmp/log2.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find a matching pattern in $tmp/log2.out"
+    estat=1
+fi
+
+grep "Got plugin command" $tmp/log2.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find plugin activation in $tmp/log2.out"
+    estat=1
+fi
+
+################################################################
+# The plugin is not started via a plugin command
+
+nb=`grep "matching pattern" $tmp/log3.out | wc -l`
+if [ $nb != 0 ]; then
+    print_debug "ERROR: Should find 0 matching pattern in $tmp/log3.out"
+    estat=2
+fi
+
+grep "$tmp/file matching pattern" $tmp/log3.out > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find a matching pattern in $tmp/log3.out"
+    estat=1
+fi
+
+grep "Got plugin command" $tmp/log3.out > /dev/null
+if [ $? = 0 ]; then
+    print_debug "ERROR: Should NOT find plugin activation in $tmp/log3.out"
+    estat=1
+fi
+
+
+stop_bacula
+end_test
