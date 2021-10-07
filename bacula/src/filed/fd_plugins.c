@@ -2343,7 +2343,8 @@ static bRC baculaNewInclude(bpContext *ctx)
    if (!is_ctx_good(ctx, jcr, bctx)) {
       return bRC_Error;
    }
-   (void)new_include(jcr);
+   // without this any AddInclude() is unable to use more than one Include{} block
+   bctx->include = new_include(jcr);
    Dsm_check(999);
    return bRC_OK;
 }

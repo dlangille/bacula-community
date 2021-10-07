@@ -45,7 +45,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 const bool have_win32 = true;
 #else
 const bool have_win32 = false;
-#endif 
+#endif
 
 #ifdef HAVE_ACL
 const bool have_acl = true;
@@ -891,7 +891,7 @@ static int exit_cmd(JCR *jcr)
    return 0;
 }
 #endif
- 
+
 /**
  * Hello from Director he must identify himself and provide his
  *  password.
@@ -1523,6 +1523,11 @@ findINCEXE *new_include(JCR *jcr)
    fileset->incexe->name_list.init(); /* for dlist;  was 1,true for alist */
    fileset->incexe->plugin_list.init();
    fileset->include_list.append(fileset->incexe);
+   // New Include should always reset the state.
+   // it is basically done by the Director executing "N" fileset command when giving information
+   // about Fileset to backup. But for the dynamically created Includes (by plugins) this state
+   // reset was never executed. This limits the usage to the single dynamic Include.
+   fileset->state = state_none;
    return fileset->incexe;
 }
 
@@ -2414,7 +2419,7 @@ static void sendit(JCR *jcr, const char *str)
 }
 
 /*
- * Query plugin parameter interface 
+ * Query plugin parameter interface
  *
  */
 static int query_cmd(JCR *jcr)

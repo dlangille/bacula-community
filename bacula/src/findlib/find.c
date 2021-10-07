@@ -93,7 +93,7 @@ set_find_changed_function(FF_PKT *ff, bool check_fct(JCR *jcr, FF_PKT *ff))
 }
 
 void
-set_find_snapshot_function(FF_PKT *ff, 
+set_find_snapshot_function(FF_PKT *ff,
                            bool convert_path(JCR *jcr, FF_PKT *ff, dlist *filelist, dlistString *node))
 {
    ff->snapshot_convert_fct = convert_path;
