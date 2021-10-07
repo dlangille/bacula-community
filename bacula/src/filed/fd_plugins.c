@@ -75,6 +75,7 @@ static bool get_plugin_name(JCR *jcr, char *cmd, int *ret);
 static bRC baculaCheckChanges(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAcceptFile(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att);
+static void plugin_register_verify_data(bpContext *ctx);
 
 /*
  * These will be plugged into the global pointer structure for
@@ -126,9 +127,11 @@ struct bacula_ctx {
    bool disabled;                        /* set if plugin disabled */
    bool restoreFileStarted;
    bool createFileCalled;
+   bool verifyFileCalled;                /* true if startVerifyFile() has been called */
    bool cancelCalled;                    /* true if the plugin got the cancel event */
    findINCEXE *exclude;                  /* pointer to exclude files */
    findINCEXE *include;                  /* pointer to include/exclude files */
+   Plugin *plugin;                       /* pointer to the plugin itself */
 };
 
 static bacula_ctx *get_bacula_ctx(bpContext *plugin_ctx)
@@ -231,6 +234,7 @@ void generate_plugin_event(JCR *jcr, bEventType eventType, void *value)
    case bEventEndVerifyJob:
       call_if_canceled = true; /* plugin *must* see this call */
       break;
+   case bEventStartVerifyJob:
    case bEventStartRestoreJob:
       break;
    case bEventEndRestoreJob:
@@ -647,7 +651,10 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       if (is_plugin_disabled(jcr)) {
          goto bail_out;
       }
-
+      if (!plug_func(plugin)->startBackupFile || !plug_func(plugin)->endBackupFile) {
+         Dmsg1(dbglvl, "Plugin not suitable for Backup job %s\n", cmd);
+         goto bail_out;
+      }
       Dmsg1(dbglvl, "Command plugin = %s\n", cmd);
       /* Send the backup command to the right plugin*/
       if (plug_func(plugin)->handlePluginEvent(jcr->plugin_ctx, &event, cmd) != bRC_OK) {
@@ -813,7 +820,10 @@ int plugin_estimate(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       if (is_plugin_disabled(jcr)) {
          goto bail_out;
       }
-
+      if (!plug_func(plugin)->startBackupFile || !plug_func(plugin)->endBackupFile) {
+         Dmsg1(dbglvl, "Plugin not suitable for Estimate job %s\n", cmd);
+         goto bail_out;
+      }
       Dmsg1(dbglvl, "Command plugin = %s\n", cmd);
       /* Send the backup command to the right plugin*/
       if (plug_func(plugin)->handlePluginEvent(jcr->plugin_ctx, &event, cmd) != bRC_OK) {
@@ -1038,10 +1048,14 @@ bool plugin_name_stream(JCR *jcr, char *name)
          Dmsg1(dbglvl, "Plugin %s disabled\n", cmd);
          goto bail_out;
       }
+      if (!plug_func(plugin)->startRestoreFile || !plug_func(plugin)->endRestoreFile) {
+         Dmsg1(dbglvl, "Plugin not suitable for Restore job %s\n", cmd);
+         goto bail_out;
+      }
       Dmsg1(dbglvl, "Restore Command plugin = %s\n", cmd);
       event.eventType = bEventRestoreCommand;
       if (plug_func(plugin)->handlePluginEvent(jcr->plugin_ctx,
-            &event, cmd) != bRC_OK) {
+                                               &event, cmd) != bRC_OK) {
          Dmsg1(dbglvl, "Handle event failed. Plugin=%s\n", cmd);
          goto bail_out;
       }
@@ -1071,6 +1085,31 @@ bail_out:
    return start;
 }
 
+static void fill_restore_pkt(JCR *jcr, ATTR *attr, restore_pkt *rp)
+{
+   rp->pkt_size = sizeof(restore_pkt);
+   rp->pkt_end = sizeof(restore_pkt);
+   rp->delta_seq = attr->delta_seq;
+   rp->stream = attr->stream;
+   rp->data_stream = attr->data_stream;
+   rp->type = attr->type;
+   rp->file_index = attr->file_index;
+   rp->LinkFI = attr->LinkFI;
+   rp->uid = attr->uid;
+   rp->statp = attr->statp;                /* structure assignment */
+   rp->attrEx = attr->attrEx;
+   if (jcr->is_JobType(JT_VERIFY)) {
+      rp->ofname = attr->fname;
+   } else {
+      rp->ofname = attr->ofname;
+      rp->olname = attr->olname;
+   }
+   rp->where = jcr->where;
+   rp->RegexWhere = jcr->RegexWhere;
+   rp->replace = jcr->replace;
+   rp->create_status = CF_ERROR;
+}
+
 /**
  * Tell the plugin to create the file.  Return values are
  *   This is called only during Restore
@@ -1094,24 +1133,13 @@ int plugin_create_file(JCR *jcr, ATTR *attr, BFILE *bfd, int replace)
    if (!plugin || !plugin_ctx || jcr->is_job_canceled()) {
       return CF_ERROR;
    }
+   if (!plug_func(plugin)->createFile) {
+      Dmsg0(dbglvl, "Plugin not suitable for Restore job\n");
+      return CF_ERROR;
+   }
 
-   rp.pkt_size = sizeof(rp);
-   rp.pkt_end = sizeof(rp);
-   rp.delta_seq = attr->delta_seq;
-   rp.stream = attr->stream;
-   rp.data_stream = attr->data_stream;
-   rp.type = attr->type;
-   rp.file_index = attr->file_index;
-   rp.LinkFI = attr->LinkFI;
-   rp.uid = attr->uid;
-   rp.statp = attr->statp;                /* structure assignment */
-   rp.attrEx = attr->attrEx;
-   rp.ofname = attr->ofname;
-   rp.olname = attr->olname;
-   rp.where = jcr->where;
-   rp.RegexWhere = jcr->RegexWhere;
-   rp.replace = jcr->replace;
-   rp.create_status = CF_ERROR;
+   fill_restore_pkt(jcr, attr, &rp);
+
    Dmsg4(dbglvl, "call plugin createFile stream=%d type=%d LinkFI=%d File=%s\n",
          rp.stream, rp.type, rp.LinkFI, rp.ofname);
    if (rp.attrEx) {
@@ -1718,6 +1746,7 @@ void new_plugins(JCR *jcr)
       bacula_ctx *b_ctx = (bacula_ctx *)malloc(sizeof(bacula_ctx));
       memset(b_ctx, 0, sizeof(bacula_ctx));
       b_ctx->jcr = jcr;
+      b_ctx->plugin = plugin;
       plugin_ctx_list[i].bContext = (void *)b_ctx;   /* Bacula private context */
       plugin_ctx_list[i].pContext = NULL;
       if (plug_func(plugin)->newPlugin(&plugin_ctx_list[i]) != bRC_OK) {
@@ -2102,14 +2131,18 @@ static bRC baculaRegisterEvents(bpContext *ctx, ...)
    va_list args;
    uint32_t event;
 
-   Dsm_check(999);
-   if (!ctx) {
-      return bRC_Error;
-   }
-
    va_start(args, ctx);
    while ((event = va_arg(args, uint32_t))) {
       Dmsg1(dbglvl, "Plugin wants event=%u\n", event);
+      switch (event) {
+      case bEventVerifyStream:
+         /* We will call specific function, maybe VerifyFile() + pluginIO */
+         plugin_register_verify_data(ctx);
+         break;
+      default:
+         Dmsg0(50, "Event registration not implemented\n");
+         break;
+      }
    }
    va_end(args);
    Dsm_check(999);
@@ -2521,6 +2554,182 @@ static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att)
 
    return bRC_OK;
 }
+
+bRC plugin_verify_data_close(JCR *jcr)
+{
+   bpContext *ctx;
+   bacula_ctx *bctx;
+   struct io_pkt io;
+   if (!jcr->plugin_verify) {
+      return bRC_Skip;              // Nothing registered
+   }
+   foreach_alist(ctx, jcr->plugin_verify) {
+      bctx = get_bacula_ctx(ctx);
+      jcr->plugin_ctx = ctx;
+      jcr->plugin = bctx->plugin;
+      if (is_plugin_disabled(jcr)) {
+         continue;
+      }
+      if (bctx->verifyFileCalled) {
+         io.pkt_size = sizeof(io);
+         io.pkt_end = sizeof(io);
+         io.func = IO_CLOSE;
+         io.count = 0;
+         io.buf = NULL;
+         io.fname = NULL;
+         io.flags = 0;
+         io.mode = O_WRONLY;
+         io.win32 = false;
+         io.lerror = 0;
+         io.status = -1;
+         plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
+         if (io.win32) {
+            errno = b_errno_win32;
+         } else {
+            errno = io.io_errno;
+         }
+         bctx->verifyFileCalled = false;
+         if (io.status >= 0) {
+            // Do something useful?
+         }
+         if (plug_func(jcr->plugin)->endVerifyFile) {
+            plug_func(jcr->plugin)->endVerifyFile(jcr->plugin_ctx); // Check the return code?
+         }
+      }
+   }
+   jcr->plugin_ctx = NULL;
+   jcr->plugin = NULL;
+   return bRC_OK;
+}
+
+
+bRC plugin_verify_data_update(JCR *jcr, char *data, int size)
+{
+   bpContext *ctx;
+   bacula_ctx *bctx;
+   struct io_pkt io;
+
+   if (!jcr->plugin_verify) {
+      return bRC_Skip;              // Nothing registered
+   }
+   foreach_alist(ctx, jcr->plugin_verify) {
+      if (!is_ctx_good(ctx, jcr, bctx)) {
+         return bRC_Error;
+      }
+      jcr->plugin_ctx = ctx;
+      jcr->plugin = bctx->plugin;
+      if (is_plugin_disabled(jcr)) {
+         continue;
+      }
+      if (bctx->verifyFileCalled) {
+         io.pkt_size = sizeof(io);
+         io.pkt_end = sizeof(io);
+         io.func = IO_WRITE;
+         io.count = size;
+         io.buf = data;
+         io.fname = NULL;
+         io.flags = 0;
+         io.mode = O_WRONLY;
+         io.win32 = false;
+         io.lerror = 0;
+         io.status = -1;
+         plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
+         if (io.win32) {
+            errno = b_errno_win32;
+         } else {
+            errno = io.io_errno;
+         }
+         if (io.status >= 0) {
+            // Do something useful? Maybe close
+         }
+         
+      }
+   }
+   jcr->plugin_ctx = NULL;
+   jcr->plugin = NULL;
+   return bRC_OK;
+}
+
+/*
+ * @brief Bacula function called for each new file in verify data job
+ * @param JCR *jcr
+ * @param ATTR *attr
+ * @return int (file descriptor)
+ */
+bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr)
+{
+   bpContext *ctx;
+   restore_pkt rp;
+   bacula_ctx *bctx;
+   struct io_pkt io;
+   if (!jcr->plugin_verify) {
+      return bRC_Skip;              // Nothing registered
+   }
+   foreach_alist(ctx, jcr->plugin_verify) {
+      if (!is_ctx_good(ctx, jcr, bctx)) {
+         return bRC_Error;
+      }
+      jcr->plugin_ctx = ctx;
+      jcr->plugin = bctx->plugin;
+      bctx->verifyFileCalled = false;
+      if (is_plugin_disabled(jcr)) {
+         continue;
+      }
+      fill_restore_pkt(jcr, attr, &rp);
+      if (plug_func(jcr->plugin)->startVerifyFile) {
+         if (plug_func(jcr->plugin)->startVerifyFile(jcr->plugin_ctx, &rp) == bRC_OK) {
+            io.pkt_size = sizeof(io);
+            io.pkt_end = sizeof(io);
+            io.func = IO_OPEN;
+            io.count = 0;
+            io.buf = NULL;
+            io.fname = attr->fname;
+            io.flags = 0;
+            io.mode = O_WRONLY;
+            io.win32 = false;
+            io.lerror = 0;
+            io.status = -1;
+            plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
+            if (io.win32) {
+               errno = b_errno_win32;
+            } else {
+               errno = io.io_errno;
+            }
+            if (io.status >= 0) {
+               bctx->verifyFileCalled = true;
+            }
+         }
+      }
+   }
+   jcr->plugin_ctx = NULL;
+   jcr->plugin = NULL;
+   return bRC_OK;
+}
+
+/*
+ * @brief Bacula function to append a plugin registered to get a copy of the data
+ *        during a Verify Data job
+ * @param JCR *jcr
+ * @param bpContext *ctx
+ * @return bool
+ */
+static void plugin_register_verify_data(bpContext *ctx)
+{
+   JCR *jcr;
+   bacula_ctx *bctx;
+   if (!is_ctx_good(ctx, jcr, bctx)) {
+      return;
+   }
+   if (!jcr->is_JobLevel(L_VERIFY_DATA)) {
+      return;              /* Cannot register for non DATA job */
+   }
+   if (!jcr->plugin_verify) {
+      jcr->plugin_verify = New(alist(5, not_owned_by_alist));
+   }
+   jcr->plugin_verify->append(ctx);
+   /* TODO: check in me->plugins if we have options for this plugin */
+}
+
 
 #ifdef TEST_PROGRAM
 

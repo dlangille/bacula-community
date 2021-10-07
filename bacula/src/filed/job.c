@@ -68,6 +68,7 @@ extern int accurate_cmd(JCR *jcr);
 extern int collect_cmd(JCR *jcr);
 
 /* Forward referenced functions */
+static int pluginoptions_cmd(JCR *jcr);
 static int backup_cmd(JCR *jcr);
 static int component_cmd(JCR *jcr);
 static int cancel_cmd(JCR *jcr);
@@ -148,6 +149,7 @@ struct s_cmds cmds[] = {
    {"restorefilelist", restorefilelist_cmd, 0},
    {"statistics",   collect_cmd, 0},
    {"query",        query_cmd,   0},
+   {"pluginoptions", pluginoptions_cmd, 0},
 #ifdef DEVELOPER
    {"exit",         exit_cmd, 0},
 #endif
@@ -3471,7 +3473,10 @@ void filed_free_jcr(JCR *jcr)
 #ifdef WIN32_VSS
    VSSCleanup(jcr->pVSSClient);
 #endif
+   bdelete_and_null(jcr->plugin_verify);
+   bdelete_and_null(jcr->plugin_options_list);
    free_plugins(jcr);                 /* release instantiated plugins */
+
    free_runscripts(jcr->RunScripts);
    delete jcr->RunScripts;
    free_path_list(jcr);
@@ -3527,6 +3532,30 @@ int response(JCR *jcr, BSOCK *sd, char *resp, const char *cmd)
       }
    }
    return 0;
+}
+
+/*
+ * Get PluginOptions from the Director 
+ *
+ */
+static int pluginoptions_cmd(JCR *jcr)
+{
+   POOL_MEM buf(PM_MESSAGE);
+   BSOCK *dir = jcr->dir_bsock;
+   buf.check_size(dir->msglen+1);
+   if (scan_string(dir->msg, "pluginoptions=%s", buf.c_str()) == 1) {
+      unbash_spaces(buf.c_str());
+      if (!jcr->plugin_options_list) {
+         jcr->plugin_options_list = New(alist(5, owned_by_alist));
+      }
+      jcr->plugin_options_list->append(bstrdup(buf.c_str()));
+
+   } else {
+      dir->fsend(_("2992 Bad pluginoptions command\n"));
+      return 0;
+   }
+   dir->fsend("2000 OK plugin options\n");
+   return 1;
 }
 
 /* 

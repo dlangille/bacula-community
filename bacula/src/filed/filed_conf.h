@@ -127,6 +127,7 @@ struct CLIENT {
    char *pid_directory;
    char *subsys_directory;
    char *plugin_directory;            /* Plugin directory */
+   alist *plugins;                    /* Non job specific Plugin options */
    char *scripts_directory;
    char *snapshot_command;
    char *dedup_index_dir;             /* Directory for local dedup cache (deprecated) */

@@ -41,6 +41,7 @@ static char verifycmd[] = "verify level=%s\n";
 
 /* Responses received from File daemon */
 static char OKverify[]  = "2000 OK verify\n";
+static char OKPluginOptions[] = "2000 OK plugin options\n";
 
 /* Commands received from Storage daemon */
 static char OKbootstrap[] = "3000 OK bootstrap\n";
@@ -367,6 +368,18 @@ bool do_verify(JCR *jcr)
 
    if (!send_runscripts_commands(jcr)) {
       goto bail_out;
+   }
+
+   if (jcr->plugin_options) {
+      if (jcr->FDVersion < 15) {
+         Jmsg1(jcr, M_FATAL, 0, _("Unable to send PluginOptions to FD. Please upgrade the FD from %d to 15.\n"), jcr->FDVersion);
+         goto bail_out;
+      }
+      bash_spaces(jcr->plugin_options);
+      fd->fsend("pluginoptions=%s\n", jcr->plugin_options);
+      if (!response(jcr, fd, BSOCK_TYPE_FD, OKPluginOptions, "Verify", DISPLAY_ERROR)) {
+         goto bail_out;
+      }
    }
 
    /*

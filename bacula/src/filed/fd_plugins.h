@@ -466,7 +466,8 @@ typedef enum {
   bEventOptionPlugin                    = 23,
   bEventHandleBackupFile                = 24, /* Used with Options Plugin */
   bEventComponentInfo                   = 25, /* Plugin component */
-  bEventFeatures                        = 26  /* Ask for file list, ... "xxx,yyy,zzz" */
+  bEventFeatures                        = 26, /* Ask for file list, ... "xxx,yyy,zzz" */
+  bEventVerifyStream                    = 27, /* Register to get a copy of the data stream during verify */
 } bEventType;
 
 
@@ -513,6 +514,9 @@ bool plugin_restore_xattr(JCR *jcr, char *data, uint32_t length);
 bool plugin_check_stream(JCR *jcr, int32_t &stream);
 bool plugin_query_parameter(JCR *jcr, char *command, char *param, void sendit(JCR *jcr, const char *str));
 bool plugin_backup_metadata(JCR *jcr, FF_PKT *ff_pkt);
+bRC plugin_verify_data_close(JCR *jcr);
+bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr);
+bRC plugin_verify_data_update(JCR *jcr,  char *buf, int len);
 #endif
 
 #ifdef __cplusplus
@@ -613,6 +617,8 @@ typedef struct s_pluginFuncs {
    bRC (*checkStream)(bpContext *ctx, struct stream_pkt *sp);
    bRC (*queryParameter)(bpContext *ctx, struct query_pkt *qp);
    bRC (*metadataRestore)(bpContext *ctx, struct meta_pkt *mp);
+   bRC (*startVerifyFile)(bpContext *ctx, struct restore_pkt *rp);
+   bRC (*endVerifyFile)(bpContext *ctx);
 } pFuncs;
 
 #define plug_func(plugin) ((pFuncs *)(plugin->pfuncs))

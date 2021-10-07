@@ -254,6 +254,7 @@ void do_verify_volume(JCR *jcr)
    char digest[BASE64_SIZE(CRYPTO_DIGEST_MAX_SIZE)];
    int stat;
    int bget_ret = 0;
+   char *opts;
    char *wbuf;                        /* write buffer */
    uint32_t wsize;                    /* write size */
    uint32_t rsize;                    /* read size */
@@ -269,6 +270,12 @@ void do_verify_volume(JCR *jcr)
    }
    dir = jcr->dir_bsock;
    jcr->setJobStatus(JS_Running);
+
+   if (jcr->plugin_options_list) {
+      foreach_alist(opts, jcr->plugin_options_list) {
+         generate_plugin_event(jcr, bEventPluginCommand, (void *)opts);
+      }
+   }
 
    LockRes();
    CLIENT *client = (CLIENT *)GetNextRes(R_CLIENT, NULL);
@@ -337,6 +344,10 @@ void do_verify_volume(JCR *jcr)
       case STREAM_UNIX_ATTRIBUTES:
       case STREAM_UNIX_ATTRIBUTES_EX:
          Dmsg0(400, "Stream=Unix Attributes.\n");
+         if (plugin_verify_data_close(jcr) == bRC_Error) {
+            goto bail_out;
+         }
+
          if (!vctx.close_previous_stream()) {
             goto bail_out;
          }
@@ -396,6 +407,11 @@ void do_verify_volume(JCR *jcr)
             Dmsg2(200, "bfiled>bdird: attribs len=%d: msg=%s\n", dir->msglen, dir->msg);
             if (!stat) {
                Jmsg(jcr, M_FATAL, 0, _("Network error in send to Director: ERR=%s\n"), dir->bstrerror());
+               goto bail_out;
+            }
+
+         } else if (jcr->is_JobLevel(L_VERIFY_DATA) && attr->type == FT_REG) {
+            if (plugin_verify_data_open(jcr, attr) == bRC_Error) {
                goto bail_out;
             }
          }
@@ -459,6 +475,9 @@ void do_verify_volume(JCR *jcr)
             /* probably an empty file, we can create an empty crypto session */
             if (!jcr->crypto.digest) {
                jcr->crypto.digest = crypto_digest_new(jcr, vctx.digesttype);
+            }
+            if (plugin_verify_data_close(jcr) == bRC_Error) {
+               goto bail_out;
             }
             vctx.close_previous_stream();
             if (strncmp(digest, vctx.digest,
@@ -538,6 +557,11 @@ void do_verify_volume(JCR *jcr)
 
             vctx.update_checksum(wbuf, wsize);
 
+            if (plugin_verify_data_update(jcr, wbuf, wsize) == bRC_Error) {
+               dequeue_messages(jcr);
+               goto bail_out;
+            }
+
             if (vctx.stream == STREAM_WIN32_GZIP_DATA
                 || vctx.stream == STREAM_WIN32_DATA
                 || vctx.stream == STREAM_WIN32_COMPRESSED_DATA
@@ -562,6 +586,9 @@ void do_verify_volume(JCR *jcr)
       } /* end switch */
    } /* end while bnet_get */
    if (bget_ret == BNET_EXT_TERMINATE) {
+      goto bail_out;
+   }
+   if (plugin_verify_data_close(jcr) == bRC_Error) {
       goto bail_out;
    }
    if (!vctx.close_previous_stream()) {

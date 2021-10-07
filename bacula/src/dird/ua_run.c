@@ -1223,7 +1223,7 @@ int modify_job_parameters(UAContext *ua, JCR *jcr, run_ctx &rc)
          add_prompt(ua, _("Replace"));       /* 10 */
          add_prompt(ua, _("JobId"));         /* 11 */
       }
-      if (jcr->getJobType() == JT_BACKUP || jcr->getJobType() == JT_RESTORE) {
+      if (jcr->getJobType() == JT_BACKUP || jcr->getJobType() == JT_RESTORE || jcr->is_JobType(JT_VERIFY)) {
          add_prompt(ua, _("Plugin Options")); /* 12 */
       }
       switch (do_prompt(ua, "", _("Select parameter to modify"), NULL, 0)) {
@@ -1558,9 +1558,7 @@ static bool set_run_context_in_jcr(UAContext *ua, JCR *jcr, run_ctx &rc)
    }
 
    if (rc.plugin_options) {
-      if (jcr->plugin_options) {
-         free(jcr->plugin_options);
-      }
+      bfree_and_null(jcr->plugin_options);
       jcr->plugin_options = bstrdup(rc.plugin_options);
       rc.plugin_options = NULL;
    }
@@ -2017,16 +2015,17 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
             ua->signal(BNET_RUN_CMD);
             ua->send_msg("Type: Verify\n"
                         "Title: Run Verify Job\n"
-                        "JobName:     %s\n"
-                        "Level:       %s\n"
-                        "Client:      %s\n"
-                        "FileSet:     %s\n"
-                        "Pool:        %s (From %s)\n"
-                        "Storage:     %s (From %s)\n"
-                        "Verify Job:  %s\n"
-                        "Verify List: %s\n"
-                        "When:        %s\n"
-                        "Priority:    %d\n",
+                        "JobName:        %s\n"
+                        "Level:          %s\n"
+                        "Client:         %s\n"
+                        "FileSet:        %s\n"
+                        "Pool:           %s (From %s)\n"
+                        "Storage:        %s (From %s)\n"
+                        "Verify Job:     %s\n"
+                        "Verify List:    %s\n"
+                        "When:           %s\n"
+                        "Priority:       %d\n"
+                        "Plugin Options: %s\n",
               job->name(),
               level_to_str(edl, sizeof(edl), jcr->getJobLevel()),
               jcr->client->name(),
@@ -2036,19 +2035,21 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
               Name,
               verify_list,
               bstrutime(dt, sizeof(dt), jcr->sched_time),
-              jcr->JobPriority);
+              jcr->JobPriority,
+              NPRT(jcr->plugin_options));
          } else {
             ua->send_msg(_("Run Verify Job\n"
-                        "JobName:     %s\n"
-                        "Level:       %s\n"
-                        "Client:      %s\n"
-                        "FileSet:     %s\n"
-                        "Pool:        %s (From %s)\n"
-                        "Storage:     %s (From %s)\n"
-                        "Verify Job:  %s\n"
-                        "Verify List: %s\n"
-                        "When:        %s\n"
-                        "Priority:    %d\n"),
+                        "JobName:        %s\n"
+                        "Level:          %s\n"
+                        "Client:         %s\n"
+                        "FileSet:        %s\n"
+                        "Pool:           %s (From %s)\n"
+                        "Storage:        %s (From %s)\n"
+                        "Verify Job:     %s\n"
+                        "Verify List:    %s\n"
+                        "When:           %s\n"
+                        "Priority:       %d\n"
+                        "Plugin Options: %s\n"),
               job->name(),
               level_to_str(edl, sizeof(edl), jcr->getJobLevel()),
               jcr->client->name(),
@@ -2058,7 +2059,8 @@ static bool display_job_parameters(UAContext *ua, JCR *jcr, JOB *job, const char
               Name,
               verify_list,
               bstrutime(dt, sizeof(dt), jcr->sched_time),
-              jcr->JobPriority);
+              jcr->JobPriority,
+              NPRT(jcr->plugin_options));
          }
       }
       break;
@@ -2559,15 +2561,13 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
                kw_ok = true;
                break;
             case 25: /* pluginoptions */
-               ua->send_msg(_("Plugin Options not yet implemented.\n"));
-               return false;
                if (rc.plugin_options) {
                   ua->send_msg(_("Plugin Options specified twice.\n"));
                   return false;
                }
                rc.plugin_options = ua->argv[i];
                if (!acl_access_ok(ua, PluginOptions_ACL, rc.plugin_options)) {
-                  ua->send_msg(_("No authoriztion for \"PluginOptions\" specification.\n"));
+                  ua->send_msg(_("No authorization for \"PluginOptions\" specification.\n"));
                   return false;
                }
                kw_ok = true;
@@ -2732,6 +2732,10 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
       }
    } else if (!rc.verify_job) {
       rc.verify_job = rc.job->verify_job;
+   }
+
+   if (rc.job->JobType == JT_VERIFY && rc.job->PluginOptions) {
+      rc.plugin_options = rc.job->PluginOptions;
    }
 
    if (rc.previous_job_name) {

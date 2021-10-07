@@ -1594,13 +1594,13 @@ void dird_free_jcr(JCR *jcr)
 
    delete jcr->store_mngr;
 
-   if (jcr->JobId != 0)
+   if (jcr->JobId != 0) {
       write_state_file(director->working_directory, "bacula-dir", get_first_port_host_order(director->DIRaddrs));
-
+   }
+   bfree_and_null(jcr->plugin_options);
    if (jcr->plugin_config) {
       free_plugin_config_items(jcr->plugin_config);
-      delete jcr->plugin_config;
-      jcr->plugin_config = NULL;
+      bdelete_and_null(jcr->plugin_config);
    }
    free_plugins(jcr);                 /* release instantiated plugins */
 

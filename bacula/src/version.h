@@ -209,9 +209,9 @@
  */
 
 #ifdef COMMUNITY
-#define FD_VERSION 14  /* make same as community Linux FD */
+#define FD_VERSION 15  /* make same as community Linux FD */
 #else
-#define FD_VERSION 14 /* Enterprise FD version */
+#define FD_VERSION 15 /* Enterprise FD version */
 #endif
 
 /*

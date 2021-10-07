@@ -489,6 +489,8 @@ public:
    DedupFiledInterface *dedup;        /* help the FD to do deduplication */
    bool dedup_use_cache;              /* use client cache */
    VSSClient *pVSSClient;             /* VSS handler */
+   alist *plugin_verify;              /* Registered plugins that need a copy of the data in verify job */
+   alist *plugin_options_list;        /* list of the options to use in a job */
 #endif /* FILE_DAEMON */
 
 
