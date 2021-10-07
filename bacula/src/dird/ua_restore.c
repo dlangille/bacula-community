@@ -428,10 +428,9 @@ int restore_cmd(UAContext *ua, const char *cmd)
 
    jcr->component_fd = rx.component_fd;
    rx.component_fd = NULL;
+
    /* The Client might request the file list */
-   if (jcr->bsr_list) {
-      free_bsr(jcr->bsr_list);
-   }
+   free_bsr(jcr->bsr_list);
    jcr->bsr_list = rx.bsr_list;
    rx.bsr_list = NULL;
 
