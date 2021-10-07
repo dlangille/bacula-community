@@ -390,6 +390,7 @@ fi
 support_smartalloc=yes
 support_readline=yes
 support_lzo=yes
+support_zstd=yes
 support_s3=yes
 support_conio=yes
 support_bat=no
@@ -639,7 +640,6 @@ fi
 
 AC_SUBST(DIRD_DIR)
 AC_SUBST(DIR_TOOLS)
-# AC_SUBST(DIR_PLUGIN_DIR)
 
 dnl -------------------------------------------
 dnl stored  (default on)
@@ -910,11 +910,115 @@ AC_ARG_WITH(tcp-wrappers,
    ]
 )
 
-TOKYOCABINET_LIBS=
-TOKYOCABINET_INC=
+with_curl_directory=no
 
-AC_SUBST(TOKYOCABINET_LIBS)
-AC_SUBST(TOKYOCABINET_INC)
+dnl -----------------------------------------------------------
+dnl Check whether CURL is available
+dnl -----------------------------------------------------------
+AC_MSG_CHECKING([for CURL])
+dnl The following uses quadrigraphs:
+dnl '@<:@' = '['
+dnl '@:>@' = ']'
+AC_ARG_WITH(curl,
+    AC_HELP_STRING([--with-curl@<:@=DIR@:>@], [Include CURL support. DIR is the CURL base]),
+    [
+	with_curl_directory=${withval}
+    ]
+)
+
+CURL_LIBS="-lcurl"
+CURL_INC=""
+
+saved_LIBS="${LIBS}"
+saved_CFLAGS="${CFLAGS}"
+
+if test "x$with_curl_directory" != "xno"; then
+
+   if test "x$with_curl_directory" != "xyes" && test x"${with_curl_directory}" != "x"; then
+      #
+      # Make sure the $with_curl_directory also makes sense
+      #
+      if test -d "$with_curl_directory/include"; then
+      	 CURL_INC="-I$with_curl_directory/include $CURL_INC"
+      fi
+      if test -d "$with_curl_directory/lib"; then
+      	 CURL_LIBS="-L$with_curl_directory/lib $CURL_LIBS"
+      fi
+      if test -d "$with_curl_directory/lib64"; then
+      	 CURL_LIBS="-L$with_curl_directory/lib64 $CURL_LIBS"
+      fi
+   fi
+
+   LIBS="${saved_LIBS} ${CURL_LIBS}"
+   CFLAGS="${saved_CFLAGS} ${CURL_INC}"
+fi
+
+AC_CHECK_HEADER(curl/curl.h,,[error="Can't find CURL header."])
+AC_CHECK_LIB(curl,curl_version_info,,[error="Can't find CURL library."])
+
+if test x"${error}" == "x"; then
+   support_curl=yes
+fi 
+
+AC_MSG_RESULT([$support_curl])
+if test "$support_curl" = "yes"; then
+   AC_DEFINE(HAVE_CURL, 1, [Define if CURL library is available])
+fi
+
+AC_SUBST(CURL_LIBS)
+AC_SUBST(CURL_INC)
+
+dnl We don't want the -lcurl everywhere with AC_CHECK_LIB
+LIBS="${saved_LIBS}"
+CFLAGS="${saved_CFLAGS}"
+
+dnl ----------------------------------------------------------------
+
+
+ZSTD_LIBS="-lzstd"
+ZSTD_INC=""
+
+saved_LIBS="${LIBS}"
+saved_CFLAGS="${CFLAGS}"
+
+if test "x$with_zstd_directory" != "xno"; then
+
+   if test "x$with_zstd_directory" != "xyes" && test x"${with_zstd_directory}" != "x"; then
+      #
+      # Make sure the $with_zstd_directory also makes sense
+      #
+      if test -d "$with_zstd_directory/include"; then
+      	 ZSTD_INC="-I$with_zstd_directory/include ZSTD_INC"
+      fi
+      if test -d "$with_zstd_directory/lib"; then
+      	 ZSTD_LIBS="$with_zstd_directory/lib/libzstd.a $ZSTD_LIBS"
+      fi
+      if test -d "$with_zstd_directory/lib64"; then
+      	 ZSTD_LIBS="$with_zstd_directory/lib64/libzstd.a $ZSTD_LIBS"
+      fi
+   fi
+
+   LIBS="${saved_LIBS} ${ZSTD_LIBS}"
+   CFLAGS="${saved_CFLAGS} ${ZSTD_INC}"
+fi
+
+AC_CHECK_HEADER(zstd.h,,[error="Can't find ZSTD header."])
+AC_CHECK_LIB(zstd,ZSTD_createCCtx,,[error="Can't find ZSTD library."])
+
+if test x"${error}" == "x"; then
+    support_zstd=yes
+fi 
+
+AC_MSG_RESULT([$support_zstd])
+if test "$support_zstd" = "yes"; then
+   AC_DEFINE(HAVE_ZSTD, 1, [Define if ZSTD library is available])
+fi
+
+LIBS="${saved_LIBS}"
+CFLAGS="${saved_CFLAGS}"
+
+AC_SUBST(ZSTD_LIBS)
+AC_SUBST(ZSTD_INC)
 
 
 dnl -----------------------------------------------------------
@@ -3393,6 +3497,29 @@ AC_SUBST(LDAP_INC)
 AC_SUBST(LDAP_LIBS)
 
 dnl
+
+DIRPLUG_INSTALL_TARGET=
+EXTRA_INSTALL_SCRIPTS=
+PLUGIN_INSTALL_TARGET=
+support_antivirus=no
+AC_ARG_ENABLE(antivirus-plugin,
+   AC_HELP_STRING([--disable-antivirus-plugin], [disable Antivirus support @<:@default=yes@:>@]),
+   [
+      if test x$enableval = xyes; then
+         support_antivirus=yes
+      elif test x$enableval = xno; then
+         support_antivirus=disabled
+      fi
+   ]
+)
+
+if test x$support_antivirus = xyes ; then
+   PLUGIN_INSTALL_TARGET="$PLUGIN_INSTALL_TARGET install-antivirus"
+fi
+
+AC_SUBST(PLUGIN_INSTALL_TARGET)
+AC_SUBST(EXTRA_INSTALL_SCRIPTS)
+
 dnl Enable/Disable plugin support
 dnl
 
@@ -3478,7 +3605,8 @@ AC_ARG_ENABLE(totp-bpam,
 )
 
 if test x$support_totp_bpam = xyes ; then
-   BPAM_TARGET_INSTALL="install-totp"
+   DIRPLUG_INSTALL_TARGET="$DIRPLUG_INSTALL_TARGET install-totp"
+   DIR_PLUGIN_DIR="$DIR_PLUGIN_DIR src/plugins/dir/totp"
 fi
 
 dnl Director LDAP Auth Plugin
@@ -3511,7 +3639,7 @@ fi
 
 AC_SUBST(BPAM_LDAP_TARGET)
 AC_SUBST(BPAM_LDAP_TARGET_INSTALL)
-AC_SUBST(BPAM_TARGET_INSTALL)
+AC_SUBST(DIRPLUG_INSTALL_TARGET)
 
 AC_SUBST(DIR_PLUGIN_DIR)
 
@@ -4208,6 +4336,7 @@ Configuration on `date`:
    - LDAP BPAM:               ${support_ldap_bpam}
    - TOTP BPAM:               ${support_totp_bpam}
    - CDP:                     ${support_cdp}
+   - Antivirus:               ${support_antivirus}
   " > config.out
 
 # create a small shell script useful for support with
