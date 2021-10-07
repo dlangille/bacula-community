@@ -129,6 +129,7 @@ public:
    bool tls_require;                  /* Require TLS */
    bool tls_verify_peer;              /* TLS Verify Client Certificate */
    char *verid;                       /* Custom Id to print in version command */
+   char *customerid;                  /* Custom CustomerID */
    /* Methods */
    char *name() const;
 };

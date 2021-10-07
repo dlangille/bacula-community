@@ -402,7 +402,8 @@ static RES_ITEM dir_items[] = {
    {"TlsDhFile",            store_dir,       ITEM(res_dir.tls_dhfile), 0, 0, 0},
    {"TlsAllowedCn",         store_alist_str, ITEM(res_dir.tls_allowed_cns), 0, 0, 0},
    {"StatisticsRetention",  store_time,      ITEM(res_dir.stats_retention),  0, ITEM_DEFAULT, 60*60*24*31*12*5},
-   {"VerId",                store_str,       ITEM(res_dir.verid), 0, 0, 0},
+   {"VerId",           store_str,       ITEM(res_dir.verid), 0, 0, 0},
+   {"CustomerId",           store_str,       ITEM(res_dir.customerid), 0, 0, 0},
    {"CommCompression",      store_bool,      ITEM(res_dir.comm_compression), 0, ITEM_DEFAULT, true},
    {NULL, NULL, {0}, 0, 0, 0}
 };
@@ -1635,6 +1636,9 @@ void free_resource(RES *rres, int type)
       }
       if (res->res_dir.verid) {
          free(res->res_dir.verid);
+      }
+      if (res->res_dir.customerid) {
+         free(res->res_dir.customerid);
       }
       break;
    case R_DEVICE:
