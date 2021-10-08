@@ -72,7 +72,12 @@ public:
       }
       reset();
    };
-   ~ProgressCounter() {};
+   ~ProgressCounter()
+   {
+      if (accountings != NULL) {
+         free(accountings);
+      }
+   };
    void reset(int new_state = 0, int64_t new_goal = 0, int64_t start = 0)
    {
      acc_n = 0; state = new_state; goal = new_goal; current = start;
