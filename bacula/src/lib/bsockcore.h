@@ -139,6 +139,7 @@ public:
                 char *service, int port, int verbose);
    virtual int32_t recvn(int /*len*/);
    virtual bool send();
+   virtual bool send(char *buf, uint32_t len);
    bool fsend(const char*, ...);
    virtual void close();              /* close connection and destroy packet */
    void destroy();                    /* destroy socket packet */

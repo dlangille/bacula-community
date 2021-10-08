@@ -1,7 +1,7 @@
 /*
    Bacula(R) - The Network Backup Solution
 
-   Copyright (C) 2000-2022 Kern Sibbald
+   Copyright (C) 2000-2023 Kern Sibbald
 
    The original author of Bacula is Kern Sibbald, with contributions
    from many others, a complete list can be found in the file AUTHORS.
@@ -530,6 +530,11 @@ void BSOCKCORE::clear_locking()
  */
 bool BSOCKCORE::send()
 {
+   return send(msg, msglen);
+}
+
+bool BSOCKCORE::send(char *buf, uint32_t len)
+{
    int32_t rc;
    bool ok = true;
    bool locked = false;
@@ -555,11 +560,11 @@ bool BSOCKCORE::send()
       return false;
    }
 
-   if (msglen > 4000000) {
+   if (len > 4000000) {
       if (!m_suppress_error_msgs) {
          Qmsg4(m_jcr, M_ERROR, 0,
             _("Socket has insane msglen=%d on call to %s:%s:%d\n"),
-             msglen, m_who, m_host, m_port);
+             len, m_who, m_host, m_port);
       }
       return false;
    }
@@ -582,10 +587,10 @@ bool BSOCKCORE::send()
    timer_start = watchdog_time;  /* start timer */
    clear_timed_out();
    /* Full I/O done in one write */
-   rc = write_nbytes(msg, msglen);
-   if (chk_dbglvl(DT_NETWORK|1900)) dump_bsock_msg(m_fd, *pout_msg_no, "SEND", rc, msglen, m_flags, msg, msglen);
+   rc = write_nbytes(buf, len);
+   if (chk_dbglvl(DT_NETWORK|1900)) dump_bsock_msg(m_fd, *pout_msg_no, "SEND", rc, len, m_flags, buf, len);
    timer_start = 0;         /* clear timer */
-   if (rc != msglen) {
+   if (rc != (int32_t)len) {
       errors++;
       if (errno == 0) {
          b_errno = EIO;
@@ -596,13 +601,13 @@ bool BSOCKCORE::send()
          if (!m_suppress_error_msgs) {
             Qmsg5(m_jcr, M_ERROR, 0,
                   _("Write error sending %d bytes to %s:%s:%d: ERR=%s\n"),
-                  msglen, m_who,
+                  len, m_who,
                   m_host, m_port, this->bstrerror());
          }
       } else {
          Qmsg5(m_jcr, M_ERROR, 0,
                _("Wrote %d bytes to %s:%s:%d, but only %d accepted.\n"),
-               msglen, m_who, m_host, m_port, rc);
+               len, m_who, m_host, m_port, rc);
       }
       ok = false;
    }
