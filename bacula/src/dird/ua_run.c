@@ -1224,7 +1224,7 @@ int modify_job_parameters(UAContext *ua, JCR *jcr, run_ctx &rc)
          add_prompt(ua, _("JobId"));         /* 11 */
       }
       if (jcr->getJobType() == JT_BACKUP || jcr->getJobType() == JT_RESTORE || jcr->is_JobType(JT_VERIFY)) {
-         add_prompt(ua, _("Plugin Options")); /* 12 */
+         add_prompt(ua, _("Plugin Options")); /* R:12 V:9  B:9*/
       }
       switch (do_prompt(ua, "", _("Select parameter to modify"), NULL, 0)) {
       case 0:
@@ -1379,19 +1379,33 @@ int modify_job_parameters(UAContext *ua, JCR *jcr, run_ctx &rc)
          jcr->where = bstrdup(ua->cmd);
          goto try_again;
       case 9:
-         /* File relocation */
-         select_where_regexp(ua, jcr);
-         goto try_again;
-      case 10:
-         /* Replace */
-         start_prompt(ua, _("Replace:\n"));
-         for (i=0; ReplaceOptions[i].name; i++) {
-            add_prompt(ua, ReplaceOptions[i].name);
+         if (jcr->getJobType() == JT_RESTORE) {
+            /* File relocation */
+            select_where_regexp(ua, jcr);
+            goto try_again;
          }
-         opt = do_prompt(ua, "", _("Select replace option"), NULL, 0);
-         if (opt >=  0) {
-            rc.replace = ReplaceOptions[opt].name;
-            jcr->replace = ReplaceOptions[opt].token;
+      case 10:
+         if (jcr->getJobType() == JT_RESTORE) {
+            /* Replace */
+            start_prompt(ua, _("Replace:\n"));
+            for (i=0; ReplaceOptions[i].name; i++) {
+               add_prompt(ua, ReplaceOptions[i].name);
+            }
+            opt = do_prompt(ua, "", _("Select replace option"), NULL, 0);
+            if (opt >=  0) {
+               rc.replace = ReplaceOptions[opt].name;
+               jcr->replace = ReplaceOptions[opt].token;
+            }
+         } else {
+            /* Plugin Options for verify data */
+            if (!get_cmd(ua, _("Please enter the Plugin Options string: "))) {
+               break;
+            }
+            if (jcr->plugin_options) {
+               free(jcr->plugin_options);
+               jcr->plugin_options = NULL;
+            }
+            jcr->plugin_options = bstrdup(ua->cmd);
          }
          goto try_again;
       case 11:
@@ -1403,22 +1417,8 @@ int modify_job_parameters(UAContext *ua, JCR *jcr, run_ctx &rc)
          }
          goto try_again;
       case 12:
-
          if (jcr->getJobType() == JT_RESTORE) {
             plugin_config(ua, jcr, rc);
-
-         } else {
-            //generate_plugin_event(jcr, bEventJobConfig, &rc);
-
-            /* Plugin Options */
-            if (!get_cmd(ua, _("Please Plugin Options string: "))) {
-               break;
-            }
-            if (jcr->plugin_options) {
-               free(jcr->plugin_options);
-               jcr->plugin_options = NULL;
-            }
-            jcr->plugin_options = bstrdup(ua->cmd);
          }
          goto try_again;
       case -1:                        /* error or cancel */
@@ -2565,7 +2565,7 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
                   ua->send_msg(_("Plugin Options specified twice.\n"));
                   return false;
                }
-               rc.plugin_options = ua->argv[i];
+               rc.plugin_options = bstrdup(ua->argv[i]);
                if (!acl_access_ok(ua, PluginOptions_ACL, rc.plugin_options)) {
                   ua->send_msg(_("No authorization for \"PluginOptions\" specification.\n"));
                   return false;
@@ -2734,8 +2734,8 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
       rc.verify_job = rc.job->verify_job;
    }
 
-   if (rc.job->JobType == JT_VERIFY && rc.job->PluginOptions) {
-      rc.plugin_options = rc.job->PluginOptions;
+   if (rc.job->JobType == JT_VERIFY && !rc.plugin_options && rc.job->PluginOptions) {
+      rc.plugin_options = bstrdup(rc.job->PluginOptions);
    }
 
    if (rc.previous_job_name) {
