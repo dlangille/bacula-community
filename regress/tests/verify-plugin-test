@@ -72,6 +72,15 @@ run job=VerifyData jobid=1 storage=File1
 yes
 wait
 messages
+@$out $tmp/log4.out
+run job=VerifyData pluginoptions="test1"
+no
+@$out $tmp/log5.out
+run job=VerifyData
+mod
+10
+test2
+no
 quit
 END_OF_DATA
 
@@ -113,6 +122,18 @@ fi
 grep "Got plugin command" $tmp/log3.out > /dev/null
 if [ $? = 0 ]; then
     print_debug "ERROR: Should NOT find plugin activation in $tmp/log3.out"
+    estat=1
+fi
+
+grep "Plugin Options: test1" $tmp/log4.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find the command line plugin options in $tmp/log4.out"
+    estat=1
+fi
+
+grep "Plugin Options: test2" $tmp/log5.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find the menu plugin options in $tmp/log5.out"
     estat=1
 fi
 
