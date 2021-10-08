@@ -76,6 +76,7 @@ static bRC baculaCheckChanges(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAcceptFile(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att);
 static void plugin_register_verify_data(bpContext *ctx);
+static bRC baculaAddPlugin(bpContext *ctx, const char *file);
 
 /*
  * These will be plugged into the global pointer structure for
@@ -116,6 +117,7 @@ static bFuncs bfuncs = {
    baculaCheckChanges,
    baculaAcceptFile,
    baculaAccurateAttribs,
+   baculaAddPlugin
 };
 
 /*
@@ -2265,7 +2267,7 @@ static bRC baculaAddExclude(bpContext *ctx, const char *file)
 }
 
 /**
- * Let the plugin define files/directories to be excluded
+ * Let the plugin define files/directories to be included
  *  from the main backup.
  */
 static bRC baculaAddInclude(bpContext *ctx, const char *file)
@@ -2295,6 +2297,46 @@ static bRC baculaAddInclude(bpContext *ctx, const char *file)
 
    set_incexe(jcr, bctx->include);
    add_file_to_fileset(jcr, file, true);
+
+   /* Restore the current context */
+   set_incexe(jcr, old);
+
+   Dmsg1(100, "Add include file=%s\n", file);
+   Dsm_check(999);
+   return bRC_OK;
+}
+
+/**
+ * Let the plugin define plugin to be included
+ *  from the main backup.
+ */
+static bRC baculaAddPlugin(bpContext *ctx, const char *file)
+{
+   JCR *jcr;
+   findINCEXE *old;
+   bacula_ctx *bctx;
+
+   Dsm_check(999);
+   if (!is_ctx_good(ctx, jcr, bctx)) {
+      return bRC_Error;
+   }
+   if (!file) {
+      return bRC_Error;
+   }
+
+   /* Save the include context */
+   old = get_incexe(jcr);
+
+   /* Not right time to add include */
+   if (!old) {
+      return bRC_Error;
+   }
+   if (!bctx->include) {
+      bctx->include = old;
+   }
+
+   set_incexe(jcr, bctx->include);
+   add_file_to_fileset(jcr, file, false);
 
    /* Restore the current context */
    set_incexe(jcr, old);

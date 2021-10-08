@@ -683,6 +683,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                } else if (strcasecmp(ua->argv[j], NT_("RESTORE_FIRST")) == 0) {
                   rr.FileType = FT_RESTORE_FIRST;
 
+               } else if (strcasecmp(ua->argv[j], NT_("SECURITY")) == 0) {
+                  rr.FileType = FT_SECURITY_OBJECT;
+
                } else if (strcasecmp(ua->argv[j], NT_("ALL")) == 0) {
                   rr.FileType = 0;
 

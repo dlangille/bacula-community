@@ -551,6 +551,8 @@ typedef struct s_baculaFuncs {
    bRC (*checkChanges)(bpContext *ctx, struct save_pkt *sp);
    bRC (*AcceptFile)(bpContext *ctx, struct save_pkt *sp); /* Need fname and statp */
    bRC (*getAccurateAttribs)(bpContext *ctx, accurate_attribs_pkt *att);
+   bRC (*AddPlugin)(bpContext *ctx, const char *file);
+
 } bFuncs;
 
 

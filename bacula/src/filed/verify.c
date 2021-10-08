@@ -154,6 +154,7 @@ static int verify_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       Jmsg(jcr, M_SKIPPED, 1, _("     File system change prohibited. Directory skipped: %s\n"), ff_pkt->fname);
       return 1;
    case FT_PLUGIN_CONFIG:
+   case FT_SECURITY_OBJECT:
    case FT_RESTORE_FIRST:
       return 1;                       /* silently skip */
    case FT_NOOPEN: {

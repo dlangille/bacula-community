@@ -367,6 +367,9 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
    case FT_LNK:
       Dmsg2(130, "FT_LNK saving: %s -> %s\n", ff_pkt->fname, ff_pkt->link);
       break;
+   case FT_SECURITY_OBJECT:
+      Dmsg1(100, "FT_SECURITY_OBJECT saving: %s\n", ff_pkt->fname);
+      break;
    case FT_RESTORE_FIRST:
       Dmsg1(100, "FT_RESTORE_FIRST saving: %s\n", ff_pkt->fname);
       break;
@@ -1144,6 +1147,7 @@ bool encode_and_send_attributes(bctx_t &bctx)
                        ff_pkt->type, ff_pkt->link, 0, attribs, 0, 0,
                        attribsEx, 0, ff_pkt->delta_seq, 0);
       break;
+   case FT_SECURITY_OBJECT:
    case FT_PLUGIN_CONFIG:
    case FT_RESTORE_FIRST:
       comp_len = ff_pkt->restore_obj.object_len;
