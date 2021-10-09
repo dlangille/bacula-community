@@ -15,7 +15,9 @@ LIBDIR=../../lib
 
 topdir = @BUILD_DIR@
 thisdir = src/plugins/dir
-BPAM_TARGET_INSTALL = @BPAM_TARGET_INSTALL@
+DIRPLUG_INSTALL_TARGET = @DIRPLUG_INSTALL_TARGET@
+CURL_INC = @CURL_INC@
+CURL_LIBS = @CURL_LIBS@
 
 .SUFFIXES:    .c .o .lo
 
@@ -40,7 +42,7 @@ test-authentication-api-dir.la: Makefile test-authentication-api-dir.lo dirplugl
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
-install: all $(BPAM_TARGET_INSTALL)
+install: all $(DIRPLUG_INSTALL_TARGET)
 	$(MKDIR) $(DESTDIR)$(plugindir)
 
 # $(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) example-plugin-dir.la $(DESTDIR)$(plugindir)
