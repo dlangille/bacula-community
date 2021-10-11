@@ -100,6 +100,7 @@ SD_OBJS = \
 	$(OBJDIR)/read.o \
 	$(OBJDIR)/vbackup.o \
 	$(OBJDIR)/status.o \
+	$(OBJDIR)/store_mngr.o \
 	$(EXTRA_STORED_OBJS)
 
 # bextract
