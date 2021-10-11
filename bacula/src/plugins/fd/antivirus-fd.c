@@ -227,7 +227,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
     */
    switch (event->eventType) {
 
-   case bEventPluginCommand:
+   case bEventPluginOptions:
       Jmsg(ctx, M_INFO, "Got plugin command = %s\n", (char *)value);
       self->parse_cmd((char *)value);
       bfuncs->registerBaculaEvents(ctx, bEventVerifyStream);

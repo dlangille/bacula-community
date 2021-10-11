@@ -214,6 +214,7 @@ void generate_plugin_event(JCR *jcr, bEventType eventType, void *value)
     */
    switch(eventType) {
    case bEventPluginCommand:
+   case bEventPluginOptions:
    case bEventOptionPlugin:
       name = (char *)value;
       if (!get_plugin_name(jcr, name, &len)) {

@@ -2468,6 +2468,7 @@ static int fileset_cmd(JCR *jcr)
    POOL_MEM buf(PM_MESSAGE);
    BSOCK *dir = jcr->dir_bsock;
    int rtnstat;
+   char *p;
 
 #if HAVE_WIN32
    jcr->Snapshot = (strstr(dir->msg, "vss=1") != NULL);
@@ -2482,6 +2483,12 @@ static int fileset_cmd(JCR *jcr)
       Dmsg1(500, "Fileset: %s\n", dir->msg);
       pm_strcpy(buf, dir->msg);
       add_fileset(jcr, buf.c_str());
+   }
+   /* Foreach special configuration in the FD, we call the PluginOption event */
+   if (me->plugins) {
+      foreach_alist(p, me->plugins) {
+         generate_plugin_event(jcr, bEventPluginOptions, (void *)p);
+      }
    }
    if (!term_fileset(jcr)) {
       return 0;

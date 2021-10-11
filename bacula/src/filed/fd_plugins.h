@@ -468,6 +468,7 @@ typedef enum {
   bEventComponentInfo                   = 25, /* Plugin component */
   bEventFeatures                        = 26, /* Ask for file list, ... "xxx,yyy,zzz" */
   bEventVerifyStream                    = 27, /* Register to get a copy of the data stream during verify */
+  bEventPluginOptions                   = 28, /* Sent when starting the job */
 } bEventType;
 
 

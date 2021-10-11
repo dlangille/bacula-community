@@ -273,7 +273,7 @@ void do_verify_volume(JCR *jcr)
 
    if (jcr->plugin_options_list) {
       foreach_alist(opts, jcr->plugin_options_list) {
-         generate_plugin_event(jcr, bEventPluginCommand, (void *)opts);
+         generate_plugin_event(jcr, bEventPluginOptions, (void *)opts);
       }
    }
 

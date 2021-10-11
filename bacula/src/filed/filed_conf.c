@@ -87,7 +87,7 @@ static RES_ITEM cli_items[] = {
    {"PidDirectory",  store_dir,     ITEM(res_client.pid_directory),     0, ITEM_REQUIRED, 0},
    {"SubsysDirectory",  store_dir,  ITEM(res_client.subsys_directory),  0, 0, 0},
    {"PluginDirectory",  store_dir,  ITEM(res_client.plugin_directory),  0, 0, 0},
-   {"Plugin",           store_alist_str, ITEM(res_client.plugins),      0, 0, 0},
+   {"PluginOptions",    store_alist_str, ITEM(res_client.plugins),      0, 0, 0},
    {"SnapshotCommand",  store_str,  ITEM(res_client.snapshot_command), 0, 0, 0},
    {"ScriptsDirectory", store_dir,  ITEM(res_client.scripts_directory),  0, 0, 0},
    {"MaximumConcurrentJobs", store_pint32,  ITEM(res_client.MaxConcurrentJobs), 0, ITEM_DEFAULT, 20},
