@@ -2536,7 +2536,13 @@ bail_out:
    return ret;
 }
 
-/* Get features from plugins, we fill a alist with {plugin name, features list} */
+/**
+ * @brief Get features from plugins, we fill a alist with {plugin name, features list}
+ *
+ * @param JCR *jcr
+ * @param alist *ret: list of the features available
+ * @return bool
+ */
 bool plugin_get_features(JCR *jcr, alist *ret)
 {
    bFeature *elt;
@@ -2598,11 +2604,19 @@ static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att)
    return bRC_OK;
 }
 
+/**
+ * @brief Verify Data Plugin function to close a stream. The plugin is responsible to display a message.
+ *
+ * @param JCR *jcr
+ * @return bRC bRC_Error when a plugin has returned an error during the pluginIO(close) or the endVerifyFile()
+ *             bRC_OK when all plugins are OK
+ */
 bRC plugin_verify_data_close(JCR *jcr)
 {
    bpContext *ctx;
    bacula_ctx *bctx;
    struct io_pkt io;
+   bRC ret = bRC_OK;
    if (!jcr->plugin_verify) {
       return bRC_Skip;              // Nothing registered
    }
@@ -2632,26 +2646,40 @@ bRC plugin_verify_data_close(JCR *jcr)
             errno = io.io_errno;
          }
          bctx->verifyFileCalled = false;
-         if (io.status >= 0) {
-            // Do something useful?
+         if (io.status != 0) {
+	    Dmsg2(50, "Plugin %s in pluginIO(CLOSE) status=%d\n", jcr->plugin->file, io.status);
+	    ret = bRC_Error;
          }
          if (plug_func(jcr->plugin)->endVerifyFile) {
-            plug_func(jcr->plugin)->endVerifyFile(jcr->plugin_ctx); // Check the return code?
+            if (plug_func(jcr->plugin)->endVerifyFile(jcr->plugin_ctx) != bRC_OK) {
+	        Dmsg2(50, "Plugin %s in endVerifyFile() status=%d\n", jcr->plugin->file, io.status);
+		ret = bRC_Error;
+            }
          }
       }
    }
    jcr->plugin_ctx = NULL;
    jcr->plugin = NULL;
-   return bRC_OK;
+   return ret;
 }
 
 
+/**
+ * @brief Verify Data Plugin function to update a stream. For each block of the file, we call this function
+ *
+ * @param JCR *jcr
+ * @param char *data   Backup data for the given file
+ * @param int size     Size of the data block
+ * @return bRC bRC_Error when a plugin has returned an error during the pluginIO(write)
+ *             bRC_OK when all plugins are OK
+ */
 bRC plugin_verify_data_update(JCR *jcr, char *data, int size)
 {
    bpContext *ctx;
    bacula_ctx *bctx;
    struct io_pkt io;
-
+   bRC ret = bRC_OK;
+   
    if (!jcr->plugin_verify) {
       return bRC_Skip;              // Nothing registered
    }
@@ -2682,22 +2710,24 @@ bRC plugin_verify_data_update(JCR *jcr, char *data, int size)
          } else {
             errno = io.io_errno;
          }
-         if (io.status >= 0) {
-            // Do something useful? Maybe close
+         if (io.status != 0) {
+            ret = bRC_Error;
          }
          
       }
    }
    jcr->plugin_ctx = NULL;
    jcr->plugin = NULL;
-   return bRC_OK;
+   return ret;
 }
 
 /*
  * @brief Bacula function called for each new file in verify data job
  * @param JCR *jcr
- * @param ATTR *attr
- * @return int (file descriptor)
+ * @param ATTR *attr  Attribute of the current file
+ * @return bRC  bRC_Skip  if the list of plugins is empty
+ *              bRC_Error if one of the plugin is incorrect
+ *              bRC_OK    if OK
  */
 bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr)
 {
@@ -2738,7 +2768,7 @@ bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr)
             } else {
                errno = io.io_errno;
             }
-            if (io.status >= 0) {
+            if (io.status >= 0) { // -1 in case of error
                bctx->verifyFileCalled = true;
             }
          }
@@ -2752,9 +2782,8 @@ bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr)
 /*
  * @brief Bacula function to append a plugin registered to get a copy of the data
  *        during a Verify Data job
- * @param JCR *jcr
  * @param bpContext *ctx
- * @return bool
+ * @return void
  */
 static void plugin_register_verify_data(bpContext *ctx)
 {
