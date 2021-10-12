@@ -394,7 +394,7 @@ CREATE TABLE Client (
    ClientId INTEGER,
    Name VARCHAR(128) NOT NULL,
    Uname VARCHAR(255) NOT NULL,   -- uname -a field
-   Plugin VARCHAR(1024) DEFAULT '',
+   Plugins VARCHAR(1024) DEFAULT '',
    AutoPrune TINYINT DEFAULT 0,
    FileRetention BIGINT UNSIGNED DEFAULT 0,
    JobRetention  BIGINT UNSIGNED DEFAULT 0,
