@@ -373,7 +373,7 @@ bool is_restore_stream_supported(int stream)
    case STREAM_SPARSE_GZIP_DATA:
    case STREAM_WIN32_GZIP_DATA:
 #endif
-#ifndef HAVE_LZO
+#if !defined(HAVE_LZO) && !defined(HAVE_ZSTD)
    case STREAM_COMPRESSED_DATA:
    case STREAM_SPARSE_COMPRESSED_DATA:
    case STREAM_WIN32_COMPRESSED_DATA:
@@ -391,7 +391,7 @@ bool is_restore_stream_supported(int stream)
    case STREAM_SPARSE_GZIP_DATA:
    case STREAM_WIN32_GZIP_DATA:
 #endif
-#ifdef HAVE_LZO
+#if defined(HAVE_LZO) || defined(HAVE_ZSTD)
    case STREAM_COMPRESSED_DATA:
    case STREAM_SPARSE_COMPRESSED_DATA:
    case STREAM_WIN32_COMPRESSED_DATA:
@@ -415,7 +415,7 @@ bool is_restore_stream_supported(int stream)
    case STREAM_ENCRYPTED_FILE_GZIP_DATA:
    case STREAM_ENCRYPTED_WIN32_DATA:
    case STREAM_ENCRYPTED_WIN32_GZIP_DATA:
-#ifdef HAVE_LZO
+#if defined(HAVE_LZO) || defined(HAVE_ZSTD)
    case STREAM_ENCRYPTED_FILE_COMPRESSED_DATA:
    case STREAM_ENCRYPTED_WIN32_COMPRESSED_DATA:
 #endif
@@ -925,7 +925,7 @@ bool is_restore_stream_supported(int stream)
    case STREAM_SPARSE_GZIP_DATA:
    case STREAM_WIN32_GZIP_DATA:
 #endif
-#ifndef HAVE_LZO
+#if !defined(HAVE_LZO) && !defined(HAVE_ZSTD)
    case STREAM_COMPRESSED_DATA:
    case STREAM_SPARSE_COMPRESSED_DATA:
    case STREAM_WIN32_COMPRESSED_DATA:
@@ -944,7 +944,7 @@ bool is_restore_stream_supported(int stream)
    case STREAM_SPARSE_GZIP_DATA:
    case STREAM_WIN32_GZIP_DATA:
 #endif
-#ifdef HAVE_LZO
+#if defined(HAVE_LZO) || defined(HAVE_ZSTD)
    case STREAM_COMPRESSED_DATA:
    case STREAM_SPARSE_COMPRESSED_DATA:
    case STREAM_WIN32_COMPRESSED_DATA:

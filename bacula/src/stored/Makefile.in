@@ -144,6 +144,8 @@ CAP_LIBS = @CAP_LIBS@
 ZLIBS=@ZLIBS@
 LZO_LIBS= @LZO_LIBS@
 LZO_INC= @LZO_INC@
+ZSTD_LIBS = @ZSTD_LIBS@
+ZSTD_INC = @ZSTD_INC@
 TOKYOCABINET_LIBS = @TOKYOCABINET_LIBS@
 TOKYOCABINET_INC = @TOKYOCABINET_INC@
 
@@ -302,11 +304,11 @@ bls:	Makefile $(BLSOBJS) libbacsd.la drivers  ../findlib/libbacfind$(DEFAULT_ARC
 bextract.o: bextract.c
 	@echo "Compiling $<"
 	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) \
-	   -I$(basedir) $(DINCLUDE) $(CFLAGS) $(LZO_INC) $<
+	   -I$(basedir) $(DINCLUDE) $(CFLAGS) $(LZO_INC) $(ZSTD_INC) $<
 
 bextract: Makefile $(BEXTOBJS) libbacsd.la drivers ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE) ../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE)
 	@echo "Compiling $<"
-	$(LIBTOOL_LINK) $(CXX) $(TTOOL_LDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(BEXTOBJS) $(DLIB) $(ZLIBS) $(LZO_LIBS) \
+	$(LIBTOOL_LINK) $(CXX) $(TTOOL_LDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(BEXTOBJS) $(DLIB) $(ZLIBS) $(LZO_LIBS) $(ZSTD_LIBS) \
 	   $(SD_LIBS) -lm $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
 bscan.o: bscan.c

@@ -131,6 +131,9 @@ LIBS_ZLIB := \
 LIBS_LZO := \
         $(DEPKGS)/lib/liblzo2.a
 
+LIBS_ZSTD := \
+        $(DEPKGS)/lib/libzstd.a
+
 LIBS_MYSQL := \
         $(DEPKGS)/lib/libmysql.a
 
@@ -161,6 +164,7 @@ HAVES := \
         -DHAVE_MINGW \
         -DHAVE_ZLIB_H \
         -DHAVE_LZO \
+        -DHAVE_ZSTD \
         -DHAVE_LIBZ \
         -DHAVE_CRYPTO \
         -DHAVE_OPENSSL \

@@ -202,6 +202,10 @@ struct s_fs_opt FS_options[] = {
    {"Gzip8",    INC_KW_COMPRESSION,  "Z8"},
    {"Gzip9",    INC_KW_COMPRESSION,  "Z9"},
    {"Lzo",      INC_KW_COMPRESSION,  "Zo"},
+   {"zstd",     INC_KW_COMPRESSION,  "Zs"},
+   {"zstd1",    INC_KW_COMPRESSION,  "Zr"},
+   {"zstd10",   INC_KW_COMPRESSION,  "Zs"},
+   {"zstd19",   INC_KW_COMPRESSION,  "Zt"},
    {"blowfish", INC_KW_ENCRYPTION,    "B"},   /* ***FIXME*** not implemented */
    {"3des",     INC_KW_ENCRYPTION,    "3"},   /* ***FIXME*** not implemented */
    {"Storage",  INC_KW_DEDUP,        "d1"},

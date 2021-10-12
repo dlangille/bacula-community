@@ -29,6 +29,11 @@
 #include "ch.h"
 #include "findlib/find.h"
 
+#ifdef HAVE_ZSTD
+#include <zstd.h>
+ZSTD_DCtx *ZSTD_decompress_workset = NULL;
+#endif
+
 #ifdef HAVE_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
@@ -240,6 +245,9 @@ int main (int argc, char *argv[])
       Pmsg1(000, _("%d Win32 data or Win32 gzip data stream records. Ignored.\n"),
          win32_data_msg);
    }
+#ifdef HAVE_ZSTD
+   ZSTD_freeDCtx(ZSTD_decompress_workset);
+#endif
    term_include_exclude_files(ff);
    term_find_files(ff);
    return 0;
@@ -669,7 +677,39 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
                Dmsg2(100, "Compress len=%d uncompressed=%d\n", rec->data_len, compress_len);
                break;
 #endif
-            default:
+#ifdef HAVE_ZSTD
+            case COMPRESS_ZSTD:
+            {
+               if (!ZSTD_decompress_workset) {
+                  ZSTD_decompress_workset = ZSTD_createDCtx();
+               }
+               compress_len = compress_buf_size;
+               cbuf = (const unsigned char*) wbuf + sizeof(comp_stream_header);
+               real_compress_len = wsize - sizeof(comp_stream_header);
+               Dmsg2(200, "Comp_len=%d msglen=%d\n", compress_len, wsize);
+
+               unsigned long long rSize = ZSTD_getFrameContentSize(compress_buf, real_compress_len);
+               if (rSize == ZSTD_CONTENTSIZE_ERROR || rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+                  Emsg1(M_ERROR, 0, _("ZSTD uncompression error. ERR=%d\n"), rSize);
+                  extract = false;
+                  goto bail_out;
+               }
+               compress_buf = check_pool_memory_size(compress_buf, rSize);
+               rSize = ZSTD_decompressDCtx(ZSTD_decompress_workset, (unsigned char *)compress_buf, compress_len, cbuf, real_compress_len);
+
+               if (rSize == ZSTD_CONTENTSIZE_ERROR || rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+                  Emsg1(M_ERROR, 0, _("ZSTD uncompression error. ERR=%d\n"), rSize);
+                  goto bail_out;
+               }
+               Dmsg2(100, "Write uncompressed %d bytes, total before write=%d\n", compress_len, total);
+               store_data(rec->Stream, &bfd, compress_buf, compress_len);
+               total += compress_len;
+               fileAddr += compress_len;
+               Dmsg2(100, "Compress len=%d uncompressed=%d\n", rec->data_len, compress_len);
+            }
+            break;
+#endif
+          default:
                Emsg1(M_ERROR, 0, _("Compression algorithm 0x%x found, but not supported!\n"), comp_magic);
                extract = false;
                goto bail_out;

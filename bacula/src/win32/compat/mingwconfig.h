@@ -76,6 +76,9 @@
 /* Define if you have zlib */
 #define HAVE_LIBZ 1
 
+/* Define if you have ZSTD */
+#define HAVE_ZSTD 1
+
 /* Define if you have lzo lib */
 #define HAVE_LZO 1
 

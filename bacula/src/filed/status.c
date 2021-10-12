@@ -64,11 +64,8 @@ void output_status(STATUS_PKT *sp)
    list_terminated_jobs(sp);    /* defined in lib/status.h */
 }
 
-#if defined(HAVE_LZO)
-static const bool have_lzo = true;
-#else
-static const bool have_lzo = false;
-#endif
+/* Get have_lzo, have_zstd, ... */
+#include "compress.h"
 
 /* from filed_conf.c */
 extern s_ct ciphertypes[];
@@ -201,13 +198,14 @@ static void  list_status_header(STATUS_PKT *sp)
                  p_SetCurrentDirectoryA?"":"!",
                  p_SetCurrentDirectoryW?"":"!");
       sendit(msg.c_str(), len, sp);
-      len = Mmsg(msg, " %sGCDA,%sGCDW,%sGVPNW,%sGVNFVMPW,%sLZO,%sEFS\n",
+      len = Mmsg(msg, " %sGCDA,%sGCDW,%sGVPNW,%sGVNFVMPW,%sLZO,%sEFS,%sZSTD\n",
                  p_GetCurrentDirectoryA?"":"!",
                  p_GetCurrentDirectoryW?"":"!",
                  p_GetVolumePathNameW?"":"!",
                  p_GetVolumeNameForVolumeMountPointW?"":"!",
                  have_lzo?"":"!",
-                 (BEEF>0)?"":"!");
+                 (BEEF>0)?"":"!",
+                 have_zstd?"":"!");
       sendit(msg.c_str(), len, sp);
    }
 #endif

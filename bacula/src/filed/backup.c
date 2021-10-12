@@ -27,17 +27,8 @@
 #include "filed.h"
 #include "backup.h"
 
-#ifdef HAVE_LZO
-const bool have_lzo = true;
-#else
-const bool have_lzo = false;
-#endif
-
-#ifdef HAVE_LIBZ
-const bool have_libz = true;
-#else
-const bool have_libz = false;
-#endif
+/* Get have_lzo, have_zstd, ... */
+#include "compress.h"
 
 /* Forward referenced functions */
 int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level);
@@ -48,6 +39,7 @@ static void close_vss_backup_session(JCR *jcr);
 static bool send_resource_fork(bctx_t &bctx);
 #endif
 static bool setup_compression(bctx_t &bctx);
+static bool do_zstd_compression(bctx_t &bctx);
 static bool do_lzo_compression(bctx_t &bctx);
 static bool do_libz_compression(bctx_t &bctx);
 
@@ -146,6 +138,11 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
    }
 #endif
 
+#ifdef HAVE_ZSTD
+   ZSTD_CCtx *pZSTD = ZSTD_createCCtx();
+   jcr->ZSTD_compress_workset = pZSTD;
+#endif
+
    if (!crypto_session_start(jcr)) {
       return false;
    }
@@ -228,6 +225,10 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
       bfree_and_null(jcr->LZO_compress_workset);
    }
 
+#ifdef HAVE_ZSTD
+   ZSTD_freeCCtx((ZSTD_CCtx*)jcr->ZSTD_compress_workset);
+#endif
+   
    crypto_session_end(jcr);
 
    bdelete_and_null(jcr->sd_packet_mgr);
@@ -943,6 +944,10 @@ bool process_and_send_data(bctx_t &bctx)
       goto err;
    }
 
+   if (have_zstd && !do_zstd_compression(bctx)) {
+      goto err;
+   }
+
    /**
     * Note, here we prepend the current record length to the beginning
     *  of the encrypted data. This is because both sparse and compression
@@ -1251,17 +1256,21 @@ static bool setup_compression(bctx_t &bctx)
 {
    JCR *jcr = bctx.jcr;
 
-#if defined(HAVE_LIBZ) || defined(HAVE_LZO)
+#if defined(HAVE_LIBZ) || defined(HAVE_LZO) || defined(HAVE_ZSTD)
    bctx.compress_len = 0;
    bctx.max_compress_len = 0;
    bctx.cbuf = NULL;
- #ifdef HAVE_LIBZ
+   bctx.cbuf2 = NULL;
+   memset(&bctx.ch, 0, sizeof(comp_stream_header));
+
+# ifdef HAVE_LIBZ
    int zstat;
 
    if ((bctx.ff_pkt->flags & FO_COMPRESS) && bctx.ff_pkt->Compress_algo == COMPRESS_GZIP) {
       if ((bctx.ff_pkt->flags & FO_SPARSE) || (bctx.ff_pkt->flags & FO_OFFSETS)) {
          bctx.cbuf = (unsigned char *)jcr->compress_buf + OFFSET_FADDR_SIZE;
          bctx.max_compress_len = jcr->compress_buf_size - OFFSET_FADDR_SIZE;
+
       } else {
          bctx.cbuf = (unsigned char *)jcr->compress_buf;
          bctx.max_compress_len = jcr->compress_buf_size; /* set max length */
@@ -1285,16 +1294,18 @@ static bool setup_compression(bctx_t &bctx)
          }
       }
    }
- #endif
- #ifdef HAVE_LZO
-   memset(&bctx.ch, 0, sizeof(comp_stream_header));
-   bctx.cbuf2 = NULL;
+# endif
 
+   /* cbuf points to the destination compression header
+    * cbuf2 points to the destination compression data
+    */
+# ifdef HAVE_LZO
    if ((bctx.ff_pkt->flags & FO_COMPRESS) && bctx.ff_pkt->Compress_algo == COMPRESS_LZO1X) {
       if ((bctx.ff_pkt->flags & FO_SPARSE) || (bctx.ff_pkt->flags & FO_OFFSETS)) {
          bctx.cbuf = (unsigned char *)jcr->compress_buf + OFFSET_FADDR_SIZE;
          bctx.cbuf2 = (unsigned char *)jcr->compress_buf + OFFSET_FADDR_SIZE + sizeof(comp_stream_header);
          bctx.max_compress_len = jcr->compress_buf_size - OFFSET_FADDR_SIZE;
+
       } else {
          bctx.cbuf = (unsigned char *)jcr->compress_buf;
          bctx.cbuf2 = (unsigned char *)jcr->compress_buf + sizeof(comp_stream_header);
@@ -1305,7 +1316,25 @@ static bool setup_compression(bctx_t &bctx)
       bctx.wbuf = jcr->compress_buf;    /* compressed output here */
       bctx.cipher_input = (uint8_t *)jcr->compress_buf; /* encrypt compressed data */
    }
- #endif
+# endif
+# ifdef HAVE_ZSTD
+   if ((bctx.ff_pkt->flags & FO_COMPRESS) && bctx.ff_pkt->Compress_algo == COMPRESS_ZSTD) {
+      if ((bctx.ff_pkt->flags & FO_SPARSE) || (bctx.ff_pkt->flags & FO_OFFSETS)) {
+         bctx.cbuf = (unsigned char *)jcr->compress_buf + OFFSET_FADDR_SIZE;
+         bctx.cbuf2 = (unsigned char *)jcr->compress_buf + OFFSET_FADDR_SIZE + sizeof(comp_stream_header);
+         bctx.max_compress_len = jcr->compress_buf_size - OFFSET_FADDR_SIZE;
+
+      } else {
+         bctx.cbuf = (unsigned char *)jcr->compress_buf;
+         bctx.cbuf2 = (unsigned char *)jcr->compress_buf + sizeof(comp_stream_header);
+         bctx.max_compress_len = jcr->compress_buf_size; /* set max length */
+      }
+      bctx.ch.magic = COMPRESS_ZSTD;
+      bctx.ch.version = COMP_HEAD_VERSION;
+      bctx.wbuf = jcr->compress_buf;    /* compressed output here */
+      bctx.cipher_input = (uint8_t *)jcr->compress_buf; /* encrypt compressed data */
+   }
+# endif
 #endif
    return true;
 }
@@ -1443,6 +1472,53 @@ static bool do_lzo_compression(bctx_t &bctx)
       }
 
       Dmsg2(400, "LZO compressed len=%d uncompressed len=%d\n", bctx.compress_len,
+            sd->msglen);
+
+      bctx.compress_len += sizeof(comp_stream_header); /* add size of header */
+      sd->msglen = bctx.compress_len;      /* set compressed length */
+      bctx.cipher_input_len = bctx.compress_len;
+   }
+#endif
+   return true;
+}
+
+static bool do_zstd_compression(bctx_t &bctx)
+{
+#ifdef HAVE_ZSTD
+   JCR *jcr = bctx.jcr;
+   BSOCK *sd = bctx.sd;
+
+   /** Do compression if turned on */
+   if (bctx.ff_pkt->flags & FO_COMPRESS && bctx.ff_pkt->Compress_algo == COMPRESS_ZSTD) {
+      if (jcr->ZSTD_compress_workset == NULL) {
+         Jmsg(jcr, M_FATAL, 0, _("Compression ZSTD error. Unable to allocate the ZSTD context\n"));
+         return false;
+      }
+      ser_declare;
+      ser_begin(bctx.cbuf, sizeof(comp_stream_header));
+
+      Dmsg3(400, "cbuf=0x%x rbuf=0x%x len=%u\n", bctx.cbuf, bctx.rbuf, sd->msglen);
+      size_t ret = ZSTD_compressCCtx((ZSTD_CCtx*) jcr->ZSTD_compress_workset,
+                                     bctx.cbuf2, bctx.max_compress_len,
+                                     bctx.rbuf, sd->msglen,
+                                     10);
+      
+      if (ZSTD_isError(ret)) {
+         /** this should NEVER happen */
+         Jmsg(jcr, M_FATAL, 0, _("Compression ZSTD error: %d\n"), ret);
+         jcr->setJobStatus(JS_ErrorTerminated);
+         return false;
+
+      }
+
+      bctx.compress_len = ret;
+      /* complete header */
+      ser_uint32(COMPRESS_ZSTD);
+      ser_uint32(bctx.compress_len);
+      ser_uint16(bctx.ch.level);
+      ser_uint16(bctx.ch.version);
+
+      Dmsg2(400, "ZSTD compressed len=%d uncompressed len=%d\n", bctx.compress_len,
             sd->msglen);
 
       bctx.compress_len += sizeof(comp_stream_header); /* add size of header */

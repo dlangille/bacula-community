@@ -62,18 +62,8 @@ const bool have_xattr = false;
 /* Data received from Storage Daemon */
 static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 
-/* Forward referenced functions */
-#if   defined(HAVE_LIBZ)
-static const char *zlib_strerror(int stat);
-const bool have_libz = true;
-#else
-const bool have_libz = false;
-#endif
-#ifdef HAVE_LZO
-const bool have_lzo = true;
-#else
-const bool have_lzo = false;
-#endif
+/* Get have_lzo, have_zstd, ... */
+#include "compress.h"
 
 static void deallocate_cipher(r_ctx &rctx);
 static void deallocate_fork_cipher(r_ctx &rctx);
@@ -400,7 +390,7 @@ void do_restore(JCR *jcr)
    jcr->buf_size = sd->msglen;
 
    /* use the same buffer size to decompress both gzip and lzo */
-   if (have_libz || have_lzo) {
+   if (have_libz || have_lzo || have_zstd) {
       uint32_t compress_buf_size = jcr->buf_size + 12 + ((jcr->buf_size+999) / 1000) + 100;
       jcr->compress_buf = get_memory(compress_buf_size);
       jcr->compress_buf_size = compress_buf_size;
@@ -411,12 +401,17 @@ void do_restore(JCR *jcr)
    fdmsg->start_read_sock();
    bmessage *bmsg = fdmsg->new_msg(); /* get a message, to exchange with fdmsg */
 
-#ifdef HAVE_LZO
-   if (lzo_init() != LZO_E_OK) {
-      Jmsg(jcr, M_FATAL, 0, _("LZO init failed\n"));
-      goto get_out;
+   if (have_zstd) {
+      ZSTD_DCtx *pZSTD = ZSTD_createDCtx();
+      jcr->ZSTD_decompress_workset = pZSTD;
    }
-#endif
+
+   if (have_lzo) {
+      if (lzo_init() != LZO_E_OK) {
+         Jmsg(jcr, M_FATAL, 0, _("LZO init failed\n"));
+         goto get_out;
+      }
+   }
 
    if (have_crypto) {
       rctx.cipher_ctx.buf = get_memory(CRYPTO_CIPHER_MAX_BLOCK_SIZE);
@@ -1221,6 +1216,9 @@ ok_out:
       jcr->compress_buf = NULL;
       jcr->compress_buf_size = 0;
    }
+#ifdef HAVE_ZSTD
+   ZSTD_freeDCtx((ZSTD_DCtx_s*)jcr->ZSTD_decompress_workset);
+#endif
 
 #ifdef HAVE_ACL
    if (jcr->bacl) {
@@ -1312,7 +1310,7 @@ bool sparse_data(JCR *jcr, BFILE *bfd, uint64_t *addr, char **data, uint32_t *le
 
 bool decompress_data(JCR *jcr, int32_t stream, char **data, uint32_t *length)
 {
-#if defined(HAVE_LZO) || defined(HAVE_LIBZ)
+#if defined(HAVE_LZO) || defined(HAVE_LIBZ) || defined(HAVE_ZSTD)
    char ec1[50];                   /* Buffer printing huge values */
 #endif
 
@@ -1326,6 +1324,9 @@ bool decompress_data(JCR *jcr, int32_t stream, char **data, uint32_t *length)
       lzo_uint compress_len;
       const unsigned char *cbuf;
       int r, real_compress_len;
+#endif
+#ifdef HAVE_ZSTD
+      unsigned long long rSize;
 #endif
 
       /* read compress header */
@@ -1374,6 +1375,32 @@ bool decompress_data(JCR *jcr, int32_t stream, char **data, uint32_t *length)
             }
             *data = jcr->compress_buf;
             *length = compress_len;
+            Dmsg2(200, "Write uncompressed %d bytes, total before write=%s\n", compress_len, edit_uint64(jcr->JobBytes, ec1));
+            return true;
+#endif
+#ifdef HAVE_ZSTD
+         case COMPRESS_ZSTD:
+            compress_len = jcr->compress_buf_size;
+            cbuf = (const unsigned char*)*data + sizeof(comp_stream_header);
+            real_compress_len = *length - sizeof(comp_stream_header);
+            Dmsg2(200, "Comp_len=%d msglen=%d\n", compress_len, *length);
+            rSize = ZSTD_getFrameContentSize(cbuf, real_compress_len);
+            if (rSize == ZSTD_CONTENTSIZE_ERROR || rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+               Qmsg(jcr, M_ERROR, 0, _("ZSTD uncompression error on file %s. Invalid content size. ERR=%d\n"),
+                    jcr->last_fname, rSize);
+               return false;
+            }
+            jcr->compress_buf = check_pool_memory_size(jcr->compress_buf, rSize);
+            rSize = ZSTD_decompressDCtx((ZSTD_DCtx*)jcr->ZSTD_decompress_workset,
+                                        (unsigned char *)jcr->compress_buf, compress_len, cbuf, real_compress_len);
+
+            if (rSize == ZSTD_CONTENTSIZE_ERROR || rSize == ZSTD_CONTENTSIZE_UNKNOWN) {
+               Qmsg(jcr, M_ERROR, 0, _("ZSTD uncompression error on file %s. Decompress error. ERR=%d\n"),
+                    jcr->last_fname, rSize);
+               return false;
+            }
+            *data = jcr->compress_buf;
+            *length = compress_len = rSize;
             Dmsg2(200, "Write uncompressed %d bytes, total before write=%s\n", compress_len, edit_uint64(jcr->JobBytes, ec1));
             return true;
 #endif

@@ -55,6 +55,8 @@ FDLIBS = @FDLIBS@	     # extra libs for File daemon
 ZLIBS = @ZLIBS@
 LZO_LIBS = @LZO_LIBS@
 LZO_INC= @LZO_INC@
+ZSTD_LIBS = @ZSTD_LIBS@
+ZSTD_INC = @ZSTD_INC@
 
 # extra items for linking on Win32
 WIN32OBJS = win32/winmain.o win32/winlib.a win32/winres.res
@@ -69,7 +71,7 @@ WIN32LIBS = $(@WIN32@)
 # inference rules
 .c.o:
 	@echo "Compiling $<"
-	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) $(ZSTD_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 #-------------------------------------------------------------------------
 all: Makefile @WIN32@ bacula-fd @STATIC_FD@ bfdjson
 	@echo "==== Make of filed is good ===="
@@ -77,15 +79,15 @@ all: Makefile @WIN32@ bacula-fd @STATIC_FD@ bfdjson
 
 bacgpfs.o: bacgpfs.c bacgpfs.h
 	@echo "Compiling $<"
-	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $(AFS_CFLAGS) $(GPFS_CFLAGS) $<
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) $(ZSTD_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $(AFS_CFLAGS) $(GPFS_CFLAGS) $<
 
 bacl.o: bacl.c bacgpfs.o
 	@echo "Compiling $<"
-	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $(AFS_CFLAGS) $<
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) $(ZSTD_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $(AFS_CFLAGS) $<
 
 bxattr.o: bxattr.c bacgpfs.o
 	@echo "Compiling $<"
-	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
+	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) $(ZSTD_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 win32/winlib.a:
 	@if test -f win32/Makefile -a "${GMAKE}" != "none"; then \
@@ -116,18 +118,18 @@ bacula-fd:  Makefile $(SVROBJS) ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE) ../
 	@echo "Linking $@ ..."
 	$(LIBTOOL_LINK) $(CXX) $(WLDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(SVROBJS) \
 	  $(WIN32LIBS) $(FDLIBS) $(ZLIBS) -lbacfind -lbaccfg -lbac -lm $(LIBS) \
-	  $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS) $(IOKITLIBS)
+	  $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS) $(ZSTD_LIBS) $(IOKITLIBS)
 
 bfdjson:  Makefile $(JSONOBJS) ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE) ../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) @WIN32@
 	@echo "Linking $@ ..."
 	$(LIBTOOL_LINK) $(CXX) $(WLDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(JSONOBJS) \
 	  $(WIN32LIBS) $(FDLIBS) $(ZLIBS) -lbacfind -lbaccfg -lbac -lm $(LIBS) \
-	  $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS)
+	  $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS) $(ZSTD_LIBS)
 
 static-bacula-fd: Makefile $(SVROBJS) ../findlib/libbacfind$(DEFAULT_ARCHIVE_TYPE) ../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) @WIN32@
 	$(LIBTOOL_LINK) $(CXX) $(WLDFLAGS) $(LDFLAGS) -static -L../lib -L../findlib -o $@ $(SVROBJS) \
 	   $(WIN32LIBS) $(FDLIBS) $(ZLIBS) -lbacfind -lbaccfg -lbac -lm $(LIBS) \
-	   $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS)
+	   $(DLIB) $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS) $(AFS_LIBS) $(LZO_LIBS) $(ZSTD_LIBS)
 	strip $@
 
 Makefile: $(srcdir)/Makefile.in $(topdir)/config.status
@@ -194,7 +196,7 @@ depend:
 	@$(MV) Makefile Makefile.bak
 	@$(SED) "/^# DO NOT DELETE:/,$$ d" Makefile.bak > Makefile
 	@$(ECHO) "# DO NOT DELETE: nice dependency list follows" >> Makefile
-	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(LZO_INC) $(AFS_CFLAGS) $(GPFS_CFLAGS) -I$(srcdir) -I$(basedir) *.c >> Makefile
+	@$(CXX) -S -M $(CPPFLAGS) $(XINC) $(LZO_INC) $(ZSTD_INC) $(AFS_CFLAGS) $(GPFS_CFLAGS) -I$(srcdir) -I$(basedir) *.c >> Makefile
 	@if test -f Makefile ; then \
 	    $(RMF) Makefile.bak; \
 	else \

@@ -42,6 +42,12 @@ const bool have_lzo = true;
 const bool have_lzo = false;
 #endif
 
+#ifdef HAVE_ZSTD
+const bool have_zstd = true;
+#else
+const bool have_zstd = false;
+#endif
+
 /* Context used during Verify Data job. We use it in the
  * verify loop to compute checksums and check attributes.
  */
@@ -293,7 +299,7 @@ void do_verify_volume(JCR *jcr)
    jcr->buf_size = sd->msglen;
 
    /* use the same buffer size to decompress both gzip and lzo */
-   if (have_libz || have_lzo) {
+   if (have_libz || have_lzo || have_zstd) {
       uint32_t compress_buf_size = jcr->buf_size + 12 + ((jcr->buf_size+999) / 1000) + 100;
       jcr->compress_buf = get_memory(compress_buf_size);
       jcr->compress_buf_size = compress_buf_size;

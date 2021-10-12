@@ -272,6 +272,34 @@ Job {
 }
 
 Job {
+  Name = "ZSTDTest"
+  Type = Backup
+  Client=@hostname@-fd
+  FileSet="ZSTDSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Max Run Time = 30min
+  SpoolData=yes
+}
+
+Job {
+  Name = "SparseZSTDTest"
+  Type = Backup
+  Client=@hostname@-fd
+  FileSet="SparseZSTDSet"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Write Bootstrap = "@working_dir@/NightlySave.bsr"
+  Max Run Time = 30min
+  SpoolData=yes
+  Maximum Concurrent Jobs = 10
+}
+
+Job {
   Name = "FIFOTest"
   Type = Backup
   Client=@hostname@-fd 
@@ -591,6 +619,17 @@ FileSet {
 }
 
 FileSet {
+  Name = "ZSTDSet"
+  Include {
+    Options {
+      signature=MD5
+      compression=ZSTD
+    }
+    File = <@tmpdir@/file-list
+  }
+}
+
+FileSet {
   Name = "DeltaSet"
   Include {
     Options {
@@ -631,6 +670,18 @@ FileSet {
     Options {
       signature=MD5
       compression=LZO
+      sparse=yes
+    }
+    File = <@tmpdir@/file-list
+  }
+}
+
+FileSet {
+  Name = "SparseZSTDSet"
+  Include {
+    Options {
+      signature=MD5
+      compression=ZSTD
       sparse=yes
     }
     File = <@tmpdir@/file-list

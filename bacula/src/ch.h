@@ -31,6 +31,7 @@
 #define COMPRESS_NONE  0x4e4f4e45  /* used for incompressible block */
 #define COMPRESS_GZIP  0x475a4950
 #define COMPRESS_LZO1X 0x4c5a4f58
+#define COMPRESS_ZSTD  0x4c5a4f59
 
 /*
  * Compression header version

@@ -227,7 +227,7 @@ int select_data_stream(FF_PKT *ff_pkt)
    /*
     * Handle compression and encryption options
     */
-#if defined(HAVE_LIBZ) || defined(HAVE_LZO)
+#if defined(HAVE_LIBZ) || defined(HAVE_LZO) || defined(HAVE_ZSTD)
    if (ff_pkt->flags & FO_COMPRESS) {
       #ifdef HAVE_LIBZ
          if(ff_pkt->Compress_algo == COMPRESS_GZIP) {
@@ -252,8 +252,8 @@ int select_data_stream(FF_PKT *ff_pkt)
             }
          }
       #endif
-      #ifdef HAVE_LZO
-         if(ff_pkt->Compress_algo == COMPRESS_LZO1X) {
+      #if defined(HAVE_LZO) || defined(HAVE_ZSTD)
+         if(ff_pkt->Compress_algo == COMPRESS_LZO1X || ff_pkt->Compress_algo == COMPRESS_ZSTD) {
             switch (stream) {
             case STREAM_WIN32_DATA:
                   stream = STREAM_WIN32_COMPRESSED_DATA;

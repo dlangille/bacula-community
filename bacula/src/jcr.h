@@ -453,6 +453,8 @@ public:
    int32_t compress_buf_size;         /* Length of compression buffer */
    void *pZLIB_compress_workset;      /* zlib compression session data */
    void *LZO_compress_workset;        /* lzo compression session data */
+   void *ZSTD_compress_workset;       /* zstd compression session data */
+   void *ZSTD_decompress_workset;     /* zstd decompression session data */
    int32_t replace;                   /* Replace options */
    int32_t buf_size;                  /* length of buffer */
    FF_PKT *ff;                        /* Find Files packet */

@@ -59,6 +59,9 @@
 #else
 #define uLongf uint32_t
 #endif
+#ifdef HAVE_ZSTD
+#include <zstd.h>
+#endif
 #ifdef HAVE_LZO
 #include <lzo/lzoconf.h>
 #include <lzo/lzo1x.h>
