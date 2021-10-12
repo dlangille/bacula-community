@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run antivirus-fd.  Note, this plugin is for testing
+#   new features and probably should not be run in normal
+#   testing
+#
+TestName="antivirus-plugin-test"
+JobName=AntivirusPluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+rm -rf ${cwd}/tmp/*
+
+# need to escape $ in \$
+echo "X5O!P%@AP[4\PZX54(P^)7CC)7}\$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!\$H+H*" > $tmp/eicar
+
+echo "${cwd}/build/src" >> ${cwd}/tmp/file-list
+
+# check if clamav daemon is started
+systemctl status clamav-daemon >> /dev/null
+if [ $? -ne 0 ]; then
+   print_debug "Failed to detect clamav-daemon!"
+   exit 1
+fi
+
+# Build and install the test plugin
+cd ${cwd}/build/src/plugins/fd
+make install-test-plugin
+if [ $? -ne 0 ]; then
+   print_debug "Failed to build or install test plugin!"
+   exit 1
+fi
+
+cd ${cwd}
+
+start_test
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'PluginOptions', 'antivirus: hostname=localhost port=3310', 'Job', 'VerifyData')"
+ 
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=MonsterSave storage=File1 yes
+wait
+status client=$CLIENT
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=VerifyData jobid=1 storage=File1
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+echo $tmp/eicar >> ${cwd}/tmp/file-list
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log3.out
+run job=MonsterSave storage=File1 accurate=yes yes
+wait
+status client=$CLIENT
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log4.out
+reload
+run job=VerifyData jobid=3 storage=File1
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+nb=`grep "Eicar-Signature FOUND" $tmp/log2.out | wc -l`
+if [ $nb != 0 ]; then
+    print_debug "ERROR: Should find 2 time Eicar virus in $tmp/log2.out"
+    estat=1
+fi
+
+nb=`grep "Eicar-Signature FOUND" $tmp/log4.out | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should find Eicar virus in $tmp/log4.out"
+    estat=2
+fi
+
+stop_bacula
+end_test
