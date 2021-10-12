@@ -30,7 +30,7 @@ fi
 
 # Build and install the test plugin
 cd ${cwd}/build/src/plugins/fd
-make install-test-plugin
+make install-antivirus
 if [ $? -ne 0 ]; then
    print_debug "Failed to build or install test plugin!"
    exit 1
