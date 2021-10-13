@@ -61,7 +61,6 @@ end \$\$;
 
 CREATE INDEX meta_emailowner on MetaEmail (EmailTenant, EmailOwner);
 CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
-CREATE INDEX meta_emailsenttime on MetaEmail (EmailSentTime);
 CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
 CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
 -- CREATE INDEX meta_emailsender on MetaEmail (EmailSender);
