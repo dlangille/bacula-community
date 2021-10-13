@@ -594,6 +594,7 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
    return true;
 }
 
+#ifdef HAVE_FS_IOC_GETFLAGS
 bool file_dev::check_for_attr(const char *vol_name, int attr)
 {
    int tmp_fd, ioctl_ret, get_attr;
@@ -628,7 +629,14 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
 
    return ret;
 }
+#else
+bool file_dev::check_for_attr(const char *vol_name, int attr)
+{
+   return true;
+}
+#endif // HAVE_FS_IOC_GETFLAGS
 
+#ifdef HAVE_FS_IOC_SETFLAGS
 bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
 {
    bool ret = false;
@@ -692,6 +700,12 @@ bail_out:
    }
    return ret;
 }
+#else
+bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
+{
+   return true;
+}
+#endif // HAVE_FS_IOC_SETFLAGS
 
 bool file_dev::set_fattr(const char *vol_name, int attr)
 {
