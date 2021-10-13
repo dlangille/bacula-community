@@ -1134,6 +1134,12 @@
 /* Define to 1 if you have IMMUTABLE file flag supported */
 #undef HAVE_IMMUTABLE_FL
 
+/* Define to 1 if you have FS_IOC_GETFLAGS ioctl supported */
+#undef HAVE_FS_IOC_GETFLAGS
+
+/* Define to 1 if you have FS_IOC_SETFLAGS ioctl supported */
+#undef HAVE_FS_IOC_SETFLAGS
+
 /* Define to 1 if you have working ldap libraries */
 #undef HAVE_LDAP
 

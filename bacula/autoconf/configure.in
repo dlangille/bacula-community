@@ -2584,6 +2584,20 @@ AC_CHECK_DECL(
 )
 
 AC_CHECK_DECL(
+    FS_IOC_GETFLAGS,
+    AC_DEFINE(HAVE_FS_IOC_GETFLAGS, 1, [Set if FS_IOC_GETFLAGS is available]),
+    ,
+    [#include <linux/fs.h>]
+)
+
+AC_CHECK_DECL(
+    FS_IOC_SETFLAGS,
+    AC_DEFINE(HAVE_FS_IOC_SETFLAGS, 1, [Set if FS_IOC_SETFLAGS is available]),
+    ,
+    [#include <linux/fs.h>]
+)
+
+AC_CHECK_DECL(
     F_SETLK,
     AC_DEFINE(HAVE_FCNTL_LOCK, 1, [Set if fcntl supports file locking]),
     ,
