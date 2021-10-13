@@ -171,7 +171,7 @@ $(BINDIR)/btape.exe: $(OBJDIR)/btape.o $(COMMON_OBJS) $(LIBS_BACULA)
 $(BINDIR)/bls.exe: $(OBJDIR)/bls.o $(EXTRA_BLS_OBJS) $(COMMON_OBJS) $(LIBS_BACULA)
 	$(call link_conapp,$(LIBS_STORED))
 
-$(BINDIR)/bextract.exe: $(BEXTRACT_OBJS) $(COMMON_OBJS) $(LIBS_BACULA) $(LIBS_LZO)
+$(BINDIR)/bextract.exe: $(BEXTRACT_OBJS) $(COMMON_OBJS) $(LIBS_BACULA) $(LIBS_LZO) $(LIBS_ZSTD)
 	$(call link_conapp,$(LIBS_STORED) $(LIBS_ZLIB))
 
 $(BINDIR)/bscan.exe: $(OBJDIR)/bscan.o $(COMMON_OBJS) $(LIBS_CATS) $(LIBS_BACULA)

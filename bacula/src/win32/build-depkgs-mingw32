@@ -641,6 +641,15 @@ process_mingw()
    fi
 }
 
+process_zstd()
+{
+   echo Installing ZSTD
+   get_source "$URL_ZSTD" "$DIR_ZSTD" "$MKD_ZSTD"
+   CC=i686-w64-mingw32-gcc make TARGET_SYSTEM=Windows
+   cp  lib/libzstd.a $DEPPKG_DIR/lib
+   cp  lib/*.h $DEPPKG_DIR/include
+}
+
 if [ "$#" -eq 0 ]
 then
    process_mingw
@@ -651,6 +660,7 @@ then
    process_stab2cv
    process_sed
    process_cmd_utils
+   process_zstd
 #   process_pcre
 #   process_mysql
 #   process_sqlite

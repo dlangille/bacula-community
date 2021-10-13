@@ -96,6 +96,7 @@ FILED_LIBS = \
 	$(LIBS_PTHREADS) \
 	$(LIBS_ZLIB) \
 	$(LIBS_LZO) \
+	$(LIBS_ZSTD) \
 	$(LIBS_NETWORK) \
 	-lole32 \
 	-loleaut32 \
