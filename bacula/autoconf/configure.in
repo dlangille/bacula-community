@@ -1007,7 +1007,9 @@ AC_CHECK_LIB(zstd,ZSTD_createCCtx,,[error="Can't find ZSTD library."])
 
 if test x"${error}" == "x"; then
     support_zstd=yes
-fi 
+else
+    support_zstd=no
+fi
 
 AC_MSG_RESULT([$support_zstd])
 if test "$support_zstd" = "yes"; then

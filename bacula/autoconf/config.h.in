@@ -113,6 +113,9 @@
 /* Define if you have zlib */
 #undef HAVE_LIBZ
 
+/* Define if you have zstd lib */
+#undef HAVE_ZSTD
+
 /* Define if you have lzo lib */
 #undef HAVE_LZO
 
