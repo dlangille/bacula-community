@@ -326,6 +326,10 @@ BuildRequires: openldap-devel
 # should we enable tcp wrappers support
 %{?build_tcpwrappers:%define tcpwrappers 1}
 
+%if 0%{rhel8}
+BuildRequires: libzstd-devel
+%endif
+
 # should we enable tcp wrappers support
 %if %{rhel8} || %{rhel9} || %{fc31}
 %define tcpwrappers 0
