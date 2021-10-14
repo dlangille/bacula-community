@@ -1009,6 +1009,8 @@ if test x"${error}" == "x"; then
     support_zstd=yes
 else
     support_zstd=no
+    ZSTD_LIBS=""
+    ZSTD_INC=""
 fi
 
 AC_MSG_RESULT([$support_zstd])
