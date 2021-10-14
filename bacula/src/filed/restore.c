@@ -62,6 +62,10 @@ const bool have_xattr = false;
 /* Data received from Storage Daemon */
 static char rec_header[] = "rechdr %ld %ld %ld %ld %ld";
 
+#ifdef HAVE_LIBZ
+static const char *zlib_strerror(int stat);
+#endif
+
 /* Get have_lzo, have_zstd, ... */
 #include "compress.h"
 

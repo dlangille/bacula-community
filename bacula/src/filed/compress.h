@@ -33,7 +33,6 @@ const bool have_zstd = false;
 #endif
 
 #ifdef HAVE_LIBZ
-static const char *zlib_strerror(int stat);
 const bool have_libz = true;
 #else
 const bool have_libz = false;
