@@ -262,10 +262,6 @@ namespace pluginlib
     */
    bRC PLUGINBCLASS::parse_plugin_command(bpContext *ctx, const char *command)
    {
-      // bool found;
-      // int count;
-      // int parargc, argc;
-
       DMSG(ctx, DINFO, "Parse command: %s\n", command);
       if (parser.parse_cmd(command) != bRC_OK) {
          DMSG0(ctx, DERROR, "Unable to parse Plugin command line.\n");
@@ -288,6 +284,7 @@ namespace pluginlib
                pluginctx_set_abort_on_error();
             }
             DMSG1(ctx, DINFO, "abort_on_error found: %s\n", pluginctx_is_abort_on_error() ? "True" : "False");
+            continue;
          }
          /* scan for listing parameter, so the estimate job should be executed as a Listing procedure */
          if (EstimateFull == mode && bstrcmp(parser.argk[i], "listing")){
@@ -571,6 +568,8 @@ namespace pluginlib
       }
 
       bRC status = perform_start_backup_file(ctx, sp);
+
+      DMSG2(ctx, DINFO, "StartBackup: %s %ld\n", sp->fname, sp->statp.st_size);
 
       // DMSG3(ctx, DINFO, "TSDebug: %ld(at) %ld(mt) %ld(ct)\n",
       //       sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
