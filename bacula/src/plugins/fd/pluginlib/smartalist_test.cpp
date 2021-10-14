@@ -29,16 +29,24 @@
 #include "pluginlib.h"
 #include "smartalist.h"
 #include "unittests.h"
+#include <utility>
 
 bFuncs *bfuncs;
 bInfo *binfo;
 
 static int referencenumber = 0;
 
-struct testclass
+struct testclass : public SMARTALLOC
 {
    testclass() { referencenumber++; };
    ~testclass() { referencenumber--; };
+};
+
+struct testvalue : public SMARTALLOC
+{
+   int value;
+   testvalue(const testvalue *other) { value = other->value; }
+   testvalue() : value(0) {}
 };
 
 int main()
@@ -50,7 +58,7 @@ int main()
 
    {
       smart_alist<testclass> list;
-      ti = new testclass;
+      ti = New(testclass);
       list.append(ti);
       ok(referencenumber == 1, "check first insert");
    }
@@ -64,7 +72,7 @@ int main()
       smart_alist<testclass> list;
       for (int a = 0; a < refs; a++)
       {
-         ti = new testclass;
+         ti = New(testclass);
          list.append(ti);
       }
       ok(referencenumber == refs, "check bulk inserts");
@@ -72,6 +80,36 @@ int main()
 
    ok(referencenumber == 0, "check smart free");
 
+   {
+      smart_alist<testvalue> list;
+      testvalue *ti = New(testvalue);
+      ti->value = 0xfff1;
+      list.append(ti);
+
+      smart_alist<testvalue> copylist;
+
+      copylist = list;
+
+      testvalue *tv = (testvalue*)copylist.first();
+      rok(tv != NULL, "test first value");
+      ok(tv->value == ti->value, "test copy value");
+      ok(tv != ti, "test copy pointer");
+   }
+
+// #if __cplusplus >= 201104
+//    {
+//       smart_alist<testvalue> list;
+//       // fill it with data
+//       for (int i = 0; i < 10;i++)
+//       {
+//          testvalue *ti = New(testvalue);
+//          ti->value = 100 + i;
+//          list.append(ti);
+//       }
+
+//       ok(list.size() == 10, "test prefill data size");
+//    }
+// #endif
 
    return report();
 }

@@ -29,6 +29,12 @@
 #ifndef _SMARTALIST_H_
 #define _SMARTALIST_H_
 
+// This is for custom alist iterator
+//    which is not working as Bacula can't use any of the modern C++ headers (yet?)
+// #if __cplusplus >= 201104
+// #include <iterator> // For std::forward_iterator_tag
+// #include <cstddef>  // For std::ptrdiff_t
+// #endif
 
 /**
  * @brief This is a simple smart array list (alist) resource guard conceptually based on C++11 - RAII.
@@ -38,20 +44,99 @@
 template <typename T>
 class smart_alist : public alist
 {
-public:
-   smart_alist(int num = 10) : alist(num, not_owned_by_alist) {}
-   ~smart_alist()
+private:
+   void _destroy(bool _remove_items = true)
    {
-      T * it;
-      if (items) {
-         for (int i = 0; i < max_items; i++) {
-            if (items[i]) {
-               it = (T*)items[i];
+      if (items)
+      {
+         for (int i = 0; i < max_items; i++)
+         {
+            if (items[i])
+            {
+               T *item = (T*)items[i];
                items[i] = NULL;
-               delete it;
+               delete item;
+            }
+         }
+         if (_remove_items)
+         {
+            free(items);
+            items = NULL;
+         }
+      }
+      num_items = 0;
+      last_item = 0;
+      max_items = 0;
+   }
+
+public:
+   // This is a custom alist iteration for modern C++
+   // #if __cplusplus >= 201104
+   //    struct Iterator
+   //    {
+   //       using iterator_category = std::forward_iterator_tag;
+   //       using difference_type   = std::ptrdiff_t;
+   //       using value_type        = T;
+   //       using pointer           = T*;  // or also value_type*
+   //       using reference         = T&;  // or also value_type&
+
+   //    private:
+   //       pointer m_ptr;
+
+   //    public:
+   //       Iterator(pointer ptr) : m_ptr(ptr) {}
+   //       reference operator*() const { return *m_ptr; }
+   //       pointer operator->() { return m_ptr; }
+
+   //       // Prefix increment
+   //       Iterator& operator++() { m_ptr++; return *this; }
+
+   //       // Postfix increment
+   //       Iterator operator++(int) { Iterator tmp = *this; ++(*this); return tmp; }
+
+   //       friend bool operator== (const Iterator& a, const Iterator& b) { return a.m_ptr == b.m_ptr; };
+   //       friend bool operator!= (const Iterator& a, const Iterator& b) { return a.m_ptr != b.m_ptr; };
+   //    };
+
+   //    // our iterator interface
+   //    inline Iterator begin() { return Iterator(&items[0]); }
+   //    inline Iterator end() { return Iterator(NULL); }
+   // #endif
+
+   smart_alist(int num = 10) : alist(num, not_owned_by_alist) {}
+   ~smart_alist() { _destroy(); }
+
+   // This is a simple copy operator
+   // it requires a T(T*) constructor to work correctly
+   inline smart_alist<T> &operator=(const smart_alist<T> &other)
+   {
+      if (items != other.items)
+      {
+         _destroy(false);
+         if (other.items)
+         {
+            for (int i = 0; i < other.max_items; i++)
+            {
+               if (other.items[i])
+               {
+                  T *item = New(T((const T*)other.items[i]));
+                  this->append(item);
+               }
             }
          }
       }
+      return *this;
+   }
+   // This is a simple move operator
+   inline smart_alist<T> &operator=(smart_alist<T> &&other)
+   {
+      if (items != other.items)
+      {
+         _destroy();
+         items = other.items;
+         other.init(other.num_grow, own_items);
+      }
+      return *this;
    }
 };
 
