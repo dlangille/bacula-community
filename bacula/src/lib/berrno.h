@@ -22,6 +22,9 @@
  *
  */
 
+#ifndef BERRNO_H
+#define BERRNO_H
+
 /*
  * Extra bits set to interpret errno value differently from errno
  */
@@ -33,6 +36,26 @@
 #endif
 #define b_errno_exit   (1<<28)        /* child exited, exit code returned */
 #define b_errno_signal (1<<27)        /* child died, signal code returned */
+#define b_bacula_errno (1<<26)        /* internal Bacula error
+                                         (e.g. script to be run is out of allowed paths) */
+
+
+/* Set 'bacula error' bit flag for each Bacula-specific error */
+static const int berr_not_allowed_path = 1 | b_bacula_errno;
+static const int berr_not_allowed_char = 2 | b_bacula_errno;
+
+/* Helper struct to map error code to message */
+struct berror_msg {
+   const int berrno;
+   const char *msg;
+};
+
+static struct berror_msg berror_msgs_map[] = {
+   { berr_not_allowed_path,       "Not in allowed paths" },
+   { berr_not_allowed_char,       "Contains not allowed character" },
+};
+
+const int berror_msgs_map_size = sizeof(berror_msgs_map) / sizeof(berror_msg);
 
 /*
  * A more generalized way of handling errno that works with Unix, Windows,
@@ -59,6 +82,7 @@ public:
    void set_errno(int errnum);
    int code() { return m_berrno & ~(b_errno_exit|b_errno_signal); }
    int code(int stat) { return stat & ~(b_errno_exit|b_errno_signal); }
+   const char *get_berr_msg();
 };
 
 /* Constructor */
@@ -86,3 +110,5 @@ inline void berrno::set_errno(int errnum)
 {
    m_berrno = errnum;
 }
+
+#endif /* BERRNO_H */

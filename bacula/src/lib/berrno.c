@@ -37,10 +37,22 @@ extern int num_execvp_errors;
 extern int execvp_errors[];
 #endif
 
+const char *berrno::get_berr_msg()
+{
+   for (uint32_t i=0; i<berror_msgs_map_size; i++) {
+      if (m_berrno == berror_msgs_map[i].berrno){
+          return berror_msgs_map[i].msg;
+      }
+   }
+
+   return "Unknown Error";
+}
+
 const char *berrno::bstrerror()
 {
    *m_buf = 0;
 #ifdef HAVE_WIN32
+   /* Handle Windows error */
    if (m_berrno & (b_errno_win32 | b_errno_WSA)) {
       format_win32_message();
       return (const char *)m_buf;
@@ -48,6 +60,13 @@ const char *berrno::bstrerror()
 #else
    int stat = 0;
 
+   /* Handle Bacula-specific error */
+   if (m_berrno & b_bacula_errno) {
+      pm_strcpy(m_buf, get_berr_msg());
+      return m_buf;
+   }
+
+   /* Handle 'exit' error */
    if (m_berrno & b_errno_exit) {
       stat = (m_berrno & ~b_errno_exit);       /* remove bit */
       if (stat == 0) {
@@ -67,13 +86,15 @@ const char *berrno::bstrerror()
          /* If we drop out here, m_berrno is set to an execvp errno */
       }
    }
+
+   /* Handle 'signal' error */
    if (m_berrno & b_errno_signal) {
       stat = (m_berrno & ~b_errno_signal);        /* remove bit */
       Mmsg(m_buf, _("Child died from signal %d: %s"), stat, get_signal_name(stat));
       return m_buf;
    }
 #endif
-   /* Normal errno */
+   /* Handle normal errno */
    if (b_strerror(m_berrno, m_buf, sizeof_pool_memory(m_buf)) < 0) {
       return _("Invalid errno. No error message possible.");
    }
