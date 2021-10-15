@@ -64,7 +64,7 @@ struct bctx_t {
    unsigned char *cbuf;
    unsigned char *cbuf2;
 
-#ifdef HAVE_LZO
+#if defined(HAVE_LZO) || defined(HAVE_ZSTD)
    comp_stream_header ch;
 #endif
 
