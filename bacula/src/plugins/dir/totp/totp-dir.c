@@ -478,7 +478,7 @@ public:
       fclose(fp);
 
       // Call qrencode to generate the QR code, else display the URL
-      Mmsg(tmp, "qrencode -t ansiutf8 -r \"%s\"", urlfile);
+      Mmsg(tmp, "sh -c 'cat \"%s\" | qrencode -t ansiutf8'", urlfile);
       if (run_program_full_output (tmp.c_str(), 0, *ret, NULL) != 0) {
          berrno be;
          Dmsg1(DINFO, "Unable to call qrencode on a new key. ERR=%s\n", be.bstrerror());
@@ -536,7 +536,7 @@ public:
       }
 
       // Call qrencode to generate the QR code, else display the URL
-      Mmsg(tmp, "qrencode -s 10 -t png -o \"%s\" -r \"%s\"", pngfile, urlfile);
+      Mmsg(tmp, "sh -c 'cat \"%s\" | qrencode -s 10 -t png -o \"%s\"'", urlfile, pngfile);
       if (run_program_full_output (tmp.c_str(), 0, *ret, NULL) != 0) {
          Dmsg0(0, "Unable to generate the totp png file from the key\n");
          goto bail_out;
