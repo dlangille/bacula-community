@@ -106,6 +106,8 @@ public:
    smart_alist(int num = 10) : alist(num, not_owned_by_alist) {}
    ~smart_alist() { _destroy(); }
 
+   inline void smart_destroy() { _destroy(); }
+
    // This is a simple copy operator
    // it requires a T(T*) constructor to work correctly
    inline smart_alist<T> &operator=(const smart_alist<T> &other)
