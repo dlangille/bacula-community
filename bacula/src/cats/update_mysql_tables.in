@@ -3,11 +3,11 @@
 # Copyright (C) 2000-2022 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-# Shell script to update MySQL tables to Bacula version 13.0.x
+# Shell script to update MySQL tables to Bacula version 15.0.x
 #
 
-OLDVERSION=1022
-NEWVERSION=1024
+OLDVERSION=1024
+NEWVERSION=1025
 
 echo " "
 echo "This script will update a Bacula MySQL database"
@@ -555,6 +555,78 @@ END-OF-DATA
         getVersion
     else
         echo "Update of Bacula MySQL tables 1023 to 1024 failed."
+        exit 1
+    fi
+fi
+
+if [ "$DBVERSION" -eq 1024 ] ; then
+    if mysql $* -f  <<END-OF-DATA
+USE ${db_name};
+-- --------------------------------------------------------------
+-- MetaData Index
+
+CREATE TABLE MetaEmail
+(
+    EmailTenant     		TINYTEXT,
+    EmailOwner       		TINYTEXT,
+    EmailId          		TINYTEXT,
+    EmailTime         		DATETIME,
+    EmailTags         		TEXT,
+    EmailSubject      		TEXT,
+    EmailFolderName   		TEXT,
+    EmailFrom         		TINYTEXT,
+    EmailTo           		TEXT,
+    EmailCc           		TEXT,
+    EmailInternetMessageId 	TINYTEXT,
+    EmailBodyPreview  		TEXT,
+    EmailImportance   		TINYTEXT,
+    EmailConversationId    	TINYTEXT,
+    EmailIsRead       		TINYINT,
+    EmailIsDraft      		TINYINT,
+    EmailHasAttachment 		TINYINT,
+    EmailSize	 			INTEGER,
+    Plugin       			TINYTEXT,
+    FileIndex   	 		INTEGER,
+    JobId        			INTEGER
+);
+
+-- Requires TEXT instead of BLOB
+CREATE FULLTEXT INDEX meta_emailsubjectbody ON MetaEmail 
+       (EmailSubject, EmailBodyPreview, EmailTo, EmailCc, EmailFrom);
+CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant(255), EmailOwner(255));
+CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags(255));
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName(255));
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId(255));
+CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
+CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
+CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
+
+CREATE TABLE MetaAttachment
+{
+    AttachmentTenant            TINYTEXT,
+    AttachmentOwner    		TINYTEXT,
+    AttachmentName     		TEXT,
+    AttachmentEmailId  		TINYTEXT,
+    AttachmentContentType 	TINYTEXT,
+    AttachmentIsInline 		SMALLINT,
+    AttachmentSize	 		INTEGER,
+    Plugin      			TINYTEXT,
+    FileIndex    			INTEGER,
+    JobId        			INTEGER
+};
+
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
+CREATE INDEX meta_attachmentjobid on MetaAttachment (Jobid);
+
+UPDATE Version SET VersionId=1025;
+END-OF-DATA
+    then
+        echo "Update of Bacula MySQL tables 1024 to 1025 succeeded."
+        getVersion
+    else
+        echo "Update of Bacula MySQL tables 1024 to 1025 failed."
         exit 1
     fi
 fi

@@ -48,7 +48,7 @@
  */
 
 /* Current database version number for all drivers */
-#define BDB_VERSION 1024
+#define BDB_VERSION 1025
 
 typedef void (DB_LIST_HANDLER)(void *, const char *);
 typedef int (DB_RESULT_HANDLER)(void *, int, char **);

@@ -1,0 +1,108 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#
+echo " "
+echo "This script will update a Bacula PostgreSQL database from version 1024 to 1025"
+echo " "
+
+bindir=@POSTGRESQL_BINDIR@
+PATH="$bindir:$PATH"
+db_name=${db_name:-@db_name@}
+
+DBVERSION=`psql -d ${db_name} -t --pset format=unaligned -c "select VersionId from Version" $*`
+if [ $DBVERSION != 1024 ] ; then
+   echo " "
+   echo "The existing database is version $DBVERSION !!"
+   echo "This script can only update an existing version 1024 database to version 1025."
+   echo "Error. Cannot upgrade this database."
+   echo " "
+   exit 1
+fi
+
+if psql -f - -d ${db_name} $* <<END-OF-DATA
+begin;
+CREATE TABLE MetaEmail
+(
+    EmailTenant       		text,
+    EmailOwner        		text,
+    EmailId           		text,
+    EmailTime 				timestamp without time zone,
+    EmailTags         		text,
+    EmailSubject      		text,
+    EmailFolderName   		text,
+    EmailFrom         		text,
+    EmailTo           		text,
+    EmailCc     		    text,
+    EmailInternetMessageId 	text,  -- no index
+    EmailBodyPreview  		text,
+    EmailImportance   		text,
+    EmailConversationId    	text,
+    EmailIsRead       		smallint,
+    EmailIsDraft      		smallint,
+    EmailHasAttachment	 	smallint,
+    EmailSize    			integer,
+    Plugin      			text,
+    FileIndex  				int,
+    JobId        			int
+);
+
+-- Need to add postgresql-contrib to the dependency list
+
+do \$\$
+declare
+  selected_ext pg_extension%rowtype;
+begin  
+
+  select 1 from pg_extension
+    into selected_ext
+  where extname = 'pg_trgm';
+  
+  if not found then
+     CREATE EXTENSION pg_trgm;
+  end if;
+end \$\$;
+
+CREATE INDEX meta_emailowner on MetaEmail (EmailTenant, EmailOwner);
+CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
+-- CREATE INDEX meta_emailsender on MetaEmail (EmailSender);
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId);
+CREATE INDEX meta_emailsubjectbody ON MetaEmail 
+       USING GIN (EmailSubject gin_trgm_ops, EmailBodyPreview gin_trgm_ops, EmailTo gin_trgm_ops, EmailCc gin_trgm_ops, EmailFrom gin_trgm_ops);
+CREATE INDEX meta_emailimportance on MetaEmail (EmailImportance);
+CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
+CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
+CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
+
+CREATE TABLE MetaAttachment
+(
+    AttachmentTenant            text,
+    AttachmentOwner    		text,
+    AttachmentName     		text,
+    AttachmentEmailId  		text,
+    AttachmentContentType 	text,
+    AttachmentIsInline 		smallint,
+    AttachmentSize    		int,
+    Plugin       			text,
+    FileIndex    			int,
+    JobId        			int
+);
+
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
+CREATE INDEX meta_attachmentjobid ON MetaAttachment (JobId); 
+UPDATE Version SET VersionId=1025;
+commit;
+END-OF-DATA
+then
+   echo "Update of Bacula PostgreSQL tables 1023 to 1024 succeeded."
+else
+   echo "Update of Bacula PostgreSQL tables 1023 to 1024 failed."
+   exit 1
+fi
+
+exit 0

@@ -628,7 +628,7 @@ CREATE UNIQUE INDEX snapshot_idx ON Snapshot (Device text_pattern_ops,
 					      Volume text_pattern_ops,
 					      Name text_pattern_ops);
 
-INSERT INTO Version (VersionId) VALUES (1024);
+INSERT INTO Version (VersionId) VALUES (1025);
 
 -- Make sure we have appropriate permissions
 

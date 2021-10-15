@@ -607,7 +607,7 @@ CREATE TABLE Version (
    );
 
 -- Initialize Version
-INSERT INTO Version (VersionId) VALUES (1024);
+INSERT INTO Version (VersionId) VALUES (1025);
 
 END-OF-DATA
 then
