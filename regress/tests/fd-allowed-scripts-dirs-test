@@ -1,0 +1,237 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test for the 'AllowedScriptDirectories' FD directive
+#
+TestName="fd-allowed-scripts-dirs-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+verify_backup_ok()
+{
+nb=`grep 'Backup OK' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found Backup OK message, check $1"
+    bstat=1
+fi
+}
+
+verify_backup_error()
+{
+nb=`grep '*** Backup Error ***' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found Backup Error message, check $1"
+    bstat=1
+fi
+}
+
+check_invalid_path()
+{
+nb=`grep 'ERR=Not in allowed paths' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found error message about invalid path, check $1"
+    bstat=1
+fi
+}
+
+check_invalid_char()
+{
+nb=`grep 'ERR=Contains not allowed character' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found error message about invalid character, check $1"
+    bstat=1
+fi
+}
+
+cat << EOF >> $conf/bacula-dir.conf
+FileSet {
+ Name = "Fset_path"
+ Include {
+  # This one will fail the bakup - not allowed path
+  File = "\\\\|/binS/echo ${cwd}/build/po"
+ }
+}
+
+FileSet {
+ Name = "Fset_char"
+ Include {
+  Options {
+    signature=MD5
+  }
+  # This one will also fail the bakup - invalid char
+  File = "\\\\|/bin/echo & ${cwd}/build/po &"
+ }
+}
+
+FileSet {
+ Name = "Fset_ok"
+ Include {
+  # The one below works fine
+  File = "\\\\|/bin/echo ${cwd}/build/po"
+ }
+}
+
+Job {
+  Name = runscript_not_allowed
+  FileSet = "Full Set"
+  JobDefs = DefaultJob
+  RunScript {
+    #This one will fail the bakup - not allowed path
+    Command = "$tmp/not-allowed-scripts/run"
+    RunsWhen = After
+    RunsOnClient = yes
+  }
+}
+
+Job {
+  Name = runscript_allowed
+  FileSet = "Full Set"
+  JobDefs = DefaultJob
+  RunScript {
+    # The one below works fine
+    Command = "$tmp/allowed-scripts/run"
+    RunsWhen = before
+    RunsOnClient = yes
+  }
+}
+
+Job {
+  Name = runscript_char
+  FileSet = "Full Set"
+  JobDefs = DefaultJob
+  RunScript {
+    #This one will fail the bakup - not allowed char
+    Command = "$tmp/allowed-scripts/run \| piped_prog"
+    RunsWhen = before
+    RunsOnClient = yes
+  }
+}
+EOF
+
+mkdir $tmp/allowed-scripts
+mkdir $tmp/not-allowed-scripts
+
+# Create some simple 'script' files
+echo "/bin/echo allowed-script called!" > $tmp/allowed-scripts/run
+echo "/bin/echo not-allowed-script called!" > $tmp/not-allowed-scripts/run
+chmod +x $tmp/allowed-scripts/*
+chmod +x $tmp/not-allowed-scripts/*
+
+allowed_dir1="$tmp/allowed-scripts"
+allowed_dir2="/bin/"
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "Fset_path", "Job", "'$JobName'")'
+# Set allowed directories for scripts
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedScriptDirectories", "'$allowed_dir1','$allowed_dir2'", "Director")'
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+@$out $tmp/log2.out
+run job=$JobName yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+verify_backup_error $tmp/log2.out
+
+check_invalid_path $tmp/log2.out
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "Fset_char", "Job", "'$JobName'")'
+
+cat <<END_OF_DATA >$tmp/bconcmds
+reload
+@$out $tmp/log3.out
+run job=$JobName yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+verify_backup_error $tmp/log3.out
+
+check_invalid_char $tmp/log3.out
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "Fset_ok", "Job", "'$JobName'")'
+
+cat <<END_OF_DATA >$tmp/bconcmds
+reload
+@$out $tmp/log4.out
+run job=$JobName yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+verify_backup_ok $tmp/log4.out
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log5.out
+run job=runscript_not_allowed yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+verify_backup_error $tmp/log5.out
+
+check_invalid_path $tmp/log5.out
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log6.out
+run job=runscript_char yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+verify_backup_error $tmp/log6.out
+
+check_invalid_char $tmp/log6.out
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log7.out
+run job=runscript_allowed yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+verify_backup_ok $tmp/log7.out
+
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+end_test
