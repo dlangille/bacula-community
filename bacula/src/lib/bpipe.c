@@ -70,6 +70,24 @@ void build_sh_argc_argv(char *cmd, int *bargc, char *bargv[], int max_arg)
    *bargc = 3;
 }
 
+int forbidden_chars[] = {
+   '$', '!', ';', '\\', '&', '|', '<', '>', '`', '(', ')'
+};
+
+static bool check_for_forbidden_chars(const char *str)
+{
+   bool ret = true;
+   int size = sizeof(forbidden_chars) / sizeof(int);
+   for (int i=0; i<size; i++) {
+      if (strchr(str, forbidden_chars[i]) != NULL) {
+         ret = false;
+         break;
+      }
+   }
+
+   return ret;
+}
+
 /*
  * Run an external program. Optionally wait a specified number
  *   of seconds. Program killed if wait exceeded. We open
@@ -84,16 +102,50 @@ BPIPE *open_bpipe(char *prog, int wait, const char *mode, char *envp[])
    POOLMEM *tprog;
    int mode_map = 0;
    BPIPE *bpipe;
+   JCR *jcr;
    int save_errno;
-
-#if !defined(HAVE_FCNTL_F_CLOSEM) && !defined(HAVE_CLOSEFROM)
-   struct rlimit rl;
-   int64_t rlimitResult=0;
-#endif
+   bool allowed = false;
 
    if (!prog || !*prog) {
       /* execve(3) A component of the file does not name an existing file or file is an empty string. */
       errno = ENOENT; 
+      return NULL;
+   }
+
+   /* Get JCR from the thread context.
+    * It's needed for per-daemon specific data, e.g. list of allowed scripts/programs directories. */
+   jcr = get_jcr_from_tsd();
+   if (!jcr) {
+      allowed = true; /* Allow everything */
+   } else if (jcr->allowed_script_dirs) {
+      /* JCR has some allowed script directories set, so we need to check if command matches it */
+      char *dir, *p;
+      foreach_alist(dir, jcr->allowed_script_dirs) {
+         if ((p = b_path_match(prog, dir)) == prog) {
+            /* Path is ok, now check if program contains forbidden characters */
+            //TODO too many ifs, refactor that
+            if (!check_for_forbidden_chars(prog)) {
+               errno = berr_not_allowed_char;
+               allowed = false;
+               break;
+            } else {
+               allowed = true;
+            }
+            break;
+         }
+      }
+
+      if (!allowed && errno != berr_not_allowed_char) {
+         errno = berr_not_allowed_path;
+      }
+
+   } else {
+      /* Nothing specified, so we should allow to run scripts from every dir provided */
+      allowed = true;
+   }
+
+   /* Check if script/program can be executed */
+   if (!allowed) {
       return NULL;
    }
 

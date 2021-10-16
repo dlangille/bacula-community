@@ -2310,7 +2310,10 @@ static bRC baculaAddExclude(bpContext *ctx, const char *file)
    /* Set the Exclude context */
    set_incexe(jcr, bctx->exclude);
 
-   add_file_to_fileset(jcr, file, true);
+   if (add_file_to_fileset(jcr, file, true) != state_include) {
+      Dmsg1(100, "Failed to add exclude file=%s\n", file);
+      return bRC_Error;
+   }
 
    /* Restore the current context */
    set_incexe(jcr, old);
@@ -2350,7 +2353,10 @@ static bRC baculaAddInclude(bpContext *ctx, const char *file)
    }
 
    set_incexe(jcr, bctx->include);
-   add_file_to_fileset(jcr, file, true);
+   if (add_file_to_fileset(jcr, file, true) != state_include) {
+      Dmsg1(100, "Failed to add include file=%s\n", file);
+      return bRC_Error;
+   }
 
    /* Restore the current context */
    set_incexe(jcr, old);
@@ -2414,7 +2420,10 @@ static bRC baculaAddPlugin(bpContext *ctx, const char *file)
    }
 
    set_incexe(jcr, bctx->include);
-   add_file_to_fileset(jcr, file, false);
+   if (add_file_to_fileset(jcr, file, false) != state_include) {
+      Dmsg1(100, "Failed to plugin=%s\n", file);
+      return bRC_Error;
+   }
 
    /* Restore the current context */
    set_incexe(jcr, old);

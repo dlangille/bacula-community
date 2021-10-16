@@ -403,6 +403,12 @@ static void *handle_director_request(BSOCK *dir)
                 quit = true;
                 break;
             }
+
+            /* Set per-director list of allowed directories for scripts/program being run */
+            if (jcr->director && jcr->director->allowed_script_dirs) {
+               jcr->allowed_script_dirs = jcr->director->allowed_script_dirs;
+            }
+
             Dmsg1(100, "Executing Dir %s command.\n", dir->msg);
             if (!cmds[i].func(jcr)) {         /* do command */
                quit = true;         /* error or fully terminated, get out */
@@ -1455,7 +1461,7 @@ static void append_file(JCR *jcr, findINCEXE *incexe,
  * Add fname to include/exclude fileset list. First check for
  * | and < and if necessary perform command.
  */
-void add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
+int add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
 {
    findFILESET *fileset = jcr->ff->fileset;
    char *p;
@@ -1480,7 +1486,7 @@ void add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
          Jmsg(jcr, M_FATAL, 0, _("Cannot run program: %s. ERR=%s\n"),
             p, be.bstrerror());
          free_pool_memory(fn);
-         return;
+         return state_error;
       }
       free_pool_memory(fn);
       while (fgets(buf, sizeof(buf), bpipe->rfd)) {
@@ -1493,7 +1499,7 @@ void add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
          berrno be;
          Jmsg(jcr, M_FATAL, 0, _("Error running program: %s. stat=%d: ERR=%s\n"),
             p, be.code(stat), be.bstrerror(stat));
-         return;
+         return state_error;
       }
       break;
    case '<':
@@ -1504,7 +1510,7 @@ void add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
          Jmsg(jcr, M_FATAL, 0,
               _("Cannot open FileSet input file: %s. ERR=%s\n"),
             p, be.bstrerror());
-         return;
+         return state_error;
       }
       while (fgets(buf, sizeof(buf), ffd)) {
          strip_trailing_junk(buf);
@@ -1516,6 +1522,9 @@ void add_file_to_fileset(JCR *jcr, const char *fname, bool is_file)
       append_file(jcr, fileset->incexe, fname, is_file);
       break;
    }
+
+   //TODO check all calls for add_file_to_fileset() to check for ret code now
+   return state_include;
 }
 
 findINCEXE *get_incexe(JCR *jcr)
@@ -1755,13 +1764,11 @@ static void add_fileset(JCR *jcr, const char *item)
       break;
    case 'F':                             /* file = */
       /* File item to include or exclude list */
-      state = state_include;
-      add_file_to_fileset(jcr, item, true);
+      state = add_file_to_fileset(jcr, item, true);
       break;
    case 'P':                              /* plugin */
       /* Plugin item to include list */
-      state = state_include;
-      add_file_to_fileset(jcr, item, false);
+      state = add_file_to_fileset(jcr, item, false);
       break;
    case 'R':                              /* regex */
       state = add_regex_to_fileset(jcr, item, subcode);

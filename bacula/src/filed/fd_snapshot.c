@@ -1495,8 +1495,11 @@ bool snapshot_manager::create_snapshots()
                set_incexe(jcr, exclude);
             }
             Mmsg(t, "%s", elt->snap->SnapDirectory);
+            if (add_file_to_fileset(jcr, t.c_str(), true) != state_include) {
+               Jmsg(jcr, M_ERROR, 0, "   Failed to exclude=%s\n", t.c_str());
+               return false;
+            }
             Dmsg1(DT_SNAPSHOT|10, "Excluding %s\n", t.c_str());
-            add_file_to_fileset(jcr, t.c_str(), true);
          }
       }
    }

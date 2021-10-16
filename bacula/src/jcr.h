@@ -274,6 +274,8 @@ public:
    pthread_mutex_t msg_queue_mutex;   /* message queue mutex */
    bool dequeuing_msgs;               /* Set when dequeuing messages */
    alist job_end_push;                /* Job end pushed calls */
+   alist *allowed_script_dirs;        /* Daemon-specific Allowed directory list to run
+                                         scripts/programs from */
    POOLMEM *VolumeName;               /* Volume name desired -- pool_memory */
    POOLMEM *errmsg;                   /* edited error message */
    char Job[MAX_NAME_LENGTH];         /* Unique name of this Job */
