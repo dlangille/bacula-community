@@ -190,6 +190,7 @@ static char setbandwidth[]= "setbandwidth=%lld Job=%127s";
 static char errmsg[]      = "2999 Invalid command\n";
 static char no_auth[]     = "2998 No Authorization\n";
 static char invalid_cmd[] = "2997 Invalid command for a Director with Monitor directive enabled.\n";
+static char not_allowed_restore_path[] = "2996 Restore path out of allowed directories.\n";
 static char OKBandwidth[] = "2000 OK Bandwidth\n";
 static char OKinc[]       = "2000 OK include\n";
 static char OKest[]       = "2000 OK estimate files=%s bytes=%s\n";
@@ -3227,6 +3228,8 @@ static int restore_cmd(JCR *jcr)
    bool scan_ok = true;
    int files;
    int ret = 0;
+   bool allowed = false; /* Are we going to restore to allowed location */
+   char *directory;
 
    /**
     * Scan WHERE (base directory for restore) from command
@@ -3299,6 +3302,25 @@ static int restore_cmd(JCR *jcr)
 
    Dmsg2(150, "Got replace %c, where=%s\n", replace, args);
    unbash_spaces(args);
+
+   if (jcr->director->allowed_restore_dirs) {
+      /* Go through the list of allowed directories to restore */
+      foreach_alist(directory, jcr->director->allowed_restore_dirs) {
+         if (fnmatch(directory, args, FNM_LEADING_DIR) == 0) {
+            allowed = true;
+            break;
+         }
+      }
+   } else {
+      /* Directive was not configured at all */
+      allowed = true;
+   }
+
+   if (!allowed) {
+      Jmsg(jcr, M_FATAL, 0, _("Path not allowed for restore: \"%s\"\n"), args);
+      dir->fsend(not_allowed_restore_path);
+      goto free_mempool;
+   }
 
    /* Keep track of newly created directories to apply them correct attributes */
    if (replace == REPLACE_NEVER || replace == REPLACE_IFNEWER) {

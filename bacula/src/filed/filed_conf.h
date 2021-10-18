@@ -120,6 +120,7 @@ struct DIRRES {
    alist *allowed_backup_dirs;        /* Allowed to-be-backed-up directory list */
    alist *excluded_backup_dirs;       /* Excluded to-be-backed-up directory list */
    alist *allowed_script_dirs;        /* Allowed directory list to run scripts/programs from */
+   alist *allowed_restore_dirs;       /* Allowed directory list to restore to */
 };
 
 struct CLIENT {
