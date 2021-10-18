@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test for the 'AllowedRestoreDirectories' FD directive
+#
+TestName="fd-allowed-restore-dirs-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+verify_restore_ok()
+{
+nb=`grep 'Restore OK' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found Restore OK message, check $1"
+    bstat=1
+fi
+}
+
+verify_restore_error()
+{
+nb=`grep '*** Restore Error ***' $1 | wc -l`
+if [ $nb -ne 1 ]; then
+    print_debug "ERROR: should have found Restore Error message, check $1"
+    bstat=1
+fi
+}
+
+allowed_dir1="$tmp/allowed1"
+allowed_dir2="$tmp/some-other-allowed/*"
+
+# Set allowed directories to restore
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "AllowedRestoreDirectories", "'$allowed_dir1','$allowed_dir2'", "Director")'
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+@$out $tmp/log2.out
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+@$out $tmp/log3.out
+restore where=$tmp/allowed1 select all done
+yes
+wait
+messages
+@$out $tmp/log4.out
+restore where=$tmp/allowed2 select all done
+yes
+wait
+messages
+@$out $tmp/log5.out
+restore where=$tmp/allo select all done
+yes
+wait
+messages
+@$out $tmp/log6.out
+restore where=$tmp/some-other-allowed/a/bit/nested/one select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+verify_restore_error $tmp/log2.out
+
+verify_restore_ok $tmp/log3.out
+
+$rscripts/diff.pl -notop -s ${src} -d ${tmp}/allowed1/${src} 2>&1 >${tmp}/diff-log
+if test $? -ne 0; then
+   dstat=1
+   print_debug "Restore diff, compare source directory with restored ${tmp}/allowed1"
+fi
+
+verify_restore_error $tmp/log4.out
+
+verify_restore_error $tmp/log5.out
+
+verify_restore_ok $tmp/log6.out
+
+$rscripts/diff.pl -notop -s ${src} -d ${tmp}/some-other-allowed/a/bit/nested/one/${src} 2>&1 >${tmp}/diff-log
+if test $? -ne 0; then
+   dstat=1
+   print_debug "Restore diff, compare source directory with restored ${tmp}/some-other-allowed/a/bit/nested"
+fi
+
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+end_test
