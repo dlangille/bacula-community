@@ -597,7 +597,6 @@ bool do_restore(JCR *jcr)
    return true;
 
 bail_out:
-   restore_cleanup(jcr, JS_ErrorTerminated);
    return false;
 }
 
