@@ -21,6 +21,7 @@ create user ${db_user} ${pass};
 
 -- for the database
 alter database ${db_name} owner to ${db_user} ;
+grant CREATE on DATABASE ${db_name} to ${db_user};
 
 -- for tables
 grant all on MetaEmail    to ${db_user};

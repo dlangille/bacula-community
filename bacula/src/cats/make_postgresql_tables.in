@@ -15,6 +15,7 @@ db_name=${db_name:-@db_name@}
 
 psql -f - -d ${db_name} $* <<END-OF-DATA
 
+BEGIN;
 -- --------------------------------------------------------------
 -- MetaData Index
 
@@ -630,8 +631,9 @@ CREATE UNIQUE INDEX snapshot_idx ON Snapshot (Device text_pattern_ops,
 
 INSERT INTO Version (VersionId) VALUES (1025);
 
--- Make sure we have appropriate permissions
 
+COMMIT;
+-- Make sure we have appropriate permissions
 
 END-OF-DATA
 pstat=$?
