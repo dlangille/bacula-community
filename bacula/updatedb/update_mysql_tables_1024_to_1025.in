@@ -86,10 +86,10 @@ CREATE INDEX meta_attachmentjobid on MetaAttachment (Jobid);
 UPDATE Version SET VersionId=1024;
 END-OF-DATA
 then
-   echo "Update of Bacula MySQL tables 1023 to 1024 succeeded."
+   echo "Update of Bacula MySQL tables 1024 to 1025 succeeded."
    getVersion
 else
-   echo "Update of Bacula MySQL tables 1023 to 1024 failed."
+   echo "Update of Bacula MySQL tables 1024 to 1025 failed."
    exit 1
 fi
 
