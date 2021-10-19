@@ -134,6 +134,7 @@ namespace pluginlib
       POOL_MEM execpath;               /// ready to use path where bacula binaries are located
       POOL_MEM workingpath;            /// ready to use path for bacula working directory
       bool job_cancelled;              /// it signal the metaplugin that job was cancelled
+      int accurate_mode;               /// if the job is accurate
 
       virtual bRC parse_plugin_config(bpContext *ctx, restore_object_pkt *rop) { return bRC_OK; }
       virtual bRC parse_plugin_command(bpContext *ctx, const char *command);

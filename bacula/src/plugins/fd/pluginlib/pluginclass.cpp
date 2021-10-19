@@ -40,6 +40,11 @@
 #undef sscanf
 #endif
 
+// Plugin linking time variables
+extern const char *PLUGINPREFIX;
+extern const char *PLUGINNAME;
+extern const char *PLUGINNAMESPACE;
+
 // synchronie access to job_cancelled variable
 //   smart_lock<smart_mutex> lg(&mutex); - removed on request
 #define CHECK_JOB_CANCELLED \
@@ -118,23 +123,24 @@ namespace pluginlib
          char lvl;
          lvl = (char)((intptr_t) value & 0xff);
          DMSG(ctx, D2, "bEventLevel='%c'\n", lvl);
-         switch (lvl) {
-            case 'F':
-               DMSG0(ctx, D2, "backup level = Full\n");
-               mode = BackupFull;
-               break;
-            case 'I':
-               DMSG0(ctx, D2, "backup level = Incr\n");
-               mode = BackupIncr;
-               break;
-            case 'D':
-               DMSG0(ctx, D2, "backup level = Diff\n");
-               mode = BackupDiff;
-               break;
-            default:
-               // TODO: handle other backup levels
-               DMSG0(ctx, D2, "unsupported backup level!\n");
-               return bRC_Error;
+         switch (lvl)
+         {
+         case 'F':
+            DMSG0(ctx, D2, "backup level = Full\n");
+            mode = BackupFull;
+            break;
+         case 'I':
+            DMSG0(ctx, D2, "backup level = Incr\n");
+            mode = BackupIncr;
+            break;
+         case 'D':
+            DMSG0(ctx, D2, "backup level = Diff\n");
+            mode = BackupDiff;
+            break;
+         default:
+            // TODO: handle other backup levels
+            DMSG0(ctx, D2, "unsupported backup level!\n");
+            return bRC_Error;
          }
          return perform_joblevel(ctx, lvl);
 
@@ -185,29 +191,25 @@ namespace pluginlib
             mode = EstimateFull;
             break;
          }
+         pluginctx_switch_command((char *)value);
          return prepare_estimate(ctx, (char *)value);
 
       /* Plugin command e.g. plugin = <plugin-name>:parameters */
       case bEventBackupCommand:
          DMSG(ctx, D2, "bEventBackupCommand value=%s\n", NPRT((char *)value));
-         // pluginconfigsent = false;
+         pluginctx_switch_command((char *)value);
          return prepare_backup(ctx, (char*)value);
 
       /* Plugin command e.g. plugin = <plugin-name>:parameters */
       case bEventRestoreCommand:
          DMSG(ctx, D2, "bEventRestoreCommand value=%s\n", NPRT((char *)value));
+         pluginctx_switch_command((char *)value);
          return prepare_restore(ctx, (char*)value);
 
       /* Plugin command e.g. plugin = <plugin-name>:parameters */
       case bEventPluginCommand:
          DMSG(ctx, D2, "bEventPluginCommand value=%s\n", NPRT((char *)value));
-         // getBaculaVar(bVarAccurate, (void *)&accurate_mode);
-         // if (isourplugincommand(PLUGINPREFIX, (char*)value) && !backend_available)
-         // {
-         //    DMSG2(ctx, DERROR, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), backend_error.c_str());
-         //    JMSG2(ctx, M_FATAL, "Unable to use backend: %s Err=%s\n", backend_cmd.c_str(), backend_error.c_str());
-         //    return bRC_Error;
-         // }
+         getBaculaVar(bVarAccurate, (void *)&accurate_mode);
          return prepare_command(ctx, (char*)value);
 
       case bEventOptionPlugin:
@@ -452,7 +454,6 @@ namespace pluginlib
             return perform_backup_open(ctx, io);
 
          case Restore:
-            // nodata = true;
             return perform_restore_open(ctx, io);
 
          default:
@@ -684,7 +685,9 @@ namespace pluginlib
    {
       CHECK_JOB_CANCELLED;
 
-      if (isourpluginfname(PLUGINPREFIX, fname)) {
+      DMSG2(ctx, DINFO, "PLUGINBCLASS::checkFile: %s %s\n", PLUGINNAMESPACE, fname);
+      if (isourpluginfname(PLUGINNAMESPACE, fname))
+      {
          return perform_backup_check_file(ctx, fname);
       }
 
