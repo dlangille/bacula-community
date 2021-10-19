@@ -170,9 +170,14 @@ public:
    inline int get_terminate_status() { return tstatus; };
 
    /* all you need is to simply execute the command first */
-   bool execute_command(bpContext *ctx, const POOLMEM *cmd, const POOLMEM *args = "");
-   bool execute_command(bpContext *ctx, const POOL_MEM &cmd, const POOL_MEM &args);
-   bool execute_command(bpContext *ctx, const POOL_MEM &cmd);
+   bool execute_command(bpContext *ctx, const char *cmd, const char *args = "");
+
+   /*
+    * Run command and prepared parameters.
+    */
+   inline bool execute_command(bpContext *ctx, const char *cmd, const POOL_MEM &args) { return execute_command(ctx, cmd, args.c_str()); }
+   inline bool execute_command(bpContext *ctx, const POOL_MEM &cmd, const POOL_MEM &args)  { return execute_command(ctx, cmd.c_str(), args.c_str()); }
+   inline bool execute_command(bpContext *ctx, const POOL_MEM &cmd) { return execute_command(ctx, cmd.c_str()); }
 
    /* then just simply read or write data to it */
    int32_t read_data(bpContext *ctx, POOLMEM *buf, int32_t len);

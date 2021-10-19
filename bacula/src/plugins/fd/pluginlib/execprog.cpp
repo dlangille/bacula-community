@@ -44,13 +44,15 @@
  */
 void EXECPROG::terminate(bpContext *ctx, bool raise_error)
 {
-   if (is_closed()){
+   if (is_closed())
+   {
       return;
    }
 
    // after close_bpipe it is no longer available
    tstatus = close_bpipe(bpipe);
-   if (tstatus && raise_error){
+   if (tstatus && raise_error)
+   {
       /* error during close */
       berrno be;
       DMSG(ctx, DERROR, "Error closing command. Err=%s\n", be.bstrerror(tstatus));
@@ -68,22 +70,6 @@ void EXECPROG::terminate(bpContext *ctx, bool raise_error)
 
 /*
  * Run command and prepared parameters.
- */
-bool EXECPROG::execute_command(bpContext *ctx, const POOL_MEM &cmd, const POOL_MEM &args)
-{
-   return execute_command(ctx, cmd.c_str(), args.c_str());
-}
-
-/*
- * Run command and prepared parameters.
- */
-bool EXECPROG::execute_command(bpContext *ctx, const POOL_MEM &cmd)
-{
-   return execute_command(ctx, cmd.c_str());
-}
-
-/*
- * Run command and prepared parameters.
  *
  * in:
  *    bpContext - for Bacula debug and jobinfo messages
@@ -92,11 +78,12 @@ bool EXECPROG::execute_command(bpContext *ctx, const POOL_MEM &cmd)
  *    True - when command execute successfully
  *    False - when execution return error
  */
-bool EXECPROG::execute_command(bpContext *ctx, const POOLMEM *cmd, const POOLMEM *args)
+bool EXECPROG::execute_command(bpContext *ctx, const char *cmd, const char *args)
 {
    POOL_MEM exe_cmd(PM_FNAME);
 
-   if (cmd == NULL){
+   if (cmd == NULL)
+   {
       /* cannot execute command NULL */
       DMSG0(ctx, DERROR, "Logic error: Cannot execute NULL command!\n");
       JMSG0(ctx, M_FATAL, "Logic error: Cannot execute NULL command!\n");
@@ -107,7 +94,8 @@ bool EXECPROG::execute_command(bpContext *ctx, const POOLMEM *cmd, const POOLMEM
    Mmsg(exe_cmd, "%s %s", cmd, args);
    DMSG(ctx, DINFO, "Executing: %s\n", exe_cmd.c_str());
    bpipe = open_bpipe(exe_cmd.c_str(), 0, "rw");
-   if (bpipe == NULL){
+   if (bpipe == NULL)
+   {
       berrno be;
       DMSG(ctx, DERROR, "Unable to run command. Err=%s\n", be.bstrerror());
       JMSG(ctx, M_FATAL, "Unable to run command. Err=%s\n", be.bstrerror());
