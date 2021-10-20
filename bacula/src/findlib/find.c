@@ -265,7 +265,7 @@ bool is_in_fileset(FF_PKT *ff)
 }
 
 /**
- *  Check if the file being processed is inside allowed directories or not.
+ *  Check if the file being processed is allowed to backup or not.
  *
  *  Returns: true if OK to backup
  *           false to ignore file/directory
@@ -275,7 +275,18 @@ static int check_allowed_dirs(JCR *jcr, FF_PKT *ff_pkt)
    bool ret = true;
    char *dir, *pp;
 
-   if (ff_pkt->allowed_backup_dirs) {
+   /* Check if file is not excluded at all */
+   if (ff_pkt->excluded_backup_dirs) {
+      foreach_alist(dir, ff_pkt->excluded_backup_dirs) {
+         if ((pp = b_path_match(ff_pkt->fname, dir)) == ff_pkt->fname) {
+            ret = false;
+            break;
+         }
+      }
+   }
+
+   /* If not excluded, then check if it's inside of allowed directories */
+   if (ret && ff_pkt->allowed_backup_dirs) {
       foreach_alist(dir, ff_pkt->allowed_backup_dirs) {
          /* The b_path_match check can be done twice here:
           * For the 1st time we check if current file path contains exactly the allowed dir - if it does
@@ -556,9 +567,6 @@ term_find_files(FF_PKT *ff)
    }
    if (ff->mtab_list) {
       delete ff->mtab_list;
-   }
-   if (ff->allowed_backup_dirs) {
-      delete ff->allowed_backup_dirs;
    }
    hard_links = term_find_one(ff);
    free(ff);

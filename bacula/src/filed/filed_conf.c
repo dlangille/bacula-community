@@ -157,6 +157,8 @@ static RES_ITEM dir_items[] = {
    {"Schedule", store_res, ITEM(res_dir.schedule), R_SCHEDULE, 0, 0},
    {"ReconnectionTime", store_time,ITEM(res_dir.reconnection_time), 0, ITEM_DEFAULT, 60 * 45},
    {"AllowedBackupDirectories",   store_alist_str,     ITEM(res_dir.allowed_backup_dirs), 0, 0, 0},
+   {"ExlcudedBackupDirectories",   store_alist_str,     ITEM(res_dir.excluded_backup_dirs), 0, 0, 0},
+   {"AllowedScriptDirectories",   store_alist_str,     ITEM(res_dir.allowed_script_dirs), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -540,6 +542,12 @@ void free_resource(RES *sres, int type)
       if (res->res_dir.allowed_backup_dirs) {
          delete res->res_dir.allowed_backup_dirs;
       }
+      if (res->res_dir.excluded_backup_dirs) {
+         delete res->res_dir.excluded_backup_dirs;
+      }
+      if (res->res_dir.allowed_script_dirs) {
+         delete res->res_dir.allowed_script_dirs;
+      }
       break;
    case R_CONSOLE:
       if (res->res_cons.dirinfo.password) {
@@ -781,6 +789,8 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
             res->res_dir.dirinfo.tls_allowed_cns = res_all.res_dir.dirinfo.tls_allowed_cns;
             res->res_dir.disable_cmds = res_all.res_dir.disable_cmds;
             res->res_dir.allowed_backup_dirs = res_all.res_dir.allowed_backup_dirs;
+            res->res_dir.excluded_backup_dirs = res_all.res_dir.excluded_backup_dirs;
+            res->res_dir.allowed_script_dirs = res_all.res_dir.allowed_script_dirs;
             res->res_dir.console = res_all.res_dir.console;
             res->res_dir.schedule = res_all.res_dir.schedule;
             break;
