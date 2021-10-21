@@ -3741,3 +3741,78 @@ msgstr "Configurar seu agendamento personalizado"
 msgid "Override directives"
 msgstr "Substituir diretivas"
 
+
+msgid "Migrate by job"
+msgstr "Migrate by job"
+
+msgid "Migrate by client"
+msgstr "Migrate by client"
+
+msgid "Migrate by volume"
+msgstr "Migrate by volume"
+
+msgid "Migrate by smallest volume"
+msgstr "Migrate by smallest volume"
+
+msgid "Migrate by oldest volume"
+msgstr "Migrate by oldest volume"
+
+msgid "Migrate using Pool occupancy"
+msgstr "Migrate using Pool occupancy"
+
+msgid "Migrate by Pool time"
+msgstr "Migrate by Pool time"
+
+msgid "Migrate by SQL query"
+msgstr "Migrate by SQL query"
+
+msgid "New migrate job wizard"
+msgstr "New migrate job wizard"
+
+msgid "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing i     t to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+msgstr "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing i     t to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+
+msgid "Step 2 - what you want to migrate"
+msgstr "Step 2 - what you want to migrate"
+
+msgid "Please select a pool from which you want to migrate data."
+msgstr "Please select a pool from which you want to migrate data."
+
+msgid "The source pool will be examined for finding backup jobs to migrate."
+msgstr "The source pool will be examined for finding backup jobs to migrate."
+
+msgid "Please select a storage using which you want to read migrate data."
+msgstr "Please select a storage using which you want to read migrate data."
+
+msgid "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
+msgstr "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
+
+msgid "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
+msgstr "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
+
+msgid "Step 3 - how would you like to migrate"
+msgstr "Step 3 - how would you like to migrate"
+
+msgid "Step 4 - where you like to migrate"
+msgstr "Step 4 - where you like to migrate"
+
+msgid "Please select a storage using which you want to write migrated data."
+msgstr "Please select a storage using which you want to write migrated data."
+
+msgid "Step 5 - migrate job options"
+msgstr "Step 5 - migrate job options"
+
+msgid "Purge jobs"
+msgstr "Purge jobs"
+
+msgid "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
+msgstr "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
+
+msgid "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+msgstr "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+
+msgid "New migrate job"
+msgstr "New migrate job"
+
+msgid "Please select the criteria that will be used for selecting backup jobs to migrate."
+msgstr "Please select the criteria that will be used for selecting backup jobs to migrate."
