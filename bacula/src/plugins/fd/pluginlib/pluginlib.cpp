@@ -604,25 +604,11 @@ bool parse_param_add_str(alist **list, const char *pname, const char *name, cons
             *list = New(alist(8, not_owned_by_alist));
          }
          param = get_pool_memory(PM_NAME);
-         Mmsg(param, "%s", value);
+         pm_strcpy(param, value);
          (*list)->append(param);
          DMsg2(DDEBUG, "add param: %s=%s\n", name, param);
          return true;
       }
-   }
-   return false;
-}
-
-bool parse_param_add_str(alist &list, const char *pname, const char *name, const char *value)
-{
-   POOLMEM *param;
-
-   if (bstrcasecmp(name, pname)){
-      param = get_pool_memory(PM_NAME);
-      pm_strcpy(param, value);
-      list.append(param);
-      DMsg2(DDEBUG, "add param: %s=%s\n", name, param);
-      return true;
    }
    return false;
 }
@@ -677,3 +663,32 @@ void scan_and_terminate_str(POOL_MEM &buf, int msglen)
       buf.c_str()[msglen + 1] = '\0';
    }
 }
+
+namespace pluginlib
+{
+   /**
+    * @brief Render and add a parameter for string value to alist.
+    *       In this case POOL_MEM is created.
+    *
+    * @param list a list to append
+    * @param pname a name of the parameter to compare
+    * @param name a name of the parameter from parameter list
+    * @param value a value to render
+    * @return true if parameter was rendered
+    * @return false if it was not the parameter required
+    */
+   bool parse_param_add_str(alist &list, const char *pname, const char *name, const char *value)
+   {
+      if (bstrcasecmp(name, pname))
+      {
+         POOL_MEM *param = new POOL_MEM(PM_NAME);
+         pm_strcpy(*param, value);
+         list.append(param);
+         DMsg2(DDEBUG, "add param: %s=%s\n", name, (*param).c_str());
+         return true;
+      }
+
+      return false;
+   }
+
+}  // namespace pluginlib

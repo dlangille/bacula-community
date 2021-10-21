@@ -27,6 +27,7 @@
 
 #include "pluginlib.h"
 #include "unittests.h"
+#include "smartalist.h"
 
 bFuncs *bfuncs;
 bInfo *binfo;
@@ -206,6 +207,39 @@ int main()
       scan_and_terminate_str(ebuf, testvect2[i].msglen);
       ok(memcmp(ebuf.c_str(), testvect2[i].output, testvect2[i].len) == 0, testvect2[i].descr);
    }
+
+   {
+      // debug_level = 800;
+      alist mylist(10, not_owned_by_alist);
+      bool status = pluginlib::parse_param_add_str(mylist, "test", "test", "value");
+      ok(status, "test parse_param_add_str");
+      rok(mylist.size() == 1, "test alist size after append");
+      delete (POOL_MEM*)mylist.get(0);
+   }
+
+   {
+      // debug_level = 800;
+      smart_alist<POOL_MEM> mylist;
+      bool status = pluginlib::parse_param_add_str(mylist, "test", "test", "othervalue");
+      ok(status, "test parse_param_add_str with smart_alist");
+      rok(mylist.size() == 1, "test alist size after append");
+   }
+
+   // {
+   //    alist mylist(10, not_owned_by_alist);
+   //    mylist.append((void*)10);
+   //    mylist.append((void*)20);
+   //    mylist.append((void*)30);
+   //    ok(mylist.size() == 3, "test size");
+   //    uint64_t *a;
+   //    int i;
+   //    foreach_alist_index(i, a, &mylist)
+   //    {
+   //       printf("i:%d a:%ld\n", i, (uint64_t)a);
+   //       mylist.remove(i);
+   //       i--;
+   //    }
+   // }
 
    return report();
 }
