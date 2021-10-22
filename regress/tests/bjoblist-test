@@ -134,7 +134,7 @@ if [ $? != 0 ]; then
 	$estat=1
 fi
 
-rm "$data_file"
+rm "$working_dir/$data_file"
 rm "$result_file"
 
 end_test
