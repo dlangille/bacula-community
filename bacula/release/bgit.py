@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*
 # this program compare two branche of GIT
 # and show the differences
@@ -12,11 +12,12 @@ import argparse
 import time
 import codecs
 import difflib
+import itertools
 
 try:
     import git
 except ImportError:
-    print >>sys.stderr, "you must install python-git aka GitPython"
+    print("you must install python-git aka GitPython", file=sys.stderr)
     sys.exit(1)
 
 
@@ -36,73 +37,126 @@ def add_file_logger(filename):
     return filelog
 
 
-
 def run_cmp_branch(args):
     repo=args.repo
     # check if the branch exists
     f1=f2=False
+    sources=[]
+    if args.branch1.startswith('re:'):
+        try:
+            branch_re=re.compile(args.branch1[3:])
+        except re.error:
+            print("invalid regex: ", args.branch1)
+            return False
+        for ref in repo.references:
+            if branch_re.match(ref.name):
+                sources.append(ref)
+        if not sources:
+            print("no match: ", args.branch1)
+            return False
+    else:
+        sources.append(args.branch1)
+
     for ref in repo.references:
-        f1|=(args.branch1==ref.name)
+        f1|=(args.branch1.startswith('re:') or args.branch1==ref.name)
         f2|=(args.branch2==ref.name)
     for found, name in ((f1, args.branch1), (f2, args.branch2)):
         if not found:
             print("Branch not found: ", name)
             return False
 
-    if args.switch:
-        args.branch1, args.branch2=args.branch2, args.branch1
-    if args.short_legend:
-        print("=== Compare branch %(branch1)s and %(branch2)s" %
-              dict(branch1=args.branch1, branch2=args.branch2))
-    elif not args.no_legend:
-        print(cmp_branch_legend % dict(branch1=args.branch1, branch2=args.branch2))
-#    for commit in repo.iter_commits(args.branch1, max_count=10):
-#        print commit.hexsha, commit.committed_date, commit.author.name, commit.message
+    branch2_orig=args.branch2
+    if args.path:
+        # check if the paths are valid in the branch2
+        for path in args.path:
+            path_match=False
+            for entry in repo.commit(branch2_orig).tree.traverse():
+                if entry.path.startswith(path):
+                    path_match=True
+                    break
+            if not path_match:
+                args._parser.error("path not found in {}: {}".format(branch2_orig, path));
 
-#    print dir(repo)
-    commons=repo.merge_base(args.branch1, args.branch2)
-    if len(commons)!=1:
-        print("cannot find the unique common commit between", args.branch1, args.branch2)
-        return False
+    for branch1 in sources:
+        branch2=branch2_orig
+        if args.switch:
+            branch1, branch2=branch2, branch1
+        if args.short_legend or args.branch1.startswith('re:'):
+            print("=== Compare branch %(branch1)s and %(branch2)s" %
+                  dict(branch1=branch1, branch2=branch2))
+        elif not args.no_legend:
+            print(cmp_branch_legend % dict(branch1=branch1, branch2=branch2))
+#       for commit in repo.iter_commits(branch1, max_count=10):
+#           print commit.hexsha, commit.committed_date, commit.author.name, commit.message
 
-    common=commons[0]
-    # make a list of all know commit in branch-2
-    commits2=set() # (authored_date, author_name, subject)
-    commits2b=set() # (author_name, subject) to detect modified patch
-    commits2m=dict()  # (authored_date, author_name) to detect modified message
-    for commit in repo.iter_commits(args.branch2):
-        if commit.hexsha==common.hexsha:
-            break
+#       print dir(repo)
+        commons=repo.merge_base(branch1, branch2)
+        if len(commons)!=1:
+            print("cannot find the unique common commit between", branch1, branch2)
+            return False
 
-        subject=commit.message.split('\n', 1)[0]
-        commits2.add((commit.authored_date, commit.author.name, subject))
-        commits2b.add((commit.author.name, subject))
-        commits2m[(commit.authored_date, commit.author.name)]=(subject, commit.hexsha[:8])
-        #print(commit.committed_date, commit.author.name, subject)
+        common=commons[0]
+        # make a list of all know commit in branch-2
+        commits2=set() # (authored_date, author_name, subject)
+        commits2b=set() # (author_name, subject) to detect modified patch
+        commits2m=dict()  # (authored_date, author_name) to detect modified message
+        for commit in repo.iter_commits(branch2):
+            if commit.hexsha==common.hexsha:
+                break
 
-    # list and compare with commits of branch-1
-    for commit in repo.iter_commits(args.branch1):
-        if commit.hexsha==common.hexsha:
-            break
-        subject=commit.message.split('\n', 1)[0]
-        date=time.strftime("%Y-%m-%d %H:%M", time.gmtime(commit.authored_date))
-        line='%s %s %s' % (date, commit.author.name, subject)
-        alt_subject, alt_sha=None, None
-        if args.sha:
-            line='%s %s' % (commit.hexsha[:8], line)
-        if (commit.authored_date, commit.author.name, subject) in commits2:
-            prefix='='
-        elif (commit.author.name, subject) in commits2b:
-            prefix='~'
-        elif (commit.authored_date, commit.author.name) in commits2m:
-            prefix='§'
-            alt_subject, alt_sha=commits2m[(commit.authored_date, commit.author.name)]
-        else:
-            prefix='+'
-        print(prefix, codecs.encode(line, 'ascii', 'replace'))
-        if prefix=='§':
-            line2='%s%s %s %s' % ((alt_sha+' ' if args.sha else ''), ' '*len(date), commit.author.name, alt_subject)
-            print(prefix, codecs.encode(line2, 'ascii', 'replace'))
+            subject=commit.message.split('\n', 1)[0]
+            commits2.add((commit.authored_date, commit.author.name, subject))
+            commits2b.add((commit.author.name, subject))
+            commits2m[(commit.authored_date, commit.author.name)]=(subject, commit.hexsha[:8])
+            #print(commit.committed_date, commit.author.name, subject)
+
+        # list and compare with commits of branch1
+        # we need the commit and commit_next to be able to make a diff
+        # start iterating before to enter into the loop
+        commit_iterator=iter(repo.iter_commits(branch1))
+        commit=next(commit_iterator) # we always have at least the common node
+        for commit_next in commit_iterator:
+            if commit.hexsha==common.hexsha:
+                break # Stop when we have reached the common node
+
+            # skip the commit if no files match the path filter
+            if args.path:
+                path_match=False
+                for path in args.path:
+                    diff=commit.diff(commit_next)
+                    for entry in itertools.chain(diff.iter_change_type('M'), diff.iter_change_type('A'), diff.iter_change_type('D'), diff.iter_change_type('R')):
+                        # print(entry.a_path, entry.b_path, entry.change_type, " - ", entry.diff)
+                        p=entry.b_path if not entry.a_path else entry.a_path
+                        if p.startswith(path):
+                            path_match=True
+                            break
+                    if path_match:
+                        break
+                if not path_match:
+                    commit=commit_next
+                    continue
+
+            subject=commit.message.split('\n', 1)[0]
+            date=time.strftime("%Y-%m-%d %H:%M", time.gmtime(commit.authored_date))
+            line='%s %s %s' % (date, commit.author.name, subject)
+            alt_subject, alt_sha=None, None
+            if args.sha:
+                line='%s %s' % (commit.hexsha[:8], line)
+            if (commit.authored_date, commit.author.name, subject) in commits2:
+                prefix='='
+            elif (commit.author.name, subject) in commits2b:
+                prefix='~'
+            elif (commit.authored_date, commit.author.name) in commits2m:
+                prefix='§'
+                alt_subject, alt_sha=commits2m[(commit.authored_date, commit.author.name)]
+            else:
+                prefix='+'
+            print(prefix, line)
+            if prefix=='§':
+                line2='%s%s %s %s' % ((alt_sha+' ' if args.sha else ''), ' '*len(date), commit.author.name, alt_subject)
+                print(prefix, line2)
+
+            commit=commit_next
 
 def print_prefix(prefix, content):
     for n, line in enumerate(content):
@@ -146,6 +200,10 @@ def run_res_conflict(args):
         return resolve_cherry_pick(args)
     print('Not a cherry-pick issue! Sorry only cherry-pick is supported for now.', file=sys.stderr)
 
+def run_version(args):
+    print('GitPython:', git.__version__)
+    print('git:', '.'.join(map(str, git.Git().version_info)))
+
 mainparser=argparse.ArgumentParser(description='git utility for bacula')
 subparsers=mainparser.add_subparsers(dest='command', metavar='', title='valid commands')
 
@@ -162,7 +220,9 @@ are prefixed with a '~'.
 Commits that have the same author_name and authored_date but a different subject
 are prefixed with a '&' and both subject are shown.
 Other commit are prefixed with a '+' that means that it was not found in
-the second branch and could be added."""
+the second branch and could be added.
+The first Branch can be a regex (prefixed with "re:") to compare a set of
+branches to the second one"""
 
 cmp_branch_legend="""= Commits that are in both branches with the same authored_date, author_name and  subject
 ~ Commits that are in both branches but with a different authored_date
@@ -175,30 +235,39 @@ parser=subparsers.add_parser('cmp_branch', description=cmp_branch_description, p
 
 parser.add_argument('--switch', action='store_true', help='switch the two BRANCH parameters to ease use of xargs')
 parser.add_argument('--sha', action='store_true', help='display the short sha1 of the commit')
-parser.add_argument('--no-legend', action='store_true', help='don''t display the legend')
-parser.add_argument('--short-legend', action='store_true', help='don''t display the legend')
-parser.add_argument('branch1', metavar='BRANCH-1', help='the first branch')
+parser.add_argument('--no-legend', action='store_true', help='don\'t display the legend')
+parser.add_argument('--short-legend', action='store_true', help='don\'t display the legend')
+parser.add_argument('--path', nargs=1, help='report only commits that modify this file or a file in this directory')
+parser.add_argument('branch1', metavar='[re:]BRANCH-1', help='the first branch')
 parser.add_argument('branch2', metavar='BRANCH-2', help='the second branch')
 parser.set_defaults(func=run_cmp_branch)
 
-res_conflict_legend="""description of res_conflict"""
-parser=subparsers.add_parser('res_conflict', description=cmp_branch_description, parents=[git_parser, ], 
-    help='help resolve conflic in the current branch')
+res_conflict_help='help resolve conflic in the current branch'
+parser=subparsers.add_parser('res_conflict', parents=[git_parser, ],
+    description=res_conflict_help, help=res_conflict_help)
 parser.set_defaults(func=run_res_conflict)
 
-args=mainparser.parse_args()
+version_help="""shows version of git and GitPython"""
+parser=subparsers.add_parser('version', description=version_help, help=version_help)
+parser.set_defaults(func=run_version)
 
+
+args=mainparser.parse_args()
+args._parser=mainparser
+
+if not args.command:
+    mainparser.error('command argument required')
 
 logging.getLogger().setLevel(logging.DEBUG)
 
 add_console_logger()
-#print args.git_dir
-#print "logging into gitstat.log"
+#print(args.git_dir)
+#print("logging into gitstat.log")
 add_file_logger('gitstat.log')
 
 # search the git repo
 repo=None
-if args.git_dir:
+if args.command in [ 'cmp_branch', 'res_conflict', ] and args.git_dir:
     if args.git_dir=='.':
         path=os.getcwd()
         while path and not os.path.isdir(os.path.join(path, '.git')):
@@ -208,17 +277,17 @@ if args.git_dir:
             try:
                 repo=git.Repo(path)
             except git.exc.InvalidGitRepositoryError:
-                parser.error("git repository not found in %s" % (path,))
+                mainparser.error("git repository not found in %s" % (path,))
             else:
                 args.git_dir=path
         else:
-            parser.error("not .git directory found above %s" % (os.getcwd(),))
+            mainparser.error("not .git directory found above %s" % (os.getcwd(),))
 
     else:
         try:
             repo=git.Repo(args.git_dir)
         except git.exc.InvalidGitRepositoryError:
-            parser.error("git repository not found in %s" % (args.git_dir,))
+            mainparser.error("git repository not found in %s" % (args.git_dir,))
 
 args.repo=repo
 args.func(args)
