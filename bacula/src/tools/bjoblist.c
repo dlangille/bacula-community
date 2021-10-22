@@ -68,7 +68,8 @@ int main(int argc, char *argv[])
    while ((opt = getopt(argc, argv, "w:f:k:p:j:l:D:sSiLd:h")) != -1) {
       switch (opt) {
       case 'w':		   // Working dir
-	 working_directory = optarg;	// global var
+	 working = working_directory = optarg;	
+	 // working is for fd_common.h , working directory global variable in bacula
 	 break;
 
       case 'f':		   // datfile
@@ -149,13 +150,13 @@ int main(int argc, char *argv[])
 
    // Check that current job is not null
    if (curr_job == NULL) {
-      Dmsg(NULL, CRITICAL_LEVEL, "Current job not sell EXIT\n");
+      Dmsg(NULL, CRITICAL_LEVEL, "Current job not set EXIT\n");
       exit(EXIT_FAILURE);
    }
 
    // Check if key = either F/I/D
    if (level != 'F' && level != 'I' && level != 'D') {
-      Dmsg(NULL, CRITICAL_LEVEL, "Bad key has to be either F/I/D\n");
+      Dmsg(NULL, CRITICAL_LEVEL, "Bad key has to be either F/I/D is %d\n", level);
       exit(EXIT_FAILURE);
    }
 
