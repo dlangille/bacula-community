@@ -43,6 +43,7 @@ class JobHistoryView extends BaculumWebPage {
 	const JOB_TYPE = 'JobType';
 	const CLIENTID = 'ClientId';
 	const JOB_INFO = 'JobInfo';
+	const STORAGE_INFO = 'StorageInfo';
 
 	const USE_CACHE = true;
 
@@ -296,6 +297,31 @@ class JobHistoryView extends BaculumWebPage {
 		return $this->getViewState(self::JOB_INFO, []);
 	}
 
+	/**
+	 * Set all storage information.
+	 *
+	 * @return none
+	 */
+	public function setStorageInfo() {
+		$storages_show = $this->getModule('api')->get(
+			['storages', 'show', '?output=json'],
+			null,
+			true,
+			false
+		);
+		if ($storages_show->error == 0) {
+			$this->setViewState(self::STORAGE_INFO, $storages_show->output);
+		}
+	}
+
+	/**
+	 * Get storage information.
+	 *
+	 * @return array storage information
+	 */
+	public function getStorageInfo() {
+		return $this->getViewState(self::STORAGE_INFO, []);
+	}
 
 	/**
 	 * Reload job information.
@@ -327,12 +353,23 @@ class JobHistoryView extends BaculumWebPage {
 		}
 		$log = $this->getModule('api')->get($params);
 
+		$joblog = [];
 		if (!is_array($log->output) || count($log->output) == 0) {
 			$msg = Prado::localize("Output for selected job is not available yet or you do not have enabled logging job logs to the catalog database.\n\nTo watch job log you need to add to the job Messages resource the following directive:\n\nCatalog = all, !debug, !skipped, !saved");
-			$joblog = array($msg);
+			$joblog = [$msg];
 
 		} else {
 			$joblog = $log->output;
+
+			if ($this->is_running) {
+				// search for media requests to display warning
+				$this->findLogMediaRequest($joblog);
+			} else {
+				$this->getCallbackClient()->callClientFunction(
+					'oRunningJobStatus.show_warning',
+					[false]
+				);
+			}
 		}
 		if ($this->is_running) {
 			$this->RunningIcon->Display = 'Dynamic';
@@ -353,6 +390,77 @@ class JobHistoryView extends BaculumWebPage {
 		$joblog = $this->getModule('log_parser')->parse($joblog);
 
 		$this->JobLog->Text = implode(PHP_EOL, $joblog);
+	}
+
+	private function findLogMediaRequest($joblog) {
+		$waiting = false;
+		$needed = [
+			'storage' => '',
+			'volume' => '',
+			'pool' => '',
+			'mediatype' => '',
+			'write' => true,
+			'waiting' => $waiting
+		];
+		$joblog = array_reverse($joblog);
+		for ($i = 0; $i < count($joblog); $i++) {
+			if (preg_match('/Cannot find any appendable volumes/i', $joblog[$i]) === 1) {
+				$waiting = true;
+			} elseif (preg_match('/Please mount read Volume "(?P<volume>[a-zA-Z0-9:.\-_]+)" for:/i', $joblog[$i], $match) === 1) {
+				$needed['volume'] = $match['volume'];
+				$needed['write'] = false;
+				$waiting = true;
+			} elseif (preg_match('/Please mount append Volume "(?P<volume>[a-zA-Z0-9:.\-_]+)" or label a new one for:/i', $joblog[$i], $match) === 1) {
+				$needed['volume'] = $match['volume'];
+				$waiting = true;
+			} elseif (preg_match('/(New volume "[a-zA-Z0-9:.\-_]+" mounted on device|Ready to append to end of Volume|Ready to read from volume|Recycled volume.+all previous data lost|Wrote label to prelabeled Volume)/i', $joblog[$i]) === 1) {
+				// stop checking, new volume provided
+				break;
+			}
+			if ($waiting) {
+				$log = explode(PHP_EOL, $joblog[$i]);
+				for ($j = 0; $j < count($log); $j++) {
+					if (preg_match('/\s+(?P<key>Storage|Pool|Media type):\s*(?P<value>.+)/i', $log[$j], $match) === 1) {
+						$key = strtolower($match['key']);
+						$key = str_replace(' ', '', $key);
+						$needed[$key] = $match['value'];
+					}
+				}
+				if ($needed['storage'] && $needed['pool'] && $needed['mediatype']) {
+					// everything what needed, so stop
+					break;
+				}
+			}
+		}
+		if ($waiting && $needed['write']) {
+			if (!empty($needed['pool'])) {
+				// Set pool for labeling
+				$this->LabelMedia->setPool($needed['pool']);
+			}
+			if (!empty($needed['storage'])) {
+				// Set storage for labeling
+				if (count($this->StorageInfo) == 0) {
+					$this->setStorageInfo();
+				}
+				$storage = '';
+				if (preg_match('/^"(?P<storage>[a-zA-Z0-9:.\-_ ]+)"/', $needed['storage'], $match) === 1) {
+					$storage = $match['storage'];
+				}
+				for ($i = 0; $i < count($this->StorageInfo); $i++) {
+					if ($this->StorageInfo[$i]->devicename == $storage) {
+						// Set storage for labeling
+						$this->LabelMedia->setStorage($this->StorageInfo[$i]->name);
+						break;
+					}
+				}
+			}
+		}
+		$needed['waiting'] = $waiting;
+
+		$this->getCallbackClient()->callClientFunction(
+			'oRunningJobStatus.set_media_request_msg',
+			[$needed]
+		);
 	}
 
 	private function isShowRestoreBtn() {

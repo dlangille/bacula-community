@@ -13,7 +13,7 @@
 	<div class="w3-modal-content w3-animate-top w3-card-4">
 		<header class="w3-container w3-teal"> 
 			<span onclick="show_label_volume_window(false);" class="w3-button w3-display-topright">&times;</span>
-			<h2><%[ Label volume(s) ]%></h2>
+			<h2><%[ Label volume(s) ]%> <%=$this->Storage ? Prado::localize('Storage:') . ' ' . $this->Storage : ''%></h2>
 		</header>
 		<div class="w3-padding">
 			<com:TValidationSummary

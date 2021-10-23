@@ -76,6 +76,13 @@
 				ClientSide.OnComplete="oRunningJobStatus.init_refresh(); oRunningJobStatus.show_loader(false);"
 			/>
 			<div class="w3-row">
+				<div id="status_running_job_warning_container" class="w3-panel w3-pale-yellow w3-border" style="display: none">
+					<h3><%[ Warning ]%></h3>
+					<p id="status_running_job_warning_msg"></p>
+					<div id="status_running_job_warning_label_btn" class="w3-section" style="display: none">
+						<com:Application.Web.Portlets.LabelVolume ID="LabelMedia" />
+					</div>
+				</div>
 				<a href="javascript:void(0)" onclick="W3SubTabs.open('status_running_job_subtab_graphical', 'status_running_job_graphical_output');"<%=!$this->allow_graph_mode ? ' style="display: none"' : ''%>>
 					<div id="status_running_job_subtab_graphical" class="subtab_btn w3-half w3-bottombar w3-hover-light-grey w3-border-red w3-padding">
 						<%[ Running job status ]%>
@@ -117,6 +124,11 @@ var oRunningJobStatus = {
 		refresh_interval: 'status_running_job_refresh_interval',
 		status_not_supported: 'status_running_job_status_not_supported',
 		graphical_container: 'status_running_job_graphical_container',
+		warning: {
+			container: 'status_running_job_warning_container',
+			msg: 'status_running_job_warning_msg',
+			label_btn: 'status_running_job_warning_label_btn'
+		},
 		header: {
 			version: 'status_client_version',
 			uname: 'status_client_uname',
@@ -390,6 +402,37 @@ var oRunningJobStatus = {
 	},
 	show_loader: function(show) {
 		document.getElementById(this.ids.loader).style.display = (show === true ? '' : 'none');
+	},
+	show_warning: function(show) {
+		var warning = document.getElementById(oRunningJobStatus.ids.warning.container);
+		warning.style.display = show ? 'block' : 'none';
+	},
+	set_media_request_msg: function(data) {
+		if (data.waiting) {
+			var msg;
+			var label_btn = document.getElementById(oRunningJobStatus.ids.warning.label_btn);
+			label_btn.style.display = 'none';
+			if (data.volume) {
+				if (data.write) {
+					msg = '<%[ The job needs media. ]%> <%[ Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype. ]%>';
+					label_btn.style.display = '';
+				} else {
+					msg = '<%[ The job needs media. ]%> <%[ Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype. ]%>';
+				}
+				msg = msg.replace('%volume', '<strong>' + data.volume + '</strong>');
+			} else {
+				msg = '<%[ The job needs media. ]%> <%[ Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype. ]%>';
+				label_btn.style.display = '';
+			}
+			msg = msg.replace('%storage', '<strong>' + data.storage + '</strong>');
+			msg = msg.replace('%pool', '<strong>' + data.pool + '</strong>');
+			msg = msg.replace('%mediatype', '<strong>' + data.mediatype + '</strong>');
+			var message = document.getElementById(oRunningJobStatus.ids.warning.msg);
+			message.innerHTML = msg;
+			oRunningJobStatus.show_warning(true);
+		} else {
+			oRunningJobStatus.show_warning(false);
+		}
 	}
 }
 

@@ -3816,3 +3816,15 @@ msgstr "New migrate job"
 
 msgid "Please select the criteria that will be used for selecting backup jobs to migrate."
 msgstr "Please select the criteria that will be used for selecting backup jobs to migrate."
+
+msgid "The job needs media."
+msgstr "The job needs media."
+
+msgid "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
+
+msgid "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
+
+msgid "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."

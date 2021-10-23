@@ -39,6 +39,7 @@ class LabelVolume extends Portlets {
 	const SHOW_BUTTON = 'ShowButton';
 	const BARCODE_LABEL = 'BarcodeLabel';
 	const STORAGE = 'Storage';
+	const POOL = 'Pool';
 
 	public function loadValues() {
 		$storages = $this->getModule('api')->get(array('storages'));
@@ -50,8 +51,10 @@ class LabelVolume extends Portlets {
 		}
 		$this->StorageLabel->DataSource = $storage_list;
 		if ($this->Storage) {
-			$storage_list_flip =array_flip($storage_list);
-			$this->StorageLabel->SelectedValue = $storage_list_flip[$this->Storage];
+			$storage_list_flip = array_flip($storage_list);
+			if (key_exists($this->Storage, $storage_list_flip)) {
+				$this->StorageLabel->SelectedValue = $storage_list_flip[$this->Storage];
+			}
 		}
 		$this->StorageLabel->dataBind();
 
@@ -63,6 +66,12 @@ class LabelVolume extends Portlets {
 			}
 		}
 		$this->PoolLabel->dataSource = $pool_list;
+		if ($this->Pool) {
+			$pool_list_flip = array_flip($pool_list);
+			if (key_exists($this->Pool, $pool_list_flip)) {
+				$this->PoolLabel->SelectedValue = $pool_list_flip[$this->Pool];
+			}
+		}
 		$this->PoolLabel->dataBind();
 	}
 
@@ -193,6 +202,14 @@ class LabelVolume extends Portlets {
 
 	public function getStorage() {
 		return $this->getViewState(self::STORAGE);
+	}
+
+	public function setPool($pool) {
+		$this->setViewState(self::POOL, $pool);
+	}
+
+	public function getPool() {
+		return $this->getViewState(self::POOL);
 	}
 }
 ?>
