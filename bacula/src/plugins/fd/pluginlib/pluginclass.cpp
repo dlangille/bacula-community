@@ -289,19 +289,29 @@ namespace pluginlib
             continue;
          }
          /* scan for listing parameter, so the estimate job should be executed as a Listing procedure */
-         if (EstimateFull == mode && bstrcmp(parser.argk[i], "listing")){
+         if (EstimateFull == mode && bstrcmp(parser.argk[i], "listing"))
+         {
             /* we have a listing parameter which for estimate means .ls command */
-            mode = Listing;
             DMSG0(ctx, DINFO, "listing procedure param found\n");
-            continue;
-         }
-         /* scan for query parameter, so the estimate job should be executed as a QueryParam procedure */
-         if (EstimateFull == mode && strcasecmp(parser.argk[i], "query") == 0){
-            /* found, so check the value if provided */
-            if (parser.argv[i]){
-               mode = QueryParams;
-               DMSG0(ctx, DINFO, "query procedure param found\n");
+            mode = Listing;
+            const char **table = get_listing_top_struct();
+            if (table)
+            {
+               pm_strcpy(m_listing_query, parser.argv[i]);
+               m_listing_top_nr = 0;
+               for (int func = 0; table[func]; func++)
+               {
+                  if (bstrcmp(parser.argv[i], table[func]) || (*parser.argv[i] == '/' && bstrcmp(parser.argv[i] + 1, table[func])))
+                  {
+                     DMSG2(ctx, DDEBUG, "listing data: %s %d\n", table[func], func);
+                     m_listing_func = func;
+                     m_listing_top_nr = -1;
+                     break;
+                  }
+               }
             }
+            DMSG2(ctx, DDEBUG, "m_listing_top_nr: %d m_listing_func: %d\n", m_listing_top_nr, m_listing_func);
+            continue;
          }
          /* handle it with pluginctx */
          bRC status = pluginctx_parse_parameter(ctx, parser.argk[i], parser.argv[i]);
@@ -568,6 +578,42 @@ namespace pluginlib
          return bRC_OK;
       }
 
+      if (mode == Listing)
+      {
+         if (m_listing_top_nr >= 0)
+         {
+            const char **table = get_listing_top_struct();
+            if (table)
+            {
+               DMSG1(ctx, DINFO, "m_listing_top_nr: %d\n", m_listing_top_nr);
+               const char *table_name = (char *)table[m_listing_top_nr];
+               if (table_name)
+               {
+                  // handle listing top
+                  m_listing_top_nr++;
+                  sp->fname = (char *)table_name;
+                  sp->type = FT_DIREND;
+                  sp->statp.st_size = 0;
+                  sp->statp.st_nlink = 1;
+                  sp->statp.st_uid = 0;
+                  sp->statp.st_gid = 0;
+                  sp->statp.st_mode = 040750;
+                  sp->statp.st_blksize = 4096;
+                  sp->statp.st_blocks = 1;
+                  sp->statp.st_atime = sp->statp.st_mtime = sp->statp.st_ctime = time(NULL);
+                  return bRC_OK;
+               } else {
+                  m_listing_top_nr = -1;
+                  return bRC_Max;
+               }
+            } else {
+               DMSG0(ctx, DERROR, "Listing is not enabled for this plugin\n");
+               JMSG0(ctx, DERROR, "Listing is not enabled for this plugin\n");
+               return bRC_Error;
+            }
+         }
+      }
+
       bRC status = perform_start_backup_file(ctx, sp);
 
       DMSG2(ctx, DINFO, "StartBackup: %s %ld\n", sp->fname, sp->statp.st_size);
@@ -596,6 +642,11 @@ namespace pluginlib
       /* When current file was the Plugin Config, so just ask for the next file */
       if (mode == BackupFull && pluginconfigsent == false) {
          pluginconfigsent = true;
+         return bRC_More;
+      }
+
+      if (mode == Listing && m_listing_top_nr >= 0)
+      {
          return bRC_More;
       }
 
@@ -738,16 +789,20 @@ namespace pluginlib
    bRC PLUGINBCLASS::queryParameter(bpContext *ctx, struct query_pkt *qp)
    {
       // check if it is our Plugin command
-      if (!isourplugincommand(PLUGINPREFIX, qp->command) != 0){
+      if (!isourplugincommand(PLUGINPREFIX, qp->command) != 0)
+      {
          // it is not our plugin prefix
          return bRC_OK;
       }
 
       CHECK_JOB_CANCELLED;
 
-      if (mode != QueryParams) {
+      if (mode != QueryParams)   // TODO: do we really need this?
+      {
          mode = QueryParams;
       }
+
+      pluginctx_switch_command(qp->command);
 
       return perform_query_parameter(ctx, qp);
    }

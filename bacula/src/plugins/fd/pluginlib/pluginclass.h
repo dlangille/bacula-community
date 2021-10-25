@@ -108,7 +108,11 @@ namespace pluginlib
          parser(),
          execpath(PM_FNAME),
          workingpath(PM_FNAME),
-         job_cancelled(false)
+         job_cancelled(false),
+         accurate_mode(0),
+         m_listing_query(PM_NAME),
+         m_listing_top_nr(-1),
+         m_listing_func(-1)
       {}
 #if __cplusplus > 201103L
       PLUGINBCLASS() = delete;
@@ -135,6 +139,9 @@ namespace pluginlib
       POOL_MEM workingpath;            /// ready to use path for bacula working directory
       bool job_cancelled;              /// it signal the metaplugin that job was cancelled
       int accurate_mode;               /// if the job is accurate
+      POOL_MEM m_listing_query;        ///
+      int m_listing_top_nr;            ///
+      int m_listing_func;              ///
 
       virtual bRC parse_plugin_config(bpContext *ctx, restore_object_pkt *rop) { return bRC_OK; }
       virtual bRC parse_plugin_command(bpContext *ctx, const char *command);
@@ -181,7 +188,7 @@ namespace pluginlib
       virtual bRC perform_end_restore_file(bpContext *ctx) { return bRC_OK; }
       virtual bRC perform_cancel_command(bpContext *ctx) { return bRC_OK; }
 
-      // virtual int check_ini_param(char *param);
+      virtual const char **get_listing_top_struct() noexcept { return NULL; }
 
       virtual void pluginctx_switch_command(const char *command) {}
       virtual void pluginctx_clear_abort_on_error() {}
