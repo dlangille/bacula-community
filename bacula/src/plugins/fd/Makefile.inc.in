@@ -65,9 +65,6 @@ $(INIOBJ):
 $(LIBBACOBJ):
 	$(MAKE) -C $(LIBDIR) libbac.la
 
-$(INIOBJ):
-	$(MAKE) -C $(LIBDIR) ini.lo
-
 $(LIBBACCFGOBJ):
 	$(MAKE) -C $(LIBDIR) libbaccfg.la
 
