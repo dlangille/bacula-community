@@ -237,6 +237,9 @@ devclean: realclean
 install-fs-io-error: fs-io-error
 	$(INSTALL_PROGRAM) fs-io-error $(DESTDIR)$(sbindir)/fs-io-error
 
+install-bjoblist: bjoblist
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bjoblist $(DESTDIR)$(sbindir)/
+
 install-bsnapshot: bsnapshot
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bsnapshot $(DESTDIR)$(sbindir)/bsnapshot
 
