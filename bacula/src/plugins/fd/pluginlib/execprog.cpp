@@ -31,6 +31,7 @@
 /* Plugin compile time variables */
 #define PLUGINPREFIX                "execprog:"
 
+
 /*
  * Terminate the connection represented by BPIPE object.
  *    it shows a debug and job messages when connection close is unsuccessful
@@ -42,31 +43,43 @@
  * out:
  *    none
  */
-void EXECPROG::terminate(bpContext *ctx, bool raise_error)
+int EXECPROG::terminate(bpContext *ctx, bool raise_error)
 {
-   if (is_closed())
-   {
-      return;
-   }
+   // clear status
+   tstatus = 0;
+   pm_strcpy(m_errmsg, NULL);
 
-   // after close_bpipe it is no longer available
-   tstatus = close_bpipe(bpipe);
-   if (tstatus && raise_error)
+   if (!is_closed())
    {
-      /* error during close */
+      // after close_bpipe it is no longer available
+      pid_t wpid = bpipe->worker_pid;
+
+
+      tstatus = close_bpipe(bpipe);
       berrno be;
-      DMSG(ctx, DERROR, "Error closing command. Err=%s\n", be.bstrerror(tstatus));
-      JMSG(ctx, M_ERROR, "Error closing command. Err=%s\n", be.bstrerror(tstatus));
+      pm_strcpy(m_errmsg, be.bstrerror(tstatus));
+      if (tstatus)
+      {
+         /* error during close */
+         DMSG(ctx, DERROR, "Error closing command. Err=%s (%d)\n", m_errmsg.c_str());
+         if (raise_error)
+         {
+            // raise it on request
+            JMSG(ctx, M_ERROR, "Error closing command. Err=%s (%d)\n", m_errmsg.c_str());
+         }
+      }
+
+      if (wpid)
+      {
+         /* terminate the process command */
+         kill(wpid, SIGTERM);
+      }
+
+      bpipe = NULL;
    }
 
-   // TODO: is it required to terminate the backend process?
-   // if (bpipe->worker_pid){
-   //    /* terminate the process command */
-   //    kill(bpipe->worker_pid, SIGTERM);
-   // }
-
-   bpipe = NULL;
-};
+   return tstatus;
+}
 
 /*
  * Run command and prepared parameters.
