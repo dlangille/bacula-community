@@ -2942,6 +2942,12 @@ static int backup_cmd(JCR *jcr)
    dir->fsend(OKbackup);
    Dmsg1(110, "filed>dird: %s", dir->msg);
 
+   /* Change the user if needed */
+   if (!set_job_user(jcr)) {
+      dir->fsend(BADcmd, "backup");
+      goto cleanup;
+   }
+
    /*
     * Send Append Open Session to Storage daemon
     */
@@ -3097,6 +3103,8 @@ static int backup_cmd(JCR *jcr)
    }
 
 cleanup:
+   /* Reset the user if */
+   reset_job_user(jcr);
 #if defined(WIN32_VSS)
    if (jcr->Snapshot) {
       Win32ConvCleanupCache();
@@ -3375,7 +3383,11 @@ static int restore_cmd(JCR *jcr)
    }
 #endif
 
-   set_job_user(jcr);
+   /* Change the user if needed */
+   if (!set_job_user(jcr)) {
+      dir->fsend(BADjob);
+      goto bail_out;
+   }
 
    if (!jcr->is_canceled()) {
       do_restore(jcr);

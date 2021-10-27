@@ -121,6 +121,8 @@ struct DIRRES {
    alist *excluded_backup_dirs;       /* Excluded to-be-backed-up directory list */
    alist *allowed_script_dirs;        /* Allowed directory list to run scripts/programs from */
    alist *allowed_restore_dirs;       /* Allowed directory list to restore to */
+   char *backup_job_user;             /* Backup job will be run as this user if specified */
+   char *restore_job_user;            /* Restore job will be run as this user if specified */
 };
 
 struct CLIENT {
