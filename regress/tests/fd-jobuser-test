@@ -1,0 +1,159 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test for 'JobUser' and 'JobGroup' File Daemon directives.
+#
+# This test should be able to use sudo
+# TODO add some test cases for the backup flow - if only specified user's
+#      directories can be backed up
+#
+TestName="fd-jobuser-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+# This is the user and group that Bacula should use for the Jobs
+user="bacula_test"
+
+cleanup()
+{
+   trap "sudo $bin/bacula-ctl-fd stop" EXIT
+   sudo rm -rf /tmp/bac$$
+}
+
+trap 'cleanup' EXIT INT TERM
+
+# Choose user to set
+backup_user=`awk -F: '{ if (NR == 5) { print $1 ; exit } }' /etc/passwd`
+backup_group=`awk -F: '{ if (NR == 5) { print $1 ; exit } }' /etc/group`
+
+restore_user=`awk -F: '{ if (NR == 6) { print $1 ; exit } }' /etc/passwd`
+restore_group=`awk -F: '{ if (NR == 6) { print $1 ; exit } }' /etc/group`
+
+# This is the user and group that should not be used, even if it's specified in the restore cmd (it should be
+# overriden by the one set in the config file
+user_cmd=`awk -F: '{ if (NR == 8) { print $1 ; exit } }' /etc/passwd`
+group_cmd=`awk -F: '{ if (NR == 8) { print $1 ; exit } }' /etc/group`
+
+# Set proper directives
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "BackupJobUser", "'$backup_user':'$backup_group'", "Director")'
+
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "RestoreJobUser", "'$restore_user':'$restore_group'", "Director")'
+
+# Run Bacula daemons. FD need to be run with sudo to be able to change the user
+${scripts}/bacula-ctl-sd start -m
+sudo $bin/bacula-ctl-fd start -m
+${scripts}/bacula-ctl-dir start -m
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+check_for_zombie_jobs storage=File1
+
+n=`grep "Job will be restricted to $backup_user:$backup_group" $tmp/log1.out | wc -l`
+if [ $n -ne 1 ]; then
+    print_debug "ERROR: No log about changing user found in Backup joblog! See $tmp/log1"
+    bstat=1
+fi
+
+nb=`grep 'Backup OK' $tmp/log1.out | wc -l`
+if [ $nb -lt 1 ]; then
+    print_debug "ERROR: should have found Backup OK message, see $tmp/log2.out"
+    bstat=1
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log2.out
+restore where=$tmp/bacula-restores jobid=2 jobuser=$user_cmd jobgroup=$group_cmd where=/tmp/bac$$ select all done
+yes
+wait
+messages
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File1
+sudo $bin/bacula-ctl-fd stop
+stop_bacula
+
+check_two_logs
+
+n=`grep "Job will be restricted to $restore_user:$restore_group" $tmp/log2.out | wc -l`
+if [ $n -ne 1 ]; then
+    print_debug "ERROR: No log about changing user found in Restore joblog! See $tmp/log2"
+    rstat=1
+fi
+
+# Check if restored permisions are correct (the ones sent in the config file should ovewrite the ones set during the restore)
+sudo ls -l /tmp/bac$$/$cwd/build/po/fr.po | grep "$restore_user $restore_group"
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Permissions on files are not correct"
+    sudo ls -l /tmp/bac$$/home/$user/build/po/fr.po
+    rstat=1
+fi
+
+nb=`sudo ls -la /tmp/bac$$/$cwd/build/ | grep /tmp | grep -v "$restore_user $restore_group" | wc -l`
+if [ $nb -gt 0 ]; then
+    print_debug "ERROR: Permissions on files are not correct"
+    sudo ls -la /tmp/bac$$/$cwd/build/ | grep /tmp | grep -v "$restore_user $restore_group"
+    rstat=2
+fi
+
+$bperl -e 'add_attribute("$conf/bacula-fd.conf", "BackupJobUser", "notvalid:'$backup_group'", "Director")'
+
+${scripts}/bacula-ctl-sd start -m
+sudo $bin/bacula-ctl-fd start -m
+${scripts}/bacula-ctl-dir start -m
+
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log3.out
+run job=$JobName level=Full yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+n=`grep "Unable to restrict Job to notvalid:$backup_group. ERR=Could not find userid=notvalid" $tmp/log3.out | wc -l`
+if [ $n -ne 1 ]; then
+       print_debug "ERROR: No log about invalid user to used found in Backup joblog! See $tmp/log3"
+           bstat=1
+fi
+
+nb=`grep 'Backup Error' $tmp/log3.out | wc -l`
+if [ $nb -lt 1 ]; then
+       print_debug "ERROR: should have found Backup Error message, see $tmp/log3.out"
+           bstat=1
+fi
+
+sudo $bin/bacula-ctl-fd stop
+stop_bacula
+
+end_test
