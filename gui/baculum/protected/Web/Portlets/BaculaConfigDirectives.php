@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+Prado::using('System.Web.UI.TCommandEventParameter');
 Prado::using('System.Web.UI.ActiveControls.TActiveLabel');
 Prado::using('System.Web.UI.ActiveControls.TActiveLinkButton');
 Prado::using('System.Web.UI.ActiveControls.TActivePanel');
@@ -370,6 +371,11 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 					// set new resource name
 					$this->setResourceName($res_name_dir);
 					$resource_name = $res_name_dir;
+					$param = new TCommandEventParameter('rename', [
+						'resource_type' => $resource_type,
+						'resource_name' => $resource_name
+					]);
+					$this->onRename($param);
 				}
 			}
 		} else {
@@ -579,6 +585,16 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 		$host = null;
 		$resource_type = $this->getResourceType();
 		$resource_name = $this->getResourceName();
+
+		if ($resource_type == 'Pool') {
+			/**
+			 * For Pools there is done copy resource, not rename, to allow users
+			 * re-assigning volumes from original pool to new pool and at the end
+			 * to remove original pool.
+			 */
+			return true;
+		}
+
 		$config = $this->getConfigData($host, array($component_type));
 		$deps = $this->getModule('data_deps')->checkDependencies(
 			$component_type,
@@ -681,7 +697,7 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 	/**
 	 * Set if buttons should be flexible and available at the bottom of the page.
 	 *
-	 * @return none;
+	 * @return none
 	 */
 	public function setShowBottomButtons($show) {
 		$show = TPropertyValue::ensureBoolean($show);
@@ -697,9 +713,24 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 		return $this->getViewState(self::SHOW_BOTTOM_BUTTONS, true);
 	}
 
+	/**
+	 * On save event fired when resource is saved.
+	 *
+	 * @return none
+	 */
 	public function onSave($param) {
 		$this->raiseEvent('OnSave', $this, $param);
 	}
+
+	/**
+	 * On rename event fired when resource is renamed.
+	 *
+	 * @return none
+	 */
+	public function onRename($param) {
+		$this->raiseEvent('OnRename', $this, $param);
+	}
+
 
 	/**
 	 * Set if name field should be disabled.

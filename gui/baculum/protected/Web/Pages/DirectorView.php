@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+Prado::using('System.Web.UI.TCommandEventParameter');
 Prado::using('System.Web.UI.ActiveControls.TCallback');
 Prado::using('Application.Web.Class.BaculumWebPage');
 
@@ -130,6 +131,15 @@ class DirectorView extends BaculumWebPage {
 		}
 
 		$this->getCallbackClient()->callClientFunction('init_graphical_director_status', [$client_status]);
+	}
+
+	public function renameResource($sender, $param) {
+		if ($param instanceof TCommandEventParameter) {
+			$res = $param->getCommandParameter();
+			if ($res['resource_type'] == 'Pool') {
+				$this->getCallbackClient()->show('director_view_rename_resource');
+			}
+		}
 	}
 }
 ?>

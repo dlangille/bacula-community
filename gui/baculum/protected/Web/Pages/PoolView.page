@@ -3,7 +3,7 @@
 	<!-- Header -->
 	<header class="w3-container">
 		<h5>
-			<b><i class="fa fa-desktop"></i> <%[ Pool details ]%></b>
+			<b><i class="fa fa-tape"></i> <%[ Pool details ]%></b>
 		</h5>
 	</header>
 	<h3 class="w3-margin-left">[PoolId <%=$this->getPoolId()%>] <%[ Pool: ]%> <%=$this->getPoolName()%></h3>
@@ -27,7 +27,7 @@
 			ClientSide.OnLoading="$('#status_pool_loading').show();"
 			ClientSide.OnSuccess="$('#status_pool_loading').hide();"
 		>
-			<prop:Text><%=Prado::localize('Update pool')%> &nbsp;<i class="fa fa-wrench"></i></prop:Text>
+			<prop:Text><i class="fa fa-wrench"></i>&nbsp; <%=Prado::localize('Update pool')%></prop:Text>
 		</com:TActiveLinkButton>
 		<com:TActiveLinkButton
 			ID="UpdateAllVolInPoolBtn"
@@ -37,8 +37,11 @@
 			ClientSide.OnLoading="$('#status_pool_loading').show();"
 			ClientSide.OnSuccess="$('#status_pool_loading').hide();"
 		>
-			<prop:Text><%=Prado::localize('Update all vols in pool')%> &nbsp;<i class="fa fa-wrench"></i></prop:Text>
+			<prop:Text><i class="fa fa-wrench"></i>&nbsp; <%=Prado::localize('Update all vols in pool')%></prop:Text>
 		</com:TActiveLinkButton>
+		<com:Application.Web.Portlets.AssignVolumesToPool
+			PoolId="<%=$this->getPoolId()%>"
+		/>
 		<i id="status_pool_loading" class="fa fa-sync w3-spin" style="display: none; vertical-align: super;"></i>
 		<div class="w3-row">
 			<div class="w3-card w3-quarter w3-padding w3-margin-right details_card">
@@ -243,11 +246,16 @@
 		</table>
 	</div>
 	<div class="w3-container tab_item" id="pool_config" style="display: none">
+		<div id="pool_view_rename_resource" class="w3-panel w3-pale-yellow w3-border" style="display: none">
+			<h3><%[ Warning ]%></h3>
+			<p><%[ The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool. ]%></p>
+		</div>
 		<com:Application.Web.Portlets.BaculaConfigDirectives
 			ID="PoolConfig"
 			ComponentType="dir"
 			ResourceType="Pool"
 			ShowCancelButton="false"
+			OnRename="showAssignVolumesWarning"
 		/>
 	</div>
 <script type="text/javascript">

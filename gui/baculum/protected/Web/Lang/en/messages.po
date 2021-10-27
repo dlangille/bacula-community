@@ -3817,3 +3817,24 @@ msgstr "Please mount volume %volume for storage: %storage, pool: %pool, media ty
 
 msgid "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
 msgstr "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
+
+msgid "Assign volumes from selected pool"
+msgstr "Assign volumes from selected pool"
+
+msgid "This function enables re-assigning volumes from selected pool to this pool."
+msgstr "This function enables re-assigning volumes from selected pool to this pool."
+
+msgid "Please select a pool from which you would like to assign volumes to this pool."
+msgstr "Please select a pool from which you would like to assign volumes to this pool."
+
+msgid "Assigned volume count:"
+msgstr "Assigned volume count:"
+
+msgid "Assign volumes"
+msgstr "Assign volumes"
+
+msgid "No volumes in the pool to assign."
+msgstr "No volumes in the pool to assign."
+
+msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
+msgstr "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."

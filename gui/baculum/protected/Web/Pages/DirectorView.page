@@ -935,6 +935,10 @@ function load_director_config() {
 		<com:TCallback ID="LoadDirectorResourcesConfig" OnCallback="loadDirectorResourcesConfig" />
 		<script>
 function load_dir_res_config(resource) {
+	// hide pool warning
+	document.getElementById('director_view_rename_resource').style.display = 'none';
+
+	// do load Director resource request
 	var cb = <%=$this->LoadDirectorResourcesConfig->ActiveControl->Javascript%>;
 	cb.setCallbackParameter(resource);
 	cb.dispatch();
@@ -986,11 +990,16 @@ function load_dir_res_config(resource) {
 				ShowCancelButton="false"
 			/>
 		</div>
+		<div id="director_view_rename_resource" class="w3-panel w3-pale-yellow w3-border" style="display: none">
+			<h3><%[ Warning ]%></h3>
+			<p><%[ The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool. ]%></p>
+		</div>
 		<div id="director_resources_config_form" class="subtab_item" style="display: none">
 			<com:Application.Web.Portlets.BaculaConfigResourceList
 				ID="DirectorResourcesConfig"
 				ComponentType="dir"
 				ResourceList="<%=[[ 'name' => 'Name', 'label' => 'Name' ]]%>"
+				OnRename="renameResource"
 			/>
 		</div>
 	</div>

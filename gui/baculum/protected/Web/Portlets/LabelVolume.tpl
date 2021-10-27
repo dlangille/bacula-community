@@ -8,7 +8,6 @@
 	</prop:Attributes.onclick>
 	<i class="fa fa-tag"></i> &nbsp;<%[ Label volume(s) ]%>
 </com:TActiveLinkButton>
-</button>
 <div id="label_volume" class="w3-modal">
 	<div class="w3-modal-content w3-animate-top w3-card-4">
 		<header class="w3-container w3-teal"> 

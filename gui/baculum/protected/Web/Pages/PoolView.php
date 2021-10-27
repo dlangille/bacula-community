@@ -217,5 +217,8 @@ class PoolView extends BaculumWebPage {
 		}
 	}
 
+	public function showAssignVolumesWarning($sender, $param) {
+		$this->getCallbackClient()->show('pool_view_rename_resource');
+	}
 }
 ?>

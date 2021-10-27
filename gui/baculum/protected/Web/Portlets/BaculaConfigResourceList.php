@@ -189,6 +189,14 @@ class BaculaConfigResourceList extends Portlets {
 		$this->getPage()->getCallbackClient()->show($err_win_id);
 	}
 
+	public function renameResource($sender, $param) {
+		$this->onRename($param);
+	}
+
+	public function onRename($param) {
+		$this->raiseEvent('OnRename', $this, $param);
+	}
+
 	public function getHost() {
 		return $this->getViewState(self::HOST);
 	}

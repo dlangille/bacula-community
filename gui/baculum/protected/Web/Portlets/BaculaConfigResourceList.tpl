@@ -141,6 +141,7 @@ var oBaculaConfigResourceList<%=$this->ClientID%> = {
 				ShowBottomButtons="false"
 				SaveDirectiveActionOk="oBaculaConfigResourceWindow<%=$this->ClientID%>.close_resource_window();"
 				OnSave="loadResourceListTable"
+				OnRename="renameResource"
 			/>
 		</div>
 	</div>
