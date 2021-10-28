@@ -203,6 +203,8 @@ drivers: bacula-sd-cloud-driver.la ${CLOUD_DRIVERS}
 
 s3-driver: bacula-sd-cloud-s3-driver.la
 
+aws-driver: bacula-sd-cloud-aws-driver.la
+
 generic-driver: bacula-sd-cloud-generic-driver.la
 
 oci-driver: bacula-sd-cloud-oci-driver.la
@@ -215,6 +217,9 @@ bacula-sd-cloud-driver.la: Makefile $(CLOUD_ALL_LOBJS)
 	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(CLOUD_ALL_LOBJS) -o $@ -R $(libdir) -rpath $(libdir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE)
 
 bacula-sd-cloud-was-driver.la: Makefile $(CLOUD_GENERIC_LOBJS)
+	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(CLOUD_GENERIC_LOBJS) -o $@ -R $(libdir) -rpath $(libdir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE)
+
+bacula-sd-cloud-aws-driver.la: Makefile $(CLOUD_GENERIC_LOBJS)
 	 $(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared $(CLOUD_GENERIC_LOBJS) -o $@ -R $(libdir) -rpath $(libdir) -module -export-dynamic -release $(LIBBACSD_LT_RELEASE)
 
 bacula-sd-cloud-s3-driver.la: Makefile $(CLOUD_S3_LOBJS)
@@ -433,6 +438,11 @@ install-s3-glacier-cloud: install-cloud bacula-sd-cloud-glacier-s3-driver.la
 	$(MKDIR) $(DESTDIR)$(plugindir)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-cloud-glacier-s3-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
 	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-cloud-glacier-s3-driver.la
+
+install-aws-cloud: install-cloud bacula-sd-cloud-aws-driver.la
+	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) bacula-sd-cloud-aws-driver$(DEFAULT_SHARED_OBJECT_TYPE) $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/bacula-sd-cloud-aws-driver.la
 
 install-generic-cloud: install-cloud bacula-sd-cloud-generic-driver.la
 	$(MKDIR) $(DESTDIR)$(plugindir)

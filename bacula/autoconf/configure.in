@@ -392,6 +392,7 @@ support_readline=yes
 support_lzo=yes
 support_zstd=yes
 support_s3=yes
+support_aws=yes
 support_conio=yes
 support_bat=no
 support_tls=no
@@ -2257,6 +2258,27 @@ fi
 AC_SUBST(S3_INC)
 AC_SUBST(S3_LIBS)
 
+have_aws=no
+
+if test x$support_aws = xyes; then
+   AC_ARG_WITH(aws,
+      AC_HELP_STRING([--with-aws], [specify Google Storage Cloud]),
+      [
+	  case "$with_aws" in
+	  no)
+	     :
+	     ;;
+	  yes|*)
+   
+   	AC_DEFINE(HAVE_GENERIC_CLOUD, 1, [Define to 1 if you have generic cloud])
+        have_aws="yes"
+        CLOUD_DRIVERS="${CLOUD_DRIVERS} generic-driver"
+        CLOUD_INSTALL_TARGETS="${CLOUD_INSTALL_TARGETS} install-aws-cloud"
+	     ;;
+	  esac
+   ])
+fi
+
 AC_LANG_PUSH(C++)
 AC_CHECK_FUNCS(backtrace)
 AC_LANG_POP(C++)
@@ -4093,6 +4115,7 @@ AC_CONFIG_FILES([
    scripts/bat.desktop.xsu \
    scripts/bat.desktop.consolehelper \
    scripts/bat.console_apps \
+   scripts/aws_cloud_driver \
    scripts/bacula-tray-monitor.desktop \
    scripts/kubernetes-bacula-backup/Dockerfile \
    src/Makefile \
@@ -4371,6 +4394,7 @@ Configuration on `date`:
    - TOTP BPAM:               ${support_totp_bpam}
    - CDP:                     ${support_cdp}
    - Antivirus:               ${support_antivirus}
+   - aws:                     ${have_aws}
   " > config.out
 
 # create a small shell script useful for support with
