@@ -3758,9 +3758,6 @@ msgstr "Migrate by SQL query"
 msgid "New migrate job wizard"
 msgstr "New migrate job wizard"
 
-msgid "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing i     t to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
-msgstr "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing i     t to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
-
 msgid "Step 2 - what you want to migrate"
 msgstr "Step 2 - what you want to migrate"
 
