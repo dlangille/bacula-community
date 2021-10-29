@@ -61,7 +61,7 @@ class Monitor extends BaculumPage {
 
 		$error = null;
 		$params = $this->Request->contains('params') ? $this->Request['params'] : [];
-		if (is_array($params) && key_exists('jobs', $params)) {
+		if (key_exists('jobs', $params)) {
 			$job_params = ['jobs'];
 			$job_query = [];
 			if (is_array($params['jobs'])) {
@@ -85,14 +85,6 @@ class Monitor extends BaculumPage {
 			$result = $this->getModule('api')->get($job_params);
 			if ($result->error === 0) {
 				$monitor_data['jobs'] = $result->output;
-			} else {
-				$error = $result;
-			}
-		}
-		if (!$error) {
-			$result = $this->getModule('api')->get(['jobs', '?jobstatus=CR']);
-			if ($result->error === 0) {
-				$monitor_data['running_jobs'] = $result->output;
 			} else {
 				$error = $result;
 			}
@@ -144,15 +136,24 @@ class Monitor extends BaculumPage {
 			}
 		}
 
-		$running_job_states = $this->Application->getModule('misc')->getRunningJobStates();
-
 		if (key_exists('jobs', $params)) {
+			$running_job_states = $this->Application->getModule('misc')->getRunningJobStates();
 			for ($i = 0; $i < count($monitor_data['jobs']); $i++) {
-				if (!in_array($monitor_data['jobs'][$i]->jobstatus, $running_job_states)) {
+				if (in_array($monitor_data['jobs'][$i]->jobstatus, $running_job_states)) {
+					$monitor_data['running_jobs'][] = $monitor_data['jobs'][$i];
+				} else {
 					$monitor_data['terminated_jobs'][] = $monitor_data['jobs'][$i];
 				}
 			}
+		} elseif (!$error) {
+			$result = $this->getModule('api')->get(['jobs', '?jobstatus=CR']);
+			if ($result->error === 0) {
+				$monitor_data['running_jobs'] = $result->output;
+			} else {
+				$error = $result;
+			}
 		}
+
 		if (is_object($error)) {
 			$monitor_data['error'] = $error;
 		}

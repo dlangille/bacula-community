@@ -58,6 +58,7 @@ class Main extends TTemplateControl {
 		$api_host = $this->UserAPIHosts->SelectedValue;
 		if (!empty($api_host)) {
 			$this->User->setDefaultAPIHost($api_host);
+			$this->getPage()->resetSessionUserVars();
 			$this->getResponse()->reload();
 		}
 	}

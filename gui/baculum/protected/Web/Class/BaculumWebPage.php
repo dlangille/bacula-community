@@ -64,7 +64,9 @@ class BaculumWebPage extends BaculumPage {
 		if (!$this->IsPostBack && !$this->IsCallBack) {
 			$this->postInitActions();
 			$this->getModule('api')->initSessionCache(true);
-			$this->setSessionUserVars();
+			if (!key_exists('user_vars', $_SESSION) || $_SESSION['user_vars'] === false) {
+				$this->setSessionUserVars();
+			}
 		}
 	}
 
@@ -97,7 +99,6 @@ class BaculumWebPage extends BaculumPage {
 
 		// Set config main component names
 		$config = $this->getModule('api')->get(array('config'), null, false);
-		$_SESSION['dir'] = $_SESSION['sd'] = $_SESSION['fd'] = $_SESSION['bcons'] = '';
 		if ($config->error === 0) {
 			for ($i = 0; $i < count($config->output); $i++) {
 				$component = (array)$config->output[$i];
@@ -106,6 +107,12 @@ class BaculumWebPage extends BaculumPage {
 				}
 			}
 		}
+		$_SESSION['user_vars'] = true;
+	}
+
+	public function resetSessionUserVars() {
+		$_SESSION['user_vars'] = false;
+		$_SESSION['director'] = $_SESSION['dir'] = $_SESSION['sd'] = $_SESSION['fd'] = $_SESSION['bcons'] = '';
 	}
 
 	/**

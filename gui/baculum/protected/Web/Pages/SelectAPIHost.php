@@ -46,6 +46,7 @@ class SelectAPIHost extends BaculumWebPage {
 		$api_host = $this->UserAPIHosts->SelectedValue;
 		if (!empty($api_host)) {
 			$this->User->setDefaultAPIHost($api_host);
+			$this->getPage()->resetSessionUserVars();
 			$this->goToDefaultPage();
 		}
 	}
