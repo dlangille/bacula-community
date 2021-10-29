@@ -51,6 +51,7 @@ namespace pluginlib
          f_fatal(false),
          abort_on_error(false),
          f_debug(false),
+         m_parameters_parsed(false),
          ini(),
          preg()
       { pm_strcpy(cmd, command); }
@@ -72,7 +73,7 @@ namespace pluginlib
        * @return true when is error
        * @return false when no error
        */
-      inline bool is_error() { return f_error || f_fatal; }
+      inline bool is_error() const { return f_error || f_fatal; }
 
       /**
        * @brief Checks if plugin context operation is flagged on f_fatal.
@@ -80,14 +81,14 @@ namespace pluginlib
        * @return true when is fatal error
        * @return false when no fatal error
        */
-      inline bool is_fatal() { return f_fatal || (f_error && abort_on_error); }
+      inline bool is_fatal() const { return f_fatal || (f_error && abort_on_error); }
 
       /**
        * @brief Return a Job Message error level based on context
        *
        * @return int
        */
-      inline int jmsg_err_level() { return is_fatal() ? M_FATAL : M_ERROR; }
+      inline int jmsg_err_level() const { return is_fatal() ? M_FATAL : M_ERROR; }
 
       /**
        * @brief Set the abort on error flag
@@ -105,7 +106,10 @@ namespace pluginlib
        * @return true if flag is set
        * @return false  if flag is not set
        */
-      bool is_abort_on_error() { return abort_on_error; }
+      inline bool is_abort_on_error() const { return abort_on_error; }
+
+      inline bool are_parameters_parsed() const { return m_parameters_parsed; }
+      inline void set_parameters_parsed() { m_parameters_parsed = true; }
 
    protected:
       POOL_MEM cmd;                 /// plugin command for this context
@@ -113,6 +117,7 @@ namespace pluginlib
       bool f_fatal;                 /// the plugin signaled a fatal error
       bool abort_on_error;          /// abort on error flag
       bool f_debug;                 /// when additional debugging required
+      bool m_parameters_parsed;
       ConfigFile ini;               /// Restore ini file handler
       regex_t preg;                 /// this is a regex context for include/exclude
 

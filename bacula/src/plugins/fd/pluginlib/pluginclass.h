@@ -143,10 +143,11 @@ namespace pluginlib
       int m_listing_top_nr;            ///
       int m_listing_func;              ///
 
-      virtual bRC parse_plugin_config(bpContext *ctx, restore_object_pkt *rop) { return bRC_OK; }
+      virtual bRC parse_plugin_config(bpContext *ctx, restore_object_pkt *rop);
       virtual bRC parse_plugin_command(bpContext *ctx, const char *command);
 
       virtual bRC parse_plugin_restore_object(bpContext *ctx, restore_object_pkt *rop);
+      virtual bRC handle_plugin_config(bpContext *ctx, restore_object_pkt *rop) { return bRC_OK; }
       virtual bRC handle_plugin_restore_object(bpContext *ctx, restore_object_pkt *rop) { return bRC_OK; }
 
       virtual bRC prepare_estimate(bpContext *ctx, char *command) { return bRC_OK; }
@@ -188,9 +189,12 @@ namespace pluginlib
       virtual bRC perform_end_restore_file(bpContext *ctx) { return bRC_OK; }
       virtual bRC perform_cancel_command(bpContext *ctx) { return bRC_OK; }
 
-      virtual const char **get_listing_top_struct() noexcept { return NULL; }
+      virtual const char **get_listing_top_struct() { return NULL; }
 
       virtual void pluginctx_switch_command(const char *command) {}
+      virtual bool pluginctx_check_command(const char *command) { return false; }
+      virtual bool pluginctx_are_parameters_parsed() const { return false; }
+      virtual void pluginctx_set_parameters_parsed() {}
       virtual void pluginctx_clear_abort_on_error() {}
       virtual void pluginctx_set_abort_on_error() {}
       virtual bRC pluginctx_parse_parameter(bpContext *ctx, const char *argk, const char *argv) { return bRC_Error; }
@@ -222,6 +226,9 @@ namespace pluginlib
       COMMCTX<CTX> pluginctx;          /// the current plugin execution context
 
       virtual void pluginctx_switch_command(const char *command) { pluginctx.switch_command(command); }
+      virtual bool pluginctx_check_command(const char *command) { return pluginctx.check_command(command); }
+      virtual bool pluginctx_are_parameters_parsed() { return pluginctx->are_parameters_parsed(); }
+      virtual void pluginctx_set_parameters_parsed() { pluginctx->set_parameters_parsed(); }
       virtual void pluginctx_clear_abort_on_error() { pluginctx->clear_abort_on_error(); }
       virtual void pluginctx_set_abort_on_error() { pluginctx->set_abort_on_error(); }
       virtual bRC pluginctx_parse_parameter(bpContext *ctx, const char *argk, const char *argv) { return pluginctx->parse_parameter(ctx, argk, argv); }

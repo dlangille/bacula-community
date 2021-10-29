@@ -187,8 +187,8 @@ public:
    /* and finally terminate execution when finish */
    int terminate(bpContext *ctx, bool raise_error = true);
 
-   inline POOL_MEM &get_error() noexcept { return m_errmsg; }
-   inline char *get_error_str() noexcept { return m_errmsg.c_str(); }
+   inline POOL_MEM &get_error() { return m_errmsg; }
+   inline char *get_error_str() { return m_errmsg.c_str(); }
 
    /* direct pipe management */
    inline int close_wpipe() { return ::close_wpipe(bpipe); }

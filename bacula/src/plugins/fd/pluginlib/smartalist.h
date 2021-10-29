@@ -129,6 +129,7 @@ public:
       }
       return *this;
    }
+#if __cplusplus >= 201104
    // This is a simple move operator
    inline smart_alist<T> &operator=(smart_alist<T> &&other)
    {
@@ -140,6 +141,7 @@ public:
       }
       return *this;
    }
+#endif
 };
 
 #endif   /* _SMARTALIST_H_ */
