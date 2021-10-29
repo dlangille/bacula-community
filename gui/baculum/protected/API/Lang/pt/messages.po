@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-07-14 03:39\n"
+"PO-Revision-Date: 2021-10-29 15:54\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Wanderlei Hüttel <wanderlei.huttel@gmail.com>\n"
@@ -681,13 +681,14 @@ msgid "Search:"
 msgstr "Procurar:"
 
 msgid "Get pre-defined paths:"
-msgstr "Get pre-defined paths:"
+msgstr "Obter caminhos pré-definidos:"
 
 msgid "Select paths"
-msgstr "Select paths"
+msgstr "Selecionar caminhos"
 
 msgid "Binaries:"
-msgstr "Binaries:"
+msgstr "Binários:"
 
 msgid "Configs:"
-msgstr "Configs:"
+msgstr "Configurações:"
+

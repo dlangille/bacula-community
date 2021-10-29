@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-08-02 19:35\n"
+"PO-Revision-Date: 2021-10-29 15:55\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Wanderlei Hüttel <wanderlei.huttel@gmail.com>\n"
@@ -3741,108 +3741,108 @@ msgstr "Configurar seu agendamento personalizado"
 msgid "Override directives"
 msgstr "Substituir diretivas"
 
-
 msgid "Migrate by job"
-msgstr "Migrate by job"
+msgstr "Migrar por job"
 
 msgid "Migrate by client"
-msgstr "Migrate by client"
+msgstr "Migrar por cliente"
 
 msgid "Migrate by volume"
-msgstr "Migrate by volume"
+msgstr "Migrar por volume"
 
 msgid "Migrate by smallest volume"
-msgstr "Migrate by smallest volume"
+msgstr "Migrar pelo menor volume"
 
 msgid "Migrate by oldest volume"
-msgstr "Migrate by oldest volume"
+msgstr "Migrar pelo volume mais antigo"
 
 msgid "Migrate using Pool occupancy"
-msgstr "Migrate using Pool occupancy"
+msgstr "Migrar usando ocupação da Pool"
 
 msgid "Migrate by Pool time"
-msgstr "Migrate by Pool time"
+msgstr "Migrar por tempo do Pool"
 
 msgid "Migrate by SQL query"
-msgstr "Migrate by SQL query"
+msgstr "Migrar por consulta SQL"
 
 msgid "New migrate job wizard"
-msgstr "New migrate job wizard"
+msgstr "Novo assistente de migração de trabalho"
 
 msgid "Step 2 - what you want to migrate"
-msgstr "Step 2 - what you want to migrate"
+msgstr "Passo 2 - O que você deseja migrar"
 
 msgid "Please select a pool from which you want to migrate data."
-msgstr "Please select a pool from which you want to migrate data."
+msgstr "Selecione um pool do qual deseja migrar os dados."
 
 msgid "The source pool will be examined for finding backup jobs to migrate."
-msgstr "The source pool will be examined for finding backup jobs to migrate."
+msgstr "O pool de origem será examinado para encontrar os jobs de backup para migrar."
 
 msgid "Please select a storage using which you want to read migrate data."
-msgstr "Please select a storage using which you want to read migrate data."
+msgstr "Selecione o storage que deseja ler os dados de migração."
 
 msgid "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
-msgstr "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
+msgstr "Como você selecionou migrar usando \"Ocupação de Pool\", serão adicionadas duas diretivas na pool de origem escolhida %pool: Migration Low Bytes e Migration High Bytes."
 
 msgid "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
-msgstr "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
+msgstr "Como você selecionou a migração usando o tempo de pool, será adicionada na pool de origem escolhida %pool, a diretiva de tempo de migração."
 
 msgid "Step 3 - how would you like to migrate"
-msgstr "Step 3 - how would you like to migrate"
+msgstr "Etapa 3 - Como você gostaria de efetuar a migração"
 
 msgid "Step 4 - where you like to migrate"
-msgstr "Step 4 - where you like to migrate"
+msgstr "Etapa 4 - Onde você gosta de migrar"
 
 msgid "Please select a storage using which you want to write migrated data."
-msgstr "Please select a storage using which you want to write migrated data."
+msgstr "Por favor, selecione um armazenamento usando o qual você deseja gravar dados migrados."
 
 msgid "Step 5 - migrate job options"
-msgstr "Step 5 - migrate job options"
+msgstr "Etapa 5 - Opções de job de migração"
 
 msgid "Purge jobs"
-msgstr "Purge jobs"
+msgstr "Purgar jobs"
 
 msgid "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
-msgstr "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
+msgstr "Nível, Cliente e FileSet não serão usados durante a cópia de jobs em execução, mas serão necessários para definir no recurso do job de cópia como as diretivas padrão do job."
 
 msgid "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
-msgstr "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+msgstr "Os jobs de migração executam a transferência dos dados dos jobs de backup de um volume para outro. Isso é executado lendo os dados dos volumes e gravando-os em outro volume e em uma pool diferente. Os registros dos arquivos gravados no catálogo associados aos jobs de backup originais serão eliminados. Todo o processo é executado sem usar o daemon de arquivo (cliente)."
 
 msgid "New migrate job"
-msgstr "New migrate job"
+msgstr "Novo job de migração"
 
 msgid "Please select the criteria that will be used for selecting backup jobs to migrate."
-msgstr "Please select the criteria that will be used for selecting backup jobs to migrate."
+msgstr "Selecione os critérios que serão usados para buscar os jobs de backup a serem migrados."
 
 msgid "The job needs media."
-msgstr "The job needs media."
+msgstr "O job precisa de mídia."
 
 msgid "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Monte o volume %volume ou rotule um novo volume para o storage: %storage, pool: %pool, tipo de mídia: %mediatype."
 
 msgid "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Monte o volume %volume para o storage: %storage, pool: %pool, tipo de mídia: %mediatype."
 
 msgid "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Crie um novo volume no storage: %storage, pool: %pool, tipo de mídia: %mediatype."
 
 msgid "Assign volumes from selected pool"
-msgstr "Assign volumes from selected pool"
+msgstr "Atribuir volumes na pool selecionada"
 
 msgid "This function enables re-assigning volumes from selected pool to this pool."
-msgstr "This function enables re-assigning volumes from selected pool to this pool."
+msgstr "Esta função permite reatribuir volumes na pool selecionada para esta pool."
 
 msgid "Please select a pool from which you would like to assign volumes to this pool."
-msgstr "Please select a pool from which you would like to assign volumes to this pool."
+msgstr "Selecione uma pool do qual você gostaria de atribuir volumes a esta pool."
 
 msgid "Assigned volume count:"
-msgstr "Assigned volume count:"
+msgstr "Contagem de volume atribuída:"
 
 msgid "Assign volumes"
-msgstr "Assign volumes"
+msgstr "Atribuir volumes"
 
 msgid "No volumes in the pool to assign."
-msgstr "No volumes in the pool to assign."
+msgstr "Nenhum volume da pool para atribuir."
 
 msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
-msgstr "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
+msgstr "A pool não foi renomeado, mas foi copiada com o novo nome. Observe que, se a pool original continha volumes, eles não foram movidos e ainda estão atribuídos à pool original no catálogo do banco de dados. Para reatribuir volumes da pool original para esta, vá para o Menu Principal &#10148; Pools &#10148; [Nova Pool] &#10148; Guia: Ações e use o botão 'Atribuir volumes'. Depois de reajustar os volumes, você pode excluir a pool original."
+
