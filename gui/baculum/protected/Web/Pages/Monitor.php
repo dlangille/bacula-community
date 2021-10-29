@@ -19,6 +19,7 @@
  *
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
+Prado::using('Application.Common.Class.Errors');
 Prado::using('Application.Web.Class.BaculumWebPage');
 Prado::using('Application.Web.Class.WebUserRoles');
 
@@ -61,7 +62,13 @@ class Monitor extends BaculumPage {
 
 		$error = null;
 		$params = $this->Request->contains('params') ? $this->Request['params'] : [];
-		if (key_exists('jobs', $params)) {
+		if (!is_array($params)) {
+			$error = (object)[
+				'output' => 'Wrong monitor parameter.',
+				'error' => GenericError::ERROR_INTERNAL_ERROR
+			];
+		}
+		if (!$error && key_exists('jobs', $params)) {
 			$job_params = ['jobs'];
 			$job_query = [];
 			if (is_array($params['jobs'])) {
@@ -136,16 +143,24 @@ class Monitor extends BaculumPage {
 			}
 		}
 
+		$running_from_all = false;
 		if (key_exists('jobs', $params)) {
+			$running_from_all = empty($params['jobs']);
 			$running_job_states = $this->Application->getModule('misc')->getRunningJobStates();
 			for ($i = 0; $i < count($monitor_data['jobs']); $i++) {
 				if (in_array($monitor_data['jobs'][$i]->jobstatus, $running_job_states)) {
-					$monitor_data['running_jobs'][] = $monitor_data['jobs'][$i];
+					// @NOTE: Running jobs are taken from all jobs only
+					// if there is not any job criteria in query (see $params['jobs'])
+					if ($running_from_all) {
+						$monitor_data['running_jobs'][] = $monitor_data['jobs'][$i];
+					}
 				} else {
 					$monitor_data['terminated_jobs'][] = $monitor_data['jobs'][$i];
 				}
 			}
-		} elseif (!$error) {
+		}
+
+		if (!$error && !$running_from_all) {
 			$result = $this->getModule('api')->get(['jobs', '?jobstatus=CR']);
 			if ($result->error === 0) {
 				$monitor_data['running_jobs'] = $result->output;
