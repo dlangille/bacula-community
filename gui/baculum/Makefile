@@ -59,13 +59,13 @@ commondatadirsrc = $(datadir)/$(commondir)/Class \
 	$(datadir)/$(commondir)/Portlets
 
 
-datafilesrc = $(datadir)/application.xml
+datafilesrc = $(datadir)/application.xml \
+	$(datadir)/autoload.php
 
 webdatafilesrc = $(datadir)/$(webdir)/endpoints.xml \
 	$(datadir)/$(webdir)/Init.php
 
-miscfilesrc = autoload.php \
-	index.php \
+miscfilesrc = index.php \
 	AUTHORS \
 	INSTALL \
 	LICENSE \
