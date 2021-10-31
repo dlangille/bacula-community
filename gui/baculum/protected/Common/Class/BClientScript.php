@@ -21,6 +21,7 @@
  */
 
 Prado::using('System.Web.UI.WebControls.TClientScript');
+Prado::using('Application.Common.Class.Params');
 
 /**
  * Baculum client script class.
@@ -31,13 +32,11 @@ Prado::using('System.Web.UI.WebControls.TClientScript');
  */
 class BClientScript extends TClientScript {
 
-	const SCRIPTS_VERSION = 23;
-
 	public function getScriptUrl()
 	{
 		$url = parent::getScriptUrl();
 		if (!empty($url)) {
-			$url .= '?ver=' . self::SCRIPTS_VERSION;
+			$url .= '?ver=' . Params::BACULUM_VERSION;
 		}
 		return $url;
 	}

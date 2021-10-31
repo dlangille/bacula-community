@@ -8,21 +8,24 @@
 	<body  class="w3-light-grey">
 		<com:TForm>
 			<com:TClientScript PradoScripts="ajax, effects" />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net/js/jquery.dataTables.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net-responsive/js/dataTables.responsive.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons/js/dataTables.buttons.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons/js/buttons.html5.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons/js/buttons.colVis.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/datatables.net-select/js/dataTables.select.min.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/flotr2/flotr2.js %> />
+			<com:BClientScript ScriptUrl=<%~ ../../vendor/bower-asset/gaugejs/dist/gauge.min.js %> />
 			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/misc.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/fontawesome.min.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/datatables.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/dataTables.responsive.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/responsive.jqueryui.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/dataTables.buttons.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/buttons.html5.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/buttons.colVis.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../../Common/JavaScript/dataTables.select.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../JavaScript/flotr2.js %> />
 			<com:BClientScript ScriptUrl=<%~ ../JavaScript/bacula-config.js %> />
 			<com:BClientScript ScriptUrl=<%~ ../JavaScript/misc.js %> />
 			<com:BClientScript ScriptUrl=<%~ ../JavaScript/graph.js %> />
 			<com:BClientScript ScriptUrl=<%~ ../JavaScript/statistics.js %> />
-			<com:BClientScript ScriptUrl=<%~ ../JavaScript/gauge.js %> />
+			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/w3css/w3.css %> />
+			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-dt/css/jquery.dataTables.min.css %> />
+			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-responsive-dt/css/responsive.dataTables.min.css %> />
+			<com:BStyleSheet StyleSheetUrl=<%~ ../../vendor/bower-asset/datatables.net-buttons-dt/css/buttons.dataTables.min.css %> />
+			<com:BStyleSheet StyleSheetUrl=<%~ ../../../themes/Baculum-v2/css/baculum.css %> />
 			<com:Application.Common.Portlets.TableDefaults />
 			<!-- Top container -->
 			<div class="w3-bar w3-top w3-black w3-large" style="z-index:4">

@@ -29,7 +29,7 @@ datadir = protected
 apidir = API
 webdir = Web
 commondir = Common
-frameworkdir = framework
+vendordir = $(datadir)/vendor
 themesdir = themes
 cachedir = assets
 configdir = Config
@@ -64,7 +64,8 @@ datafilesrc = $(datadir)/application.xml
 webdatafilesrc = $(datadir)/$(webdir)/endpoints.xml \
 	$(datadir)/$(webdir)/Init.php
 
-miscfilesrc = index.php \
+miscfilesrc = autoload.php \
+	index.php \
 	AUTHORS \
 	INSTALL \
 	LICENSE \
@@ -76,9 +77,6 @@ localewebdirsrc = $(datadir)/$(webdir)/Lang
 localeapidirsrc = $(datadir)/$(apidir)/Lang
 localemofile = messages.mo
 localepofile = messages.po
-
-excluded_dirs = '.*/\(3rdParty\|tinymce-405\).*'
-excluded_files = '.*\(\.htaccess\)$$'
 
 
 build: prepare_build prepare_data prepare_externals prepare_themes prepare_locale setup
@@ -113,8 +111,7 @@ prepare_data: prepare_build
 	cp -a $(miscfilesrc) $(DESTDIR)$(WWWDIR)/
 
 prepare_externals: prepare_build
-	find $(frameworkdir) -type d ! -regex $(excluded_dirs) -exec mkdir -p $(DESTDIR)$(WWWDIR)/{} \;
-	find $(frameworkdir) -type f ! -regex $(excluded_files) -a ! -regex $(excluded_dirs) -exec cp -a {} $(DESTDIR)$(WWWDIR)/{} \;
+	 cp -ra $(vendordir) $(DESTDIR)$(WWWDIR)/$(datadir)
 
 prepare_themes: prepare_build
 	cp -ra $(themesdir) $(DESTDIR)$(WWWDIR)

@@ -441,8 +441,9 @@ done
 %dir %{_datadir}/%{metaname}/htdocs
 %dir %{_datadir}/%{metaname}/htdocs/protected
 %{_datadir}/%{metaname}/htdocs/protected/Common
+%{_datadir}/%{metaname}/htdocs/protected/autoload.php
 %{_datadir}/%{metaname}/htdocs/protected/application.xml
-%{_datadir}/%{metaname}/htdocs/framework
+%{_datadir}/%{metaname}/htdocs/protected/vendor
 %{_datadir}/%{metaname}/htdocs/themes
 %{_datadir}/%{metaname}/htdocs/LICENSE
 %{_datadir}/%{metaname}/htdocs/AUTHORS

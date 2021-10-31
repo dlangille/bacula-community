@@ -25,8 +25,9 @@
  * Using for placing Baculum files in document root subdirectory
  */
 define('APPLICATION_DIRECTORY', __DIR__);
+define('PRADO_VENDORDIR', APPLICATION_DIRECTORY . '/protected/vendor');
 
-require 'framework/autoload.php';
+require 'protected/autoload.php';
 $application = new \Prado\TApplication;
 $application->run();
 ?>

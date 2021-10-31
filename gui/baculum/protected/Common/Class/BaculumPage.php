@@ -22,6 +22,7 @@
 
 Prado::using('System.Web.UI.TPage');
 Prado::using('Application.Common.Class.BClientScript');
+Prado::using('Application.Common.Class.Params');
 
 /**
  * Base pages module.
@@ -159,7 +160,7 @@ class BaculumPage extends TPage {
 		if (is_null($theme)) {
 			return;
 		}
-		$css_path = $theme->getBaseUrl() . '/css/';
+		$css_path = $theme->getBaseUrl() . '/fonts/css/';
 		$css_dir = APPLICATION_DIRECTORY . $css_path;
 		if (!is_dir($css_dir)) {
 			return;
@@ -175,7 +176,7 @@ class BaculumPage extends TPage {
 					'%s%s?ver=%s',
 					$css_path,
 					$filename,
-					BClientScript::SCRIPTS_VERSION
+					Params::BACULUM_VERSION
 				);
 				$this->getPage()->getClientScript()->registerStyleSheetFile($filename, $url);
 			}

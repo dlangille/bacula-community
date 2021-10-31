@@ -1465,6 +1465,16 @@ function get_table_toolbar(table, actions, txt) {
 	return table_toolbar;
 }
 
+function showTip(el, title, description) {
+	var tip = new Opentip(el, description, title, {
+			stem: true, 
+			fixed: true, 
+			tipJoint: 'left middle',
+			target: true,
+			showOn: 'creation'
+		});
+}
+
 $(function() {
 	set_sbbr_compatibility();
 	set_icon_css();

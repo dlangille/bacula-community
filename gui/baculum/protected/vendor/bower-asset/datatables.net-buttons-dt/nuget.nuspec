@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <version>2.0.0</version>
+        <id>datatables.net-buttons-dt</id>
+        <description>This is Buttons for DataTables with styling for [DataTables](https://datatables.net/)</description>
+        <repository type="git" url="https://github.com/DataTables/Dist-DataTables-Buttons-DataTables.git"/>
+        <authors>SpryMedia Ltd</authors>
+        <projectUrl>http://datatables.net</projectUrl>
+        <license type="expression">MIT</license>
+        <tags>Buttons  Column Visibility  csv  excel  pdf  print   Datatables jQuery table</tags>
+        <dependencies>
+            <dependency id="datatables.net-buttons" version="1.7.1"/>
+            <dependency id="datatables.net-dt" version="1.10.25"/>
+        </dependencies>
+        <contentFiles>
+            <files include="**/*" buildAction="Content"/>
+        </contentFiles>
+    </metadata>
+    <files>
+        <file src="js/buttons.dataTables.js" target="content\Scripts"/>
+        <file src="js/buttons.dataTables.js" target="contentFiles\any\any\wwwroot\js"/>
+        <file src="js/buttons.dataTables.min.js" target="content\Scripts"/>
+        <file src="js/buttons.dataTables.min.js" target="contentFiles\any\any\wwwroot\js"/>
+        <file src="css/buttons.dataTables.css" target="content\Content"/>
+        <file src="css/buttons.dataTables.css" target="contentFiles\any\any\wwwroot\css"/>
+        <file src="css/buttons.dataTables.min.css" target="content\Content"/>
+        <file src="css/buttons.dataTables.min.css" target="contentFiles\any\any\wwwroot\css"/>
+        <file src="types/buttons.dataTables.d.ts" target="content\Scripts"/>
+        <file src="types/buttons.dataTables.d.ts" target="contentFiles\any\any\wwwroot\js"/>
+    </files>
+</package>
+
