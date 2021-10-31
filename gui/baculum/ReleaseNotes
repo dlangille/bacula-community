@@ -1,4 +1,28 @@
 
+               Release Notes for Baculum 11.0.5.5
+
+This is a minor bug fix and new feature release. From new feature side there
+has been added a migrate job wizard. Besides of that we improved notifying
+if job is waiting on media (media mount request) and we updated translations.
+The interface has also been optimized for faster page loading.
+
+Baculum Web:
+ - New migrate job wizard
+ - Add warning to running job status if job needs media
+ - Do not require using some job resource values to ease using jobdefs - idea proposed by Heitor Faria
+ - Update Portuguese translations
+ - Update Polish translations
+ - Loading pages optimization
+ - Improve sun icon for displaying job status weather - idea proposed by Heitor Faria
+ - Fix #2642 add tool to re-assigning volumes from one pool to another
+ - Move all external dependencies to vendor directory
+
+Baculum API:
+ - Add capability to use pre-defined paths in API config wizard - idea proposed by Heitor Faria
+
+Bugs fixed/closed since last release:
+2642
+
                 Release Notes for Baculum 11.0.5.4
 
 This is a minor new feature and bug fix release. In this version a new schedule
