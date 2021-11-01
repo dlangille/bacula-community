@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-08-02 17:54\n"
+"PO-Revision-Date: 2021-11-01 06:28\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Sergey Zhidkov <zhsv@bk.ru>\n"
@@ -3628,22 +3628,22 @@ msgid "Weeks of the month"
 msgstr "Недели месяца"
 
 msgid "first"
-msgstr "первый"
+msgstr "первая"
 
 msgid "second"
-msgstr "секунд"
+msgstr "вторая"
 
 msgid "third"
-msgstr "третий"
+msgstr "третья"
 
 msgid "fourth"
 msgstr "четвертая"
 
 msgid "fifth"
-msgstr "пятый"
+msgstr "пятая"
 
 msgid "sixth"
-msgstr "шестой"
+msgstr "шестая"
 
 msgid "Days of the month"
 msgstr "Дней месяца"
@@ -3712,13 +3712,13 @@ msgid "Hourly"
 msgstr "Почасовой"
 
 msgid "Daily"
-msgstr "Ежедневно"
+msgstr "Ежедневный"
 
 msgid "Weekly"
-msgstr "Еженедельно"
+msgstr "Еженедельный"
 
 msgid "Monthly"
-msgstr "Ежемесячно"
+msgstr "Ежемесячный"
 
 msgid "Custom"
 msgstr "Настраиваемый"
@@ -3736,113 +3736,113 @@ msgid "Run job every month at the specified time in selected weeks of the month"
 msgstr "Запускать задание каждый месяц в указанное время в выбранные недели месяца"
 
 msgid "Setup your custom schedule"
-msgstr "Настройте свой индивидуальный график"
+msgstr "Настроить индивидуальный график"
 
 msgid "Override directives"
-msgstr "Переопределить директивы"
-
+msgstr "Настроить"
 
 msgid "Migrate by job"
-msgstr "Migrate by job"
+msgstr "Миграция по заданию"
 
 msgid "Migrate by client"
-msgstr "Migrate by client"
+msgstr "Миграция по клиенту"
 
 msgid "Migrate by volume"
-msgstr "Migrate by volume"
+msgstr "Миграция по Тому"
 
 msgid "Migrate by smallest volume"
-msgstr "Migrate by smallest volume"
+msgstr "Миграция по наименьшему Тому"
 
 msgid "Migrate by oldest volume"
-msgstr "Migrate by oldest volume"
+msgstr "Копировать по старому Тому"
 
 msgid "Migrate using Pool occupancy"
-msgstr "Migrate using Pool occupancy"
+msgstr "Миграция с использованием занятости пула"
 
 msgid "Migrate by Pool time"
-msgstr "Migrate by Pool time"
+msgstr "Миграция по времени пула"
 
 msgid "Migrate by SQL query"
-msgstr "Migrate by SQL query"
+msgstr "Миграция по SQL-запросу"
 
 msgid "New migrate job wizard"
-msgstr "New migrate job wizard"
+msgstr "Новый мастер миграции задания"
 
 msgid "Step 2 - what you want to migrate"
-msgstr "Step 2 - what you want to migrate"
+msgstr "Шаг 2 - что вы хотите мигрировать"
 
 msgid "Please select a pool from which you want to migrate data."
-msgstr "Please select a pool from which you want to migrate data."
+msgstr "Выберите пул, из которого вы хотите перенести данные."
 
 msgid "The source pool will be examined for finding backup jobs to migrate."
-msgstr "The source pool will be examined for finding backup jobs to migrate."
+msgstr "Исходный пул будет исследован на предмет заданий резервного копирования для миграции."
 
 msgid "Please select a storage using which you want to read migrate data."
-msgstr "Please select a storage using which you want to read migrate data."
+msgstr "Выберите хранилище, которое вы хотите использовать для чтения данных миграции."
 
 msgid "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
-msgstr "Because you selected migrate using Pool occupancy, to chosen source pool %pool will be added two directives: Migration Low Bytes and Migration High Bytes."
+msgstr "Поскольку вы выбрали миграцию с использованием занятости пула, к выбранному исходному пулу %pool будут добавлены две директивы: младшие байты миграции и старшие байты миграции."
 
 msgid "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
-msgstr "Because you selected migrate using Pool time, to chosen source pool %pool will be added the Migration Time directive."
+msgstr "Поскольку вы выбрали миграцию с использованием времени пула, к выбранному исходному пулу %pool будет добавлена директива времени миграции."
 
 msgid "Step 3 - how would you like to migrate"
-msgstr "Step 3 - how would you like to migrate"
+msgstr "Шаг 3 - как бы вы хотели мигрировать"
 
 msgid "Step 4 - where you like to migrate"
-msgstr "Step 4 - where you like to migrate"
+msgstr "Шаг 4 - куда вы хотите мигрировать"
 
 msgid "Please select a storage using which you want to write migrated data."
-msgstr "Please select a storage using which you want to write migrated data."
+msgstr "Выберите хранилище, в которое вы хотите записать данные."
 
 msgid "Step 5 - migrate job options"
-msgstr "Step 5 - migrate job options"
+msgstr "Шаг 5 - миграция параметров задания"
 
 msgid "Purge jobs"
-msgstr "Purge jobs"
+msgstr "Очистить задания"
 
 msgid "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
-msgstr "Level, Client and FileSet are not used during migrate jobs running but they are required to define in migrate job resource as the standard Job directives."
+msgstr "Уровень, клиент и набор файлов не используются во время выполнения заданий миграции, но они должны быть определены в ресурсе задания миграции как стандартные директивы задания."
 
 msgid "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
-msgstr "Migrate jobs run moving backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. The file catalog records associated with the original backup jobs are purged. All process runs without using file daemon."
+msgstr "Задания миграции запускают перемещение данных заданий резервного копирования с одного тома на другой. Это делается путем чтения ранее зарезервированных данных с тома и записи их на другой том в другом пуле. Записи каталога файлов, связанные с исходными заданиями резервного копирования, удаляются. Все процессы выполняются без использования файлового демона."
 
 msgid "New migrate job"
-msgstr "New migrate job"
+msgstr "Новое задание миграции"
 
 msgid "Please select the criteria that will be used for selecting backup jobs to migrate."
-msgstr "Please select the criteria that will be used for selecting backup jobs to migrate."
+msgstr "Пожалуйста выберите критерии, которые будут использоваться для выбора заданий резервного копирования для миграции."
 
 msgid "The job needs media."
-msgstr "The job needs media."
+msgstr "Заданию необходимы media."
 
 msgid "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please mount volume %volume or label a new one for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Пожалуйста, смонтируйте том %volume или промаркируйте новый для хранения: %storage, пул: %pool, media type: %mediatype."
 
 msgid "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please mount volume %volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Пожалуйста, смонтируйте том %volume для хранения: %storage, пул: %pool, media type: %mediatype."
 
 msgid "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
-msgstr "Please create a new volume for storage: %storage, pool: %pool, media type: %mediatype."
+msgstr "Пожалуйста, создайте новый том для хранения: %storage, пул: %pool, media type: %mediatype."
 
 msgid "Assign volumes from selected pool"
-msgstr "Assign volumes from selected pool"
+msgstr "Назначить тома из выбранного пула"
 
 msgid "This function enables re-assigning volumes from selected pool to this pool."
-msgstr "This function enables re-assigning volumes from selected pool to this pool."
+msgstr "Эта функция позволяет перераспределять тома из выбранного пула в этот пул."
 
 msgid "Please select a pool from which you would like to assign volumes to this pool."
-msgstr "Please select a pool from which you would like to assign volumes to this pool."
+msgstr "Пожалуйста, выберите пул, из которого вы хотели бы назначить тома этому пулу."
 
 msgid "Assigned volume count:"
-msgstr "Assigned volume count:"
+msgstr "Количество назначенных томов:"
 
 msgid "Assign volumes"
-msgstr "Assign volumes"
+msgstr "Назначить тома"
 
 msgid "No volumes in the pool to assign."
-msgstr "No volumes in the pool to assign."
+msgstr "В пуле нет томов для назначения."
 
 msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
-msgstr "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
+msgstr "Пул не был переименован, но был скопирован с новым именем. Пожалуйста, обратите внимание, что если в первоначальном пуле содержались тома, они не были перемещены, и они по-прежнему назначены в исходный пул в базе данных каталога. Чтобы переназначить тома из исходного пула к этому пулу, перейдите к Главному меню &#10148; Пулы &#10148; [НОВЫЙ ПУЛ] &#10148; Вкладка: Действия и, пожалуйста, используйте кнопку «Назначить тома». После восстановления томов вы можете удалить исходный пул."
+

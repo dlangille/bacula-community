@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-07-14 03:39\n"
+"PO-Revision-Date: 2021-11-01 06:28\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Sergey Zhidkov <zhsv@bk.ru>\n"
@@ -681,13 +681,14 @@ msgid "Search:"
 msgstr "Поиск:"
 
 msgid "Get pre-defined paths:"
-msgstr "Get pre-defined paths:"
+msgstr "Получить заранее определенные пути:"
 
 msgid "Select paths"
-msgstr "Select paths"
+msgstr "Выберите пути"
 
 msgid "Binaries:"
-msgstr "Binaries:"
+msgstr "Двоичные файлы:"
 
 msgid "Configs:"
-msgstr "Configs:"
+msgstr "Настройка:"
+
