@@ -1,4 +1,14 @@
 
+               Release Notes for Baculum 11.0.5.6
+
+This is a bug fix release. It fixes a bug introduced in 11.0.5.5 that happens if
+user not use Bacula configuration function in Baculum. Also there has also been
+updated Russian translations.
+
+Baculum Web:
+ - Fix undefined index error if user not use Bacula configuration function
+ - Update Russian translations
+
                Release Notes for Baculum 11.0.5.5
 
 This is a minor bug fix and new feature release. From new feature side there
