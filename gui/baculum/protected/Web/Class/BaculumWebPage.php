@@ -64,7 +64,8 @@ class BaculumWebPage extends BaculumPage {
 		if (!$this->IsPostBack && !$this->IsCallBack) {
 			$this->postInitActions();
 			$this->getModule('api')->initSessionCache(true);
-			if (!key_exists('user_vars', $_SESSION) || $_SESSION['user_vars'] === false) {
+			if (!key_exists('is_user_vars', $_SESSION) || $_SESSION['is_user_vars'] === false) {
+				$this->resetSessionUserVars(); // reset is required for init session vars
 				$this->setSessionUserVars();
 			}
 		}
@@ -96,7 +97,6 @@ class BaculumWebPage extends BaculumPage {
 		       (!key_exists('director', $_SESSION) || $directors->output[0] != $_SESSION['director'])) {
 			$_SESSION['director'] = $directors->output[0];
 		}
-
 		// Set config main component names
 		$config = $this->getModule('api')->get(array('config'), null, false);
 		if ($config->error === 0) {
@@ -107,11 +107,12 @@ class BaculumWebPage extends BaculumPage {
 				}
 			}
 		}
-		$_SESSION['user_vars'] = true;
+		$_SESSION['is_user_vars'] = true;
+
 	}
 
 	public function resetSessionUserVars() {
-		$_SESSION['user_vars'] = false;
+		$_SESSION['is_user_vars'] = false;
 		$_SESSION['director'] = $_SESSION['dir'] = $_SESSION['sd'] = $_SESSION['fd'] = $_SESSION['bcons'] = '';
 	}
 
