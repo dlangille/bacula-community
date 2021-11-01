@@ -129,6 +129,10 @@ table.dataTable thead .sorting_desc_disabled {
 	background-color: white;
 }
 
+.dataTables_info span.select-info {
+	margin-left: 10px;
+}
+
 table.selectable tr {
 	cursor: pointer;
 }
