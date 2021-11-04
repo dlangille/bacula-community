@@ -636,6 +636,9 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        * (or what is defined for IgnoreDir in this fileset) exists
        */
       if (have_ignoredir(ff_pkt)) {
+         Jmsg(jcr, M_SKIPPED, 0, _("Skipping ignored directory %s "
+                                   "(found file with ExcludeDirContaining pattern)\n"),
+              ff_pkt->fname);
          return 1; /* Just ignore this directory */
       }
 
