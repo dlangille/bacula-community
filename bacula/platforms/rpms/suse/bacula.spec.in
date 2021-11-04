@@ -361,7 +361,18 @@ BuildRequires: gcc, gcc-c++, make, autoconf
 BuildRequires: glibc, glibc-devel
 BuildRequires: ncurses-devel, readline-devel
 BuildRequires: libstdc++-devel, zlib-devel
-BuildRequires: openssl-devel
+BuildRequires: libcurl-devel
+BuildRequires: libcap-devel
+
+# If suse version higher than 11 SP4, use openssl and libopenssl-devel
+%if 0%{?suse_version} > 1140
+BuildRequires: openssl
+BuildRequires: libopenssl-devel
+%else
+BuildRequires: openssl1
+BuildRequires: libopenssl1-devel
+%endif
+
 BuildRequires: libacl-devel
 BuildRequires: pkgconfig
 %if ! %{rh7}

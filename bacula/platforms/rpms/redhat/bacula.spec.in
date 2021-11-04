@@ -364,6 +364,8 @@ BuildRequires: openssl-devel
 BuildRequires: libacl-devel
 BuildRequires: pkgconfig
 BuildRequires: bzip2-devel
+BuildRequires: libcurl-devel
+BuildRequires: libcap-devel
 %if ! %{rh7}
 BuildRequires: libxml2-devel
 %endif
