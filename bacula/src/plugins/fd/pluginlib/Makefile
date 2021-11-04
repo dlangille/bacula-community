@@ -28,8 +28,6 @@ SMARTALISTSRC = smartalist.h
 SMARTPTRSRC = smartptr.h
 SMARTMUTEXSRC = smartmutex.h
 SMARTLOCKSRC = smartlock.h
-METAPLUGINSRC = metaplugin.cpp metaplugin.h metaplugin_attributes.cpp metaplugin_attributes.h metaplugin_accurate.cpp metaplugin_accurate.h metaplugin_metadata.cpp metaplugin_metadata.h $(SMARTMUTEXSRC) $(SMARTLOCKSRC) $(COMMCTXSRC)
-METAPLUGINOBJ = $(filter %.lo,$(METAPLUGINSRC:.cpp=.lo))
 
 PLUGINLIBSTEST = pluginlib_test.cpp $(PLUGINLIBSSRC) $(UNITTESTSOBJ) $(INIOBJ)
 PLUGINLIBSTESTOBJ = $(filter %.lo,$(PLUGINLIBSTEST:.cpp=.lo))
@@ -81,31 +79,31 @@ test_metaplugin_backend_fd: $(TESTMETAPLUGINBACKENDOBJ) test_metaplugin_backend_
 
 test_metaplugin-fd.la: $(PTCOMMOBJ) $(PLUGINLIBSOBJ) $(METAPLUGINOBJ) test_metaplugin-fd.lo
 	@echo "Linking $(@:.la=.so) ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $(filter %.lo, $^) -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
 pluginlib_test: $(PLUGINLIBSTESTOBJ) $(PLUGINLIBSTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(PLUGINLIBSTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(filter %.lo, $^) -o $@
 
 smartalist_test: $(SMARTALISTTESTOBJ) $(SMARTALISTTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTALISTTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(filter %.lo, $^) -o $@
 
 smartptr_test: $(SMARTPTRTESTOBJ) $(SMARTPTRTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(SMARTPTRTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(filter %.lo, $^) -o $@
 
 commctx_test: $(COMMCTXTESTOBJ) $(COMMCTXTEST) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(COMMCTXTESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(filter %.lo, $^) -o $@
 
 iso8601_test: $(ISO8601TESTOBJ) $(ISO8601SRC) $(UNITTESTSOBJ) $(LIBBACOBJ)
 	@echo "Building $@ ..."
-	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(ISO8601TESTOBJ) -o $@
+	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) -lbac $(filter %.lo, $^) -o $@
 
 metaplugin_test: $(METAPLUGINTESTOBJ)
 	@echo "Building $@ ..."
-	$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) $(LIBBACCFGOBJ) $(LIBBACOBJ) $(METAPLUGINTESTOBJ) -o $@
+	$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -L$(LIBDIR) $(LIBBACCFGOBJ) $(LIBBACOBJ) $(filter %.lo, $^) -o $@
 
 #$(NO_ECHO)
 
