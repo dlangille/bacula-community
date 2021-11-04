@@ -388,6 +388,7 @@ public:
    void set_worm(bool is_worm) { m_is_worm = is_worm; }
    bool do_checksum() const { return (capabilities & CAP_BLOCKCHECKSUM) != 0; }
    int is_autochanger() const { return capabilities & CAP_AUTOCHANGER; }
+   bool is_virtual_autochanger() const;
    int requires_mount() const { return capabilities & CAP_REQMOUNT; }
    int is_removable() const { return capabilities & CAP_REM; }
    bool is_tape() const { return (dev_type == B_TAPE_DEV ||

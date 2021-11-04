@@ -532,6 +532,13 @@ ssize_t DEVICE::write(const void *buf, size_t len)
    return write_len;
 }
 
+/* to make the difference with an "real" auto changer */
+bool DEVICE::is_virtual_autochanger() const {
+   return device->changer_command &&
+      (device->changer_command[0] == 0 ||
+       strcmp(device->changer_command, "/dev/null") == 0);
+}
+
 /* Return the resource name for the device */
 const char *DEVICE::name() const
 {
