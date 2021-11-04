@@ -37,8 +37,8 @@ namespace metaplugin
 {
 namespace accurate
 {
-   bRC perform_accurate_check(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, bool accurate_mode, bool &accurate_mode_err);
-   bRC perform_accurate_check_get(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, bool accurate_mode, bool &accurate_mode_err);
+   bRC perform_accurate_check(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, POOL_MEM &lname, bool accurate_mode, bool &accurate_mode_err);
+   bRC perform_accurate_check_get(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, POOL_MEM &lname, bool accurate_mode, bool &accurate_mode_err);
 
 }  // namespace accurate
 }  // namespace metaplugin

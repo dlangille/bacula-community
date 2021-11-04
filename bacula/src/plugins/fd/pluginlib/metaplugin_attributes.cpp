@@ -51,7 +51,7 @@ namespace attributes
     *                Status_Handled when data managed and TSTAMP command is not required
     *                Not_Command when it was not this command
     */
-   Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp)
+   Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp, POOL_MEM &lname)
    {
       char type;
       size_t size;
@@ -67,7 +67,7 @@ namespace attributes
          // handle stat(2) for this file
          scan_parameter_str(cmd, "STAT:", param);
          DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat:%s\n", param.c_str());
-         int rc = stat(param.c_str(), &sp->statp);
+         int rc = lstat(param.c_str(), &sp->statp);
          if (rc < 0)
          {
             // error
@@ -84,6 +84,23 @@ namespace attributes
             break;
          case S_IFREG:
             sp->type = FT_REG;
+            break;
+         case S_IFLNK:
+            {
+               sp->type = FT_LNK;
+               ssize_t rc = readlink(param.c_str(), lname.c_str(), lname.size());
+               if (rc < 0)
+               {
+                  berrno be;
+                  // error reading link value
+                  DMSG2(ctx, DERROR, "Error reading link value. Err=%s (%d)", be.bstrerror(), be.code());
+                  JMSG3(ctx, M_ERROR, "Error reading link value: %s, Err=%s (%d)", param.c_str(), be.bstrerror(), be.code());
+                  return Status_Error;
+               }
+               lname.c_str()[rc] = '\0';
+               sp->link = lname.c_str();
+               DMSG1(ctx, DDEBUG, "read_scan_stat_command():readlink:%s\n", sp->link);
+            }
             break;
          default:
             DMSG1(ctx, DERROR, "Unsupported file type: %o\n", sp->statp.st_mode & S_IFMT);
@@ -246,7 +263,7 @@ namespace attributes
     * @param sp save packet to fill when file attributes handled
     * @return Status Status_OK when file attributes commands handled, Status_Error on any error, other depends on enum.
     */
-   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp)
+   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp, POOL_MEM &lname)
    {
       DMSG0(ctx, DDEBUG, "read_attributes_command()\n");
 
@@ -256,7 +273,7 @@ namespace attributes
          return Status_Error;
       }
 
-      Status status = read_scan_stat_command(ctx, cmd, sp);
+      Status status = read_scan_stat_command(ctx, cmd, sp, lname);
       switch(status)
       {
       case Status_OK:

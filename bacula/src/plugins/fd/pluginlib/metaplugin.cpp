@@ -897,13 +897,6 @@ bRC METAPLUGIN::send_startjob(bpContext *ctx, const char *command)
       return bRC_Error;
    }
 
-   // if (!backend.ctx->read_ack(ctx)){
-   //    strip_trailing_newline(cmd.c_str());
-   //    DMSG(ctx, DERROR, "Wrong backend response to %s command.\n", cmd.c_str());
-   //    JMSG(ctx, backend.ctx->jmsg_err_level(), "Wrong backend response to %s command.\n", cmd.c_str());
-   //    return bRC_Error;
-   // }
-
    int32_t status;
    while ((status = backend.ctx->read_command(ctx, cmd)) != 0)
    {
@@ -1765,13 +1758,13 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
          if (scan_parameter_str(cmd, "CHECK:", fname))
          {
             /* got accurate check query */
-            metaplugin::accurate::perform_accurate_check(ctx, backend.ctx, fname, accurate_mode, accurate_mode_err);
+            metaplugin::accurate::perform_accurate_check(ctx, backend.ctx, fname, lname, accurate_mode, accurate_mode_err);
             continue;
          }
          if (scan_parameter_str(cmd, "CHECKGET:", fname))
          {
             /* got accurate get query */
-            metaplugin::accurate::perform_accurate_check_get(ctx, backend.ctx, fname, accurate_mode, accurate_mode_err);
+            metaplugin::accurate::perform_accurate_check_get(ctx, backend.ctx, fname, lname, accurate_mode, accurate_mode_err);
             continue;
          }
          if (scan_parameter_str(cmd, "ACCEPT:", fname))
@@ -1929,7 +1922,7 @@ bRC METAPLUGIN::perform_accept_file(bpContext *ctx)
    struct save_pkt sp;
    memset(&sp, 0, sizeof(sp));
 
-   metaplugin::attributes::Status status = metaplugin::attributes::read_attributes_command(ctx, backend.ctx, cmd, &sp);
+   metaplugin::attributes::Status status = metaplugin::attributes::read_attributes_command(ctx, backend.ctx, cmd, &sp, lname);
    switch(status)
    {
    case metaplugin::attributes::Invalid_File_Type:
@@ -2329,9 +2322,13 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       while (backend.ctx->read_command(ctx, cmd) > 0)
       {
          DMSG(ctx, DINFO, "read_command(2): %s\n", cmd.c_str());
-         metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, sp);
+
+         metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, sp, lname);
          switch (status)
          {
+         case metaplugin::attributes::Status_Error:
+            return bRC_Error;
+
          case metaplugin::attributes::Invalid_File_Type:
             JMSG2(ctx, M_ERROR, "Invalid file type: %c for %s\n", sp->type, fname.c_str());
             return bRC_Error;
@@ -2345,12 +2342,15 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
                reqparams--;
             }
             continue;
+
          case metaplugin::attributes::Status_Handled:
             reqparams--;
             continue;
+
          default:
             break;
          }
+
          status = metaplugin::attributes::read_scan_tstamp_command(ctx, cmd, sp);
          switch (status)
          {
@@ -2359,12 +2359,15 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          default:
             break;
          }
-         if (scan_parameter_str(cmd, "LSTAT:", lname) == 1) {
+
+         if (scan_parameter_str(cmd, "LSTAT:", lname) == 1)
+         {
             sp->link = lname.c_str();
             reqparams--;
             DMSG(ctx, DINFO, "LSTAT:%s\n", lname.c_str());
             continue;
          }
+
          POOL_MEM tmp(PM_FNAME);
          if (scan_parameter_str(cmd, "PIPE:", tmp)) {
             /* handle PIPE command */

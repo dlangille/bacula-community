@@ -54,8 +54,9 @@ extern const char *PLUGINNAME;
 
 int logfd;
 pid_t mypid;
-char * buf;
-char * buflog;
+char *buf;
+char *buflog;
+char symlink_fname[32];
 
 bool regress_error_plugin_params = false;
 bool regress_error_start_job = false;
@@ -1183,6 +1184,27 @@ void perform_backup()
    signal_eod();
    write_plugin('I', "TEST18Data");
 
+   // now test `STAT:/path/to/file` using symbolic link
+   snprintf(symlink_fname, 32, "/tmp/passwd.%d", mypid);
+   symlink("/etc/passwd", symlink_fname);
+
+   // the file with external stat(2) packet
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/java/%d/stat.symlink\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "STAT:%s\n", symlink_fname);
+   write_plugin('C', buf);
+   write_plugin('I', "TEST18S");
+   signal_eod();
+   // here comes a file data contents
+   write_plugin('C', "DATA\n");
+   write_plugin('D', "/* here comes a file data contents */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   write_plugin('D', "/* here comes another file line    */");
+   signal_eod();
+   write_plugin('I', "TEST18S_Data");
+
    // this plugin object should be the latest item to backup
    if (regress_backup_plugin_objects)
    {
@@ -1771,6 +1793,8 @@ int main(int argc, char** argv) {
 
 Term:
    signal_term();
+   // LOG("#> Unlink symlink_fname.");
+   // unlink(symlink_fname);
    LOG("#> Terminating backend.");
    close(logfd);
    free(buf);

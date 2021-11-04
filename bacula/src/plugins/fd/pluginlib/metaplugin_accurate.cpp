@@ -53,7 +53,7 @@ namespace accurate
     * @param accurate_mode_err when accurate mode error handled
     * @return bRC bRC_OK when success, bRC_Error if not
     */
-   bRC perform_accurate_check(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, bool accurate_mode, bool &accurate_mode_err)
+   bRC perform_accurate_check(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, POOL_MEM &lname, bool accurate_mode, bool &accurate_mode_err)
    {
       if (strlen(fname.c_str()) == 0){
          // input variable is not valid
@@ -72,7 +72,7 @@ namespace accurate
          return bRC_Error;
       }
 
-      metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, &sp);
+      metaplugin::attributes::Status status = metaplugin::attributes::read_scan_stat_command(ctx, cmd, &sp, lname);
       if (status == metaplugin::attributes::Status_OK) {
          if (ptcomm->read_command(ctx, cmd) < 0) {
             // error
@@ -137,7 +137,7 @@ namespace accurate
     * @param accurate_mode_err when accurate mode error handled
     * @return bRC bRC_OK when success, bRC_Error if not
     */
-   bRC perform_accurate_check_get(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, bool accurate_mode, bool &accurate_mode_err)
+   bRC perform_accurate_check_get(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &fname, POOL_MEM &lname, bool accurate_mode, bool &accurate_mode_err)
    {
       POOL_MEM cmd(PM_FNAME);
 

@@ -47,11 +47,11 @@ namespace attributes
       Status_Error,
    } Status;
 
-   Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
+   Status read_scan_stat_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp, POOL_MEM &lname);
    Status make_stat_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
    Status read_scan_tstamp_command(bpContext *ctx, POOL_MEM &cmd, struct save_pkt *sp);
    Status make_tstamp_command(bpContext *ctx, POOL_MEM &cmd, const restore_pkt *rp);
-   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp);
+   Status read_attributes_command(bpContext *ctx, PTCOMM *ptcomm, POOL_MEM &cmd, struct save_pkt *sp, POOL_MEM &lname);
 }  // attributes
 }  // metaplugin
 
