@@ -1084,7 +1084,7 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
          break;
       }
       sendit(sock, _("Catalog: name=%s address=%s DBport=%d db_name=%s\n"
-"      db_driver=%s db_user=%s MutliDBConn=%d\n"),
+"      db_driver=%s db_user=%s MultiDBConn=%d\n"),
          res->res_cat.hdr.name, NPRT(res->res_cat.db_address),
          res->res_cat.db_port, res->res_cat.db_name,
          NPRT(res->res_cat.db_driver), NPRT(res->res_cat.db_user),
