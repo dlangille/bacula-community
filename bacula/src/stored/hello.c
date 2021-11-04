@@ -82,10 +82,10 @@ bool validate_dir_hello(JCR* jcr)
    BSOCK *dir = jcr->dir_bsock;
 
    if (dir->msglen < 25 || dir->msglen > 500) {
-      Dmsg2(dbglvl, "Bad Hello command from Director at %s. Len=%d.\n",
-            dir->who(), dir->msglen);
-      Qmsg2(jcr, M_SECURITY, 0, _("Bad Hello command from Director at %s. Len=%d.\n"),
-            dir->who(), dir->msglen);
+      Dmsg3(dbglvl, "Bad Hello command from Director at %s:%s. Len=%d.\n",
+            dir->who(), dir->host(), dir->msglen);
+      Qmsg3(jcr, M_SECURITY, 0, _("Bad Hello command from Director at %s:%s. Len=%d.\n"),
+            dir->who(), dir->host(), dir->msglen);
       sleep(5);
       return false;
    }
@@ -99,10 +99,10 @@ bool validate_dir_hello(JCR* jcr)
        scan_string(dir->msg, "Hello SD: Bacula Director %127s calling",
           dirname) != 1) {
       dir->msg[100] = 0;
-      Dmsg2(dbglvl, "Bad Hello command from Director at %s: %s\n",
-            dir->who(), dir->msg);
-      Qmsg2(jcr, M_SECURITY, 0, _("Bad Hello command from Director at %s: %s\n"),
-            dir->who(), dir->msg);
+      Dmsg3(dbglvl, "Bad Hello command from Director at %s:%s. Msg=%s\n",
+            dir->who(), dir->host(), dir->msg);
+      Qmsg3(jcr, M_SECURITY, 0, _("Bad Hello command from Director at %s:%s. Msg=%s\n"),
+            dir->who(), dir->host(), dir->msg);
       free_pool_memory(dirname);
       sleep(5);
       return false;
@@ -122,11 +122,11 @@ bool validate_dir_hello(JCR* jcr)
       }
    }
    if (!director) {
-      Dmsg2(dbglvl, "Connection from unknown Director %s at %s rejected.\n",
-            dirname, dir->who());
-      Qmsg2(jcr, M_SECURITY, 0, _("Connection from unknown Director %s at %s rejected.\n"
+      Dmsg3(dbglvl, "Connection from unknown Director %s at %s:%s rejected.\n",
+            dirname, dir->who(), dir->host());
+      Qmsg3(jcr, M_SECURITY, 0, _("Connection from unknown Director %s at %s:%s rejected.\n"
             "Please see " MANUAL_AUTH_URL " for help.\n"),
-            dirname, dir->who());
+            dirname, dir->who(), dir->host());
       free_pool_memory(dirname);
       sleep(5);
       return false;
@@ -152,7 +152,7 @@ void handle_client_connection(BSOCK *fd)
     */
    if (fd->msglen < 25 || fd->msglen > (int)sizeof(job_name)) {
       Pmsg1(000, "<filed: %s", fd->msg);
-      Qmsg2(NULL, M_SECURITY, 0, _("Invalid connection from %s. Len=%d\n"), fd->who(), fd->msglen);
+      Qmsg3(NULL, M_SECURITY, 0, _("Invalid connection from %s:%s. Len=%d\n"), fd->who(), fd->host(), fd->msglen);
       bmicrosleep(5, 0);   /* make user wait 5 seconds */
       fd->destroy();
       return;
@@ -170,7 +170,7 @@ void handle_client_connection(BSOCK *fd)
        scan_string(fd->msg, "Hello Bacula SD: Start Job %127s %d", job_name, &fd_version) != 2 &&
        scan_string(fd->msg, "Hello FD: Bacula Storage calling Start Job %127s %d", job_name, &sd_version) != 2 &&
        scan_string(fd->msg, "Hello Start Job %127s", job_name) != 1) {
-      Qmsg2(NULL, M_SECURITY, 0, _("Invalid Hello from %s. Len=%d\n"), fd->who(), fd->msglen);
+      Qmsg3(NULL, M_SECURITY, 0, _("Invalid Hello from %s:%s. Len=%d\n"), fd->who(), fd->host(), fd->msglen);
       sleep(5);
       fd->destroy();
       return;
@@ -187,9 +187,9 @@ void handle_client_connection(BSOCK *fd)
    /* After this point, we can use bail_out */
    Dmsg1(100, "Found Client Job %s\n", job_name);
    if (jcr->authenticated) {
-      Jmsg3(jcr, M_SECURITY, 0, _("A Client \"%s\" tried to authenticate for Job %s, "
+      Jmsg4(jcr, M_SECURITY, 0, _("A Client %s:%s tried to authenticate for Job %s, "
                                  "but the Job is already authenticated with \"%s\".\n"),
-            fd->who(), jcr->Job, jcr->file_bsock?jcr->file_bsock->who():"N/A");
+            fd->who(), fd->host(), jcr->Job, jcr->file_bsock?jcr->file_bsock->who():"N/A");
       Dmsg2(050, "Hey!!!! JobId %u Job %s already authenticated.\n",
          (uint32_t)jcr->JobId, jcr->Job);
       goto bail_out;
@@ -222,9 +222,9 @@ void handle_client_connection(BSOCK *fd)
     */
    jcr->lock_auth();     /* Ensure that only one thread is dealing with auth */
    if (jcr->authenticated) {
-      Jmsg2(jcr, M_SECURITY, 0, _("A Client \"%s\" tried to authenticate for Job %s, "
+      Jmsg3(jcr, M_SECURITY, 0, _("A Client %s:%s tried to authenticate for Job %s, "
                                  "but the job is already authenticated.\n"),
-            fd->who(), jcr->Job);
+            fd->who(), fd->host(), jcr->Job);
 
    } else if (!authenticate_filed(jcr, fd, fd_version)) {
       Dmsg1(50, "Authentication failed Job %s\n", jcr->Job);
