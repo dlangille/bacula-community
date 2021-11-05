@@ -31,7 +31,7 @@
 class WebUser extends TUser {
 
 	/**
-	 * Saved in session user properties.
+	 * Saved in current state user properties.
 	 */
 	const LONG_NAME = 'LongName';
 	const EMAIL = 'Email';
@@ -43,15 +43,25 @@ class WebUser extends TUser {
 	const IN_CONFIG = 'InConfig';
 
 	/**
+	 * Stores non-session information about user.
+	 */
+	private $current_state = [];
+
+	/**
 	 * Create single user instance.
 	 * Used for authenticated users.
 	 * If user doesn't exist in configuration then default access values can be taken into accout.
 	 *
 	 * @param string username user name
+	 * @param boolean $new_obj create new user object
 	 * @return WebUser user instance
 	 */
-	public function createUser($username) {
-		$user = Prado::createComponent(__CLASS__, $this->getManager());
+	public function createUser($username, $new_obj = true) {
+		$user = $this;
+		if ($new_obj === true) {
+			$user = Prado::createComponent(__CLASS__, $this->getManager());
+		}
+
 		$user->setUsername($username);
 
 		$application = $this->getManager()->getApplication();
@@ -111,7 +121,7 @@ class WebUser extends TUser {
 	 * @return none
 	 */
 	public function setLongName($long_name) {
-		$this->setState(self::LONG_NAME, $long_name);
+		$this->setCurrentState(self::LONG_NAME, $long_name);
 	}
 
 	/**
@@ -120,7 +130,7 @@ class WebUser extends TUser {
 	 * @return string long name (default empty string)
 	 */
 	public function getLongName() {
-		return $this->getState(self::LONG_NAME, '');
+		return $this->getCurrentState(self::LONG_NAME, '');
 	}
 
 	/**
@@ -130,7 +140,7 @@ class WebUser extends TUser {
 	 * @return none
 	 */
 	public function setEmail($email) {
-		$this->setState(self::EMAIL, $email);
+		$this->setCurrentState(self::EMAIL, $email);
 	}
 
 	/**
@@ -139,7 +149,7 @@ class WebUser extends TUser {
 	 * @return string e-mail address
 	 */
 	public function getEmail() {
-		return $this->getState(self::EMAIL, '');
+		return $this->getCurrentState(self::EMAIL, '');
 	}
 
 	/**
@@ -149,7 +159,7 @@ class WebUser extends TUser {
 	 * @return none
 	 */
 	public function setDescription($desc) {
-		$this->setState(self::DESCRIPTION, $desc);
+		$this->setCurrentState(self::DESCRIPTION, $desc);
 	}
 
 	/**
@@ -158,7 +168,36 @@ class WebUser extends TUser {
 	 * @return string description
 	 */
 	public function getDescription() {
-		return $this->getState(self::DESCRIPTION, '');
+		return $this->getCurrentState(self::DESCRIPTION, '');
+	}
+
+	/**
+	 * Get user roles.
+	 *
+	 * @return array role list assigned to user
+	 */
+	public function getRoles() {
+		return $this->getCurrentState('Roles', []);
+	}
+
+	/**
+	 * Set user roles.
+	 *
+	 * @param mixed $value roles assigned to user
+	 * @return none
+	 */
+	public function setRoles($value) {
+		if (is_array($value)) {
+			$this->setCurrentState('Roles', $value, []);
+		} else {
+			$roles = [];
+			foreach (explode(',', $value) as $role) {
+				if (($role = trim($role)) !== '') {
+					$roles[] = $role;
+				}
+			}
+			$this->setCurrentState('Roles', $roles, []);
+		}
 	}
 
 	/**
@@ -168,7 +207,7 @@ class WebUser extends TUser {
 	 * @return none
 	 */
 	public function setAPIHosts($api_hosts) {
-		$this->setState(self::API_HOSTS, $api_hosts);
+		$this->setCurrentState(self::API_HOSTS, $api_hosts);
 	}
 
 	/**
@@ -178,7 +217,7 @@ class WebUser extends TUser {
 	 */
 	public function getAPIHosts() {
 		$api_hosts = [];
-		$hosts = $this->getState(self::API_HOSTS);
+		$hosts = $this->getCurrentState(self::API_HOSTS);
 		/**
 		 * This checking is for backward compatibility because previously
 		 * hosts were written in session as string. Now it is written as array.
@@ -255,7 +294,7 @@ class WebUser extends TUser {
 	 * @return none
 	 */
 	public function setIps($ips) {
-		$this->setState(self::IPS, $ips);
+		$this->setCurrentState(self::IPS, $ips);
 	}
 
 	/**
@@ -264,7 +303,7 @@ class WebUser extends TUser {
 	 * @return string comma separated IP address list (default empty string)
 	 */
 	public function getIps() {
-		return $this->getState(self::IPS, '');
+		return $this->getCurrentState(self::IPS, '');
 	}
 
 	/**
@@ -275,7 +314,7 @@ class WebUser extends TUser {
 	 */
 	public function setEnabled($enabled) {
 		$enabled = TPropertyValue::ensureBoolean($enabled);
-		$this->setState(self::ENABLED, $enabled);
+		$this->setCurrentState(self::ENABLED, $enabled);
 	}
 
 	/**
@@ -284,7 +323,7 @@ class WebUser extends TUser {
 	 * @return string enabled flag state (default false)
 	 */
 	public function getEnabled() {
-		return $this->getState(self::ENABLED, false);
+		return $this->getCurrentState(self::ENABLED, false);
 	}
 
 	/**
@@ -295,7 +334,7 @@ class WebUser extends TUser {
 	 */
 	public function setInConfig($in_config) {
 		$in_config = TPropertyValue::ensureBoolean($in_config);
-		$this->setState(self::IN_CONFIG, $in_config);
+		$this->setCurrentState(self::IN_CONFIG, $in_config);
 	}
 
 	/**
@@ -304,7 +343,49 @@ class WebUser extends TUser {
 	 * @return string in config state value (default false)
 	 */
 	public function getInConfig() {
-		return $this->getState(self::IN_CONFIG, false);
+		return $this->getCurrentState(self::IN_CONFIG, false);
+	}
+
+	/**
+	 * Set current state.
+	 * Unlike user session (setState and getState), current state is not remembered.
+	 * It is for storing user data only for current request.
+	 *
+	 * @param string $key state key
+	 * @param mixed $value value to set
+	 * @return none
+	 */
+	private function setCurrentState($key, $value) {
+		$this->current_state[$key] = $value;
+	}
+
+	/**
+	 * Get current state.
+	 *
+	 * @param string $key state key
+	 * @param mixed $default_value default value
+	 * @return mixed state value or default value if state value does not exist
+	 */
+	private function getCurrentState($key, $default_value = null) {
+		return key_exists($key, $this->current_state) ? $this->current_state[$key] : $default_value;
+	}
+
+	/**
+	 * Load user information from session data.
+	 * This method overloads parent method for adding user data from user config file.
+	 *
+	 * @param string $data user data
+	 * @return IUser user object
+	 */
+	public function loadFromString($data) {
+		parent::loadFromString($data);
+		if ($this->getIsGuest() === false) {
+			$username = $this->getName();
+
+			// Create user from config file data.
+			$this->createUser($username, false);
+		}
+		return $this;
 	}
 }
 ?>
