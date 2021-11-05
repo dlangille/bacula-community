@@ -79,6 +79,7 @@ void PTCOMM::terminate(bpContext *ctx)
       return;
    }
 
+   struct timeval _timeout;
    _timeout.tv_sec = 0;
    _timeout.tv_usec = 1000;
 
@@ -151,6 +152,7 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
 {
    int status;
    int rbytes = 0;
+   struct timeval _timeout;
 
    _timeout.tv_sec = PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
@@ -244,8 +246,9 @@ bool PTCOMM::sendbackend_data(bpContext *ctx, const char *buf, int32_t nbytes)
 {
    int status;
    int wbytes = 0;
+   struct timeval _timeout;
 
-   _timeout.tv_sec = PTCOMM_DEFAULT_TIMEOUT;
+   _timeout.tv_sec = m_timeout > 0 ? m_timeout : PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
 
    while (nbytes > 0)

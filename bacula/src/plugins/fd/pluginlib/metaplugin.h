@@ -60,16 +60,17 @@ extern const char *PLUGIN_VERSION;
 extern const char *PLUGIN_DESCRIPTION;
 
 // Plugin linking time variables
-extern const char *PLUGINPREFIX;             /// is used for prefixing every Job and Debug messages generted by a plugin
-extern const char *PLUGINNAME;               /// should match the backend $pluginname$ used for Handshake procedure
-extern const bool CUSTOMNAMESPACE;           /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
-extern const bool CUSTOMPREVJOBNAME;         /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
-extern const char *PLUGINNAMESPACE;          /// custom backend plugin namespace used as file name prefix
-extern const char *PLUGINAPI;                /// the plugin api string which should match backend expectations
-extern const char *BACKEND_CMD;              /// a backend execution command path
-extern const int32_t CUSTOMCANCELSLEEP;      /// custom wait time for backend between USR1 and terminate procedures
-extern const bool ACCURATEPLUGINPARAMETER;   /// accurate parameter for plugin parameter
-extern const int ADDINCLUDESTRIPOPTION;      /// setup precompiled include path strip option
+extern const char *PLUGINPREFIX;                /// is used for prefixing every Job and Debug messages generted by a plugin
+extern const char *PLUGINNAME;                  /// should match the backend $pluginname$ used for Handshake procedure
+extern const bool CUSTOMNAMESPACE;              /// defines if metaplugin should send `Namespace=...` backend plugin parameter using PLUGINNAMESPACE variable
+extern const bool CUSTOMPREVJOBNAME;            /// defines if metaplugin should send `PrevJobName=...` backend plugin parameter from bacula variable
+extern const char *PLUGINNAMESPACE;             /// custom backend plugin namespace used as file name prefix
+extern const char *PLUGINAPI;                   /// the plugin api string which should match backend expectations
+extern const char *BACKEND_CMD;                 /// a backend execution command path
+extern const int32_t CUSTOMCANCELSLEEP;         /// custom wait time for backend between USR1 and terminate procedures
+extern const bool ACCURATEPLUGINPARAMETER;      /// accurate parameter for plugin parameter
+extern const int ADDINCLUDESTRIPOPTION;         /// setup precompiled include path strip option
+extern const bool DONOTSAVE_FT_PLUGIN_CONFIG;   /// when set to `true` then Metaplugin won't save FT_PLUGIN_CONFIG as a first file during Full backup
 
 /// defines if metaplugin should handle local filesystem restore with Bacula Core functions
 /// `false` means metaplugin will redirect local restore to backend

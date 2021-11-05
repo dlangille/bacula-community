@@ -381,9 +381,10 @@ bRC METAPLUGIN::handle_plugin_restoreobj(bpContext *ctx, restore_object_pkt *rop
 
    DMSG2(ctx, DDEBUG, "handle_plugin_restoreobj: %s %d\n", rop->object_name, rop->object_type);
 
-   // if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0) {
-   if (strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0 && (rop->object_type == FT_PLUGIN_CONFIG || rop->object_type == FT_PLUGIN_CONFIG_FILLED)) {
-
+   // do not handle FT_PLUGIN_CONFIG when no one was saved by default
+   if (!DONOTSAVE_FT_PLUGIN_CONFIG && strcmp(rop->object_name, INI_RESTORE_OBJECT_NAME) == 0 &&
+         (rop->object_type == FT_PLUGIN_CONFIG || rop->object_type == FT_PLUGIN_CONFIG_FILLED))
+   {
       DMSG(ctx, DINFO, "INIcmd: %s\n", rop->plugin_name);
 
       ini.clear_items();
@@ -2252,16 +2253,19 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       return bRC_Error;
    }
 
-   /* The first file in Full backup, is the RestoreObject */
-   if (!estimate && mode == BACKUP_FULL && pluginconfigsent == false) {
-      ConfigFile ini;
-      ini.register_items(plugin_items_dump, sizeof(struct ini_items));
-      sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
-      sp->restore_obj.object_len = ini.serialize(robjbuf.handle());
-      sp->restore_obj.object = robjbuf.c_str();
-      sp->type = FT_PLUGIN_CONFIG;
-      DMSG2(ctx, DINFO, "Prepared RestoreObject/%s (%d) sent.\n", INI_RESTORE_OBJECT_NAME, FT_PLUGIN_CONFIG);
-      return bRC_OK;
+   if (!DONOTSAVE_FT_PLUGIN_CONFIG)
+   {
+      /* The first file in Full backup, is the RestoreObject */
+      if (!estimate && mode == BACKUP_FULL && pluginconfigsent == false) {
+         ConfigFile ini;
+         ini.register_items(plugin_items_dump, sizeof(struct ini_items));
+         sp->restore_obj.object_name = (char *)INI_RESTORE_OBJECT_NAME;
+         sp->restore_obj.object_len = ini.serialize(robjbuf.handle());
+         sp->restore_obj.object = robjbuf.c_str();
+         sp->type = FT_PLUGIN_CONFIG;
+         DMSG2(ctx, DINFO, "Prepared RestoreObject/%s (%d) sent.\n", INI_RESTORE_OBJECT_NAME, FT_PLUGIN_CONFIG);
+         return bRC_OK;
+      }
    }
 
    // check if this is the first file from backend to backup
@@ -2455,9 +2459,11 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
       }
    }
 
-   if (!estimate){
+   if (!estimate && !DONOTSAVE_FT_PLUGIN_CONFIG)
+   {
       /* The current file was the restore object, so just ask for the next file */
-      if (mode == BACKUP_FULL && pluginconfigsent == false) {
+      if (mode == BACKUP_FULL && pluginconfigsent == false)
+      {
          pluginconfigsent = true;
          return bRC_More;
       }

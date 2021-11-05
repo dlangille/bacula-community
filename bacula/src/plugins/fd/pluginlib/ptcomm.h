@@ -85,7 +85,7 @@ private:
    bool f_cont;               // when we are reading next part of data packet */
    bool abort_on_error;       // abort on error flag */
    int32_t remaininglen;      // the number of bytes to read when `f_cont` is true
-   struct timeval _timeout;   // a timeout when waiting for data to read from backend
+   uint32_t m_timeout;        // a timeout when waiting for data to read from backend, in seconds
 
 protected:
    bool recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes);
@@ -115,7 +115,8 @@ public:
       f_fatal(false),
       f_cont(false),
       abort_on_error(false),
-      remaininglen(0)
+      remaininglen(0),
+      m_timeout(PTCOMM_DEFAULT_TIMEOUT)
    {}
 #if __cplusplus > 201103L
    PTCOMM(PTCOMM &) = delete;
@@ -294,7 +295,9 @@ public:
     * @return true if flag is set
     * @return false  if flag is not set
     */
-   bool is_abort_on_error() { return abort_on_error; }
+   inline bool is_abort_on_error() { return abort_on_error; }
+
+   inline void set_timeout(uint32_t timeout) { m_timeout = timeout; }
 };
 
 #endif   /* _PTCOMM_H_ */
