@@ -49,6 +49,8 @@ const int32_t CUSTOMCANCELSLEEP  = 0;
 checkFile_t checkFile = NULL;
 const bool CORELOCALRESTORE = false;
 const bool ACCURATEPLUGINPARAMETER = true;
+const int ADDINCLUDESTRIPOPTION = 0;
+const bool DONOTSAVE_FT_PLUGIN_CONFIG = false;
 
 #ifdef DEVELOPER
 const metadataTypeMap plugin_metadata_map[] = {{"METADATA_STREAM", plugin_meta_blob}};
