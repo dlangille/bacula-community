@@ -469,6 +469,10 @@ bRC METAPLUGIN::run_backend(bpContext *ctx)
    /* setup communication channel */
    backend.ctx->set_bpipe(bp);
    DMSG(ctx, DINFO, "Backend executed at PID=%i\n", bp->worker_pid);
+
+   backend.ctx->set_timeout(BACKEND_TIMEOUT);
+   DMSG(ctx, DINFO, "setup backend timeout=%d\n", backend.ctx->get_timeout());
+
    return bRC_OK;
 }
 

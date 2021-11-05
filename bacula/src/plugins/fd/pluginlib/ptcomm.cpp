@@ -154,7 +154,7 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
    int rbytes = 0;
    struct timeval _timeout;
 
-   _timeout.tv_sec = PTCOMM_DEFAULT_TIMEOUT;
+   _timeout.tv_sec = m_timeout > 0 ? m_timeout : PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
 
    while (nbytes > 0)

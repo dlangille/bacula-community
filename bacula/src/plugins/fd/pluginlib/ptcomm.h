@@ -297,7 +297,19 @@ public:
     */
    inline bool is_abort_on_error() { return abort_on_error; }
 
-   inline void set_timeout(uint32_t timeout) { m_timeout = timeout; }
+   /**
+    * @brief Set the timeout value in seconds
+    *
+    * @param timeout a value in seconds
+    */
+   inline void set_timeout(uint32_t timeout) { m_timeout = timeout > 0 ? timeout : PTCOMM_DEFAULT_TIMEOUT; }
+
+   /**
+    * @brief Get the timeout object
+    *
+    * @return uint32_t a current value of the PTCOMM Timeout
+    */
+   inline uint32_t get_timeout() { return m_timeout; }
 };
 
 #endif   /* _PTCOMM_H_ */

@@ -71,6 +71,7 @@ extern const int32_t CUSTOMCANCELSLEEP;         /// custom wait time for backend
 extern const bool ACCURATEPLUGINPARAMETER;      /// accurate parameter for plugin parameter
 extern const int ADDINCLUDESTRIPOPTION;         /// setup precompiled include path strip option
 extern const bool DONOTSAVE_FT_PLUGIN_CONFIG;   /// when set to `true` then Metaplugin won't save FT_PLUGIN_CONFIG as a first file during Full backup
+extern const uint32_t BACKEND_TIMEOUT;          /// define a custom timeout value in seconds for data exchange (read from or write to backend)
 
 /// defines if metaplugin should handle local filesystem restore with Bacula Core functions
 /// `false` means metaplugin will redirect local restore to backend
