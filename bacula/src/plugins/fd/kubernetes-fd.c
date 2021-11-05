@@ -51,6 +51,7 @@ const bool CORELOCALRESTORE = false;
 const bool ACCURATEPLUGINPARAMETER = true;
 const int ADDINCLUDESTRIPOPTION = 0;
 const bool DONOTSAVE_FT_PLUGIN_CONFIG = false;
+const uint32_t BACKEND_TIMEOUT = 0; // use default
 
 #ifdef DEVELOPER
 const metadataTypeMap plugin_metadata_map[] = {{"METADATA_STREAM", plugin_meta_blob}};
