@@ -246,7 +246,7 @@ then
         DISTNAME=cygwin
         AC_DEFINE(HAVE_CYGWIN)
 else
-        DISTNAME=unknown
+        DISTNAME=unknown_distro
 fi
 AC_MSG_RESULT(done)
 ])

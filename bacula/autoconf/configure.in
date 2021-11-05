@@ -4018,7 +4018,7 @@ suse5)
        platforms/suse/bacula-dir"
   ;;
 unknown)
-   DISTVER=unknown
+   DISTVER=unknown_distro_ver
    TAPEDRIVE="/dev/nst0"
   ;;
 *)
