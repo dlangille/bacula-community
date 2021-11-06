@@ -238,10 +238,21 @@ div.TDatePicker_default {
 	z-index: 10 !important;
 }
 
+i.directive_required {
+	line-height: 40px;
+}
+
+i.help_icon {
+	 margin-left: 16px !important;
+	 cursor: pointer;
+}
 i.reset_btn, i.remove_btn {
 	display: none;
 	cursor: pointer;
 	margin-left: 4px;
+}
+i.plus_btn {
+	margin-right: 2px;
 }
 
 div.directive_value i {
@@ -250,6 +261,13 @@ div.directive_value i {
 
 div.directive_value:hover i.reset_btn, div.directive_value:hover i.remove_btn {
 	display: inline;
+}
+
+div.directive_field input, div.directive_field select {
+	max-width: 400px;
+}
+div.directive_field input.w3-half, div.directive_field select.w3-half {
+	max-width: 200px;
 }
 
 div.details_card {
@@ -611,12 +629,6 @@ img.job_weather_icon {
 /* Schedule setting */
 .day_of_month, .week_of_month, .week_of_year {
 	width: 14px;
-}
-
-i.help_icon {
-	 margin-left: 16px !important;
-	 margin-right: 16px !important;
-	 cursor: pointer;
 }
 
 div.directive_help dt, div.directive_help dd {

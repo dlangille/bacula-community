@@ -5,7 +5,7 @@
 	<prop:ItemTemplate>
 		<div class="w3-card w3-padding directive">
 			<com:TActiveLinkButton
-				CssClass="w3-button w3-green w3-right"
+				CssClass="w3-button w3-red w3-right"
 				OnCommand="SourceTemplateControl.removeMessages"
 				CommandName="<%=$this->ItemIndex%>"
 			>
