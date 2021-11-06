@@ -17,6 +17,7 @@
 			AutoPostBack="false"
 			OnSelectedIndexChanged="saveValue"
 		/> <%=$this->getRequired() ? '&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>' : ''%>
+		<i class="fas fa-info-circle help_icon w3-text-green" style="display: <%=($this->doc ? 'inline-block': 'none')%>;" onclick="var h = $(this).nextAll('div.directive_help'); var disp = h.get(0).style.display; $('div.directive_help').slideUp('fast'); if (disp == 'none') { h.slideDown('fast'); }"></i>
 		<i class="fa fa-undo reset_btn<%=!$this->ShowResetButton ? ' hide' : ''%>" onclick="var fsize = Units.format_size(parseInt('<%=$this->getDefaultValue()%>', 10), 'B'); document.getElementById('<%=$this->Directive->ClientID%>').value = fsize.value; document.getElementById('<%=$this->SizeFormat->ClientID%>').value = fsize.format;" alt="<%[ Reset to default value ]%>" title="<%[ Reset to default value ]%>"></i>
 		<i class="fa fa-trash-alt remove_btn<%=!$this->ShowRemoveButton ? ' hide' : ''%>" onclick="document.getElementById('<%=$this->Directive->ClientID%>').value = '';" alt="<%[ Remove directive ]%>" title="<%[ Remove directive ]%>"></i>
 		<com:TRequiredFieldValidator
@@ -28,5 +29,6 @@
 			Text="Field required."
 			Enabled="<%=$this->getRequired() && $this->getShow()%>"
 		/>
+		<div class="directive_help" style="clear: left; display: none"><%=$this->doc%></div>
 	</div>
 </div>

@@ -946,3 +946,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 #####################################################################
+
+Baculum uses parts of the official Bacula documentation for describing
+the Bacula configuration directives.
+
+File: protected/Web/Data/dir_docs.html
+
+Copyright 1999-2021, Kern Sibbald
+
+The Bacula documentation by Kern Sibbald with contributions from many others,
+a complete list can be found in the License chapter. Creative Commons
+Attribution-ShareAlike 4.0 International License
+
+http://creativecommons.org/licenses/by-sa/4.0/
+

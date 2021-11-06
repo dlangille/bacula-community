@@ -613,3 +613,20 @@ img.job_weather_icon {
 	width: 14px;
 }
 
+i.help_icon {
+	 margin-left: 16px !important;
+	 margin-right: 16px !important;
+	 cursor: pointer;
+}
+
+div.directive_help dt, div.directive_help dd {
+	color: #333;
+}
+
+div.directive_help dt {
+	padding: 5px;
+}
+
+div.directive_help dd {
+	margin-inline-start: 20px;
+}

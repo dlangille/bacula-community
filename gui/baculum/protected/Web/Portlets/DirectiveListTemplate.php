@@ -47,6 +47,8 @@ class DirectiveListTemplate extends ConfigListTemplate implements IActiveControl
 	const GROUP_NAME = 'GroupName';
 	const IS_DIRECTIVE_CREATED = 'IsDirectiveCreated';
 
+	public $doc;
+
 	public $display_directive;
 
 	public function __construct() {
@@ -73,6 +75,7 @@ class DirectiveListTemplate extends ConfigListTemplate implements IActiveControl
 		if (!$this->getPage()->IsCallBack && !$this->getPage()->IsPostBack) {
 			$this->display_directive = $this->getShow();
 		}
+		$this->setDoc();
 	}
 
 	public function onLoad($param) {
@@ -195,5 +198,15 @@ class DirectiveListTemplate extends ConfigListTemplate implements IActiveControl
 		$this->setViewState(self::IS_DIRECTIVE_CREATED, $is_created);
 	}
 
+	public function setDoc() {
+		$component_type = $this->getComponentType();
+		$resource_type = $this->getResourceType();
+		$directive_name = $this->getDirectiveName();
+		$this->doc = $this->Application->getModule('doc_dir')->getDoc(
+			$component_type,
+			$resource_type,
+			$directive_name
+		);
+	}
 }
 ?>

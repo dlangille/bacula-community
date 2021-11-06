@@ -57,7 +57,10 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 	const SHOW_RESET_BUTTON = 'ShowResetButton';
 	const SHOW_REMOVE_BUTTON = 'ShowRemoveButton';
 
+	public $doc;
+
 	public $display_directive;
+
 	private $data_changed = false;
 
 	private $command_params = array('save', 'add');
@@ -119,6 +122,7 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 			$this->createDirective();
 			$this->setIsDirectiveCreated(true);
 			$this->copyAttributes();
+			$this->setDoc();
 		}
 
 		// show directives existing in config or all
@@ -321,6 +325,17 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 	public function setShowRemoveButton($show) {
 		$show = TPropertyValue::ensureBoolean($show);
 		$this->setViewState(self::SHOW_REMOVE_BUTTON, $show);
+	}
+
+	public function setDoc() {
+		$component_type = $this->getComponentType();
+		$resource_type = $this->getResourceType();
+		$directive_name = $this->getDirectiveName();
+		$this->doc = $this->Application->getModule('doc_dir')->getDoc(
+			$component_type,
+			$resource_type,
+			$directive_name
+		);
 	}
 }
 ?>
