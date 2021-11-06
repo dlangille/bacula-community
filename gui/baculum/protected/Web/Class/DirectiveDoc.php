@@ -59,6 +59,9 @@ class DirectiveDoc extends WebModule {
 		} else {
 			$component = $misc->getComponentFullName($component_type);
 		}
+		if ($resource_type == 'JobDefs') {
+			$resource_type = 'Job';
+		}
 
 		$doc = '';
 		$doc_file = Prado::getPathOfNamespace(self::DOC_PATH, self::DOC_EXT);
