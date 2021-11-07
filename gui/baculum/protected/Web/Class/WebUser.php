@@ -265,8 +265,13 @@ class WebUser extends TUser {
 	 */
 	public function getDefaultAPIHost() {
 		$def_host = $this->getState(self::DEFAULT_API_HOST);
+		$api_hosts = $this->getAPIHosts();
+		if ($def_host && !in_array($def_host, $api_hosts)) {
+			// The default host is not longer assigned to user. Don't allow to use this host.
+			$def_host = null;
+			$this->setDefaultAPIHost(null); // delete default host
+		}
 		if (!$def_host) {
-			$api_hosts = $this->getAPIHosts();
 			if (count($api_hosts) == 1) {
 				// only one host assigned, so use it as default host
 				$def_host = $api_hosts[0];
