@@ -1127,7 +1127,7 @@ var oUserList = {
 						btn_edit.className = 'w3-button w3-green';
 						btn_edit.type = 'button';
 						var i_edit = document.createElement('I');
-						i_edit.className = 'fa fa-list-ul';
+						i_edit.className = 'fa fa-edit';
 						var label_edit = document.createTextNode(' <%[ Edit ]%>');
 						btn_edit.appendChild(i_edit);
 						btn_edit.innerHTML += '&nbsp';
@@ -1620,7 +1620,7 @@ var oRoleList = {
 						btn_edit.className = 'w3-button w3-green';
 						btn_edit.type = 'button';
 						var i_edit = document.createElement('I');
-						i_edit.className = 'fa fa-list-ul';
+						i_edit.className = 'fa fa-edit';
 						var label_edit = document.createTextNode(' <%[ Edit ]%>');
 						btn_edit.appendChild(i_edit);
 						btn_edit.innerHTML += '&nbsp';
@@ -2072,7 +2072,7 @@ var oConsoleList = {
 						btn_edit.className = 'w3-button w3-green';
 						btn_edit.type = 'button';
 						var i_edit = document.createElement('I');
-						i_edit.className = 'fa fa-list-ul';
+						i_edit.className = 'fa fa-edit';
 						var label_edit = document.createTextNode(' <%[ Edit ]%>');
 						btn_edit.appendChild(i_edit);
 						btn_edit.innerHTML += '&nbsp';
@@ -2312,7 +2312,7 @@ var oOAuth2ClientList = {
 						btn_edit.className = 'w3-button w3-green';
 						btn_edit.type = 'button';
 						var i_edit = document.createElement('I');
-						i_edit.className = 'fa fa-list-ul';
+						i_edit.className = 'fa fa-edit';
 						var label_edit = document.createTextNode(' <%[ Edit ]%>');
 						btn_edit.appendChild(i_edit);
 						btn_edit.innerHTML += '&nbsp';
@@ -2725,7 +2725,7 @@ var oAPIHostList = {
 						btn_edit.className = 'w3-button w3-green';
 						btn_edit.type = 'button';
 						var i_edit = document.createElement('I');
-						i_edit.className = 'fa fa-list-ul';
+						i_edit.className = 'fa fa-edit';
 						var label_edit = document.createTextNode(' <%[ Edit ]%>');
 						btn_edit.appendChild(i_edit);
 						btn_edit.innerHTML += '&nbsp';

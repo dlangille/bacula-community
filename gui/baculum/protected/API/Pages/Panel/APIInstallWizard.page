@@ -1154,7 +1154,7 @@ var oConfigWizardStep4 = {
 				}
 			</script>
 		</com:TWizardStep>
-		<com:TWizardStep ID="Step7" Title="<%[ Step 7 - Finish ]%>" StepType="Finish">
+		<com:TWizardStep ID="Step7" Title="<%[ Step 6 - Finish ]%>" StepType="Finish">
 			<fieldset>
 				<legend><%[ Catalog API ]%></legend>
 				<div style="display: <%=($this->DatabaseYes->Checked ? 'block' : 'none')%>">
