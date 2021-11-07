@@ -81,7 +81,7 @@ var oBaculaConfigResourceList<%=$this->ClientID%> = {
 								edit_btn.className = 'w3-button w3-green w3-margin-right';
 								edit_btn.type = 'button';
 								var i = document.createElement('I');
-								i.className = 'fa fa-list-ul';
+								i.className = 'fa fa-edit';
 								var label = document.createTextNode(' <%[ Edit ]%>');
 								edit_btn.appendChild(i);
 								edit_btn.innerHTML += '&nbsp';

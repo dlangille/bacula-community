@@ -110,13 +110,13 @@
 					CausesValidation="false"
 					CssClass="w3-button w3-green"
 				>
-					<%[ Previous ]%>&nbsp; <i class="fa fa-angle-left"></i>
+					<i class="fa fa-angle-left"></i> &nbsp;<%[ Previous ]%>
 				</com:TLinkButton>
 				<com:TLinkButton
 					CommandName="Complete"
 					CssClass="w3-button w3-green"
 				>
-					<%[ Run restore ]%> &nbsp;<i class="fa fa-paper-plane"></i>
+					<i class="fa fa-paper-plane"></i> &nbsp;<%[ Run restore ]%>
 				</com:TLinkButton>
 			</div>
 		</prop:FinishNavigationTemplate>

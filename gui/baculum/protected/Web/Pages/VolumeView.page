@@ -23,7 +23,7 @@
 				<i class="fa fa-shower"></i> &nbsp;<%[ Prune ]%>
 			</com:TActiveLinkButton>
 			<com:TActiveLinkButton
-				CssClass="w3-button w3-green"
+				CssClass="w3-button w3-red"
 				OnClick="purge"
 				Attributes.onclick="document.getElementById('volume_action_log').style.display='block'"
 			>

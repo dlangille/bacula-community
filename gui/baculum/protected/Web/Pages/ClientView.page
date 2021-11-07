@@ -40,7 +40,7 @@
 			ClientSide.OnSuccess="$('#status_client_loading').hide();$('#show_client_container').hide();$('#status_client_container').show();oGraphicalClientStatus.set_refresh_timeout(document.getElementById('status_client_refresh_interval').value);"
 			ClientSide.OnFailure="$('#status_client_loading').hide();status_client_show_error(parameter);"
 		>
-			<prop:Text><%=Prado::localize('Status client')%> &nbsp;<i class="fa fa-file-medical-alt"></i></prop:Text>
+			<i class="fa fa-file-medical-alt"></i> &nbsp;<%[ Status client ]%>
 		</com:TActiveLinkButton>
 		<com:Application.Web.Portlets.ComponentActionsMenu
 			ID="CompActions"

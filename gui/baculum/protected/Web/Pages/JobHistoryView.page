@@ -6,7 +6,7 @@
 			<b><i class="fa fa-tasks"></i> <%[ Job history details ]%></b>
 		</h5>
 	</header>
-	<h3>[<%[ JobId ]%> <%=$this->getJobId()%>] <%[ Job: ]%> <%=$this->getJobName()%> &nbsp;</h3>
+	<h3 class="w3-margin-left">[<%[ JobId ]%> <%=$this->getJobId()%>] <%[ Job: ]%> <%=$this->getJobName()%> &nbsp;</h3>
 	<div class="w3-bar w3-green w3-margin-bottom">
 		<a class="w3-bar-item w3-button tab_btn" href="<%=$this->Service->constructUrl('JobHistoryList')%>"><i class="fa fa-angle-left"></i></a>
 		<button id="btn_job_actions" type="button" class="w3-bar-item w3-button tab_btn w3-grey" onclick="W3Tabs.open(this.id, 'job_actions'); job_callback_func(); oRunningJobStatus.init_refresh();"><%[ Actions ]%></button>
@@ -40,17 +40,17 @@
 			Display="None"
 			ClientSide.OnSuccess="job_callback_func(true);"
 		>
-			<prop:Text><%=Prado::localize('Cancel job')%> &nbsp;<i class="fa fa-stop"></i></prop:Text>
+			<i class="fa fa-stop"></i> &nbsp;<%[ Cancel job ]%>
 		</com:TActiveLinkButton>
 		<com:TActiveLinkButton
 			CssClass="w3-button w3-green w3-margin-bottom"
 			OnClick="loadRunJobModal"
 			Attributes.onclick="document.getElementById('run_job').style.display='block'"
 		>
-			<prop:Text><%=Prado::localize('Run job again')%> &nbsp;<i class="fa fa-undo"></i></prop:Text>
+			<i class="fa fa-undo"></i> &nbsp;<%[ Run job again ]%>
 		</com:TActiveLinkButton>
 		<com:TActiveLinkButton ID="DeleteBtn" CssClass="w3-button w3-red w3-margin-bottom" Attributes.onclick="$('#job_delete_confirm').show();">
-			<%[ Delete ]%> &nbsp;<i class="fa fa-trash-alt"></i>
+			<i class="fa fa-trash-alt"></i> &nbsp;<%[ Delete ]%>
 		</com:TActiveLinkButton>
 		<com:TActiveLinkButton
 			ID="RestoreBtn"
@@ -58,7 +58,7 @@
 			CssClass="w3-button w3-green w3-margin-bottom"
 			Display="None"
 		>
-			<%[ Restore ]%> &nbsp;<i class="fa fa-reply"></i>
+			<i class="fa fa-reply"></i> &nbsp;<%[ Restore ]%>
 		</com:TActiveLinkButton>
 		<div class="w3-panel w3-card w3-light-grey">
 			<h3><%[ Job: ]%> <%=$this->getJobUname()%> &nbsp;
@@ -577,7 +577,7 @@ $(function() {
 					OnClick="delete"
 					ClientSide.OnSuccess="document.location.href='<%=$this->Service->constructUrl('JobHistoryList')%>';"
 				>
-					<prop:Text><%=Prado::localize('Delete')%> &nbsp;<i class="fa fa-trash-alt"></i></prop:Text>
+					<i class="fa fa-trash-alt"></i>  &nbsp;<%[ Delete ]%>
 				</com:TActiveLinkButton>
 			</div>
 		</div>

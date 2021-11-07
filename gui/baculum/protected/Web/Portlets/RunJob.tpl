@@ -177,7 +177,6 @@
 		<footer class="w3-container w3-center">
 			<com:TActiveLinkButton
 				ID="Estimate"
-				Text="<%[ Estimate job ]%>"
 				OnClick="estimate"
 				CssClass="w3-button w3-section w3-teal w3-padding"
 			>
@@ -194,10 +193,10 @@
 					show_job_log(true);
 					scroll_down_job_log();
 				</prop:ClientSide.OnComplete>
+				<i class="fas fa-weight"></i> &nbsp;<%[ Estimate job ]%>
 			</com:TActiveLinkButton>
 			<com:TActiveLinkButton
 				ID="Run"
-				Text="<%[ Run job ]%>"
 				ValidationGroup="JobGroup"
 				CausesValidation="true"
 				OnClick="runJobAgain"
@@ -207,6 +206,7 @@
 					var mainForm = Prado.Validation.getForm();
 					return Prado.Validation.validate(mainForm, 'JobGroup');
 				</prop:Attributes.onclick>
+				<i class="fas fa-paper-plane"></i> &nbsp;<%[ Run job ]%>
 			</com:TActiveLinkButton>
 			<script>
 				var run_job_go_to_running_job = function(jobid) {

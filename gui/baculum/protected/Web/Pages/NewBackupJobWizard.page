@@ -127,7 +127,7 @@
 					CommandName="Complete"
 					CssClass="w3-button w3-green"
 				>
-					<%[ Create job ]%> &nbsp;<i class="fa fa-paper-plane"></i>
+					<i class="fa fa-paper-plane"></i> &nbsp;<%[ Create job ]%>
 				</com:TLinkButton>
 			</div>
 			</div>

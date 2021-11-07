@@ -16,9 +16,9 @@
 					document.getElementById('<%=$this->CommandLine->ClientID%>').readOnly = false;
 					$('#<%=$this->CommandLine->ClientID%>').focus();
 				</prop:ClientSide.OnComplete>
-				<%[ Enter ]%> &nbsp;<i class="fa fa-play"></i>
+				<i class="fa fa-play"></i> &nbsp;<%[ Enter ]%>
 			</com:TActiveLinkButton>
-			<button class="w3-button w3-green" type="button" onclick="document.getElementById('<%=$this->OutputListing->ClientID%>').value = '';"><%[ Clear ]%> &nbsp;<i class="fa fa-times"></i></button>
+			<button class="w3-button w3-red" type="button" onclick="document.getElementById('<%=$this->OutputListing->ClientID%>').value = '';"><i class="fa fa-times"></i> &nbsp;<%[ Clear ]%></button>
 		</div>
 	</div>
 	<script type="text/javascript">

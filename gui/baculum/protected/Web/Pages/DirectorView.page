@@ -23,7 +23,7 @@
 			ClientSide.OnSuccess="$('#status_director_loading').hide();$('#show_director_container').hide();$('#status_director_container').show();oGraphicalDirectorStatus.set_refresh_timeout(document.getElementById('status_director_refresh_interval').value);"
 			ClientSide.OnFailure="$('#status_director_loading').hide();status_director_show_error(parameter);"
 		>
-			<%[ Status director ]%> &nbsp;<i class="fa fa-file-medical-alt"></i>
+			<i class="fa fa-file-medical-alt"></i> <%[ Status director ]%>
 		</com:TActiveLinkButton>
 		<com:Application.Web.Portlets.ComponentActionsMenu
 			ID="CompActions"
