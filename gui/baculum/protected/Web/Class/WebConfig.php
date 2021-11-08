@@ -63,6 +63,10 @@ class WebConfig extends ConfigFileModule {
 	 */
 	const DEF_TIME_IN_JOB_LOG = 0;
 
+	/**
+	 * Default value for enabling messages log.
+	 */
+	const DEF_ENABLE_MESSAGES_LOG = 1;
 
 	/**
 	 * Default date and time format.
@@ -179,7 +183,8 @@ class WebConfig extends ConfigFileModule {
 			'max_jobs' => self::DEF_MAX_JOBS,
 			'size_values_unit' => self::DEF_SIZE_VAL_UNIT,
 			'time_in_job_log' => self::DEF_TIME_IN_JOB_LOG,
-			'date_time_format' => self::DEF_DATE_TIME_FORMAT
+			'date_time_format' => self::DEF_DATE_TIME_FORMAT,
+			'enable_messages_log' => self::DEF_ENABLE_MESSAGES_LOG
 		];
 		if (key_exists('baculum', $config)) {
 			$config['baculum'] = array_merge($baculum, $config['baculum']);
@@ -294,6 +299,20 @@ class WebConfig extends ConfigFileModule {
 	public function isDefAccessDefaultSettings() {
 		$config = $this->getConfig();
 		return (isset($config['security']['def_access']) && $config['security']['def_access'] === self::DEF_ACCESS_DEFAULT_SETTINGS);
+	}
+
+	/**
+	 * Check if messages log is enabled.
+	 *
+	 * @return boolean true if is messages log enabled, otherwise false
+	 */
+	public function isMessagesLogEnabled() {
+		$enabled = self::DEF_ENABLE_MESSAGES_LOG;
+		$config = $this->getConfig();
+		if (isset($config['baculum']['enable_messages_log'])) {
+			$enabled = $config['baculum']['enable_messages_log'];
+		}
+		return (intval($enabled) == 1);
 	}
 
 	/**

@@ -35,7 +35,7 @@ Prado::using('Application.Web.Portlets.Portlets');
 class MsgEnvelope extends Portlets {
 
 	public function truncate() {
-		if (!$this->User->isInRole(WebUserRoles::ADMIN)) {
+		if (!$this->getModule('web_config')->isMessagesLogEnabled() || !$this->User->isInRole(WebUserRoles::ADMIN)) {
 			return;
 		}
 		$this->getModule('messages_log')->truncate();

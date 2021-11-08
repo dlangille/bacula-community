@@ -235,13 +235,13 @@
 			Display="Dynamic"
 			HeaderText="<%[ There is not possible to run selected action because: ]%>"
 		/>
-		<div class="w3-row w3-section">
+		<div class="w3-row w3-section directive_field">
 			<div class="w3-col w3-quarter"><com:TLabel ForControl="VolumeStatus" Text="<%[ Volume status: ]%>" /></div>
 			<div class="w3-half">
 				<com:TActiveDropDownList ID="VolumeStatus" AutoPostBack="false" CssClass="w3-select w3-border" />
 			</div>
 		</div>
-		<div class="w3-row w3-section">
+		<div class="w3-row w3-section directive_field">
 			<div class="w3-col w3-quarter"><com:TLabel ForControl="Pool" Text="<%[ Pool: ]%>" /></div>
 			<div class="w3-half">
 				<com:TActiveDropDownList ID="Pool" AutoPostBack="false" CssClass="w3-select w3-border" />

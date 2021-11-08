@@ -128,7 +128,7 @@ class Monitor extends BaculumPage {
 				$error = $result;
 			}
 		}
-		if (!$error && $this->User->isInRole(WebUserRoles::ADMIN)) {
+		if (!$error && $this->getModule('web_config')->isMessagesLogEnabled() && $this->User->isInRole(WebUserRoles::ADMIN)) {
 			$result = $this->getModule('api')->get(['joblog', 'messages']);
 			if ($result->error === 0) {
 				$ml = [];

@@ -40,7 +40,7 @@
 				<span class="w3-tag w3-large w3-purple w3-right w3-padding-small w3-margin-top w3-margin-right">
 					<i class="fa fa-cogs w3-large"></i> <%[ Running jobs: ]%> <span id="running_jobs"></span>
 				</span>
-				<span id="msg_envelope" class="w3-tag w3-large w3-green w3-text-white w3-right w3-padding-small w3-margin-top w3-margin-right" style="cursor: pointer;<%=$this->User->isInRole(WebUserRoles::ADMIN) === false ? 'display: none' : ''%>" title="<%[ Display messages log window ]%>">
+				<span id="msg_envelope" class="w3-tag w3-large w3-green w3-text-white w3-right w3-padding-small w3-margin-top w3-margin-right" style="cursor: pointer;<%=((!$this->Application->getModule('web_config')->isMessagesLogEnabled() || !$this->User->isInRole(WebUserRoles::ADMIN)) ? 'display: none' : '')%>" title="<%[ Display messages log window ]%>">
 					<i class="fas fa-envelope w3-large"></i>
 				</span>
 				<com:TLabel ID="UserAPIHostsContainter"CssClass="w3-right w3-margin-top w3-margin-right">
@@ -66,7 +66,7 @@
 		<div id="small" class="w3-hide-large"></div>
 <com:Application.Web.Portlets.ErrorMessageBox />
 <com:Application.Web.Portlets.ResourceMonitor />
-<com:Application.Web.Portlets.MsgEnvelope Visible="<%=$this->User->isInRole(WebUserRoles::ADMIN)%>" />
+<com:Application.Web.Portlets.MsgEnvelope Visible="<%=($this->Application->getModule('web_config')->isMessagesLogEnabled() && $this->User->isInRole(WebUserRoles::ADMIN))%>" />
 <script>
 var is_small = $('#small').is(':visible');
 $(function() {

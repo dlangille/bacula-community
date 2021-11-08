@@ -51,6 +51,7 @@ class ApplicationSettings extends BaculumWebPage {
 			} else {
 				$this->DateTimeFormat->Text = WebConfig::DEF_DATE_TIME_FORMAT;
 			}
+			$this->EnableMessagesLog->Checked = $this->getModule('web_config')->isMessagesLogEnabled();
 		}
 	}
 
@@ -63,6 +64,7 @@ class ApplicationSettings extends BaculumWebPage {
 			$this->web_config['baculum']['size_values_unit'] = $this->BinaryBytes->Checked ? 'binary' : 'decimal';
 			$this->web_config['baculum']['time_in_job_log'] = ($this->TimeInJobLog->Checked === true) ? 1 : 0;
 			$this->web_config['baculum']['date_time_format'] = $this->DateTimeFormat->Text;
+			$this->web_config['baculum']['enable_messages_log'] = ($this->EnableMessagesLog->Checked === true) ? 1 : 0;
 			$this->getModule('web_config')->setConfig($this->web_config);
 		}
 	}
