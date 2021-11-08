@@ -6,7 +6,7 @@
 			<b><i class="fa fa-tasks"></i> <%[ Job history details ]%></b>
 		</h5>
 	</header>
-	<h3 class="w3-margin-left">[<%[ JobId ]%> <%=$this->getJobId()%>] <%[ Job: ]%> <%=$this->getJobName()%> &nbsp;</h3>
+	<h3 class="w3-margin-left"><%[ Job: ]%> <%=$this->getJobName()%> &nbsp;<span class="w3-small">[<%[ JobId ]%> <%=$this->getJobId()%>]</span></h3>
 	<div class="w3-bar w3-green w3-margin-bottom">
 		<a class="w3-bar-item w3-button tab_btn" href="<%=$this->Service->constructUrl('JobHistoryList')%>"><i class="fa fa-angle-left"></i></a>
 		<button id="btn_job_actions" type="button" class="w3-bar-item w3-button tab_btn w3-grey" onclick="W3Tabs.open(this.id, 'job_actions'); job_callback_func(); oRunningJobStatus.init_refresh();"><%[ Actions ]%></button>
@@ -61,14 +61,14 @@
 			<i class="fa fa-reply"></i> &nbsp;<%[ Restore ]%>
 		</com:TActiveLinkButton>
 		<div class="w3-panel w3-card w3-light-grey">
-			<h3><%[ Job: ]%> <%=$this->getJobUname()%> &nbsp;
+			<h5><%[ Job: ]%> <%=$this->getJobUname()%> &nbsp;
 				<com:TActiveLabel ID="RunningIcon" Attributes.title="<%[ Job is running ]%>">
-					<i class="fa fa-sync-alt w3-spin"></i>
+					<i class="fa fa-cog w3-spin"></i>
 				</com:TActiveLabel>
 				<com:TActiveLabel ID="FinishedIcon" Attributes.title="<%[ Job is finished ]%>">
 					<i class="fa fa-check"></i>
 				</com:TActiveLabel>
-			</h3>
+			</h5>
 			<com:TCallback
 				ID="RunningJobStatusCb"
 				OnCallback="runningJobStatus"

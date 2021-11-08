@@ -1,10 +1,10 @@
-<button type="button" class="w3-button w3-green w3-margin-bottom" onmousedown="openElementOnCursor(event, '<%=$this->RunscriptMenu->ClientID%>_new_schedule', 0, 20);"><i class="fa fa-plus"></i> &nbsp;<%[ Add ]%></button>
-<com:Application.Web.Portlets.NewScheduleMenu ID="RunscriptMenu" />
+<button type="button" class="w3-button w3-green w3-margin-bottom" onmousedown="openElementOnCursor(event, '<%=$this->ScheduleMenu->ClientID%>_new_schedule', 0, 20);"><i class="fa fa-plus"></i> &nbsp;<%[ Add ]%></button>
+<com:Application.Web.Portlets.NewScheduleMenu ID="ScheduleMenu" />
 <com:TActiveRepeater ID="RepeaterScheduleRuns" OnItemDataBound="createRunItem">
 	<prop:ItemTemplate>
 		<div class="w3-card-4 w3-padding w3-margin-bottom directive runscript">
 		<com:TActiveLinkButton
-			CssClass="w3-button w3-green w3-right"
+			CssClass="w3-button w3-red w3-right"
 			OnCommand="SourceTemplateControl.removeSchedule"
 			CommandName="<%=$this->ItemIndex%>"
 		>

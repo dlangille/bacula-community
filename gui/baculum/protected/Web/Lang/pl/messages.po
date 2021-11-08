@@ -3845,3 +3845,48 @@ msgstr "Brak wolumenów w puli do przypisania."
 
 msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
 msgstr "Nazwa puli wolumenów nie została zmieniona ale pula została skopiowana z nową nazwą. Proszę mieć na uwadze, że jeżeli pierwotna pula wolumenów zawierała wolumeny to nie zostały one przeniesione i ciągle istnieją one przypisane do pierwotnej puli w bazie danych. Aby przypisać wolumeny z pierwotnej puli do tej puli wolumenów, proszę przejść do MENU GŁÓWNE &#10148; Pule wolumenów &#10148; [NOWA PULA] &#10148; Zakładka: Akcje i proszę użyć przycisku 'Przypisz wolumeny'. Po przypisaniu wolumenów możesz usunąć pierwotną pulę."
+
+msgid "Add Connect directive"
+msgstr "Add Connect directive"
+
+msgid "Add Run directive"
+msgstr "Add Run directive"
+
+msgid "Add Runscript block"
+msgstr "Add Runscript block"
+
+msgid "Add Console directive"
+msgstr "Add Console directive"
+
+msgid "Add Stdout directive"
+msgstr "Add Stdout directive"
+
+msgid "Add Stderr directive"
+msgstr "Add Stderr directive"
+
+msgid "Add Syslog directive"
+msgstr "Add Syslog directive"
+
+msgid "Add Catalog directive"
+msgstr "Add Catalog directive"
+
+msgid "Add Director directive"
+msgstr "Add Director directive"
+
+msgid "Add File directive"
+msgstr "Add File directive"
+
+msgid "Add Append directive"
+msgstr "Add Append directive"
+
+msgid "Add Mail directive"
+msgstr "Add Mail directive"
+
+msgid "Add MailOnError directive"
+msgstr "Add MailOnError directive"
+
+msgid "Add MailOnSuccess directive"
+msgstr "Add MailOnSuccess directive"
+
+msgid "Add Operator directive"
+msgstr "Add Operator directive"

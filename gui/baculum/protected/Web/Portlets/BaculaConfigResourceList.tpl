@@ -3,7 +3,7 @@
 </span>
 <div id="<%=$this->ClientID%>_container">
 	<div class="w3-container">
-		<a href="javascript:void(0)" class="w3-button w3-margin-bottom w3-green" onclick="oBaculaConfigResourceWindow<%=$this->ClientID%>.load_resource_window();"><i class="fa fa-plus"></i> &nbsp;<%[ Add ]%> <com:TActiveLabel ID="ResourceTypeLink" /></a>
+		<a href="javascript:void(0)" class="w3-button w3-margin-bottom w3-green" onclick="oBaculaConfigResourceWindow<%=$this->ClientID%>.load_resource_window();"><i class="fa fa-plus"></i> &nbsp;<%[ Add ]%> <com:TActiveLabel ID="ResourceTypeAddLink" /></a>
 	</div>
 	<table id="<%=$this->ClientID%>_list" class="w3-table w3-striped w3-hoverable w3-white w3-margin-bottom" style="width: 100%">
 		<thead>
@@ -130,8 +130,8 @@ var oBaculaConfigResourceList<%=$this->ClientID%> = {
 	<div class="w3-modal-content w3-animate-top w3-card-4">
 		<header class="w3-container w3-teal">
 			<span onclick="oBaculaConfigResourceWindow<%=$this->ClientID%>.close_resource_window();" class="w3-button w3-display-topright">&times;</span>
-			<h2 id="resource_window_title_add<%=$this->ClientID%>" style="display: none"><%[ Add ]%> <%=$this->getResourceType()%></h2>
-			<h2 id="resource_window_title_edit<%=$this->ClientID%>" style="display: none"><%[ Edit ]%> <%=$this->getResourceType()%></h2>
+			<h2 id="resource_window_title_add<%=$this->ClientID%>" style="display: none"><%[ Add ]%> <com:TActiveLabel ID="ResourceTypeAddWindowTitle" /></h2>
+			<h2 id="resource_window_title_edit<%=$this->ClientID%>" style="display: none"><%[ Edit ]%> <com:TActiveLabel ID="ResourceTypeEditWindowTitle" /></h2>
 		</header>
 		<div class="w3-container w3-margin-left w3-margin-right w3-margin-top">
 			<com:Application.Web.Portlets.BaculaConfigDirectives

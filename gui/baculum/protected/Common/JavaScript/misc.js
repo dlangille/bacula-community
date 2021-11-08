@@ -193,9 +193,7 @@ function set_global_listeners() {
 	var modals = document.getElementsByClassName('w3-modal');
 	for (var i = 0; i < modals.length; i++) {
 		modals[i].addEventListener('click', function(e) {
-			var x = e.clientX;
-			var y = e.clientY;
-			var el = document.elementFromPoint(x, y);
+			var el = e.target || e.srcElement;
 			if (el.classList.contains('w3-modal')) {
 				$(this).hide(); // shadow clicked, hide modal
 			}

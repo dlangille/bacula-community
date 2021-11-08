@@ -73,7 +73,9 @@ class BaculaConfigResourceList extends Portlets {
 		$this->showError(false);
 		$component_type = $this->getComponentType();
 		$resource_type = $this->getResourceType();
-		$this->ResourceTypeLink->Text = $resource_type;
+		$this->ResourceTypeAddLink->Text = $resource_type;
+		$this->ResourceTypeAddWindowTitle->Text = $resource_type;
+		$this->ResourceTypeEditWindowTitle->Text = $resource_type;
 		$config = $this->getModule('api')->get(
 			[
 				'config',

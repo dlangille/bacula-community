@@ -7,7 +7,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Console
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Console directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -16,7 +16,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Stdout
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Stdout directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -25,7 +25,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Stderr
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Stderr directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -34,7 +34,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Syslog
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Syslog directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -43,7 +43,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Catalog
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Catalog directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -52,7 +52,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Director
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Director directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -61,7 +61,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;File
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add File directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -70,7 +70,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Append
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Append directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -79,7 +79,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Mail
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Mail directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -88,7 +88,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;MailOnError
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add MailOnError directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -97,7 +97,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;MailOnSuccess
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add MailOnSuccess directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 		<li><com:TActiveLinkButton
@@ -106,7 +106,7 @@
 			ClientSide.OnComplete="var el = $('#<%=$this->ClientID%>_new_messages').next().find('div.directive'); BaculaConfig.scroll_to_element(el[el.length-1]);"
 			Attributes.onclick="$(this).closest('div.config_new_messages').hide();"
 			>
-			<i class='fa fa-plus'></i> &nbsp;Operator
+			<i class='fa fa-plus'></i> &nbsp;<%[ Add Operator directive ]%>
 		</com:TActiveLinkButton>
 		</li>
 	</ul>

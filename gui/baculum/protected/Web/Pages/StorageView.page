@@ -6,7 +6,7 @@
 			<b><i class="fa fa-database"></i> <%[ Storage details ]%></b>
 		</h5>
 	</header>
-	<h3 class="w3-margin-left">[StorageId <%=$this->getStorageId()%>] <%[ Storage: ]%> <%=$this->getStorageName()%> &nbsp;</h3>
+	<h3 class="w3-margin-left"><%[ Storage: ]%> <%=$this->getStorageName()%> &nbsp;<span class="w3-small">[StorageId <%=$this->getStorageId()%>]</span></h3>
 	<div class="w3-bar w3-green w3-margin-bottom">
 		<a class="w3-bar-item w3-button tab_btn" href="<%=$this->Service->constructUrl('StorageList')%>"><i class="fa fa-angle-left"></i></a>
 		<button id="btn_storage_actions" type="button" class="w3-bar-item w3-button tab_btn w3-grey" onclick="W3Tabs.open(this.id, 'storage_actions');"><%[ Actions ]%></button>
@@ -142,7 +142,7 @@ var oStorageActions = {
 	}
 };
 		</script>
-		<i id="status_storage_loading" class="fa fa-sync w3-spin" style="display: none; vertical-align: super;"></i> <span id="status_storage_error" class="w3-text-red" style="display: none"></span>
+		<i id="status_storage_loading" class="fa fa-sync w3-spin w3-margin-left" style="display: none; vertical-align: super;"></i> <span id="status_storage_error" class="w3-text-red" style="display: none"></span>
 		<com:TActivePanel ID="Autochanger" Display="None" Height="61px">
 			<div class="w3-left w3-margin-right">
 				<label><%[ Drive number: ]%></label>
@@ -181,6 +181,7 @@ var oStorageActions = {
 				/>
 			</div>
 		</com:TActivePanel>
+		<div class="w3-clear"></div>
 		<div id="storage_action_text_output" class="w3-code" style="display: none; clear: both;">
 			<pre id="storage_action_log"></pre>
 		</div>
@@ -220,7 +221,8 @@ var oStorageActions = {
 				</table>
 			</div>
 		</div>
-		<div id="status_storage_container" class="w3-clear w3-margin-top" style="display: none">
+		<div class="w3-clear"></div>
+		<div id="status_storage_container" style="display: none">
 			<div class="w3-right w3-margin-top w3-margin-right" title="<%[ To disable refreshing please type 0. ]%>">
 				<span style="line-height: 41px"><%[ Refresh interval (sec.): ]%></span> <input type="text" id="status_storage_refresh_interval" class="w3-input w3-border w3-right w3-margin-left" value="10" style="width: 50px"/>
 			</div>

@@ -6,7 +6,7 @@
 			<b><i class="fa fa-desktop"></i> <%[ Client details ]%></b>
 		</h5>
 	</header>
-	<h3 class="w3-margin-left">[ClientId <%=$this->getClientId()%>] <%[ Client: ]%> <%=$this->getClientName()%></h3>
+	<h3 class="w3-margin-left"><%[ Client: ]%> <%=$this->getClientName()%> &nbsp;<span class="w3-small">[ClientId <%=$this->getClientId()%>]</span></h3>
 	<div class="w3-bar w3-green w3-margin-bottom">
 		<a class="w3-bar-item w3-button tab_btn" href="<%=$this->Service->constructUrl('ClientList')%>"><i class="fa fa-angle-left"></i></a>
 		<button id="btn_client_actions" type="button" class="w3-bar-item w3-button tab_btn w3-grey" onclick="W3Tabs.open(this.id, 'client_actions');"><%[ Actions ]%></button>
@@ -315,6 +315,10 @@ var oGraphicalClientStatus = {
 		var header = document.createElement('H4');
 		header.className = 'running_job_header';
 		header.textContent = '<%[ Job: ]%> #' + (job_nb+1) + ' ' + job.job;
+		var running_img = document.createElement('I');
+		running_img.className = 'fas fa-cog w3-spin w3-margin-left';
+		running_img.setAttribute('title', '<%[ Job is running ]%>');
+		header.appendChild(running_img);
 
 		var table = document.createElement('TABLE');
 		table.className = 'w3-table w3-stripped w3-border status_table running_job_table';

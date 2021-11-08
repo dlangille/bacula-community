@@ -3846,3 +3846,48 @@ msgstr "Nenhum volume da pool para atribuir."
 msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
 msgstr "A pool não foi renomeado, mas foi copiada com o novo nome. Observe que, se a pool original continha volumes, eles não foram movidos e ainda estão atribuídos à pool original no catálogo do banco de dados. Para reatribuir volumes da pool original para esta, vá para o Menu Principal &#10148; Pools &#10148; [Nova Pool] &#10148; Guia: Ações e use o botão 'Atribuir volumes'. Depois de reajustar os volumes, você pode excluir a pool original."
 
+
+msgid "Add Connect directive"
+msgstr "Add Connect directive"
+
+msgid "Add Run directive"
+msgstr "Add Run directive"
+
+msgid "Add Runscript block"
+msgstr "Add Runscript block"
+
+msgid "Add Console directive"
+msgstr "Add Console directive"
+
+msgid "Add Stdout directive"
+msgstr "Add Stdout directive"
+
+msgid "Add Stderr directive"
+msgstr "Add Stderr directive"
+
+msgid "Add Syslog directive"
+msgstr "Add Syslog directive"
+
+msgid "Add Catalog directive"
+msgstr "Add Catalog directive"
+
+msgid "Add Director directive"
+msgstr "Add Director directive"
+
+msgid "Add File directive"
+msgstr "Add File directive"
+
+msgid "Add Append directive"
+msgstr "Add Append directive"
+
+msgid "Add Mail directive"
+msgstr "Add Mail directive"
+
+msgid "Add MailOnError directive"
+msgstr "Add MailOnError directive"
+
+msgid "Add MailOnSuccess directive"
+msgstr "Add MailOnSuccess directive"
+
+msgid "Add Operator directive"
+msgstr "Add Operator directive"
