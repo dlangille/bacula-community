@@ -49,11 +49,11 @@
 				Display="Dynamic"
 				RegularExpression="[0-9]+"
 			/>
-			<div class="w3-row-padding w3-section-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="Barcodes" Text="<%[ Use barcodes as label: ]%>" /></div>
 				<div class="w3-col w3-half"><com:TActiveCheckBox ID="Barcodes" CssClass="w3-check" Attributes.onclick="set_label_volume_barcodes();"/></div>
 			</div>
-			<div id="label_with_name" class="w3-row-padding w3-section">
+			<div id="label_with_name" class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="LabelName" Text="<%[ Label name: ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="LabelName" CssClass="w3-input w3-border" />
@@ -69,7 +69,7 @@
  					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div id="label_with_barcodes" class="w3-row-padding w3-section" style="display: none">
+			<div id="label_with_barcodes" class="w3-row directive_field" style="display: none">
 				<div class="w3-col w3-half"><com:TLabel ForControl="SlotsLabel" Text="<%[ Slots to label (ex. 4 or 1-5 or 2,4,6-10): ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="SlotsLabel" CssClass="w3-input w3-border" Text="0" />
@@ -85,15 +85,15 @@
  					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="PoolLabel" Text="<%[ Pool: ]%>" /></div>
 				<div class="w3-col w3-half"><com:TActiveDropDownList ID="PoolLabel" CssClass="w3-select w3-border" /></div>
 			</div>
-			<div class="w3-row-padding w3-section"<%=$this->Storage ? ' style="display: none"' : ''%>>
+			<div class="w3-row directive_field"<%=$this->Storage ? ' style="display: none"' : ''%>>
 				<div class="w3-col w3-half"><com:TLabel ForControl="StorageLabel" Text="<%[ Storage: ]%>" /></div>
 				<div class="w3-col w3-half"><com:TActiveDropDownList ID="StorageLabel" CssClass="w3-select w3-border" /></div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="DriveLabel" Text="<%[ Drive index: ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="DriveLabel" CssClass="w3-input w3-border" Text="0" />
@@ -105,7 +105,7 @@
 					/>
 				</div>
 			</div>
-			<div id="label_without_barcodes" class="w3-row-padding w3-section">
+			<div id="label_without_barcodes" class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="SlotLabel" Text="<%[ Slot number: ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="SlotLabel" CssClass="w3-input w3-border" Text="0" />
@@ -121,7 +121,7 @@
 					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><%[ Labeling status: ]%></div>
 				<div class="w3-col w3-half">
 					<i id="label_status_start" class="fa fa-step-forward" title="<%[ Ready to label ]%>"></i>

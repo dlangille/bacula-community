@@ -5,8 +5,8 @@
 			<h2><%[ Run job ]%><%=$this->getJobName() ? ' - ' . $this->getJobName() : ''%></h2>
 		</header>
 		<div class="w3-container w3-margin-left w3-margin-right">
-			<com:TActivePanel ID="JobToRunLine" CssClass="w3-row w3-section w3-text-teal" Display="None">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-tasks"></i> &nbsp;<com:TLabel ForControl="JobToRun" Text="<%[ Job to run: ]%>" CssClass="w3-xlarge" /></div>
+			<com:TActivePanel ID="JobToRunLine" CssClass="w3-row w3-text-teal directive_field" Display="None">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-tasks"></i> &nbsp;<com:TLabel ForControl="JobToRun" Text="<%[ Job to run: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList
 						ID="JobToRun"
@@ -15,8 +15,8 @@
 					/>
 				</div>
 			</com:TActivePanel>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-compass"></i> &nbsp;<com:TLabel ForControl="Level" Text="<%[ Level: ]%>" CssClass="w3-xlarge"/></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-compass"></i> &nbsp;<com:TLabel ForControl="Level" Text="<%[ Level: ]%>" CssClass="w3-large"/></div>
 				<div class="w3-half">
 				<com:TActiveDropDownList ID="Level" CssClass="w3-select w3-border" AutoPostBack="false">
 					<prop:Attributes.onchange>
@@ -48,8 +48,8 @@
 				</com:TActiveDropDownList>
 				</div>
 			</div>
-			<com:TActivePanel ID="JobToVerifyOptionsLine" CssClass="w3-row w3-section w3-text-teal" Display="None">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-search-plus"></i> &nbsp;<com:TLabel ForControl="JobToVerifyOptions" Text="<%[ Verify option: ]%>" CssClass="w3-xlarge" /></div>
+			<com:TActivePanel ID="JobToVerifyOptionsLine" CssClass="w3-row w3-text-teal directive_field" Display="None">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-search-plus"></i> &nbsp;<com:TLabel ForControl="JobToVerifyOptions" Text="<%[ Verify option: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="JobToVerifyOptions" AutoPostBack="false" CssClass="w3-select w3-border">
 						<prop:Attributes.onchange>
@@ -69,14 +69,14 @@
 					</com:TActiveDropDownList>
 				</div>
 			</com:TActivePanel>
-			<com:TActivePanel ID="JobToVerifyJobNameLine" CssClass="w3-row w3-section w3-text-teal" Display="None">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-check"></i> &nbsp;<com:TLabel ForControl="JobToVerifyJobName" Text="<%[ Job to Verify: ]%>" CssClass="w3-xlarge" /></div>
+			<com:TActivePanel ID="JobToVerifyJobNameLine" CssClass="w3-row w3-text-teal directive_field" Display="None">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-check"></i> &nbsp;<com:TLabel ForControl="JobToVerifyJobName" Text="<%[ Job to Verify: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="JobToVerifyJobName" AutoPostBack="false" CssClass="w3-select w3-border" />
 				</div>
 			</com:TActivePanel>
-			<com:TActivePanel ID="JobToVerifyJobIdLine" CssClass="w3-row w3-section w3-text-teal" Display="None">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-file-alt"></i> &nbsp;<com:TLabel ForControl="JobToVerifyJobId" Text="<%[ JobId to Verify: ]%>" CssClass="w3-xlarge" /></div>
+			<com:TActivePanel ID="JobToVerifyJobIdLine" CssClass="w3-row w3-text-teal directive_field" Display="None">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-file-alt"></i> &nbsp;<com:TLabel ForControl="JobToVerifyJobId" Text="<%[ JobId to Verify: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveTextBox ID="JobToVerifyJobId" CssClass="w3-input w3-border" AutoPostBack="false" />
 					<com:TRequiredFieldValidator
@@ -107,26 +107,26 @@
 					</com:TDataTypeValidator>
 				</div>
 			</com:TActivePanel>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-desktop"></i> &nbsp;<com:TLabel ForControl="Client" Text="<%[ Client: ]%>" CssClass="w3-xlarge" /></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-desktop"></i> &nbsp;<com:TLabel ForControl="Client" Text="<%[ Client: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="Client" AutoPostBack="false" CssClass="w3-select w3-border" />
 				</div>
 			</div>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-list-alt"></i> &nbsp;<com:TLabel ForControl="FileSet" Text="<%[ FileSet: ]%>" CssClass="w3-xlarge" /></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-list-alt"></i> &nbsp;<com:TLabel ForControl="FileSet" Text="<%[ FileSet: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="FileSet" AutoPostBack="false" CssClass="w3-select w3-border" />
 				</div>
 			</div>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-tape"></i> &nbsp;<com:TLabel ForControl="Pool" Text="<%[ Pool: ]%>" CssClass="w3-xlarge" /></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-tape"></i> &nbsp;<com:TLabel ForControl="Pool" Text="<%[ Pool: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="Pool" AutoPostBack="false" CssClass="w3-select w3-border" />
 				</div>
 			</div>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-database"></i> &nbsp;<com:TLabel ForControl="Storage" Text="<%[ Storage: ]%>" CssClass="w3-xlarge" /></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-database"></i> &nbsp;<com:TLabel ForControl="Storage" Text="<%[ Storage: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
 					<com:TActiveDropDownList ID="Storage" AutoPostBack="false" CssClass="w3-select w3-border" />
 				</div>
@@ -134,10 +134,10 @@
 					&nbsp;&nbsp;<i class="fas fa-info-circle" title="<%[ The storage has been selected basing on job configuration. This item may require adjusting before job run. ]%>"></i>
 				</div>
 			</div>
-			<div class="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-sort-numeric-up"></i> &nbsp;<com:TLabel ForControl="Priority" Text="<%[ Priority: ]%>" CssClass="w3-xlarge" /></div>
+			<div class="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-sort-numeric-up"></i> &nbsp;<com:TLabel ForControl="Priority" Text="<%[ Priority: ]%>" CssClass="w3-large" /></div>
 				<div class="w3-half">
-					<com:TActiveTextBox ID="Priority" CssClass="w3-input w3-border" AutoPostBack="false" />
+					<com:TActiveTextBox ID="Priority" CssClass="w3-input w3-border w3-quarter" AutoPostBack="false" />
 					<com:TRequiredFieldValidator
 						ValidationGroup="JobGroup"
 						ControlToValidate="Priority"
@@ -156,8 +156,8 @@
 					/>
 				</div>
 			</div>
-			<com:TActivePanel ID="AccurateLine" CssClass="w3-row w3-section w3-text-teal">
-				<div class="w3-col w3-third"><i class="w3-xlarge fa fa-balance-scale"></i> &nbsp;<com:TLabel ForControl="Accurate" Text="<%[ Accurate: ]%>" CssClass="w3-xlarge"/></div>
+			<com:TActivePanel ID="AccurateLine" CssClass="w3-row w3-text-teal directive_field">
+				<div class="w3-col w3-third"><i class="w3-large fa fa-balance-scale"></i> &nbsp;<com:TLabel ForControl="Accurate" Text="<%[ Accurate: ]%>" CssClass="w3-large"/></div>
 				<div class="field"><com:TActiveCheckBox ID="Accurate" AutoPostBack="false" CssClass="w3-check" /></div>
 			</com:TActivePanel>
 		</div>

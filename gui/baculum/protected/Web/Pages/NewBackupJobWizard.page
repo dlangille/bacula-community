@@ -139,40 +139,34 @@
 				<!--p><%[ To start please select job type that you wish to create. ]%></p-->
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="Name"
-						DirectiveName="Name"
-						Label="Job Name"
-						ValidationGroup="NewJobDirective"
-						Required="true"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="Description"
-						DirectiveName="Description"
-						Label="Description"
-						ValidationGroup="NewJobDirective"
-						Required="false"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="JobDefs"
-						DirectiveName="JobDefs"
-						Label="JobDefs"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="Name"
+					DirectiveName="Name"
+					Label="Job Name"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="Description"
+					DirectiveName="Description"
+					Label="Description"
+					ValidationGroup="NewJobDirective"
+					Required="false"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="JobDefs"
+					DirectiveName="JobDefs"
+					Label="JobDefs"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step2" Title="<%[ Step 2 - what you want to backup ]%>" StepType="Auto">
@@ -182,31 +176,27 @@
 				<p><%[ If your FileSet for this backup does not exist yet, you can create it. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Client"
-						DirectiveName="Client"
-						Label="Client"
-						Show="true"
-						ValidationGroup="NewJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Fileset"
-						DirectiveName="Fileset"
-						Label="FileSet"
-						Show="true"
-						ValidationGroup="NewJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_fileset').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green" ><i class="fa fa-plus"></i> &nbsp;<%[ Add new FileSet ]%></a></span>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Client"
+					DirectiveName="Client"
+					Label="Client"
+					Show="true"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Fileset"
+					DirectiveName="Fileset"
+					Label="FileSet"
+					Show="true"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_fileset').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green w3-margin-top w3-margin-bottom" ><i class="fa fa-plus"></i> &nbsp;<%[ Add new FileSet ]%></a></span>
 				<div id="fileset_save_ok" class="w3-panel w3-green w3-display-container" style="display: none">
 					<span onclick="this.parentElement.style.display='none'" class="w3-button w3-green w3-large w3-display-topright">x</span>
 					<p><%[ The resource has been created successfully. ]%></p>
@@ -239,66 +229,56 @@
 				<p><%[ Please select Storage where you want to backup data and please select Pool with volumes which Storage will use to store backup data. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Storage"
-						DirectiveName="Storage"
-						Label="Storage"
-						Show="true"
-						ValidationGroup="NewJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_storage_directives').slideToggle();" class="w3-button w3-green"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Storage directives for Job ]%></a></span>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Storage"
+					DirectiveName="Storage"
+					Label="Storage"
+					Show="true"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_storage_directives').slideToggle();" class="w3-button w3-green w3-margin-top w3-margin-bottom"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Storage directives for Job ]%></a></span>
 				<div id="job_wizard_storage_directives" class="w3-card-4 w3-padding w3-margin-top" style="display: none">
 					<h3><%[ Spool setting ]%></h3>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveCheckBox
-							ID="SpoolData"
-							DirectiveName="SpoolData"
-							Label="Spool Data"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveCheckBox
-							ID="SpoolAttributes"
-							DirectiveName="SpoolAttributes"
-							Label="Spool Attributes"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveSize
-							ID="SpoolSize"
-							DirectiveName="SpoolSize"
-							Label="Spool Size"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							/>
-					</div>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Pool"
-						DirectiveName="Pool"
-						Label="Pool"
+					<com:Application.Web.Portlets.DirectiveCheckBox
+						ID="SpoolData"
+						DirectiveName="SpoolData"
+						Label="Spool Data"
 						Show="true"
-						ValidationGroup="NewJobDirective"
-						Required="true"
 						ShowResetButton="false"
 						ShowRemoveButton="false"
 						 />
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_pool_directives').hide(); $('#job_wizard_new_pool').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green"><i class="fa fa-plus"></i> &nbsp;<%[ Add new Pool ]%></a></span>
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_pool').hide(); $('#job_wizard_pool_directives').slideToggle();" class="w3-button w3-green"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Pool directives for Job ]%></a></span>
+					<com:Application.Web.Portlets.DirectiveCheckBox
+						ID="SpoolAttributes"
+						DirectiveName="SpoolAttributes"
+						Label="Spool Attributes"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						 />
+					<com:Application.Web.Portlets.DirectiveSize
+						ID="SpoolSize"
+						DirectiveName="SpoolSize"
+						Label="Spool Size"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						/>
 				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Pool"
+					DirectiveName="Pool"
+					Label="Pool"
+					Show="true"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					 />
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_pool_directives').hide(); $('#job_wizard_new_pool').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green w3-margin-top w3-margin-bottom"><i class="fa fa-plus"></i> &nbsp;<%[ Add new Pool ]%></a></span>
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_pool').hide(); $('#job_wizard_pool_directives').slideToggle();" class="w3-button w3-green w3-margin-top w3-margin-bottom"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Pool directives for Job ]%></a></span>
 				<div id="pool_save_ok" class="w3-panel w3-green w3-display-container" style="display: none">
 					<span onclick="this.parentElement.style.display='none'" class="w3-button w3-green w3-large w3-display-topright">x</span>
 					<p><%[ The resource has been created successfully. ]%></p>
@@ -315,36 +295,30 @@
 				</div>
 				<div id="job_wizard_pool_directives" class="w3-card-4 w3-padding w3-margin-top" style="display: none">
 					<h3><%[ Pool setting ]%></h3>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveComboBox
-							ID="FullBackupPool"
-							DirectiveName="FullBackupPool"
-							Label="Full Backup Pool"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							/>
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveComboBox
-							ID="IncrementalBackupPool"
-							DirectiveName="IncrementalBackupPool"
-							Label="Incremental Backup Pool"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							/>
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveComboBox
-							ID="DifferentialBackupPool"
-							DirectiveName="DifferentialBackupPool"
-							Label="Differential Backup Pool"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							/>
-					</div>
+					<com:Application.Web.Portlets.DirectiveComboBox
+						ID="FullBackupPool"
+						DirectiveName="FullBackupPool"
+						Label="Full Backup Pool"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						/>
+					<com:Application.Web.Portlets.DirectiveComboBox
+						ID="IncrementalBackupPool"
+						DirectiveName="IncrementalBackupPool"
+						Label="Incremental Backup Pool"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						/>
+					<com:Application.Web.Portlets.DirectiveComboBox
+						ID="DifferentialBackupPool"
+						DirectiveName="DifferentialBackupPool"
+						Label="Differential Backup Pool"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						/>
 				</div>
 			</div>
 			<com:TCallback ID="LoadPoolList" OnCallback="LoadPoolList" />
@@ -363,75 +337,63 @@
 				<div class="w3-container">
 					<h2><%[ Job directives ]%></h2>
 				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Level"
-						DirectiveName="Level"
-						Label="Level"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveCheckBox
-						ID="Accurate"
-						DirectiveName="Accurate"
-						DefaultValue="0"
-						Label="Accurate"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						 />
-				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="MaximumConcurrentJobs"
-						DirectiveName="MaximumConcurrentJobs"
-						DefaultValue="1"
-						Label="Maximum Concurrent Jobs"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						 />
-				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="Priority"
-						DirectiveName="Priority"
-						DefaultValue="10"
-						Label="Priority"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						 />
-				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveCheckBox
-						ID="ReRunFailedLevels"
-						DirectiveName="ReRunFailedLevels"
-						DefaultValue="0"
-						Label="ReRun Failed Levels"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						 />
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Level"
+					DirectiveName="Level"
+					Label="Level"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveCheckBox
+					ID="Accurate"
+					DirectiveName="Accurate"
+					DefaultValue="0"
+					Label="Accurate"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					 />
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="MaximumConcurrentJobs"
+					DirectiveName="MaximumConcurrentJobs"
+					DefaultValue="1"
+					Label="Maximum Concurrent Jobs"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					 />
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="Priority"
+					DirectiveName="Priority"
+					DefaultValue="10"
+					Label="Priority"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					 />
+				<com:Application.Web.Portlets.DirectiveCheckBox
+					ID="ReRunFailedLevels"
+					DirectiveName="ReRunFailedLevels"
+					DefaultValue="0"
+					Label="ReRun Failed Levels"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					 />
 				<div class="w3-container">
 					<h2><%[ Other directives ]%></h2>
 				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Messages"
-						DirectiveName="Messages"
-						Label="Messages"
-						Show="true"
-						ValidationGroup="NewJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Messages"
+					DirectiveName="Messages"
+					Label="Messages"
+					Show="true"
+					ValidationGroup="NewJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step5" Title="<%[ Step 5 - when would you like to run backup ]%>" StepType="Auto">
@@ -439,18 +401,16 @@
 				<div class="w3-container">
 					<h2><%[ Schedule ]%></h2>
 				</div>
-				<div class="w3-container">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Schedule"
-						DirectiveName="Schedule"
-						Label="Schedule"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_schedule_directives').hide(); $('#job_wizard_new_schedule').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green"><i class="fa fa-plus"></i> &nbsp;<%[ Add new Schedule ]%></a></span>
-					<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_schedule').hide(); $('#job_wizard_reschedule_directives').slideToggle();" class="w3-button w3-green"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Reschedule directives ]%></a></span>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Schedule"
+					DirectiveName="Schedule"
+					Label="Schedule"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_schedule_directives').hide(); $('#job_wizard_new_schedule').slideToggle(); oBaculaConfigSection.show_sections(true);" class="w3-button w3-green w3-margin-top w3-margin-bottom"><i class="fa fa-plus"></i> &nbsp;<%[ Add new Schedule ]%></a></span>
+				<span><a href="javascript:void(0)" onclick="$('#job_wizard_new_schedule').hide(); $('#job_wizard_reschedule_directives').slideToggle();" class="w3-button w3-green w3-margin-top w3-margin-bottom"><i class="fa fa-angle-down"></i> &nbsp;<%[ Show Reschedule directives ]%></a></span>
 				<div id="schedule_save_ok" class="w3-panel w3-green w3-display-container" style="display: none">
 					<span onclick="this.parentElement.style.display='none'" class="w3-button w3-green w3-large w3-display-topright">x</span>
 					<p><%[ The resource has been created successfully. ]%></p>
@@ -467,49 +427,41 @@
 				</div>
 				<div id="job_wizard_reschedule_directives" class="w3-card-4 w3-padding w3-margin-top" style="display: none">
 					<h3><%[ Reschedule setting ]%></h3>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveCheckBox
-							ID="RescheduleOnError"
-							DirectiveName="RescheduleOnError"
-							DefaultValue="0"
-							Label="Reschedule On Error"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveCheckBox
-							ID="RescheduleIncompleteJobs"
-							DirectiveName="RescheduleIncompleteJobs"
-							DefaultValue="0"
-							Label="Reschedule Incomplete Jobs"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveTimePeriod
-							ID="RescheduleInterval"
-							DirectiveName="RescheduleInterval"
-							DefaultValue="1800"
-							Label="Reschedule Interval"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
-					<div class="w3-container">
-						<com:Application.Web.Portlets.DirectiveInteger
-							ID="RescheduleTimes"
-							DirectiveName="RescheduleTimes"
-							Label="Reschedule Times"
-							Show="true"
-							ShowResetButton="false"
-							ShowRemoveButton="false"
-							 />
-					</div>
+					<com:Application.Web.Portlets.DirectiveCheckBox
+						ID="RescheduleOnError"
+						DirectiveName="RescheduleOnError"
+						DefaultValue="0"
+						Label="Reschedule On Error"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						 />
+					<com:Application.Web.Portlets.DirectiveCheckBox
+						ID="RescheduleIncompleteJobs"
+						DirectiveName="RescheduleIncompleteJobs"
+						DefaultValue="0"
+						Label="Reschedule Incomplete Jobs"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						 />
+					<com:Application.Web.Portlets.DirectiveTimePeriod
+						ID="RescheduleInterval"
+						DirectiveName="RescheduleInterval"
+						DefaultValue="1800"
+						Label="Reschedule Interval"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						 />
+					<com:Application.Web.Portlets.DirectiveInteger
+						ID="RescheduleTimes"
+						DirectiveName="RescheduleTimes"
+						Label="Reschedule Times"
+						Show="true"
+						ShowResetButton="false"
+						ShowRemoveButton="false"
+						 />
 				</div>
 			</div>
 			<com:TCallback ID="LoadScheduleList" OnCallback="LoadScheduleList" />

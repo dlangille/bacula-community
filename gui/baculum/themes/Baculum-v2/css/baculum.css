@@ -263,11 +263,22 @@ div.directive_value:hover i.reset_btn, div.directive_value:hover i.remove_btn {
 	display: inline;
 }
 
-div.directive_field input, div.directive_field select {
+div.directive_field {
+	margin: 7px 0;
+}
+
+div.directive_field input, div.directive_field select, div.directive_field textarea {
 	max-width: 400px;
 }
-div.directive_field input.w3-half, div.directive_field select.w3-half {
+div.directive_field input.w3-half, div.directive_field select.w3-half, div.directive_field textarea.w3-half {
 	max-width: 200px;
+}
+div.directive_field input.w3-quarter, div.directive_field select.w3-quarter, div.directive_field textarea.w3-quarter {
+	max-width: 100px;
+}
+
+.view_header {
+	margin: 0 0 2px 16px;
 }
 
 div.details_card {

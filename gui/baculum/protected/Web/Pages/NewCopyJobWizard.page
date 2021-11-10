@@ -138,40 +138,34 @@
 				<p><%[ Copy jobs run copying backup jobs data from one volume to another. It is done by reading the previously backed up data from volume and writing it to another volume in a different pool. All process runs without using file daemon. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="Name"
-						DirectiveName="Name"
-						Label="Job Name"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="Description"
-						DirectiveName="Description"
-						Label="Description"
-						ValidationGroup="NewCopyJobDirective"
-						Required="false"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="JobDefs"
-						DirectiveName="JobDefs"
-						Label="JobDefs"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="Name"
+					DirectiveName="Name"
+					Label="Job Name"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="Description"
+					DirectiveName="Description"
+					Label="Description"
+					ValidationGroup="NewCopyJobDirective"
+					Required="false"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="JobDefs"
+					DirectiveName="JobDefs"
+					Label="JobDefs"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step2" Title="<%[ Step 2 - what you want to copy ]%>" StepType="Auto">
@@ -181,19 +175,17 @@
 				<p><%[ The source pool will be examined for finding backup jobs to copy. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Pool"
-						DirectiveName="Pool"
-						Label="Source Pool"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						Attributes.onchange="set_storage_from_pool(); oVolumeList.show_volumes_in_pool_btn(this.value);oVolumeList.show_volumes_in_pool_table(false);"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Pool"
+					DirectiveName="Pool"
+					Label="Source Pool"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					Attributes.onchange="set_storage_from_pool(); oVolumeList.show_volumes_in_pool_btn(this.value);oVolumeList.show_volumes_in_pool_table(false);"
+					/>
 				<a id="volumes_in_pool_btn" href="javascript:void(0)" onclick="oVolumeList.load_data(document.getElementById('<%=$this->Pool->Directive->ClientID%>').value);" style="display: none; width: 300px; margin: 0 auto;"><%[ See volumes in selected pool ]%></a>
 			</div>
 			<div class="w3-container">
@@ -201,18 +193,16 @@
 				<p><%[ Please select a storage using which you want to read copy data. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="SourceStorage"
-						DirectiveName="Storage"
-						Label="Source Storage"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="SourceStorage"
+					DirectiveName="Storage"
+					Label="Source Storage"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 				<com:TCallback ID="SetSourceStorageByPool" OnCallback="setSourceStorageByPool" />
 <script>
 function set_storage_from_pool() {
@@ -699,7 +689,6 @@ var oVolumeList = {
 				<p><%[ Please select the criteria that will be used for selecting backup jobs to copy. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
 					<com:Application.Web.Portlets.DirectiveComboBox
 						ID="SelectionType"
 						DirectiveName="SelectionType"
@@ -711,70 +700,61 @@ var oVolumeList = {
 						ShowRemoveButton="false"
 						Attributes.onchange="oSelectionType.show_opts(this.value);"
 						/>
-				</div>
 			</div>
 			<div id="selection_type_job" class="w3-half" style="float: none; display: none; margin: auto;">
-				<div class="w3-container w3-margin-top" style="position: relative">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="SelectionPatternJob"
-						DirectiveName="SelectionPattern"
-						Label="Selection Pattern Job"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="false"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<a id="selection_type_jobs_btn" href="javascript:void(0)" onclick="oJobList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See backup jobs ]%></a>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="SelectionPatternJob"
+					DirectiveName="SelectionPattern"
+					Label="Selection Pattern Job"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="false"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<a id="selection_type_jobs_btn" href="javascript:void(0)" onclick="oJobList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See backup jobs ]%></a>
 			</div>
 			<div id="selection_type_client" class="w3-half" style="float: none; display: none; margin: auto;">
-				<div class="w3-container w3-margin-top" style="position: relative">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="SelectionPatternClient"
-						DirectiveName="SelectionPattern"
-						Label="Selection Pattern Client"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="false"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<a id="selection_type_clients_btn" href="javascript:void(0)" onclick="oClientList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See clients ]%></a>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="SelectionPatternClient"
+					DirectiveName="SelectionPattern"
+					Label="Selection Pattern Client"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="false"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<a id="selection_type_clients_btn" href="javascript:void(0)" onclick="oClientList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See clients ]%></a>
 			</div>
 			<div id="selection_type_volume" class="w3-half" style="float: none; display: none; margin: auto;">
-				<div class="w3-container w3-margin-top" style="position: relative">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="SelectionPatternVolume"
-						DirectiveName="SelectionPattern"
-						Label="Selection Pattern Volume"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="false"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-					<a id="selection_type_volumes_btn" href="javascript:void(0)" onclick="oVolumeList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See volumes ]%></a>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="SelectionPatternVolume"
+					DirectiveName="SelectionPattern"
+					Label="Selection Pattern Volume"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="false"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<a id="selection_type_volumes_btn" href="javascript:void(0)" onclick="oVolumeList.load_data();" style="display: block; width: 300px; margin: 0 auto;"><%[ See volumes ]%></a>
 			</div>
 			<div id="selection_type_smallest_volume" style="display: none">
 			</div>
 			<div id="selection_type_oldest_volume" style="display: none">
 			</div>
 			<div id="selection_type_sql_query" class="w3-half" style="float: none; display: none; margin: auto;">
-				<div class="w3-container w3-margin-top" style="position: relative">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="SelectionPatternSQLQuery"
-						DirectiveName="SelectionPattern"
-						Label="Selection Pattern SQL Query"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="false"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="SelectionPatternSQLQuery"
+					DirectiveName="SelectionPattern"
+					Label="Selection Pattern SQL Query"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="false"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 			<div id="selection_type_uncopied_jobs" style="display: none">
 			</div>
@@ -1625,19 +1605,17 @@ oSelectionType.init();
 				<p><%[ Please select destination pool to which will be stored data. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="NextPool"
-						DirectiveName="NextPool"
-						Label="Destination Pool (NextPool)"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						Attributes.onchange="set_storage_from_nextpool();"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="NextPool"
+					DirectiveName="NextPool"
+					Label="Destination Pool (NextPool)"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					Attributes.onchange="set_storage_from_nextpool();"
+					/>
 			<com:TCallback ID="SetDestinationStorageByPool" OnCallback="setDestinationStorageByPool" />
 			<com:TCallback ID="GetJobsUsingPool" OnCallback="getJobsUsingPool" />
 <script>
@@ -1727,19 +1705,17 @@ function show_storage_warning(storage, pool, jobs) {
 				<p><%[ Please select a storage using which you want to write copied data. ]%></p>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="DestinationStorage"
-						DirectiveName="Storage"
-						Label="Destination Storage"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						Attributes.onchange="set_storage(this.value);"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="DestinationStorage"
+					DirectiveName="Storage"
+					Label="Destination Storage"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					Attributes.onchange="set_storage(this.value);"
+					/>
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step5" Title="<%[ Step 5 - copy job options ]%>" StepType="Auto">
@@ -1747,91 +1723,79 @@ function show_storage_warning(storage, pool, jobs) {
 				<h2><%[ Limits ]%></h2>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveTextBox
-						ID="MaximumSpawnedJobs"
-						DirectiveName="MaximumSpawnedJobs"
-						DefaultValue="600"
-						Label="Maximum Spawned Jobs"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveTextBox
+					ID="MaximumSpawnedJobs"
+					DirectiveName="MaximumSpawnedJobs"
+					DefaultValue="600"
+					Label="Maximum Spawned Jobs"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 			<div class="w3-container">
 				<h2><%[ Schedule ]%></h2>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Schedule"
-						DirectiveName="Schedule"
-						Label="Schedule"
-						Show="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Schedule"
+					DirectiveName="Schedule"
+					Label="Schedule"
+					Show="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 			<div class="w3-container">
 				<h2><%[ Messages ]%></h2>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Messages"
-						DirectiveName="Messages"
-						Label="Messages"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Messages"
+					DirectiveName="Messages"
+					Label="Messages"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 			<div class="w3-half" style="float: none; margin: auto">
 				<a href="javascript:void(0)" onclick="$('#copy_job_wizard_other_options').slideToggle();"><%[ Other options ]%></a>
 			</div>
 			<div id="copy_job_wizard_other_options" class="w3-half" style="float: none; margin: auto; display: none;">
 				<p><%[ Level, Client and FileSet are not used during copy jobs running but they are required to define in copy job resource as the standard Job directives. ]%></p>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Level"
-						DirectiveName="Level"
-						Label="Level"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="Client"
-						DirectiveName="Client"
-						Label="Client"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
-				<div class="w3-container w3-margin-top">
-					<com:Application.Web.Portlets.DirectiveComboBox
-						ID="FileSet"
-						DirectiveName="Fileset"
-						Label="FileSet"
-						Show="true"
-						ValidationGroup="NewCopyJobDirective"
-						Required="true"
-						ShowResetButton="false"
-						ShowRemoveButton="false"
-						/>
-				</div>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Level"
+					DirectiveName="Level"
+					Label="Level"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="Client"
+					DirectiveName="Client"
+					Label="Client"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
+				<com:Application.Web.Portlets.DirectiveComboBox
+					ID="FileSet"
+					DirectiveName="Fileset"
+					Label="FileSet"
+					Show="true"
+					ValidationGroup="NewCopyJobDirective"
+					Required="true"
+					ShowResetButton="false"
+					ShowRemoveButton="false"
+					/>
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step6" Title="<%[ Step 6 - summary ]%>" StepType="Finish">

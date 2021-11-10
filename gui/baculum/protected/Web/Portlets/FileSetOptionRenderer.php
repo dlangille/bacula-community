@@ -41,7 +41,7 @@ class FileSetOptionRenderer extends DirectiveRenderer {
 
 	public function render($writer) {
 		if (self::$index % 30 === 0) {
-			$writer->write('<h3 class="options">Options #' . ((self::$index/30) + 1) . '</h3><hr />');
+			$writer->write('<h3 class="options">Options #' . ((self::$index/30) + 1) . '</h3><hr style="margin: 7px 0;"/>');
 		}
 		self::$index++;
 

@@ -6,7 +6,7 @@
 			<b><i class="fa fa-database"></i> <%[ Storage details ]%></b>
 		</h5>
 	</header>
-	<h3 class="w3-margin-left"><%[ Storage: ]%> <%=$this->getStorageName()%> &nbsp;<span class="w3-small">[StorageId <%=$this->getStorageId()%>]</span></h3>
+	<h3 class="view_header"><%[ Storage: ]%> <%=$this->getStorageName()%> &nbsp;<span class="w3-small">[StorageId <%=$this->getStorageId()%>]</span></h3>
 	<div class="w3-bar w3-green w3-margin-bottom">
 		<a class="w3-bar-item w3-button tab_btn" href="<%=$this->Service->constructUrl('StorageList')%>"><i class="fa fa-angle-left"></i></a>
 		<button id="btn_storage_actions" type="button" class="w3-bar-item w3-button tab_btn w3-grey" onclick="W3Tabs.open(this.id, 'storage_actions');"><%[ Actions ]%></button>
@@ -2534,7 +2534,7 @@ var oSlots = {
 					<h2><%[ Load drive ]%></h2>
 				</header>
 				<div class="w3-container w3-margin-left w3-margin-right w3-margin-top w3-text-teal">
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field w3-margin-bottom">
 						<div class="w3-col w3-third">
 							<%[ Slot ]%>:
 						</div>
@@ -2542,7 +2542,7 @@ var oSlots = {
 							<strong id="load_drive_slot"></strong>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third">
 							<label for="load_drive_drives"><%[ Drive ]%>:</label>
 						</div>
@@ -2550,7 +2550,7 @@ var oSlots = {
 							<select id="load_drive_drives" class="w3-select w3-border"></select>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third">
 							<label for="load_drive_mount"><%[ Mount volume ]%>:</label>
 						</div>

@@ -42,15 +42,15 @@
 				Display="Dynamic"
 				RegularExpression="[0-9]+"
 			/>
-			<div class="w3-row-padding w3-section-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="Barcodes" Text="<%[ Update slots using barcodes ]%>" /></div>
 				<div class="w3-col w3-half"><com:TActiveCheckBox ID="Barcodes" CssClass="w3-check" Checked="true" Attributes.onclick="set_update_slots_barcodes();" /></div>
 			</div>
-			<div class="w3-row-padding w3-section"<%=$this->Storage ? ' style="display: none"' : ''%>>
+			<div class="w3-row directive_field"<%=$this->Storage ? ' style="display: none"' : ''%>>
 				<div class="w3-col w3-half"><com:TLabel ForControl="StorageUpdate" Text="<%[ Storage: ]%>" /></div>
 				<div class="w3-col w3-half"><com:TActiveDropDownList ID="StorageUpdate" CssClass="w3-select w3-border" /></div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="SlotsUpdate" Text="<%[ Slots to update (ex. 4 or 1-5 or 2,4,6-10): ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="SlotsUpdate" CssClass="w3-input w3-border" Text="0" />
@@ -62,7 +62,7 @@
 					/>
 				</div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><com:TLabel ForControl="DriveUpdate" Text="<%[ Drive number: ]%>" /></div>
 				<div class="w3-col w3-half">
 					<com:TActiveTextBox ID="DriveUpdate" CssClass="w3-input w3-border" Text="0" />
@@ -73,7 +73,7 @@
 					/>
 				</div>
 			</div>
-			<div class="w3-row-padding w3-section">
+			<div class="w3-row directive_field">
 				<div class="w3-col w3-half"><%[ Updating status: ]%></div>
 				<div class="w3-col w3-half">
 					<i id="update_slots_status_start" class="fa fa-step-forward" title="<%[ Ready to update ]%>"></i>

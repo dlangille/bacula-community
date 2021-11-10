@@ -42,7 +42,7 @@
 		</div>
 		<div id="general_options_default_access" class="w3-container w3-margin-left" style="display: <%=$this->GeneralDefaultAccess->Checked ? 'block' : 'none'%>">
 			<div class="w3-half">
-				<div class="w3-container w3-row w3-padding w3-block">
+				<div class="w3-container w3-row w3-block">
 					<div class="w3-third w3-col">
 						<%[ Default role: ]%>
 					</div>
@@ -100,7 +100,7 @@
 		<div id="authentication_method_basic" class="w3-container" style="display: none">
 			<%[ This type of authentication is realized by web server. To use it, the basic authentication has to be enabled in the Baculum Web web server configuration. ]%>
 			<div>
-				<div class="w3-container w3-row w3-padding opt_row">
+				<div class="w3-container w3-row opt_row">
 					<div class="w3-col" style="width: 40px">
 						<com:TCheckBox
 							ID="BasicAuthAllowManageUsers"
@@ -109,7 +109,7 @@
 					</div>
 					<label for="<%=$this->BasicAuthAllowManageUsers->ClientID%>"><%[ Allow Baculum Web to manage the Basic authentication users (add/remove users and change their passwords) ]%></label>
 				</div>
-				<div class="w3-container w3-row w3-padding w3-block">
+				<div class="w3-container w3-row w3-block">
 					<div class="w3-col opt_row" style="width: 220px">
 						<%[ Users file path: ]%>
 					</div>
@@ -259,7 +259,7 @@
 		<div id="authentication_method_ldap" class="w3-container w3-half w3-margin-left" style="display: none">
 			<%[ This type of authentication is realized by an external directory service. To authenticate it uses the Baculum Web login form. The web server basic authentication can be disabled in this method. ]%>
 			<h5><%[ LDAP server options ]%></h5>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ IP Address/Hostname: ]%>
 				</div>
@@ -285,7 +285,7 @@
 					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Port: ]%>
 				</div>
@@ -312,7 +312,7 @@
 					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ SSL encryption (LDAPS): ]%>
 				</div>
@@ -325,7 +325,7 @@
 					/>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Protocol version: ]%>
 				</div>
@@ -367,7 +367,7 @@
 				<label for="<%=$this->LdapAuthMethodSimple->ClientID%>"><%[ Simple authentication ]%></label>
 			</div>
 			<div id="authentication_method_ldap_auth_simple" class="w3-container w3-margin-left" style="display: <%=$this->LdapAuthMethodSimple->Checked ? 'block' : 'none'%>">
-				<div class="w3-container w3-row w3-padding">
+				<div class="w3-container w3-row directive_field">
 					<div class="w3-third w3-col">
 						<%[ Manager DN: ]%>
 					</div>
@@ -395,7 +395,7 @@
 						</com:TRequiredFieldValidator>
 					</div>
 				</div>
-				<div class="w3-container w3-row w3-padding">
+				<div class="w3-container w3-row directive_field">
 					<div class="w3-third w3-col">
 						<%[ Password: ]%>
 					</div>
@@ -449,7 +449,7 @@
 				<i id="ldap_test_connection_error" class="fas fa-times-circle w3-text-red" style="display: none;"></i>
 				<com:TActiveLabel ID="TestLdapConnectionMsg" CssClass="w3-text-red" Display="None" />
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Base DN: ]%>
 				</div>
@@ -478,7 +478,7 @@
 				</div>
 			</div>
 			<h5><%[ Attributes ]%></h5>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Username: ]%>
 				</div>
@@ -505,7 +505,7 @@
 					</com:TRequiredFieldValidator>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Long name: ]%>
 				</div>
@@ -519,7 +519,7 @@
 					/>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ E-mail: ]%>
 				</div>
@@ -533,7 +533,7 @@
 					/>
 				</div>
 			</div>
-			<div class="w3-container w3-row w3-padding">
+			<div class="w3-container w3-row directive_field">
 				<div class="w3-third w3-col">
 					<%[ Description: ]%>
 				</div>
@@ -1292,8 +1292,8 @@ $(function() {
 						Display="Dynamic"
 						/>
 					<span id="user_window_username_exists" class="error" style="display: none"><ul><li><%[ Username with the given name already exists. ]%></li></ul></span>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserName" Text="<%[ Username: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserName" Text="<%[ Username: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="UserName"
@@ -1318,8 +1318,8 @@ $(function() {
 							/>
 						</div> &nbsp;<i id="user_window_required" class="fa fa-asterisk w3-text-red opt_req" style="display none"></i>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserLongName" Text="<%[ Long name: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserLongName" Text="<%[ Long name: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="UserLongName"
@@ -1329,8 +1329,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserDescription" Text="<%[ Description: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserDescription" Text="<%[ Description: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="UserDescription"
@@ -1342,8 +1342,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserEmail" Text="<%[ E-mail: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserEmail" Text="<%[ E-mail: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="UserEmail"
@@ -1361,8 +1361,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div id="user_window_password" class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserPassword" Text="<%[ Password: ]%>" CssClass="w3-xlarge"/></div>
+					<div id="user_window_password" class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserPassword" Text="<%[ Password: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="UserPassword"
@@ -1373,8 +1373,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserRoles" Text="<%[ Roles: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserRoles" Text="<%[ Roles: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveListBox
 								ID="UserRoles"
@@ -1393,8 +1393,8 @@ $(function() {
 							<p class="w3-text-black" style="margin: 0 16px 0 0"><%[ Use CTRL + left-click to multiple item selection ]%></p>
 						</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserAPIHosts" Text="<%[ API hosts: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserAPIHosts" Text="<%[ API hosts: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveListBox
 								ID="UserAPIHosts"
@@ -1406,8 +1406,8 @@ $(function() {
 							<p class="w3-text-black" style="margin: 0 16px 0 0"><%[ Use CTRL + left-click to multiple item selection ]%></p>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="UserEnabled" Text="<%[ Enabled: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="UserEnabled" Text="<%[ Enabled: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveCheckBox
 								ID="UserEnabled"
@@ -1418,8 +1418,8 @@ $(function() {
 					</div>
 					<i class="fas fa-wrench w3-text-black"></i> &nbsp;<a href="javascript:void(0)" onclick="$('#user_window_advanced_options').toggle('fast');" class="w3-text-black"><%[ Advanced options ]%></a>
 					<div id="user_window_advanced_options" style="display: none">
-						<div class="w3-row w3-section" title="<%[ Comma separated IP addresses. Using asterisk character, there is also possible to provide subnet, for example: 192.168.1.* ]%>">
-							<div class="w3-col w3-third"><com:TLabel ForControl="UserIps" Text="<%[ IP address restrictions: ]%>" CssClass="w3-xlarge"/></div>
+						<div class="w3-row directive_field" title="<%[ Comma separated IP addresses. Using asterisk character, there is also possible to provide subnet, for example: 192.168.1.* ]%>">
+							<div class="w3-col w3-third"><com:TLabel ForControl="UserIps" Text="<%[ IP address restrictions: ]%>"/></div>
 							<div class="w3-half">
 								<com:TActiveTextBox
 									ID="UserIps"
@@ -1774,8 +1774,8 @@ $(function() {
 						Display="Dynamic"
 						/>
 					<span id="role_window_role_exists" class="error" style="display: none"><ul><li><%[ Role with the given name already exists. ]%></li></ul></span>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="Role" Text="<%[ Role: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="Role" Text="<%[ Role: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="Role"
@@ -1800,8 +1800,8 @@ $(function() {
 							/>
 						</div> &nbsp;<i id="role_window_required" class="fa fa-asterisk w3-text-red opt_req" style="display none"></i>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="RoleLongName" Text="<%[ Long name: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="RoleLongName" Text="<%[ Long name: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="RoleLongName"
@@ -1811,8 +1811,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="RoleDescription" Text="<%[ Description: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="RoleDescription" Text="<%[ Description: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveTextBox
 								ID="RoleDescription"
@@ -1824,8 +1824,8 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="RoleResources" Text="<%[ Resources: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="RoleResources" Text="<%[ Resources: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveListBox
 								ID="RoleResources"
@@ -1845,8 +1845,8 @@ $(function() {
 						</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 
 					</div>
-					<div class="w3-row w3-section">
-						<div class="w3-col w3-third"><com:TLabel ForControl="RoleEnabled" Text="<%[ Enabled: ]%>" CssClass="w3-xlarge"/></div>
+					<div class="w3-row directive_field">
+						<div class="w3-col w3-third"><com:TLabel ForControl="RoleEnabled" Text="<%[ Enabled: ]%>"/></div>
 						<div class="w3-half">
 							<com:TActiveCheckBox
 								ID="RoleEnabled"
@@ -2451,7 +2451,7 @@ $(function() {
 				<h2 id="oauth2_client_window_title_edit" style="display: none"><%[ Edit OAuth2 client account ]%></h2>
 			</header>
 			<div class="w3-container w3-margin-left w3-margin-right w3-margin-top w3-text-teal">
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientClientId" Text="<%[ OAuth2 Client ID: ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2480,7 +2480,7 @@ $(function() {
 						<a id="oauth2_client_generate_client_id_link" href="javascript:void(0)" onclick="document.getElementById('<%=$this->OAuth2ClientClientId->ClientID%>').value = get_random_string('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_', 32);" style="display: none"><%[ generate ]%></a>
 					</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientClientSecret" Text="<%[ OAuth2 Client Secret: ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2507,7 +2507,7 @@ $(function() {
 						<a href="javascript:void(0)" onclick="document.getElementById('<%=$this->OAuth2ClientClientSecret->ClientID%>').value = get_random_string('ABCDEFabcdef0123456789', 40); return false;"><%[ generate ]%></a>
 					</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientRedirectURI" Text="<%[ OAuth2 Redirect URI (example: https://baculumgui:9095/web/redirect): ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2524,7 +2524,7 @@ $(function() {
 						/>
 					</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientScope" Text="<%[ OAuth2 scopes (space separated): ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2543,7 +2543,7 @@ $(function() {
 						/>
 					</div> &nbsp;<i class="fa fa-asterisk w3-text-red opt_req"></i>
 				</div>
-				<div class="w3-row w3-section" id="oauth2_client_bconsole_create">
+				<div class="w3-row directive_field" id="oauth2_client_bconsole_create">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientBconsoleCreate" Text="<%[ Create dedicated Bconsole config file: ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveCheckBox
@@ -2556,7 +2556,7 @@ $(function() {
 					</div>
 				</div>
 				<div id="oauth2_client_console" style="display: none">
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientConsole" Text="<%[ Console ACL to use in new Bconsole config file: ]%>" /></div>
 						<div class="w3-half">
 							<com:TActiveDropDownList
@@ -2567,7 +2567,7 @@ $(function() {
 							/>
 						</div>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientDirector" Text="<%[ Director for Bconsole config: ]%>" /></div>
 						<div class="w3-half">
 							<com:TActiveDropDownList
@@ -2579,7 +2579,7 @@ $(function() {
 						</div>
 					</div>
 				</div>
-				<div class="w3-row w3-section" id="oauth2_client_bconsole_cfg">
+				<div class="w3-row directive_field" id="oauth2_client_bconsole_cfg">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientBconsoleCfgPath" Text="<%[ Dedicated Bconsole config file path: ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2589,7 +2589,7 @@ $(function() {
 						/>
 					</div>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="OAuth2ClientName" Text="<%[ Short name: ]%>" /></div>
 					<div class="w3-half">
 						<com:TActiveTextBox
@@ -2882,7 +2882,7 @@ $(function() {
 			</header>
 			<div class="w3-container w3-margin-left w3-margin-right w3-margin-top w3-text-teal">
 				<div id="api_host_settings">
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostSettings" Text="<%[ Get existing API host settings: ]%>" /></div>
 						<div class="w3-col w3-third">
 							<com:TActiveDropDownList
@@ -2901,7 +2901,7 @@ $(function() {
 						</div> &nbsp;<i id="api_host_settings_loading" class="fas fa-sync w3-spin w3-text-black" style="visibility: hidden; margin: 10px 5px"></i>
 					</div>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="APIHostProtocol" Text="<%[ Protocol: ]%>" /></div>
 					<div class="w3-col w3-third">
 						<com:TActiveDropDownList ID="APIHostProtocol" CssClass="w3-select w3-border" Width="150px" CausesValidation="false">
@@ -2910,7 +2910,7 @@ $(function() {
 						</com:TActiveDropDownList>&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="APIHostAddress" Text="<%[ IP Address/Hostname: ]%>" /></div>
 					<div class="w3-col w3-half">
 						<com:TActiveTextBox ID="APIHostAddress" CssClass="w3-input w3-border" CausesValidation="false" />
@@ -2918,7 +2918,7 @@ $(function() {
 					</div>
 					&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 				</div>
-				<div class="w3-row w3-section">
+				<div class="w3-row directive_field">
 					<div class="w3-col w3-third"><com:TLabel ForControl="APIHostPort" Text="<%[ Port: ]%>" /></div>
 					<div class="w3-col w3-third">
 						<com:TActiveTextBox ID="APIHostPort" CssClass="w3-input w3-border" CausesValidation="false" Text="9096" Width="70px" Style="display: inline-block" />
@@ -2927,7 +2927,7 @@ $(function() {
 					</div>
 				</div>
 				<div class="auth_setting">
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<com:TActiveRadioButton
 							ID="APIHostAuthOAuth2"
 							GroupName="SelectAuth"
@@ -2941,7 +2941,7 @@ $(function() {
 							Text="<%[ Use OAuth2 for authorization and authentication ]%>"
 						/>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<com:TActiveRadioButton
 							ID="APIHostAuthBasic"
 							GroupName="SelectAuth"
@@ -2957,8 +2957,8 @@ $(function() {
 						/>
 					</div>
 				</div>
-				<div id="configure_basic_auth" style="display: <%=($this->APIHostAuthBasic->Checked === true) ? '' : 'none';%>">
-					<div class="w3-row w3-section">
+				<div id="configure_basic_auth" class="w3-margin-top" style="display: <%=($this->APIHostAuthBasic->Checked === true) ? '' : 'none';%>">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostBasicLogin" Text="<%[ API Login: ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
@@ -2977,7 +2977,7 @@ $(function() {
 						</div>
 						&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostBasicPassword" Text="<%[ API Password: ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
@@ -2999,8 +2999,8 @@ $(function() {
 						&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
 				</div>
-				<div id="configure_oauth2_auth" style="display: <%=($this->APIHostAuthOAuth2->Checked === true) ? '' : 'none';%>">
-					<div class="w3-row w3-section">
+				<div id="configure_oauth2_auth" class="w3-margin-top" style="display: <%=($this->APIHostAuthOAuth2->Checked === true) ? '' : 'none';%>">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostOAuth2ClientSettings" Text="<%[ Get existing OAuth2 client settings: ]%>" /></div>
 						<div class="w3-col w3-third">
 							<com:TActiveDropDownList
@@ -3018,7 +3018,7 @@ $(function() {
 							</com:TActiveDropDownList>
 						</div> &nbsp;<i id="api_host_oauth2_client_settings_loading" class="fas fa-sync w3-spin w3-text-black" style="visibility: hidden; margin: 10px 5px"></i>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostOAuth2ClientId" Text="<%[ OAuth2 Client ID: ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
@@ -3047,7 +3047,7 @@ $(function() {
 						</div>
 						&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostOAuth2ClientSecret" Text="<%[ OAuth2 Client Secret: ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
@@ -3076,7 +3076,7 @@ $(function() {
 						</div>
 						&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostOAuth2RedirectURI" Text="<%[ OAuth2 Redirect URI (example: https://baculumgui:9095/web/redirect): ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
@@ -3095,7 +3095,7 @@ $(function() {
 						</div>
 						&nbsp;<i class="fa fa-asterisk w3-text-red" style="line-height: 40px"></i>
 					</div>
-					<div class="w3-row w3-section">
+					<div class="w3-row directive_field">
 						<div class="w3-col w3-third"><com:TLabel ForControl="APIHostOAuth2Scope" Text="<%[ OAuth2 scopes (space separated): ]%>" /></div>
 						<div class="w3-col w3-half">
 							<com:TActiveTextBox
