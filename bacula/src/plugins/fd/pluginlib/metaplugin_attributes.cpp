@@ -82,9 +82,11 @@ namespace attributes
             sp->type = FT_DIREND;
             sp->link = sp->fname;
             break;
+
          case S_IFREG:
             sp->type = FT_REG;
             break;
+
          case S_IFLNK:
             {
                sp->type = FT_LNK;
@@ -102,6 +104,11 @@ namespace attributes
                DMSG1(ctx, DDEBUG, "read_scan_stat_command():readlink:%s\n", sp->link);
             }
             break;
+
+         case S_IFIFO:
+            sp->type = FT_SPEC;
+            break;
+
          default:
             DMSG1(ctx, DERROR, "Unsupported file type: %o\n", sp->statp.st_mode & S_IFMT);
             return Invalid_Stat_Packet;

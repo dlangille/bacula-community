@@ -57,6 +57,7 @@ pid_t mypid;
 char *buf;
 char *buflog;
 char symlink_fname[32];
+char namedpipe_fname[32];
 
 bool regress_error_plugin_params = false;
 bool regress_error_start_job = false;
@@ -1195,15 +1196,20 @@ void perform_backup()
    write_plugin('C', buf);
    write_plugin('I', "TEST18S");
    signal_eod();
-   // here comes a file data contents
-   write_plugin('C', "DATA\n");
-   write_plugin('D', "/* here comes a file data contents */");
-   write_plugin('D', "/* here comes another file line    */");
-   write_plugin('D', "/* here comes another file line    */");
-   write_plugin('D', "/* here comes another file line    */");
-   write_plugin('D', "/* here comes another file line    */");
    signal_eod();
-   write_plugin('I', "TEST18S_Data");
+
+   // now test `STAT:/path/to/file` using named pipe
+   snprintf(namedpipe_fname, 32, "/tmp/namedpipe.%d", mypid);
+   mkfifo(namedpipe_fname, 0600);
+
+   // the file with external stat(2) packet
+   snprintf(buf, BIGBUFLEN, "FNAME:%s/java/%d/stat.namedpipe\n", PLUGINPREFIX, mypid);
+   write_plugin('C', buf);
+   snprintf(buf, BIGBUFLEN, "STAT:%s\n", namedpipe_fname);
+   write_plugin('C', buf);
+   write_plugin('I', "TEST18NP");
+   signal_eod();
+   signal_eod();
 
    // this plugin object should be the latest item to backup
    if (regress_backup_plugin_objects)
@@ -1793,8 +1799,10 @@ int main(int argc, char** argv) {
 
 Term:
    signal_term();
-   // LOG("#> Unlink symlink_fname.");
-   // unlink(symlink_fname);
+   LOG("#> Unlink symlink_fname.");
+   unlink(symlink_fname);
+   LOG("#> Unlink namedpipe_fname.");
+   unlink(namedpipe_fname);
    LOG("#> Terminating backend.");
    close(logfd);
    free(buf);
