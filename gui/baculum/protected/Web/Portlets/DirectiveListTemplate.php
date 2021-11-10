@@ -46,6 +46,7 @@ class DirectiveListTemplate extends ConfigListTemplate implements IActiveControl
 	const PARENT_NAME = 'ParentName';
 	const GROUP_NAME = 'GroupName';
 	const IS_DIRECTIVE_CREATED = 'IsDirectiveCreated';
+	const COPY_MODE = 'CopyMode';
 
 	public $doc;
 
@@ -196,6 +197,15 @@ class DirectiveListTemplate extends ConfigListTemplate implements IActiveControl
 
 	public function setIsDirectiveCreated($is_created) {
 		$this->setViewState(self::IS_DIRECTIVE_CREATED, $is_created);
+	}
+
+	public function getCopyMode() {
+		return $this->getViewState(self::COPY_MODE, false);
+	}
+
+	public function setCopyMode($copy_mode) {
+		$copy_mode = TPropertyValue::ensureBoolean($copy_mode);
+		$this->setViewState(self::COPY_MODE, $copy_mode, false);
 	}
 
 	public function setDoc() {

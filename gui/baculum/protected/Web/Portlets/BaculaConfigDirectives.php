@@ -111,6 +111,10 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 			// This control is loaded only once, otherwise fields loose assigned values.
 			return;
 		}
+		$copy_mode = $this->getCopyMode();
+		if ($copy_mode) {
+			$this->setShowAllDirectives(true);
+		}
 
 		$host = $this->getHost();
 		$component_type = $this->getComponentType();
@@ -250,6 +254,12 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 		$this->RepeaterDirectives->dataBind();
 		$this->ConfigDirectives->Display = 'Dynamic';
 		$this->IsDirectiveCreated = true;
+		if ($copy_mode) {
+			$this->getPage()->getCallbackClient()->callClientFunction(
+				'oBaculaConfigSection.show_sections',
+				[true]
+			);
+		}
 	}
 
 	public function loadDirectives($sender, $param) {
@@ -364,7 +374,7 @@ class BaculaConfigDirectives extends DirectiveListTemplate {
 			// In some cases with double control load Name value stays empty. Recreate it here.
 			$directives['Name'] = $res_name_dir = $resource_name;
 		}
-		if ($load_values === true) {
+		if ($load_values === true && $this->getCopyMode() === false) {
 			if ($resource_name !== $res_name_dir) {
 				// RENAME RESOURCE
 				if ($this->renameResource($res_name_dir)) {

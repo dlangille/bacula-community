@@ -106,10 +106,13 @@ class BaculaConfigResourceList extends Portlets {
 
 	public function loadResourceWindow($sender, $param) {
 		list($cmd, $name) = $param->getCallbackParameter();
+		$copy_el_id = 'resource_window_copy_resource' . $this->ClientID;
 		if (!empty($name)) {
 			// edit existing resource
 			$this->ResourceConfig->setResourceName($name);
 			$this->ResourceConfig->setLoadValues(true);
+			$this->ResourceConfig->setCopyMode(false);
+			$this->getPage()->getCallbackClient()->hide($copy_el_id);
 		} else {
 			// add new resource
 			$this->ResourceConfig->setLoadValues(false);
@@ -117,6 +120,8 @@ class BaculaConfigResourceList extends Portlets {
 				'oBaculaConfigSection.show_sections',
 				[true]
 			);
+			$this->loadResourcesToCopy();
+			$this->getPage()->getCallbackClient()->show($copy_el_id);
 		}
 		$host = $this->getHost();
 		$component_type = $this->getComponentType();
@@ -133,6 +138,37 @@ class BaculaConfigResourceList extends Portlets {
 	public function unloadResourceWindow($sender, $param) {
 		$this->ResourceConfig->unloadDirectives();
 	}
+
+	private function loadResourcesToCopy() {
+		$component_type = $this->getComponentType();
+		$resource_type = $this->getResourceType();
+		$resources = ['' => ''];
+		$params = [
+			'config',
+			$component_type,
+			$resource_type
+		];
+		$res = $this->getModule('api')->get($params);
+		if ($res->error === 0) {
+			for ($i = 0; $i < count($res->output); $i++) {
+				$r = $res->output[$i]->{$resource_type}->Name;
+				$resources[$r] = $r;
+			}
+		}
+		$this->ResourcesToCopy->DataSource = $resources;
+		$this->ResourcesToCopy->dataBind();
+	}
+
+	public function copyConfig($sender, $param) {
+		$resource_name = $this->ResourcesToCopy->SelectedValue;
+		if (!empty($resource_name)) {
+			$this->ResourceConfig->setResourceName($resource_name);
+			$this->ResourceConfig->setLoadValues(true);
+			$this->ResourceConfig->setCopyMode(true);
+			$this->ResourceConfig->raiseEvent('OnDirectiveListLoad', $this, null);
+		}
+	}
+
 
 	public function removeResource($sender, $param) {
 		$host = $this->getHost();

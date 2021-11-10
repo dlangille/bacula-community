@@ -42,7 +42,7 @@
 			ID="DirectiveSetting"
 			Resource="<%=$this->getResource()%>"
 			OnLoadDirectives="loadDirectives"
-			Visible="<%=$this->LoadValues%>"
+			Visible="<%=$this->LoadValues && !$this->CopyMode%>"
 		/>
 		<com:TActiveLinkButton
 			CssClass="w3-button w3-red w3-right"
@@ -71,7 +71,7 @@
 			CommandParameter="save"
 		>
 			<prop:Text>
-				<i class="fa fa-save"></i> &nbsp;<%=$this->getLoadValues() ? Prado::localize('Save') : Prado::localize('Create')%>
+				<i class="fa fa-save"></i> &nbsp;<%=$this->getLoadValues() && !$this->getCopyMode() ? Prado::localize('Save') : Prado::localize('Create')%>
 			</prop:Text>
 			<prop:ClientSide.OnLoading>
 				$('.save_progress').css({'visibility': '', 'display': 'inline-block'});

@@ -133,6 +133,17 @@ var oBaculaConfigResourceList<%=$this->ClientID%> = {
 			<h2 id="resource_window_title_add<%=$this->ClientID%>" style="display: none"><%[ Add ]%> <com:TActiveLabel ID="ResourceTypeAddWindowTitle" /></h2>
 			<h2 id="resource_window_title_edit<%=$this->ClientID%>" style="display: none"><%[ Edit ]%> <com:TActiveLabel ID="ResourceTypeEditWindowTitle" /></h2>
 		</header>
+		<div id="resource_window_copy_resource<%=$this->ClientID%>"class="w3-container w3-margin-left w3-margin-right w3-margin-top w3-right" style="display: none">
+			<span style="vertical-align: super"><%[ Copy configuration from: ]%></span>
+			<div class="directive_field w3-show-inline-block w3-margin-bottom" style="vertical-align: middle">
+				<com:TActiveDropDownList
+					ID="ResourcesToCopy"
+					CssClass="w3-select w3-border w3-show-inline-block"
+					Style="min-width: 300px"
+					OnSelectedIndexChanged="copyConfig"
+				/>
+			</div>
+		</div>
 		<div class="w3-container w3-margin-left w3-margin-right w3-margin-top">
 			<com:Application.Web.Portlets.BaculaConfigDirectives
 				ID="ResourceConfig"

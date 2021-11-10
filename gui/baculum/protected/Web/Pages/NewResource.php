@@ -44,6 +44,14 @@ class NewResource extends BaculumWebPage {
 		if ($this->IsCallBack || $this->IsPostBack) {
 			return;
 		}
+		if (key_exists('HTTP_REFERER', $_SERVER)) {
+			$this->setOriginUrl($_SERVER['HTTP_REFERER']);
+		}
+		$this->setConfigForm();
+		$this->loadResourcesToCopy();
+	}
+
+	private function setConfigForm($resource_name = null) {
 		$component_type = null;
 		$component_name = null;
 		$resource_type = null;
@@ -65,12 +73,45 @@ class NewResource extends BaculumWebPage {
 			$this->NewResource->setComponentType($component_type);
 			$this->NewResource->setComponentName($component_name);
 			$this->NewResource->setResourceType($resource_type);
-			$this->NewResource->setLoadValues(false);
+			if (is_string($resource_name)) {
+				$this->NewResource->setResourceName($resource_name);
+				$this->NewResource->setLoadValues(true);
+				$this->NewResource->setCopyMode(true);
+			} else {
+				$this->NewResource->setLoadValues(false);
+				$this->NewResource->setCopyMode(false);
+			}
 			$this->NewResource->raiseEvent('OnDirectiveListLoad', $this, null);
 			$this->setHosts();
 		}
-		if (key_exists('HTTP_REFERER', $_SERVER)) {
-			$this->setOriginUrl($_SERVER['HTTP_REFERER']);
+	}
+
+	private function loadResourcesToCopy() {
+		if ($this->Request->contains('component_type') && $this->Request->contains('resource_type')) {
+			$component_type = $this->Request['component_type'];
+			$resource_type = $this->Request['resource_type'];
+			$resources = ['' => ''];
+			$params = [
+				'config',
+				$component_type,
+				$resource_type
+			];
+			$res = $this->getModule('api')->get($params);
+			if ($res->error === 0) {
+				for ($i = 0; $i < count($res->output); $i++) {
+					$r = $res->output[$i]->{$resource_type}->Name;
+					$resources[$r] = $r;
+				}
+			}
+			$this->ResourcesToCopy->DataSource = $resources;
+			$this->ResourcesToCopy->dataBind();
+		}
+	}
+
+	public function copyConfig($sender, $param) {
+		$resource_name = $this->ResourcesToCopy->SelectedValue;
+		if (!empty($resource_name)) {
+			$this->setConfigForm($resource_name);
 		}
 	}
 
