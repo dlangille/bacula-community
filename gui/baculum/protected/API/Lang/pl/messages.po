@@ -691,3 +691,6 @@ msgstr "Pliki bin.:"
 
 msgid "Configs:"
 msgstr "Pliki konfig.:"
+
+msgid "Dedicated Bconsole config"
+msgstr "Dedykowana konfiguracja Bconsole"

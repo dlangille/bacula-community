@@ -11,6 +11,7 @@
 		<module id="oauth2_token" class="Application.API.Class.OAuth2.TokenManager" />
 
 		<!-- Basic user config -->
+		<module id="basic_apiuser" class="Application.API.Class.BasicAPIUserConfig" />
 		<module id="basic_config" class="Application.API.Class.BasicConfig" />
 
 		<!-- API Server modules -->

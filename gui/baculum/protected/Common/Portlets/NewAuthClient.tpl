@@ -62,7 +62,7 @@
 					Display="Dynamic"
 					ControlCssClass="invalidate"
 					ControlToValidate="APIBasicPassword"
-					RegularExpression="[\S\s]{5,60}"
+					RegularExpression="<%=BasicUserConfig::PASSWORD_PATTERN%>"
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Password must be longer than 4 chars. ]%>"
 				/>
@@ -96,7 +96,7 @@
 					Display="Dynamic"
 					ControlCssClass="invalidate"
 					ControlToValidate="RetypeAPIBasicPassword"
-					RegularExpression="[\S\s]{5,60}"
+					RegularExpression="<%=BasicUserConfig::PASSWORD_PATTERN%>"
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Password must be longer than 4 chars. ]%>"
 				/>

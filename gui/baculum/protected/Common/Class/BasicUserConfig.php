@@ -3,7 +3,7 @@
  * Bacula(R) - The Network Backup Solution
  * Baculum   - Bacula web interface
  *
- * Copyright (C) 2013-2020 Kern Sibbald
+ * Copyright (C) 2013-2021 Kern Sibbald
  *
  * The main author of Baculum is Marcin Haba.
  * The original author of Bacula is Kern Sibbald, with contributions
@@ -40,6 +40,11 @@ class BasicUserConfig extends CommonModule {
 	 * User name allowed characters pattern
 	 */
 	const USER_PATTERN = '[a-zA-Z0-9]+';
+
+	/**
+	 * Password allowed characters pattern.
+	 */
+	const PASSWORD_PATTERN = '[\S\s]{5,60}';
 
 	/**
 	 * Get config file path to store users' parameters.
@@ -195,7 +200,6 @@ class BasicUserConfig extends CommonModule {
 	 * @return boolean true if users removed successfully, otherwise false
 	 */
 	public function removeUsers(array $usernames) {
-		$result = false;
 		$all_users = $this->getUsers();
 		for ($i = 0; $i < count($usernames); $i++) {
 			if (key_exists($usernames[$i], $all_users)) {
@@ -224,5 +228,9 @@ class BasicUserConfig extends CommonModule {
 	public function clearUsersConfig() {
 		$result = file_put_contents($this->getConfigPath(), '', LOCK_EX) !== false;
 		return $result;
+	}
+
+	public function validateUsername($username) {
+		return (preg_match('/^' . self::USER_PATTERN . '$/', $username) === 1);
 	}
 }

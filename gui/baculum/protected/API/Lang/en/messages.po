@@ -685,3 +685,6 @@ msgstr "Binaries:"
 
 msgid "Configs:"
 msgstr "Configs:"
+
+msgid "Dedicated Bconsole config"
+msgstr "Dedicated Bconsole config"

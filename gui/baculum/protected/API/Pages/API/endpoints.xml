@@ -109,6 +109,9 @@
 	<!-- OAuth2 client endpoints -->
 	<url ServiceParameter="OAuth2Clients" pattern="api/v2/oauth2/clients/" />
 	<url ServiceParameter="OAuth2Client" pattern="api/v2/oauth2/clients/{id}/" parameters.id="[a-zA-Z0-9\-_]{32}" />
+	<!-- Basic user endpoints -->
+	<url ServiceParameter="BasicUsers" pattern="api/v2/basic/users/" />
+	<url ServiceParameter="BasicUser" pattern="api/v2/basic/users/{id}/" parameters.id="[a-zA-Z0-9]+" />
 
 	<!-- API v1 -->
 	<!-- general endpoint -->

@@ -3,7 +3,7 @@
  * Bacula(R) - The Network Backup Solution
  * Baculum   - Bacula web interface
  *
- * Copyright (C) 2013-2020 Kern Sibbald
+ * Copyright (C) 2013-2021 Kern Sibbald
  *
  * The main author of Baculum is Marcin Haba.
  * The original author of Bacula is Kern Sibbald, with contributions
@@ -130,14 +130,14 @@ class OAuth2Client extends BaculumAPIServer {
 
 			$dir_cfg = $bs->getConfig('bcons', 'Director', $params->director);
 			if ($dir_cfg['exitcode'] != 0) {
-				$this->output = $dir_cfg->output;
+				$this->output = $dir_cfg['output'];
 				$this->error = OAuth2Error::ERROR_INTERNAL_ERROR;
 				return;
 			}
 
 			$console_cfg = $bs->getConfig('dir', 'Console', $params->console);
 			if ($console_cfg['exitcode'] != 0) {
-				$this->output = $console_cfg->output;
+				$this->output = $console_cfg['output'];
 				$this->error = OAuth2Error::ERROR_INTERNAL_ERROR;
 				return;
 			}
@@ -257,14 +257,14 @@ class OAuth2Client extends BaculumAPIServer {
 
 			$dir_cfg = $bs->getConfig('bcons', 'Director', $params->director);
 			if ($dir_cfg['exitcode'] != 0) {
-				$this->output = $dir_cfg->output;
+				$this->output = $dir_cfg['output'];
 				$this->error = OAuth2Error::ERROR_INTERNAL_ERROR;
 				return;
 			}
 
 			$console_cfg = $bs->getConfig('dir', 'Console', $params->console);
 			if ($console_cfg['exitcode'] != 0) {
-				$this->output = $console_cfg->output;
+				$this->output = $console_cfg['output'];
 				$this->error = OAuth2Error::ERROR_INTERNAL_ERROR;
 				return;
 			}

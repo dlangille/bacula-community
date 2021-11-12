@@ -108,6 +108,15 @@
 			"OAuth2Client": {
 				"$ref": "#/definitions/OAuth2Client"
 			},
+			"BasicUsers": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/BasicUser"
+				}
+			},
+			"BasicUser": {
+				"$ref": "#/definitions/BasicUser"
+			},
 			"AutochangerDriveVolume": {
 				"$ref": "#/definitions/AutochangerDriveVolume"
 			},
@@ -5541,6 +5550,24 @@
 						}
 					},
 					{
+						"name": "console",
+						"in": "body",
+						"required": false,
+						"description": "Director Console name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'director' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "director",
+						"in": "body",
+						"required": false,
+						"description": "Director Name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'console' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "name",
 						"in": "body",
 						"required": false,
@@ -5626,6 +5653,24 @@
 						}
 					},
 					{
+						"name": "console",
+						"in": "body",
+						"required": false,
+						"description": "Director Console name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'director' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "director",
+						"in": "body",
+						"required": false,
+						"description": "Director Name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'console' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "name",
 						"in": "body",
 						"required": false,
@@ -5670,6 +5715,267 @@
 						"in": "path",
 						"required": true,
 						"description": "Client identifier (OAuth2 Client ID)",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/basic/users": {
+			"get": {
+				"tags": ["basic"],
+				"summary": "Basic user list",
+				"description": "Get Basic user list.",
+				"responses": {
+					"200": {
+						"description": "List of Basic users properties",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/BasicUsers"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
+		"/api/v2/basic/users/{username}": {
+			"get": {
+				"tags": ["basic"],
+				"summary": "Specific Basic user config",
+				"description": "Get specific Basic user config",
+				"responses": {
+					"200": {
+						"description": "Specific Basic user config",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/BasicUser"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 140, 142, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "username",
+						"in": "path",
+						"required": true,
+						"description": "Basic user name",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"put": {
+				"tags": ["basic"],
+				"summary": "Set Basic user settings",
+				"description": "Set specific Basic user settings",
+				"consumes": [ "application/json" ],
+				"responses": {
+					"200": {
+						"description": "Set Basic user settings",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"description": "Updated Basic user settings"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 140, 142, 143, 144, 145, 146, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "username",
+						"in": "path",
+						"required": true,
+						"description": "Basic user name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "password",
+						"in": "body",
+						"required": false,
+						"description": "Basic user password",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "bconsole_cfg_path",
+						"in": "body",
+						"required": false,
+						"description": "Dedicated Bconsole configuration file path",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "console",
+						"in": "body",
+						"required": false,
+						"description": "Director Console name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'director' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "director",
+						"in": "body",
+						"required": false,
+						"description": "Director Name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'console' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"post": {
+				"tags": ["basic"],
+				"summary": "Create Basic user account",
+				"description": "Create specific Basic user account",
+				"consumes": [ "application/json" ],
+				"responses": {
+					"200": {
+						"description": "Create Basic user account",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"description": "New Basic user settings"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 141, 142, 143, 144, 145, 146, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "username",
+						"in": "path",
+						"required": true,
+						"description": "Basic user name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "password",
+						"in": "body",
+						"required": true,
+						"description": "Basic user password",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "bconsole_cfg_path",
+						"in": "body",
+						"required": false,
+						"description": "Dedicated Bconsole configuration file path",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "console",
+						"in": "body",
+						"required": false,
+						"description": "Director Console name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'director' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "director",
+						"in": "body",
+						"required": false,
+						"description": "Director Name to create dedicated bconsole.conf that is assigned to account. Parameter must be used together with 'console' parameter.",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"delete": {
+				"tags": ["basic"],
+				"summary": "Delete Basic user account",
+				"description": "Delete Basic user account.",
+				"responses": {
+					"200": {
+						"description": "Delete Basic user account",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 140, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "username",
+						"in": "path",
+						"required": true,
+						"description": "Basic user name",
 						"schema": {
 							"type": "string"
 						}
@@ -6336,6 +6642,19 @@
 				},
 				"name": {
 					"description": "OAuth2 client name (optional)",
+					"type": "string"
+				}
+			}
+		},
+		"BasicUser": {
+			"type": "object",
+			"properties": {
+				"bconsole_cfg_path": {
+					"description": "Dedicated Bconsole configuration file",
+					"type": "string"
+				},
+				"username": {
+					"description": "User login name",
 					"type": "string"
 				}
 			}

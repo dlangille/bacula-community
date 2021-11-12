@@ -132,6 +132,31 @@ class BasicConfig extends ConfigFileModule {
 	}
 
 	/**
+	 * Get users.
+	 * NOTE: User list bases on basic password file.
+	 * @see BasicAPIUserConfig
+	 *
+	 * @return array basic user list
+	 */
+	public function getUsers() {
+		$basic_users = [];
+		$basic_apiuser = $this->getModule('basic_apiuser')->getUsers();
+		$basic_config = $this->getConfig();
+		foreach($basic_apiuser as $user => $pwd) {
+			$bconsole_cfg_path = '';
+			if (key_exists($user, $basic_config) && key_exists('bconsole_cfg_path', $basic_config[$user])) {
+				$bconsole_cfg_path = $basic_config[$user]['bconsole_cfg_path'];
+			}
+			$basic_users[] = [
+				'username' => $user,
+				'bconsole_cfg_path' => $bconsole_cfg_path
+			];
+		}
+		return $basic_users;
+
+	}
+
+	/**
 	 * Add single basic user to config.
 	 * NOTE: Basic password hashes are stored in separate file.
 	 * @see BasicAPIUserConfig
@@ -198,15 +223,18 @@ class BasicConfig extends ConfigFileModule {
 	 * @return boolean true on success, otherwise false
 	 */
 	public function removeUser($username) {
-		$success = false;
 		$config = $this->getConfig();
 		if (key_exists($username, $config)) {
 			unset($config[$username]);
-			$success = $this->setConfig($config);
+			$this->setConfig($config);
 		}
-		if ($success) {
-			$success = $this->getModule('basic_apiuser')->removeUser($username);
-		}
+		/**
+		 * There is returned only state of removing user from password file because
+		 * because user can be defined in password file but it does not have
+		 * to be defined in basic.conf file. It is for backward compatibility
+		 * with config files.
+		 */
+		$success = $this->getModule('basic_apiuser')->removeUser($username);
 		return $success;
 	}
 }
