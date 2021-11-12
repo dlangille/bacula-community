@@ -14,6 +14,7 @@
 				<tr>
 					<th></th>
 					<th><%[ Username ]%></th>
+					<th><%[ Dedicated Bconsole config ]%></th>
 					<th><%[ Actions ]%></th>
 				</tr>
 			</thead>
@@ -22,6 +23,7 @@
 				<tr>
 					<th></th>
 					<th><%[ Username ]%></th>
+					<th><%[ Dedicated Bconsole config ]%></th>
 					<th><%[ Actions ]%></th>
 				</tr>
 			</tfoot>
@@ -61,6 +63,23 @@ var oBasicUserList = {
 					defaultContent: '<button type="button" class="w3-button w3-blue"><i class="fa fa-angle-down"></i></button>'
 				},
 				{data: 'username'},
+				{
+					data: 'bconsole_cfg_path',
+					render: function(data, type, row) {
+						var ret;
+						if (type == 'display') {
+							ret = '';
+							if (data) {
+								var check = document.createElement('I');
+								check.className = 'fas fa-check';
+								ret = check.outerHTML;
+							}
+						} else {
+							ret = data;
+						}
+						return ret;
+					}
+				},
 				{
 					data: 'username',
 					render: function(data, type, row) {
@@ -110,10 +129,20 @@ var oBasicUserList = {
 			},
 			{
 				className: "dt-center",
-				targets: [ 2 ]
+				targets: [ 2, 3 ]
 			}],
 			order: [1, 'asc'],
 		});
+	},
+	get_user_props: function(username) {
+		var props = {};
+		for (var i = 0; i < this.data.length; i++) {
+			if (this.data[i].username === username) {
+				props = this.data[i];
+				break;
+			}
+		}
+		return props;
 	}
 };
 </script>
@@ -197,9 +226,8 @@ var oAPIBasicUsers = {
 	},
 	edit_user: function(username) {
 		this.edit_obj.clear_basic_fields();
-		this.edit_obj.set_basic_props({
-			username: username
-		});
+		var props = oBasicUserList.get_user_props(username);
+		this.edit_obj.set_basic_props(props);
 		this.show_edit_user_window(true);
 	},
 	delete_user: function(username) {

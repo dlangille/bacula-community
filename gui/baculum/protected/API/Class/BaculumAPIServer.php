@@ -99,6 +99,12 @@ abstract class BaculumAPIServer extends TPage {
 		$config = $this->getModule('api_config')->getConfig('api');
 		if ($config['auth_type'] === 'basic' && $this->getModule('auth_basic')->isAuthRequest()) {
 			$is_auth = true;
+			$username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null;
+			if ($username) {
+				$props = $this->getModule('basic_config')->getConfig($username);
+				$this->initAuthParams($props);
+			}
+
 		} elseif ($config['auth_type'] === 'oauth2' && $this->getModule('auth_oauth2')->isAuthRequest()) {
 			$is_auth = $this->authorize();
 		}
@@ -234,7 +240,7 @@ abstract class BaculumAPIServer extends TPage {
 	 */
 	private function initAuthParams(array $auth) {
 		// if client has own bconsole config, assign it here
-		if (array_key_exists('bconsole_cfg_path', $auth) && !empty($auth['bconsole_cfg_path'])) {
+		if (key_exists('bconsole_cfg_path', $auth) && !empty($auth['bconsole_cfg_path'])) {
 			Bconsole::setCfgPath($auth['bconsole_cfg_path'], true);
 		}
 	}

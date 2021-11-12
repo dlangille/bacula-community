@@ -76,17 +76,24 @@ class APIBasicUsers extends BaculumAPIPage {
 
 	private function getBasicUsers() {
 		$basic_users = array();
-		$basic_cfg = $this->getModule('basic_apiuser')->getUsers();
-		foreach($basic_cfg as $user => $pwd) {
-			$basic_users[] = ['username' => $user];
+		$basic_apiuser = $this->getModule('basic_apiuser')->getUsers();
+		$basic_config = $this->getModule('basic_config')->getConfig();
+		foreach($basic_apiuser as $user => $pwd) {
+			$bconsole_cfg_path = '';
+			if (key_exists($user, $basic_config) && key_exists('bconsole_cfg_path', $basic_config[$user])) {
+				$bconsole_cfg_path = $basic_config[$user]['bconsole_cfg_path'];
+			}
+			$basic_users[] = [
+				'username' => $user,
+				'bconsole_cfg_path' => $bconsole_cfg_path
+			];
 		}
 		return $basic_users;
 	}
 
 	public function deleteBasicUser($sender, $param) {
-		$config = $this->getModule('basic_apiuser');
 		$username = $param->getCallbackParameter();
-		$config->removeUser($username);
+		$this->getModule('basic_config')->removeUser($username);
 		$this->loadBasicUsers(null, null);
 	}
 }

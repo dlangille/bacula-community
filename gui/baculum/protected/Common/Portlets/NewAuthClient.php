@@ -62,22 +62,27 @@ class NewAuthClient extends PortletTemplate {
 
 		$result = false;
 		$exists = false;
-		$config = $this->getModule('api_config')->getConfig();
 		if ($this->getAuthType() === self::AUTH_TYPE_BASIC) {
+			$basic_config = $this->getModule('basic_config');
+			$props = [
+				'bconsole_cfg_path' => $this->APIBasicBconsoleCfgPath->Text
+			];
 			if ($this->Mode == self::MODE_TYPE_ADD) {
 				$users = $this->getModule('basic_apiuser')->getUsers();
 				if (!key_exists($this->APIBasicLogin->Text, $users)) {
-					$result = $this->getModule('basic_apiuser')->setUsersConfig(
+					$result = $basic_config->addUser(
 						$this->APIBasicLogin->Text,
-						$this->APIBasicPassword->Text
+						$this->APIBasicPassword->Text,
+						$props
 					);
 				} else {
 					$exists = true;
 				}
 			} elseif ($this->Mode === self::MODE_TYPE_EDIT) {
-				$result = $this->getModule('basic_apiuser')->setUsersConfig(
+				$result = $basic_config->editUser(
 					$this->APIBasicLoginHidden->Value,
-					$this->APIBasicPassword->Text
+					$this->APIBasicPassword->Text,
+					$props
 				);
 			}
 		} elseif ($this->getAuthType() === self::AUTH_TYPE_OAUTH2) {

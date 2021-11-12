@@ -22,6 +22,7 @@
 		</module>
 		<!-- auth modules -->
 		<module id="basic_apiuser" class="Application.API.Class.BasicAPIUserConfig" />
+		<module id="basic_config" class="Application.API.Class.BasicConfig" />
 		<module id="oauth2_config" class="Application.API.Class.OAuth2.OAuth2Config" />
 		<!-- component actions modules -->
 		<module id="comp_actions" class="Application.API.Class.ComponentActions" />

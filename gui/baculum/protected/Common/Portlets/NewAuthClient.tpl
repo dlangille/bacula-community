@@ -6,8 +6,8 @@
 <div class="w3-container">
 	<div class="w3-padding" style="display: <%=($this->getAuthType() == 'basic' ? '' : 'none')%>">
 		<div class="w3-row w3-section">
-			<div class="w3-col w3-quarter"><com:TLabel ForControl="APIBasicLogin" Text="<%[ API Login: ]%>" /></div>
-			<div class="w3-col w3-threequarter">
+			<div class="w3-col w3-third"><com:TLabel ForControl="APIBasicLogin" Text="<%[ API Login: ]%>" /></div>
+			<div class="w3-col w3-twothird">
 				<com:TActiveTextBox
 					ID="APIBasicLogin"
 					CssClass="w3-input w3-border"
@@ -23,7 +23,7 @@
 					ControlToValidate="APIBasicLogin"
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Please enter API login. ]%>"
-				 />
+				/>
 				<com:TRegularExpressionValidator
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					ControlToValidate="APIBasicLogin"
@@ -34,8 +34,8 @@
 			</div>
 		</div>
 		<div class="w3-row w3-section">
-			<div class="w3-col w3-quarter"><com:TLabel ForControl="APIBasicPassword" Text="<%[ API Password: ]%>" /></div>
-			<div class="w3-col w3-threequarter">
+			<div class="w3-col w3-third"><com:TLabel ForControl="APIBasicPassword" Text="<%[ API Password: ]%>" /></div>
+			<div class="w3-col w3-twothird">
 				<com:TActiveTextBox
 					ID="APIBasicPassword"
 					TextMode="Password"
@@ -52,7 +52,11 @@
 					ControlToValidate="APIBasicPassword"
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Please enter API password. ]%>"
-				/>
+				>
+					<prop:ClientSide.OnValidate>
+						sender.enabled = <%=$this->Mode == 'add' ? 'true': 'false'%>;
+					</prop:ClientSide.OnValidate>
+				</com:TRequiredFieldValidator>
 				<com:TRegularExpressionValidator
 					CssClass="validator-block"
 					Display="Dynamic"
@@ -65,8 +69,8 @@
 			</div>
 		</div>
 		<div class="w3-row w3-section">
-			<div class="w3-col w3-quarter"><com:TLabel ForControl="RetypeAPIBasicPassword" Text="<%[ Retype password: ]%>" /></div>
-			<div class="w3-col w3-threequarter">
+			<div class="w3-col w3-third"><com:TLabel ForControl="RetypeAPIBasicPassword" Text="<%[ Retype password: ]%>" /></div>
+			<div class="w3-col w3-twothird">
 				<com:TActiveTextBox
 					ID="RetypeAPIBasicPassword"
 					CssClass="w3-input w3-border"
@@ -82,7 +86,11 @@
 					ControlToValidate="RetypeAPIBasicPassword"
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Please enter retype password. ]%>"
-				/>
+				>
+					<prop:ClientSide.OnValidate>
+						sender.enabled = <%=$this->Mode == 'add' ? 'true': 'false'%>;
+					</prop:ClientSide.OnValidate>
+				</com:TRequiredFieldValidator>
 				<com:TRegularExpressionValidator
 					CssClass="validator-block"
 					Display="Dynamic"
@@ -101,6 +109,17 @@
 					ValidationGroup="<%=$this->ClientID%>Basic"
 					Text="<%[ Passwords must be the same. ]%>"
 				/>
+			</div>
+		</div>
+		<div class="w3-row w3-section">
+			<div class="w3-col w3-third"><com:TLabel ForControl="APIBasicBconsoleCfgPath" Text="<%[ Dedicated Bconsole config file path: ]%>" /></div>
+			<div class="w3-col w3-twothird">
+				<com:TTextBox
+					ID="APIBasicBconsoleCfgPath"
+					CssClass="w3-input w3-border"
+					Style="width: 70%"
+					CausesValidation="false"
+				/> <%[ (optional) ]%>
 			</div>
 		</div>
 	</div>
@@ -266,7 +285,8 @@ var <%=$this->ClientID%>oNewAuthClient = {
 			username: '<%=$this->APIBasicLogin->ClientID%>',
 			username_hidden: '<%=$this->APIBasicLoginHidden->ClientID%>',
 			password: '<%=$this->APIBasicPassword->ClientID%>',
-			password_retype: '<%=$this->RetypeAPIBasicPassword->ClientID%>'
+			password_retype: '<%=$this->RetypeAPIBasicPassword->ClientID%>',
+			bconsole_cfg_path: '<%=$this->APIBasicBconsoleCfgPath->ClientID%>'
 		},
 		oauth2: {
 			client_id: '<%=$this->APIOAuth2ClientId->ClientID%>',
@@ -289,6 +309,9 @@ var <%=$this->ClientID%>oNewAuthClient = {
 		if (props.hasOwnProperty('username')) {
 			document.getElementById(this.ids.basic.username).value = props.username;
 			document.getElementById(this.ids.basic.username_hidden).value = props.username;
+			if (props.hasOwnProperty('bconsole_cfg_path')) {
+				document.getElementById(this.ids.basic.bconsole_cfg_path).value = props.bconsole_cfg_path;
+			}
 		}
 	},
 	set_oauth2_props: function(props) {
@@ -320,6 +343,7 @@ var <%=$this->ClientID%>oNewAuthClient = {
 		document.getElementById(this.ids.basic.username_hidden).value = '';
 		document.getElementById(this.ids.basic.password).value = '';
 		document.getElementById(this.ids.basic.password_retype).value = '';
+		document.getElementById(this.ids.basic.bconsole_cfg_path).value = '';
 	},
 	clear_oauth2_fields: function() {
 		document.getElementById(this.ids.oauth2.client_id).value = '';
