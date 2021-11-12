@@ -31,11 +31,16 @@ class BasicUser extends BaculumAPIServer {
 
 	public function get() {
 		$user = $this->Request->contains('id') ? $this->Request['id'] : 0;
-		$username = $this->getModule('basic_apiuser')->validateUsername($user) ? $user : null;
+		$basic_apiuser = $this->getModule('basic_apiuser');
+		$username = $basic_apiuser->validateUsername($user) ? $user : null;
 		if (is_string($username)) {
 			$basic_config = $this->getModule('basic_config')->getConfig($username);
-			if (count($basic_config) > 0) {
-				$this->output = array_merge($basic_config, ['username' => $username]);
+			$basic_cfg = $basic_apiuser->getUserCfg($username);
+			if (count($basic_cfg) > 0) {
+				$this->output = array_merge([
+					'username' => $username,
+					'bconsole_cfg_path' => ''
+				], $basic_config);
 				$this->error = BasicUserError::ERROR_NO_ERRORS;
 			} else {
 				$this->output = BasicUserError::MSG_ERROR_BASIC_USER_DOES_NOT_EXIST;
