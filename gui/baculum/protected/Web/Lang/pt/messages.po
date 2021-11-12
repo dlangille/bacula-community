@@ -3042,8 +3042,8 @@ msgstr "Console ACL para usar no novo arquivo de configuração do Bconsole:"
 msgid "Director for Bconsole config:"
 msgstr "Configuração do director do Bconsole:"
 
-msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the OAuth2 clients that can be used in API hosts. The assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
-msgstr "As ACLs de console ativam a definição de recursos disponíveis para os usuários. Os consoles são usados na configuração Bacula no lado de host da API. Existe a possibilidade de atribuir os consoles para os clientes OAuth2 que podem ser usados em hosts API. A relação de atribuição é: Console ACL -&gt; Cliente OAuth2 -&gt; Servidor de API -&gt; Conta de usuário."
+msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
+msgstr "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
 
 msgid "The OAuth2 clients are configured on the API hosts. To create the OAuth2 clients from this page, you need to have an 'oauth2' scope in OAuth2 account related to your current admin user account. The OAuth2 client accounts are also possible to create directly in the panel of the Baculum API."
 msgstr "Os clientes OAuth2 estão configurados nos hosts API. Para criar os clientes OAuth2 a partir desta página, você precisa ter um escopo 'oauth2' na conta OAuth2 relacionada com sua conta de administrador atual. As contas de cliente OAuth2 também são possíveis de criar diretamente no painel da API Baculum."
@@ -3900,3 +3900,45 @@ msgstr "The messages log window enables to review Bacula logs in one place avail
 
 msgid "Copy configuration from:"
 msgstr "Copy configuration from:"
+
+msgid "API basic users"
+msgstr "API basic users"
+
+msgid "API OAuth2 clients"
+msgstr "API OAuth2 clients"
+
+msgid "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
+msgstr "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
+
+msgid "Add new API basic user"
+msgstr "Add new API basic user"
+
+msgid "API basic username:"
+msgstr "API basic username:"
+
+msgid "API basic password:"
+msgstr "API basic password:"
+
+msgid "Retype password:"
+msgstr "Retype password:"
+
+msgid "Add API basic user account"
+msgstr "Add API basic user account"
+
+msgid "Edit API basic user account"
+msgstr "Edit API basic user account"
+
+msgid "Please retype password."
+msgstr "Please retype password."
+
+msgid "Password must be longer than 4 chars and not longer than 60 chars."
+msgstr "Password must be longer than 4 chars and not longer than 60 chars."
+
+msgid "Invalid user. User may contain a-z A-Z 0-9 characters."
+msgstr "Invalid user. User may contain a-z A-Z 0-9 characters."
+
+msgid "Dedicated Bconsole config"
+msgstr "Dedicated Bconsole config"
+
+msgid "Get existing basic user name:"
+msgstr "Get existing basic user name:"

@@ -3042,8 +3042,8 @@ msgstr "Konsole ACL do użycia w nowym pliku konfiguracyjnym:"
 msgid "Director for Bconsole config:"
 msgstr "Zarządca dla pliku konfiguracyjnego Bconsole:"
 
-msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the OAuth2 clients that can be used in API hosts. The assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
-msgstr "Konsole ACL umożliwiają zdefiniowanie dostępnych zasobów dla użytkowników. Konsole są używane w konfiguracji Bacula po stronie hosta API. Jest możliwe przypisanie konsoli do klientów OAuth2, którzy mogą być użyci w hostach API. Relacja przypisania jest: Console ACL -&gt; Klient OAuth2 -&gt; Host API -&gt; Konto użytkownika."
+msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
+msgstr "Konsole ACL umożliwiają zdefiniowanie dostępnych zasobów dla użytkowników. Konsole są używane w konfiguracji Bacula. Jest możliwe przypisanie konsoli do użytkowników API basic lub do klientów OAuth2. Relacja przypisania dla użytkowników API basic jest następująca: Console ACL -&gt; Użytkownik API basic -&gt; Host API -&gt; Konto użytkownika. Dla klientów OAuth2 relacja przypisania to: Console ACL -&gt; Klient OAuth2 -&gt; Host API -&gt; Konto użytkownika."
 
 msgid "The OAuth2 clients are configured on the API hosts. To create the OAuth2 clients from this page, you need to have an 'oauth2' scope in OAuth2 account related to your current admin user account. The OAuth2 client accounts are also possible to create directly in the panel of the Baculum API."
 msgstr "Klienci OAuth2 są konfigurowani na hostach API. Aby stworzyć klienta OAuth2 z tej strony, potrzebujesz przypisać zakres 'oauth2' na koncie OAuth2 powiązanym z twoim obecnym kontem administratora. Konto klienta OAuth2 można stworzyć również bezpośrednio w panelu Baculum API."
@@ -3847,55 +3847,97 @@ msgid "The pool has not been renamed but it has been copied with the new name. P
 msgstr "Nazwa puli wolumenów nie została zmieniona ale pula została skopiowana z nową nazwą. Proszę mieć na uwadze, że jeżeli pierwotna pula wolumenów zawierała wolumeny to nie zostały one przeniesione i ciągle istnieją one przypisane do pierwotnej puli w bazie danych. Aby przypisać wolumeny z pierwotnej puli do tej puli wolumenów, proszę przejść do MENU GŁÓWNE &#10148; Pule wolumenów &#10148; [NOWA PULA] &#10148; Zakładka: Akcje i proszę użyć przycisku 'Przypisz wolumeny'. Po przypisaniu wolumenów możesz usunąć pierwotną pulę."
 
 msgid "Add Connect directive"
-msgstr "Add Connect directive"
+msgstr "Dodaj dyrektywę Connect"
 
 msgid "Add Run directive"
-msgstr "Add Run directive"
+msgstr "Dodaj dyrektywę Run"
 
 msgid "Add Runscript block"
-msgstr "Add Runscript block"
+msgstr "Dodaj dyrektywę Runscript"
 
 msgid "Add Console directive"
-msgstr "Add Console directive"
+msgstr "Dodaj dyrektywę Console"
 
 msgid "Add Stdout directive"
-msgstr "Add Stdout directive"
+msgstr "Dodaj dyrektywę Stdout"
 
 msgid "Add Stderr directive"
-msgstr "Add Stderr directive"
+msgstr "Dodaj dyrektywę Stderr"
 
 msgid "Add Syslog directive"
-msgstr "Add Syslog directive"
+msgstr "Dodaj dyrektywę Syslog"
 
 msgid "Add Catalog directive"
-msgstr "Add Catalog directive"
+msgstr "Dodaj dyrektywę Catalog"
 
 msgid "Add Director directive"
-msgstr "Add Director directive"
+msgstr "Dodaj dyrektywę Director"
 
 msgid "Add File directive"
-msgstr "Add File directive"
+msgstr "Dodaj dyrektywę File"
 
 msgid "Add Append directive"
-msgstr "Add Append directive"
+msgstr "Dodaj dyrektywę Append"
 
 msgid "Add Mail directive"
-msgstr "Add Mail directive"
+msgstr "Dodaj dyrektywę Mail"
 
 msgid "Add MailOnError directive"
-msgstr "Add MailOnError directive"
+msgstr "Dodaj dyrektywę MailOnError"
 
 msgid "Add MailOnSuccess directive"
-msgstr "Add MailOnSuccess directive"
+msgstr "Dodaj dyrektywę MailOnSuccess"
 
 msgid "Add Operator directive"
-msgstr "Add Operator directive"
+msgstr "Dodaj dyrektywę Operator"
 
 msgid "Enable Bacula messages log window:"
-msgstr "Enable Bacula messages log window:"
+msgstr "Włącz okno dzienników 'messages':"
 
 msgid "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
-msgstr "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
+msgstr "Okno dzienników 'messages' umożliwia przeglądanie dzienników Bacula w jednym miejscu dostępnym z prawie każdej części interfejsu. Do zbierania logów jest użyta komenda bconsole 'messages'. Okno dzienników 'messages' może zostać wyświetlone po kliknięciu w ikonę koperty w prawej górnej części interfejsu. Ta funkcja jest domyślnie załączona. Jeżeli jest załączona to jest dostępna jedynie dla użytkowników z przypisaną rolą Administrator."
 
 msgid "Copy configuration from:"
-msgstr "Copy configuration from:"
+msgstr "Kopiuj konfigurację z:"
+
+msgid "API basic users"
+msgstr "Użytkownicy API basic"
+
+msgid "API OAuth2 clients"
+msgstr "Klienci API OAuth2"
+
+msgid "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
+msgstr "Użytkownicy API basic są konfigurowani na hostach API i są używani do dostępu do hostów API. Zmiany wprowadzone na tej stronie są bezpośrednio robione na obecnie użytym hoście API. Możesz użyć użytkowników API basic do podłączenia hostów API do Baculum Web w zakładce 'Hosty API'. Konta użytkowników API basic są również możliwe do stworzenia bezpośrednio w panelu Baculum API."
+
+msgid "Add new API basic user"
+msgstr "Dodaj nowego użytkownika API Basic"
+
+msgid "API basic username:"
+msgstr "Nazwa użytkownika API Basic:"
+
+msgid "API basic password:"
+msgstr "Hasło użytkownika API basic:"
+
+msgid "Retype password:"
+msgstr "Powtórz hasło:"
+
+msgid "Add API basic user account"
+msgstr "Dodaj konto użytkownika API basic"
+
+msgid "Edit API basic user account"
+msgstr "Edytuj konto użytkownika API basic"
+
+msgid "Please retype password."
+msgstr "Proszę powtórzyć hasło."
+
+msgid "Password must be longer than 4 chars and not longer than 60 chars."
+msgstr "Hasło musi mieć długość większą niż 4 znaki i nie być dłuższe niż 60 znaków."
+
+msgid "Invalid user. User may contain a-z A-Z 0-9 characters."
+msgstr "Niepoprawny użytkownik. Nazwa użytkownika może zawierać znaki: a-z A-Z 0-9."
+
+msgid "Dedicated Bconsole config"
+msgstr "Dedykowana konfiguracja Bconsole"
+
+msgid "Get existing basic user name:"
+msgstr "Pobierz nazwę istniejącego użytkownika:"

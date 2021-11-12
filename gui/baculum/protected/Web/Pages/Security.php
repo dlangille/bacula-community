@@ -40,6 +40,7 @@ Prado::using('System.Web.UI.WebControls.TValidationSummary');
 Prado::using('Application.Common.Class.Crypto');
 Prado::using('Application.Common.Class.Ldap');
 Prado::using('Application.Common.Class.OAuth2');
+Prado::using('Application.Common.Class.BasicUserConfig');
 Prado::using('Application.Web.Class.BaculumWebPage');
 Prado::using('Application.Web.Portlets.BaculaConfigResources');
 
@@ -1348,6 +1349,151 @@ class Security extends BaculumWebPage {
 		$this->ConsoleConfig->IsDirectiveCreated = false;
 		$this->ConsoleConfig->raiseEvent('OnDirectiveListLoad', $this, null);
 		$this->getCallbackClient()->callClientFunction('oBaculaConfigSection.show_sections', [true]);
+	}
+
+	/**
+	 * Set and load API basic user list.
+	 *
+	 * @param TCallback $sender sender object
+	 * @param TCallbackEventParameter callback parameter
+	 * @return none
+	 */
+	public function setAPIBasicUserList($sender, $param) {
+		$basic_users = $this->getModule('api')->get(['basic', 'users']);
+		$this->getCallbackClient()->callClientFunction('oAPIBasicUsers.load_api_basic_user_list_cb', [
+			$basic_users->output,
+			$basic_users->error
+		]);
+
+		if ($basic_users->error === 0) {
+			$usernames = ['' => ''];
+			for ($i = 0; $i < count($basic_users->output); $i++) {
+				$usernames[$basic_users->output[$i]->username] = $basic_users->output[$i]->username;
+			}
+			$this->APIHostBasicUserSettings->DataSource = $usernames;
+			$this->APIHostBasicUserSettings->dataBind();
+		}
+	}
+
+	/**
+	 * Load data in API basic user modal window.
+	 *
+	 * @param TCallback $sender sender object
+	 * @param TCallbackEventParameter $param callback parameter
+	 * @return none
+	 */
+	public function loadAPIBasicUserWindow($sender, $param) {
+		$username = $param->getCallbackParameter();
+		if (!empty($username)) {
+			$basic_user_cfg = $this->getModule('api')->get(['basic', 'users', $username]);
+			if ($basic_user_cfg->error === 0 && is_object($basic_user_cfg->output)) {
+				// It is done only for existing basic user accounts
+				$this->APIBasicUserUsername->Text = $basic_user_cfg->output->username;
+				$this->APIBasicUserBconsoleCfgPath->Text = $basic_user_cfg->output->bconsole_cfg_path;
+			}
+		}
+		$this->loadAPIBasicUserConsole(null, null);
+
+		$dirs = $this->getModule('api')->get(['config', 'bcons', 'Director']);
+		$dir_names = [];
+		if ($dirs->error == 0) {
+			for ($i = 0; $i < count($dirs->output); $i++) {
+				$dir_names[$dirs->output[$i]->Director->Name] = $dirs->output[$i]->Director->Name;
+			}
+		}
+		$this->APIBasicUserDirector->DataSource = $dir_names;
+		$this->APIBasicUserDirector->dataBind();
+	}
+
+	public function loadAPIBasicUserConsole($sender, $param) {
+		$cons = $this->getModule('api')->get(['config', 'dir', 'Console']);
+		$console = ['' => ''];
+		if ($cons->error == 0) {
+			for ($i = 0; $i < count($cons->output); $i++) {
+				$console[$cons->output[$i]->Console->Name] = $cons->output[$i]->Console->Name;
+			}
+		}
+		$this->APIBasicUserConsole->DataSource = $console;
+		$this->APIBasicUserConsole->dataBind();
+	}
+
+	/**
+	 * Save API basic user config.
+	 * It works both for new basic users and for edited basic users.
+	 * Saves values from modal popup.
+	 *
+	 * @param TCallback $sender sender object
+	 * @param TCallbackEventParameter $param callback parameter
+	 * @return none
+	 */
+	public function saveAPIBasicUser($sender, $param) {
+		$username = $this->APIBasicUserUsername->Text;
+		$cfg = [];
+		$cfg['username'] = $username;
+		$cfg['password'] = $this->APIBasicUserPassword->Text;
+		$cfg['bconsole_cfg_path'] = $this->APIBasicUserBconsoleCfgPath->Text;
+		if ($this->APIBasicUserBconsoleCreate->Checked) {
+			$cfg['console'] = $this->APIBasicUserConsole->SelectedValue;
+			$cfg['director'] = $this->APIBasicUserDirector->SelectedValue;
+		}
+
+		$win_type = $this->APIBasicUserWindowType->Value;
+		$result = (object)['error' => -1];
+		if ($win_type === self::TYPE_ADD_WINDOW) {
+			$result = $this->getModule('api')->create(['basic', 'users', $username], $cfg);
+		} elseif ($win_type === self::TYPE_EDIT_WINDOW) {
+			$result = $this->getModule('api')->set(['basic', 'users', $username], $cfg);
+		}
+
+		if ($result->error === 0) {
+			// Refresh API basic user list
+			$this->setAPIBasicUserList(null, null);
+		}
+		$this->getCallbackClient()->callClientFunction('oAPIBasicUsers.save_api_basic_user_cb', [
+			$result
+		]);
+	}
+
+	/**
+	 * Remove API basic users action.
+	 * Here is possible to remove one basic user or many.
+	 * This action is linked with table bulk actions.
+	 *
+	 * @param TCallback $sender sender object
+	 * @param TCallbackEventParameter $param callback parameter
+	 * @return none
+	 */
+	public function removeAPIBasicUsers($sender, $param) {
+		$usernames = explode('|', $param->getCallbackParameter());
+		for ($i = 0; $i < count($usernames); $i++) {
+			$result = $this->getModule('api')->remove(['basic', 'users', $usernames[$i]]);
+			if ($result->error !== 0) {
+				break;
+			}
+		}
+
+		if (count($usernames) > 0) {
+			// Refresh API basic user list
+			$this->setAPIBasicUserList(null, null);
+		}
+	}
+
+	/**
+	 * Set and load basic user settings to API host modal window.
+	 *
+	 * @param TActiveDropDownList $sender sender object
+	 * @param TCallbackEventParameter callback parameter
+	 * @return none
+	 */
+	public function loadAPIBasicUserSettings($sender, $param) {
+		$username = $this->APIHostBasicUserSettings->SelectedValue;
+		if (!empty($username)) {
+			$host = $this->APIHostSettings->SelectedValue ?: null;
+			$basic_cfg = $this->getModule('api')->get(['basic', 'users', $username], $host);
+			if ($basic_cfg->error === 0 && is_object($basic_cfg->output)) {
+				$this->APIHostBasicLogin->Text = $basic_cfg->output->username;
+			}
+		}
 	}
 
 	/**
