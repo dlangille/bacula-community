@@ -4,7 +4,7 @@
 		<li><com:TActiveLinkButton
 			ID="RunscriptItem"
 			OnCommand="Parent.SourceTemplateControl.newRunscriptDirective"
-			ClientSide.OnComplete="var el = $('#<%=$this->RunscriptItem->ClientID%>').parents('div').find('h3.runscript_options'); BaculaConfig.scroll_to_element(el[el.length-1]);"
+			ClientSide.OnComplete="var el = $('#<%=$this->RunscriptItem->ClientID%>').parents('div').find('h3.runscript_options'); BaculaConfig.scroll_to_element(el[el.length-1], -40);"
 			Attributes.onclick="$(this).closest('div.config_new_runscript').hide();"
 			>
 			<i class='fa fa-plus'></i> &nbsp;<%[ Add Runscript block ]%>

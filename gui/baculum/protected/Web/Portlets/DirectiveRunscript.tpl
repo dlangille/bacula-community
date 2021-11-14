@@ -3,7 +3,6 @@
 <com:TActiveRepeater ID="RepeaterRunscriptOptions" ItemRenderer="Application.Web.Portlets.JobRunscriptRenderer">
 	<prop:HeaderTemplate>
 		<div class="w3-card-4 w3-padding w3-margin-bottom directive runscript">
-			<h2>Runscript</h2>
 	</prop:HeaderTemplate>
 	<prop:FooterTemplate>
 		</div>

@@ -56,7 +56,7 @@ class JobRunscriptRenderer extends DirectiveRenderer {
 
 	public function render($writer) {
 		if (self::$render_index % self::DIRECTIVE_COUNT === 0) {
-			$writer->write('<h3 class="w3-left runscript_options">Runscript #' . ((self::$render_index / self::DIRECTIVE_COUNT) + 1) . '</h3><hr />');
+			$writer->write('<h3 class="w3-left runscript_options">Runscript #' . ((self::$render_index / self::DIRECTIVE_COUNT) + 1) . '</h3>');
 		}
 		self::$render_index++;
 

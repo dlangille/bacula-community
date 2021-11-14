@@ -3,7 +3,7 @@
 <com:TActiveRepeater ID="RepeaterFileSetIncludes" OnItemDataBound="createFileSetIncludes">
 	<prop:ItemTemplate>
 		<div class="w3-card-4 w3-padding w3-margin-bottom directive incexc">
-			<h2><%#$this->SourceTemplateControl->getDirectiveName()%> #<%#$this->ItemIndex + 1%></h2>
+			<h3><%#$this->SourceTemplateControl->getDirectiveName()%> #<%#$this->ItemIndex + 1%></h3>
 			<button type="button" onmousedown="openElementOnCursor(event, '<%=$this->FileSetFileOptMenu->ClientID%>_new_fileset', 0, 20);" class="w3-button w3-green w3-margin-bottom"><i class="fa fa-plus"></i> &nbsp;<%[ Add ]%></button>
 			<com:Application.Web.Portlets.NewFileSetFileOptMenu ID="FileSetFileOptMenu" FileSetBrowserId="<%=$this->SourceTemplateControl->FSBrowser->ClientID%>" />
 		<com:TActiveRepeater
@@ -12,7 +12,6 @@
 		>
 			<prop:HeaderTemplate>
 				<div class="w3-border w3-padding w3-margin-bottom directive">
-					<h2><%[ Options ]%></h2>
 			</prop:HeaderTemplate>
 			<prop:FooterTemplate>
 				</div>
