@@ -3947,3 +3947,15 @@ msgstr "Generate new password"
 
 msgid "Show/hide password"
 msgstr "Show/hide password"
+
+msgid "Advanced filters"
+msgstr "Advanced filters"
+
+msgid "Wrong time range."
+msgstr "Wrong time range."
+
+msgid "From"
+msgstr "From"
+
+msgid "To"
+msgstr "To"

@@ -114,6 +114,31 @@
 			oMonitor();
 		</prop:ClientSide.OnComplete>
 	</com:TCallback>
+	<div id="table_adv_filters_body" class="w3-margin-left" style="display: none">
+		<a href="javascript:void(0)" class="w3-show-inline-block w3-left w3-margin-right" onclick="$('#table_adv_filters_fields').slideToggle('fast');"><%[ Advanced filters ]%></a>
+		<div id="table_adv_filters_fields" class="w3-left" style="width: 500px; display: none;">
+			<select id="table_adv_filters_value_type">
+				<option value="7">Scheduled time</option>
+				<option value="8" selected>Start time</option>
+				<option value="9">End time</option>
+				<option value="10">Real end time</option>
+			</select>
+			<com:TDatePicker
+				ID="TableAdvFiltersDateFrom"
+				CssClass="w3-input w3-border w3-show-inline-block"
+				DateFormat="yyyy-MM-dd"
+				Style="width: 100px"
+				Attributes.placeholder="<%[ From ]%>"
+			/>
+			<com:TDatePicker
+				ID="TableAdvFiltersDateTo"
+				CssClass="w3-input w3-border w3-show-inline-block"
+				DateFormat="yyyy-MM-dd"
+				Style="width: 100px"
+				Attributes.placeholder="<%[ To ]%>"
+			/>
+		</div>
+	</div>
 <script type="text/javascript">
 function get_run_job_callback() {
 	return <%=$this->RunJobCb->ActiveControl->Javascript%>;
@@ -192,7 +217,13 @@ var oJobHistoryList = {
 	ids: {
 		job_list: 'job_list',
 		job_list_body: 'job_list_body',
-		table_mode: 'table_mode'
+		table_mode: 'table_mode',
+		table_adv_filters: 'table_adv_filters',
+		table_adv_filters_body: 'table_adv_filters_body',
+		table_adv_filters_value_type: 'table_adv_filters_value_type',
+		table_adv_filters_from : '<%=$this->TableAdvFiltersDateFrom->ClientID%>',
+		table_adv_filters_to: '<%=$this->TableAdvFiltersDateTo->ClientID%>',
+		date_picker: 'TDatePicker_default'
 	},
 	data: [],
 	table: null,
@@ -204,6 +235,7 @@ var oJobHistoryList = {
 			this.set_table();
 			this.set_bulk_actions();
 			this.set_events();
+			this.set_adv_filters(); // adv filter MUST be set before other filters
 			this.set_filters();
 		}
 	},
@@ -225,7 +257,7 @@ var oJobHistoryList = {
 		this.table = $('#' + this.ids.job_list).DataTable({
 			data: this.data,
 			deferRender: true,
-			dom: 'lB<"table_toolbar"><"#table_mode">frtip',
+			dom: 'lB<"table_toolbar"><"#table_mode"><"#table_adv_filters">frtip',
 			stateSave: true,
 			buttons: [
 				'copy', 'csv', 'colvis'
@@ -479,6 +511,7 @@ var oJobHistoryList = {
 			cancel: '<%[ Jobs canceled ]%>'
 		}
 		var container = document.getElementById(this.ids.table_mode);
+		container.className = 'dt-buttons';
 		var mode = document.createTextNode(' <%[ Mode: ]%> ' + types[type] + ' ');
 		container.appendChild(mode);
 		var label = document.createTextNode(' <%[ Reset table mode ]%>');
@@ -495,6 +528,8 @@ var oJobHistoryList = {
 					select.value = '';
 					$(select).trigger('change');
 				}
+				let addr = location.href.replace(/[&;?]?(job|type)=[^&;]+/, '');
+				history.replaceState({}, '', addr);
 			})
 
 			this.table.columns().search('').draw();
@@ -548,18 +583,69 @@ var oJobHistoryList = {
 		if (search_func) {
 			$.fn.dataTable.ext.search.push(search_func);
 			this.table.columns().search('').draw();
-			var job = get_url_param('job');
-			if (job) {
-				// set job filter
-				var select = this.table.column(2).footer().querySelector('SELECT');
-				select.value = job;
-				$(select).trigger('change');
-			}
+			this.set_job_filter();
 			this.set_mode(type);
-			container.style.display = '';
+			container.style.display = 'inline-block';
 		} else {
 			container.style.display = 'none';
 		}
+	},
+	set_job_filter: function() {
+		var job = get_url_param('job');
+		if (job) {
+			// set job filter
+			var select = this.table.column(2).footer().querySelector('SELECT');
+			select.value = job;
+			$(select).trigger('change');
+		}
+	},
+	set_adv_filters: function() {
+		let container = document.getElementById(this.ids.table_adv_filters);
+		container.className = 'dt-buttons';
+		let body = document.getElementById(this.ids.table_adv_filters_body);
+		let from = document.getElementById(this.ids.table_adv_filters_from);
+		let to = document.getElementById(this.ids.table_adv_filters_to);
+		from.addEventListener('click', function(e) {
+			$('#' + this.ids.table_adv_filters_from).nextAll('.' + this.ids.date_picker).removeClass('w3-input w3-show-inline-block');
+		}.bind(this));
+		to.addEventListener('click', function(e) {
+			$('#' + this.ids.table_adv_filters_to).nextAll('.' + this.ids.date_picker).removeClass('w3-input w3-show-inline-block');
+		}.bind(this));
+		let value_type = document.getElementById(this.ids.table_adv_filters_value_type);
+		let search_func = function(settings, search_data, index, row_data, counter) {
+			let val_idx = parseInt(value_type.value, 10);
+			let date = parseInt(search_data[val_idx], 10);
+			let from_stamp = iso_date_to_timestamp(from.value);
+			let to_stamp = iso_date_to_timestamp(to.value) + 80063000; // added 23h59m59s to filter whole day
+			if (!from.value && !to.value || (!from.value && to_stamp >= date) || (!to.value && from_stamp <= date) || date >= from_stamp && date <= to_stamp) {
+				return true;
+			}
+			return false;
+		}.bind(this);
+		let validate_date = function() {
+			let from_stamp = iso_date_to_timestamp(from.value);
+			let to_stamp = iso_date_to_timestamp(to.value);
+			if (from_stamp > to_stamp) {
+				alert('<%[ Wrong time range. ]%>');
+			}
+		};
+		$.fn.dataTable.ext.search.push(search_func);
+		$(from).on('change', function(e) {
+			validate_date();
+			this.table.columns().search('').draw();
+			this.set_job_filter();
+		}.bind(this));
+		$(to).on('change', function(e) {
+			validate_date();
+			this.table.columns().search('').draw();
+			this.set_job_filter();
+		}.bind(this));
+		value_type.addEventListener('change', function() {
+			this.table.columns().search('').draw();
+			this.set_job_filter();
+		}.bind(this));
+		container.appendChild(body);
+		body.style.display = 'block';
 	}
 };
 MonitorParams = {jobs: null};
