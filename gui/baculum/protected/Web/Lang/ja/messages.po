@@ -4017,3 +4017,9 @@ msgstr "Dedicated Bconsole config"
 
 msgid "Get existing basic user name:"
 msgstr "Get existing basic user name:"
+
+msgid "Generate new password"
+msgstr "Generate new password"
+
+msgid "Show/hide password"
+msgstr "Show/hide password"
