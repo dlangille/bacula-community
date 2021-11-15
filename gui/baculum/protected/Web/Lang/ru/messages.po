@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-11-01 06:28\n"
+"PO-Revision-Date: 2021-11-15 03:01\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Sergey Zhidkov <zhsv@bk.ru>\n"
@@ -3043,7 +3043,7 @@ msgid "Director for Bconsole config:"
 msgstr "Director для настройки Bconsol:"
 
 msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
-msgstr "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
+msgstr "Консольные ACL позволяют определять доступные ресурсы для пользователей. Консоли используются в конфигурации Bacula на стороне хоста API. Консоли можно назначить базовым пользователям API или клиентам OAuth2. Отношение назначения для основных пользователей: ACL консоли -&gt; Базовый пользователь API -&gt; Хост API -&gt; Учетная запись пользователя. Для клиентов OAuth2 отношение назначения выглядит следующим образом: ACL консоли -&gt; Клиент OAuth2 -&gt; Хост API -&gt; Учетная запись пользователя."
 
 msgid "The OAuth2 clients are configured on the API hosts. To create the OAuth2 clients from this page, you need to have an 'oauth2' scope in OAuth2 account related to your current admin user account. The OAuth2 client accounts are also possible to create directly in the panel of the Baculum API."
 msgstr "Клиенты OAuth2 настроены на хост-серверах API. Чтобы создать OAuth2 клиентов с этой страницы, вам нужно иметь область действия 'oauth2' в учетной записи OAuth2, связанной с вашей текущей учетной записью администратора. Учетные записи клиентов OAuth2 также можно создать непосредственно в панели Baculum API."
@@ -3846,102 +3846,101 @@ msgstr "В пуле нет томов для назначения."
 msgid "The pool has not been renamed but it has been copied with the new name. Please note that if the original pool contained volumes, they have not been moved and they are still assigned to the original pool in the catalog database. To re-assign volumes from the original pool to this one please go to the MAIN MENU &#10148; Pools &#10148; [NEW POOL] &#10148; Tab: Actions and please use the 'Assign volumes' button. After re-assgning volumes you can delete the original pool."
 msgstr "Пул не был переименован, но был скопирован с новым именем. Пожалуйста, обратите внимание, что если в первоначальном пуле содержались тома, они не были перемещены, и они по-прежнему назначены в исходный пул в базе данных каталога. Чтобы переназначить тома из исходного пула к этому пулу, перейдите к Главному меню &#10148; Пулы &#10148; [НОВЫЙ ПУЛ] &#10148; Вкладка: Действия и, пожалуйста, используйте кнопку «Назначить тома». После восстановления томов вы можете удалить исходный пул."
 
-
 msgid "Add Connect directive"
-msgstr "Add Connect directive"
+msgstr "Добавить директиву подключения"
 
 msgid "Add Run directive"
-msgstr "Add Run directive"
+msgstr "Добавить директиву Run"
 
 msgid "Add Runscript block"
-msgstr "Add Runscript block"
+msgstr "Добавить блок Runscript"
 
 msgid "Add Console directive"
-msgstr "Add Console directive"
+msgstr "Добавить директиву Console"
 
 msgid "Add Stdout directive"
-msgstr "Add Stdout directive"
+msgstr "Добавить директиву Stdout"
 
 msgid "Add Stderr directive"
-msgstr "Add Stderr directive"
+msgstr "Добавить директиву Stderr"
 
 msgid "Add Syslog directive"
-msgstr "Add Syslog directive"
+msgstr "Добавить директиву Syslog"
 
 msgid "Add Catalog directive"
-msgstr "Add Catalog directive"
+msgstr "Добавить директиву Catalog"
 
 msgid "Add Director directive"
-msgstr "Add Director directive"
+msgstr "Добавить директиву Director"
 
 msgid "Add File directive"
-msgstr "Add File directive"
+msgstr "Добавить директиву File"
 
 msgid "Add Append directive"
-msgstr "Add Append directive"
+msgstr "Добавить директиву Append"
 
 msgid "Add Mail directive"
-msgstr "Add Mail directive"
+msgstr "Добавить директиву Mail"
 
 msgid "Add MailOnError directive"
-msgstr "Add MailOnError directive"
+msgstr "Добавить директиву MailOnError"
 
 msgid "Add MailOnSuccess directive"
-msgstr "Add MailOnSuccess directive"
+msgstr "Добавить директиву MailOnSuccess"
 
 msgid "Add Operator directive"
-msgstr "Add Operator directive"
+msgstr "Добавить директиву Operator"
 
 msgid "Enable Bacula messages log window:"
-msgstr "Enable Bacula messages log window:"
+msgstr "Включить окно журнала сообщений Bacula:"
 
 msgid "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
-msgstr "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
+msgstr "Окно журнала сообщений позволяет просматривать журналы Bacula в одном месте, доступном практически из любой части интерфейса. Для сбора логов используется команда bconsole «messages». Окно журнала сообщений отображается после нажатия на иконку конверта в правом верхнем углу интерфейса. Эта функция включена по умолчанию. Если включена, она доступна только для пользователей с ролью администратора."
 
 msgid "Copy configuration from:"
-msgstr "Copy configuration from:"
+msgstr "Копировать конфигурацию из:"
 
 msgid "API basic users"
-msgstr "API basic users"
+msgstr "Базовые пользователи API"
 
 msgid "API OAuth2 clients"
-msgstr "API OAuth2 clients"
+msgstr "API OAuth2 клиенты"
 
 msgid "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
-msgstr "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
+msgstr "Базовые пользователи API настроены на хостах API, и они используются для доступа к хостам API. Изменения, внесенные на этой странице, непосредственно выполняются на текущем API-хосте. Вы можете использовать основные учетные данные пользователя для подключения хостов API к Baculum Web на вкладке 'API хосты'. Основные учетные записи пользователей также можно создать непосредственно в панели Baculum API."
 
 msgid "Add new API basic user"
-msgstr "Add new API basic user"
+msgstr "Добавить нового базового пользователя API"
 
 msgid "API basic username:"
-msgstr "API basic username:"
+msgstr "Имя базового пользователя API:"
 
 msgid "API basic password:"
-msgstr "API basic password:"
+msgstr "Пароль базового пользователя API:"
 
 msgid "Retype password:"
-msgstr "Retype password:"
+msgstr "Повторите пароль:"
 
 msgid "Add API basic user account"
-msgstr "Add API basic user account"
+msgstr "Добавить учетную запись базового пользователя API"
 
 msgid "Edit API basic user account"
-msgstr "Edit API basic user account"
-
-msgid "Please retype password."
-msgstr "Please retype password."
+msgstr "Редактирование базовой учетной записи API"
 
 msgid "Password must be longer than 4 chars and not longer than 60 chars."
-msgstr "Password must be longer than 4 chars and not longer than 60 chars."
+msgstr "Пароль должен быть длиннее 4 символов и не длиннее 60 символов."
+
+msgid "Please retype password."
+msgstr "Введите пароль еще раз."
 
 msgid "Invalid user. User may contain a-z A-Z 0-9 characters."
-msgstr "Invalid user. User may contain a-z A-Z 0-9 characters."
+msgstr "Недопустимый пользователь. Пользователь может содержать символы a-z A-Z 0-9."
 
 msgid "Dedicated Bconsole config"
-msgstr "Dedicated Bconsole config"
+msgstr "Выделенная Bconsole"
 
 msgid "Get existing basic user name:"
-msgstr "Get existing basic user name:"
+msgstr "Получить существующее базовое имя пользователя:"
 
 msgid "Generate new password"
 msgstr "Generate new password"
