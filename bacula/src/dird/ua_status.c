@@ -637,6 +637,12 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
       ua->error_msg(_("No authorization for Client \"%s\"\n"), client->name());
       return;
    }
+
+   if (!client->is_enabled()) {
+      Dmsg1(20, "Client \"%s\" is disabled\n", client->name());
+      return;
+   }
+
    /* Connect to File daemon */
    ua->jcr->client = client;
    /* Release any old dummy key */
