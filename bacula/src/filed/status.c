@@ -142,13 +142,17 @@ static void  list_status_header(STATUS_PKT *sp)
       return;
    }
 
+   LockRes();
+   CLIENT *client = (CLIENT *)GetNextRes(R_CLIENT, NULL);
+   UnlockRes();
+
    len = Mmsg(msg, _("%s %sVersion: %s (%s) %s %s %s %s\n"),
               my_name, BDEMO, VERSION, BDATE, VSS, HOST_OS,
               DISTNAME, DISTVER);
    sendit(msg.c_str(), len, sp);
    bstrftime_nc(dt, sizeof(dt), daemon_start_time);
-   len = Mmsg(msg, _("Daemon started %s. Jobs: run=%d running=%d.\n"),
-        dt, num_jobs_run, job_count());
+   len = Mmsg(msg, _("Daemon started %s. Jobs: run=%d running=%d max=%ld.\n"),
+        dt, num_jobs_run, job_count(), client->MaxConcurrentJobs);
    sendit(msg.c_str(), len, sp);
 #if defined(HAVE_WIN32)
    char buf[300];

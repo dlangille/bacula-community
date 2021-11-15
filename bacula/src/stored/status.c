@@ -609,9 +609,12 @@ static void list_status_header(STATUS_PKT *sp)
 
    bstrftime_nc(dt, sizeof(dt), daemon_start_time);
 
+   LockRes();
+   STORES *store = (STORES *)GetNextRes(R_STORAGE, NULL);
+   UnlockRes();
 
-   len = Mmsg(msg, _("Daemon started %s. Jobs: run=%d, running=%d.\n"),
-        dt, num_jobs_run, job_count());
+   len = Mmsg(msg, _("Daemon started %s. Jobs: run=%d, running=%d max=%ld.\n"),
+        dt, num_jobs_run, job_count(), store->max_concurrent_jobs);
    sendit(msg, len, sp);
 
    int64_t nofile_l = 1000 + 5 * me->max_concurrent_jobs;

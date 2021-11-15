@@ -482,8 +482,8 @@ void list_dir_status_header(UAContext *ua)
    bstrftime_nc(dt, sizeof(dt), daemon_start_time);
    bstrftimes(dt1, sizeof(dt1), last_reload_time);
    ua->send_msg(_("Daemon started %s, conf reloaded %s\n"), dt, dt1);
-   ua->send_msg(_(" Jobs: run=%d, running=%d mode=%d,%d\n"),
-                num_jobs_run, job_count(), (int)DEVELOPER_MODE, (int)BEEF);
+   ua->send_msg(_(" Jobs: run=%d, running=%d max=%ld mode=%d,%d\n"),
+                num_jobs_run, job_count(), director->MaxConcurrentJobs, (int)DEVELOPER_MODE, (int)BEEF);
    
 /* TODO
    int64_t nofile_l = 1000 + 5 * director->MaxConcurrentJobs;
