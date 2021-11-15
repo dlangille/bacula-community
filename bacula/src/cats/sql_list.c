@@ -777,13 +777,13 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    case VERT_LIST:
       Mmsg(cmd,
            "SELECT JobId,Job,Job.Name,PurgedFiles,Type,Level,"
-           "Job.ClientId,Client.Name as ClientName,JobStatus,SchedTime,"
+           "Job.ClientId,Client.Name as ClientName,JobStatus,Status.JobStatusLong,SchedTime,"
            "StartTime,EndTime,RealEndTime,JobTDate,"
            "VolSessionId,VolSessionTime,JobFiles,JobBytes,ReadBytes,JobErrors,"
            "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,"
            "Job.FileSetId,FileSet.FileSet,Job.HasCache,Comment,Reviewed "
            "FROM Job JOIN Client USING (ClientId) LEFT JOIN Pool USING (PoolId) "
-           "LEFT JOIN FileSet USING (FileSetId) %s "
+           "LEFT JOIN FileSet USING (FileSetId) LEFT JOIN Status USING (JobStatus) %s "
            "ORDER BY StartTime %s %s", where, order, limit);
       break;
    case HORZ_LIST:
