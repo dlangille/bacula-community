@@ -137,6 +137,7 @@
 				Style="width: 100px"
 				Attributes.placeholder="<%[ To ]%>"
 			/>
+			&nbsp;<i class="fas fa-times" id="table_adv_filters_clear" style="cursor: pointer"></i>
 		</div>
 	</div>
 <script type="text/javascript">
@@ -223,6 +224,7 @@ var oJobHistoryList = {
 		table_adv_filters_value_type: 'table_adv_filters_value_type',
 		table_adv_filters_from : '<%=$this->TableAdvFiltersDateFrom->ClientID%>',
 		table_adv_filters_to: '<%=$this->TableAdvFiltersDateTo->ClientID%>',
+		table_adv_filters_clear: 'table_adv_filters_clear',
 		date_picker: 'TDatePicker_default'
 	},
 	data: [],
@@ -643,6 +645,11 @@ var oJobHistoryList = {
 		value_type.addEventListener('change', function() {
 			this.table.columns().search('').draw();
 			this.set_job_filter();
+		}.bind(this));
+		var clear_btn = document.getElementById(this.ids.table_adv_filters_clear);
+		clear_btn.addEventListener('click', function() {
+			from.value = to.value = '';
+			this.table.columns().search('').draw();
 		}.bind(this));
 		container.appendChild(body);
 		body.style.display = 'block';
