@@ -38,16 +38,23 @@ status client
 status storage
 @$out $tmp/log3.out
 status dir
-.api 2
 @$out $tmp/log4.out
-.status client resources
+disable client
 @$out $tmp/log5.out
-.status client running
+status client
 @$out $tmp/log6.out
-.status storage running
+status all
 @$out $tmp/log7.out
-.status dir running
+enable client
+.api 2
+.status client resources
 @$out $tmp/log8.out
+.status client running
+@$out $tmp/log9.out
+.status storage running
+@$out $tmp/log10.out
+.status dir running
+@$out $tmp/log11.out
 .status storage resources
 quit
 END_OF_DATA
@@ -121,77 +128,83 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
-grep "Name=" $tmp/log4.out > /dev/null
+grep "Selection list for \"Client\" is empty!" $tmp/log5.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'Name' in $tmp/log4.out"
+    print_debug "ERROR: should find 'Selection list for \"Client\" is empty!' in $tmp/log5.out"
     estat=1
 fi
 
-grep "FDPort=" $tmp/log4.out > /dev/null
-if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'FDPort' in $tmp/log4.out"
+grep "Connecting to Client" $tmp/log6.out > /dev/null
+if [ $? -eq 0 ]; then
+    print_debug "ERROR: should not find 'Connectint to Client' in $tmp/log6.out"
     estat=1
 fi
 
-grep "WorkingDirectory=" $tmp/log4.out > /dev/null
+grep "Name=" $tmp/log7.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'WorkingDirectory =' in $tmp/log4.out"
+    print_debug "ERROR: should find 'Name' in $tmp/log7.out"
+    estat=1
+fi
+
+grep "FDPort=" $tmp/log7.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'FDPort' in $tmp/log7.out"
+    estat=1
+fi
+
+grep "WorkingDirectory=" $tmp/log7.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: should find 'WorkingDirectory =' in $tmp/log7.out"
     estat=1
 fi
 
 
-grep "DirectorConnected" $tmp/log5.out > /dev/null
+grep "DirectorConnected" $tmp/log8.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find director connection in $tmp/log5.out"
+    print_debug "ERROR: should find director connection in $tmp/log8.out"
     estat=1
 fi
 
-grep "Automatically selected Client:" $tmp/log5.out > /dev/null
+grep "Automatically selected Client:" $tmp/log8.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'Automatically selected Client' in $tmp/log5.out"
+    print_debug "ERROR: should find 'Automatically selected Client' in $tmp/log8.out"
     estat=1
 fi
 
-grep "DirectorConnected_epoch" $tmp/log5.out > /dev/null
+grep "DirectorConnected_epoch" $tmp/log8.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'DirectorConnected_epoch' in $tmp/log5.out"
+    print_debug "ERROR: should find 'DirectorConnected_epoch' in $tmp/log8.out"
     estat=1
 fi
 
-grep "DirectorConnected" $tmp/log6.out > /dev/null
+grep "DirectorConnected" $tmp/log9.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find director connection in $tmp/log6.out"
+    print_debug "ERROR: should find director connection in $tmp/log9.out"
     estat=1
 fi
 
-grep "Automatically selected Storage:" $tmp/log6.out > /dev/null
+grep "Automatically selected Storage:" $tmp/log9.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'Automatically selected Storage' in $tmp/log6.out"
+    print_debug "ERROR: should find 'Automatically selected Storage' in $tmp/log9.out"
     estat=1
 fi
 
-grep "No Jobs running" $tmp/log7.out > /dev/null
+grep "No Jobs running" $tmp/log10.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'No Jobs running' in $tmp/log7.out"
+    print_debug "ERROR: should find 'No Jobs running' in $tmp/log10.out"
     estat=1
 fi
 
-grep "SDPort=" $tmp/log8.out > /dev/null
+grep "SDPort=" $tmp/log11.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'SDPort' in $tmp/log8.out"
+    print_debug "ERROR: should find 'SDPort' in $tmp/log11.out"
     estat=1
 fi
 
-grep "MaximumConcurrentJobs" $tmp/log8.out > /dev/null
+grep "MaximumConcurrentJobs" $tmp/log11.out > /dev/null
 if [ $? -ne 0 ]; then
-    print_debug "ERROR: should find 'MaximumConcurrentJobsSDPort' in $tmp/log8.out"
+    print_debug "ERROR: should find 'MaximumConcurrentJobsSDPort' in $tmp/log11.out"
     estat=1
 fi
-
-# grep "DedupDirectory" $tmp/log8.out > /dev/null
-# if [ $? -ne 0 ]; then
-#     print_debug "ERROR: should find 'DedupDirectory' in $tmp/log8.out"
-#     estat=1
-# fi
 
 end_test
