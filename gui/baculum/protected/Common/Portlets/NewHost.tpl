@@ -3,7 +3,7 @@
 	<com:TActivePanel ID="NewHostAddError" Display="None" CssClass="w3-panel w3-red w3-padding-16" EnableViewState="false"><i class="fa fa-times"></i> &nbsp;<strong><%[ Problem during save to config file. Please check host config file permission. ]%></strong></com:TActivePanel>
 	<com:TActivePanel ID="NewHostAddExists" Display="None" CssClass="w3-panel w3-red w3-padding-16" EnableViewState="false"><i class="fa fa-times"></i> &nbsp;<strong><%[ Given host already exists in config file. ]%></strong></com:TActivePanel>
 </div>
-<div id="new_host" class="w3-container w3-margin w3-card-4" style="display: none">
+<div id="new_host" class="w3-container w3-margin" style="display: none">
 	<h2><%[ Add API host ]%></h2>
 	<div class="w3-row w3-section">
 		<div class="w3-col w3-third"><com:TLabel ForControl="APIProtocol" Text="<%[ Protocol: ]%>" /></div>

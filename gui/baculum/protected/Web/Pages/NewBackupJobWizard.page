@@ -2,8 +2,8 @@
 <com:TContent ID="Wizard">
 	<com:TWizard ID="NewJobWizard"
 		CssClass="wizard"
-		StepStyle.CssClass="steps"
-		HeaderStyle.CssClass="wizard-body"
+		StepStyle.CssClass="steps w3-container"
+		HeaderStyle.CssClass="wizard-body w3-container"
 		NavigationStyle.CssClass="navigation"
 		NavigationStyle.CustomStyle="margin-bottom: 55px"
 		UseDefaultLayout="false"
@@ -14,53 +14,53 @@
 		OnCompleteButtonClick="wizardCompleted"
 		>
 		<prop:HeaderTemplate>
-			<div class="w3-half">
+			<div class="w3-half w3-hide-small">
 				<div class="w3-third w3-padding-16">
 					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 0 ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-tasks w3-xxxlarge"></i></div>
+						<div class="w3-left"><i class="fa fa-tasks w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="General" /></h4>
 					</div>
 				</div>
 				<div class="w3-third w3-padding-16">
 					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 1 ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-upload w3-xxxlarge"></i></div>
+						<div class="w3-left"><i class="fa fa-upload w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="What" /></h4>
 					</div>
 				</div>
 				<div class="w3-third w3-padding-16">
 					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 2 ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-download w3-xxxlarge"></i></div>
+						<div class="w3-left"><i class="fa fa-download w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="Where" /></h4>
 					</div>
 				</div>
 			</div>
-			<div class="w3-half">
+			<div class="w3-half w3-hide-small">
 				<div class="w3-third w3-padding-16">
 					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 3  ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-question w3-xxxlarge"></i></div>
+						<div class="w3-left"><i class="fa fa-question w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="How" /></h4>
 					</div>
 				</div>
 				<div class="w3-third w3-padding-16">
 					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 4 ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-clock w3-xxxlarge"></i></div>
+						<div class="w3-left"><i class="fa fa-clock w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="When" /></h4>
 					</div>
 				</div>
 				<div class="w3-third w3-padding-16">
-					<div class="step w3-padding w3-text-white w3-margin-right <%=($this->Parent->ActiveStepIndex === 5 ? 'w3-light-green' : 'w3-green')%>">
-						<div class="w3-left"><i class="fa fa-paper-plane w3-xxxlarge"></i></div>
+					<div class="step w3-padding w3-text-white <%=($this->Parent->ActiveStepIndex === 5 ? 'w3-light-green' : 'w3-green')%>">
+						<div class="w3-left"><i class="fa fa-paper-plane w3-xxlarge"></i></div>
 						<div class="w3-clear"></div>
 						<h4><com:TTranslate Text="Summary" /></h4>
 					</div>
 				</div>
 			</div>
-			<div class="step_title w3-panel w3-green w3-margin-right"><h3><%=$this->Parent->ActiveStep->Title%></h3></div>
+			<div class="step_title w3-panel w3-green"><h4><%=$this->Parent->ActiveStep->Title%></h4></div>
 		</prop:HeaderTemplate>
 		<prop:StartNavigationTemplate>
 			<div class="w3-center w3-section">
@@ -133,12 +133,12 @@
 			</div>
 		</prop:FinishNavigationTemplate>
 		<com:TWizardStep ID="Step1" Title="<%[ Step 1 - basic information about new job ]%>" StepType="Auto">
-			<div class="w3-container">
-				<h2><%[ New backup job wizard ]%></h2>
-				<p><%[ This wizard enables you to create in easy way a new backup job. ]%></p>
-				<!--p><%[ To start please select job type that you wish to create. ]%></p-->
-			</div>
 			<div class="w3-half" style="float: none; margin: auto">
+				<div>
+					<h2><%[ New backup job wizard ]%></h2>
+					<p><%[ This wizard enables you to create in easy way a new backup job. ]%></p>
+					<!--p><%[ To start please select job type that you wish to create. ]%></p-->
+				</div>
 				<com:Application.Web.Portlets.DirectiveTextBox
 					ID="Name"
 					DirectiveName="Name"
@@ -170,12 +170,12 @@
 			</div>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step2" Title="<%[ Step 2 - what you want to backup ]%>" StepType="Auto">
-			<div class="w3-container">
-				<h2><%[ Client and FileSet ]%></h2>
-				<p><%[ Please select Client from which you want to backup data and please select FileSet with files/directories definition to backup. ]%></p>
-				<p><%[ If your FileSet for this backup does not exist yet, you can create it. ]%></p>
-			</div>
 			<div class="w3-half" style="float: none; margin: auto">
+				<div>
+					<h2><%[ Client and FileSet ]%></h2>
+					<p><%[ Please select Client from which you want to backup data and please select FileSet with files/directories definition to backup. ]%></p>
+					<p><%[ If your FileSet for this backup does not exist yet, you can create it. ]%></p>
+				</div>
 				<com:Application.Web.Portlets.DirectiveComboBox
 					ID="Client"
 					DirectiveName="Client"
@@ -224,11 +224,11 @@
 			</script>
 		</com:TWizardStep>
 		<com:TWizardStep ID="Step3" Title="<%[ Step 3 - where you want to backup ]%>" StepType="Auto">
-			<div class="w3-container">
-				<h2><%[ Storage and Pool ]%></h2>
-				<p><%[ Please select Storage where you want to backup data and please select Pool with volumes which Storage will use to store backup data. ]%></p>
-			</div>
 			<div class="w3-half" style="float: none; margin: auto">
+				<div>
+					<h2><%[ Storage and Pool ]%></h2>
+					<p><%[ Please select Storage where you want to backup data and please select Pool with volumes which Storage will use to store backup data. ]%></p>
+				</div>
 				<com:Application.Web.Portlets.DirectiveComboBox
 					ID="Storage"
 					DirectiveName="Storage"
