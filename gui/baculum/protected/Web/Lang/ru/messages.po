@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-11-15 03:01\n"
+"PO-Revision-Date: 2021-11-16 04:18\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Sergey Zhidkov <zhsv@bk.ru>\n"
@@ -201,7 +201,7 @@ msgid "Release"
 msgstr "Релиз"
 
 msgid "Umount"
-msgstr "Размонтирование"
+msgstr "Размонтировать"
 
 msgid "Status"
 msgstr "Статус"
@@ -216,7 +216,7 @@ msgid "Operation is in progress"
 msgstr "Операция выполняется"
 
 msgid "Volume status:"
-msgstr "Статус volume:"
+msgstr "Статус тома:"
 
 msgid "Pool:"
 msgstr "Пул:"
@@ -234,7 +234,7 @@ msgid "Apply"
 msgstr "Применить"
 
 msgid "Volume name:"
-msgstr "Название тома (Volume):"
+msgstr "Название тома:"
 
 msgid "Client name:"
 msgstr "Имя клиента:"
@@ -255,7 +255,7 @@ msgid "Switch the window view (normal/details)"
 msgstr "Переключить вид окна (обычный/подробный)"
 
 msgid "Maximum volumes:"
-msgstr "Максимум томов Vol.:"
+msgstr "Максимум томов:"
 
 msgid "AutoPrune:"
 msgstr "Авто очистка (AutoPrune):"
@@ -276,7 +276,7 @@ msgid "Restore configuration"
 msgstr "Восстановить конфигурацию"
 
 msgid "Update volumes"
-msgstr "Обновить тома Vol"
+msgstr "Обновить тома"
 
 msgid "Client:"
 msgstr "Клиент:"
@@ -312,7 +312,7 @@ msgid "Clients"
 msgstr "Клиенты"
 
 msgid "Volumes"
-msgstr "Volumes"
+msgstr "Тома"
 
 msgid "Pools"
 msgstr "Пулы"
@@ -354,31 +354,31 @@ msgid "Job retention value must be integer."
 msgstr "Хранение задания должно быть целым числом."
 
 msgid "Vol. use duration value must be integer."
-msgstr "Время использования тома (Vol.) должно быть целым числом."
+msgstr "Время использования тома должно быть целым числом."
 
 msgid "Max. vol. jobs:"
-msgstr "Макс. заданий Vol.:"
+msgstr "Макс. томов заданий:"
 
 msgid "Max. vol. jobs value must be integer."
-msgstr "Макс. заданий Vol. должно быть целым числом."
+msgstr "Макс. томов заданий должно быть целым числом."
 
 msgid "Max. vol. files:"
-msgstr "Max. файлов Vol.:"
+msgstr "Max. файлов тома:"
 
 msgid "Max. vol. files value must be integer."
-msgstr "Max. файлов Vol. должно быть целым числом."
+msgstr "Max. файлов тома должно быть целым числом."
 
 msgid "Max. vol. bytes:"
 msgstr "Макс. размер Vol. (байт):"
 
 msgid "Max. vol. bytes value must be integer."
-msgstr "Макс. размер vol. должно быть целым числом."
+msgstr "Макс. размер тома должно быть целым числом."
 
 msgid "Slot value must be integer."
 msgstr "Значение слота должно быть целым числом."
 
 msgid "Max. volumes value must be integer."
-msgstr "Макс. значение vol. должно быть целым числом."
+msgstr "Макс. значение томов должно быть целым числом."
 
 msgid "Use duration value must be integer."
 msgstr "Значение продолжительности (duration) vol. быть целым числом."
@@ -408,7 +408,7 @@ msgid "Retention period (in hours):"
 msgstr "Период хранения (в часах):"
 
 msgid "Vol. use duration (in hours):"
-msgstr "Vol. длительность использования (в часах.):"
+msgstr "Том длительность использования (в часах.):"
 
 msgid "Job to restore:"
 msgstr "Задание для восстановления:"
@@ -441,13 +441,13 @@ msgid "Selected backup"
 msgstr "Резервная копия"
 
 msgid "FileSet resource:"
-msgstr "FileSet:"
+msgstr "Набор файлов ресурс:"
 
 msgid "Storage resource:"
-msgstr "Storage:"
+msgstr "Хранилище ресурс:"
 
 msgid "Pool resource:"
-msgstr "Пул:"
+msgstr "Пул ресурс:"
 
 msgid "Step 3 - select files to restore"
 msgstr "Шаг 3 - выберите файлы для восстановления"
@@ -555,7 +555,7 @@ msgid "Baculum needs access to bconsole by the web server."
 msgstr "Baculum необходим доступ к bconsole через веб-сервер."
 
 msgid "Director:"
-msgstr "Director:"
+msgstr "Директор:"
 
 msgid "Jobs for run"
 msgstr "Задания для запуска"
@@ -576,10 +576,10 @@ msgid "hide console"
 msgstr "скрыть консоль"
 
 msgid "volumes tools"
-msgstr "инструменты Vol."
+msgstr "инструменты томов"
 
 msgid "Label volume(s)"
-msgstr "Маркировка volume(s)"
+msgstr "Маркировка тома(ов)"
 
 msgid "Update slots using barcodes"
 msgstr "Обновить слоты с помощью штрих-кодов"
@@ -741,10 +741,10 @@ msgid "Configuration of clients daemons."
 msgstr "Конфигурация демонов хранения."
 
 msgid "Management of volumes."
-msgstr "Управление томами Vol."
+msgstr "Управление томами."
 
 msgid "Management of volumes pools."
-msgstr "Управление томами Vol. в пулах."
+msgstr "Управление томами в пулах."
 
 msgid "Jobs settings."
 msgstr "Настройки заданий."
@@ -1435,7 +1435,7 @@ msgid "Volume"
 msgstr "Volume"
 
 msgid "During restore there will be used following volumes:"
-msgstr "При восстановлении будут использоваться следующие Vol:"
+msgstr "При восстановлении будут использоваться тома:"
 
 msgid "Go back"
 msgstr "Вернуться"
@@ -1639,7 +1639,7 @@ msgid "Enabled"
 msgstr "Включено"
 
 msgid "Volumes in pool"
-msgstr "Vol. в пуле"
+msgstr "Томов в пуле"
 
 msgid "Configure pool"
 msgstr "Настройка пула"
@@ -2455,7 +2455,7 @@ msgid "Data encryption"
 msgstr "Шифрование данных"
 
 msgid "Deduplication optimized volumes"
-msgstr "Оптимизация дедупликации томов Vol."
+msgstr "Оптимизация дедупликации томов"
 
 msgid "Device"
 msgstr "Устройство"
@@ -3499,7 +3499,7 @@ msgid "The source pool will be examined for finding backup jobs to copy."
 msgstr "Исходный пул будет исследован на предмет поиска заданий резервного копирования для копирования."
 
 msgid "See volumes in selected pool"
-msgstr "Смотреть Тома в выбранном пуле"
+msgstr "Смотреть тома в выбранном пуле"
 
 msgid "Step 3 - how would you like to copy"
 msgstr "Шаг 3 - как вы хотите сделать резервную копию"
@@ -3538,7 +3538,7 @@ msgid "See clients"
 msgstr "Смотреть клиентов"
 
 msgid "See volumes"
-msgstr "Смотреть Тома"
+msgstr "Смотреть тома"
 
 msgid "Warning"
 msgstr "Предупреждение"
@@ -3943,19 +3943,20 @@ msgid "Get existing basic user name:"
 msgstr "Получить существующее базовое имя пользователя:"
 
 msgid "Generate new password"
-msgstr "Generate new password"
+msgstr "Сгенерировать новый пароль"
 
 msgid "Show/hide password"
-msgstr "Show/hide password"
+msgstr "Показать/скрыть пароль"
 
 msgid "Advanced filters"
-msgstr "Advanced filters"
+msgstr "Расширенные фильтры"
 
 msgid "Wrong time range."
-msgstr "Wrong time range."
+msgstr "Неправильный диапазон времени."
 
 msgid "From"
-msgstr "From"
+msgstr "От"
 
 msgid "To"
-msgstr "To"
+msgstr "Кому"
+
