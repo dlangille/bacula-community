@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-11-17 02:13\n"
+"PO-Revision-Date: 2021-11-17 16:47\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Wanderlei Hüttel <wanderlei.huttel@gmail.com>\n"
@@ -3043,7 +3043,7 @@ msgid "Director for Bconsole config:"
 msgstr "Configuração do director do Bconsole:"
 
 msgid "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
-msgstr "The console ACLs enable to define available resources for users. The consoles are used in the Bacula configuration on the API host side. There is possible to assign the consoles to the API basic users or to the OAuth2 clients. The assign relation for the basic users is: Console ACL -&gt; API basic user -&gt; API host -&gt; User account. For OAuth2 clients the assign relation is: Console ACL -&gt; OAuth2 client -&gt; API host -&gt; User account."
+msgstr "As ACLs de console ativam a definição de recursos disponíveis para os usuários. Os consoles são usados na configuração do Bacula no lado do host da API. É possível atribuir os consoles para usuários básicos da API ou para os clientes OAuth2. A relação de atribuição para usuários básicos é: ACL do console -&gt; usuário básico da API -&gt; host da API -&gt; conta de usuário. Para os clientes OAuth2, a relação de atribuição é: ACL do console -&gt; cliente OAuth2 -&gt; host de API -&gt; conta de usuário."
 
 msgid "The OAuth2 clients are configured on the API hosts. To create the OAuth2 clients from this page, you need to have an 'oauth2' scope in OAuth2 account related to your current admin user account. The OAuth2 client accounts are also possible to create directly in the panel of the Baculum API."
 msgstr "Os clientes OAuth2 estão configurados nos hosts API. Para criar os clientes OAuth2 a partir desta página, você precisa ter um escopo 'oauth2' na conta OAuth2 relacionada com sua conta de administrador atual. As contas de cliente OAuth2 também são possíveis de criar diretamente no painel da API Baculum."
@@ -3847,85 +3847,86 @@ msgid "The pool has not been renamed but it has been copied with the new name. P
 msgstr "A pool não foi renomeado, mas foi copiada com o novo nome. Observe que, se a pool original continha volumes, eles não foram movidos e ainda estão atribuídos à pool original no catálogo do banco de dados. Para reatribuir volumes da pool original para esta, vá para o Menu Principal &#10148; Pools &#10148; [Nova Pool] &#10148; Guia: Ações e use o botão 'Atribuir volumes'. Depois de reajustar os volumes, você pode excluir a pool original."
 
 msgid "Add Connect directive"
-msgstr "Add Connect directive"
+msgstr "Adicionar diretiva Connect"
 
 msgid "Add Run directive"
-msgstr "Add Run directive"
+msgstr "Adicionar diretiva Run"
 
 msgid "Add Runscript block"
-msgstr "Add Runscript block"
+msgstr "Adicionar diretiva Runscript"
 
 msgid "Add Console directive"
-msgstr "Add Console directive"
+msgstr "Adicionar diretiva Console"
 
 msgid "Add Stdout directive"
-msgstr "Add Stdout directive"
+msgstr "Adicionar diretiva Stdout"
 
 msgid "Add Stderr directive"
-msgstr "Add Stderr directive"
+msgstr "Adicionar diretiva Stderr"
 
 msgid "Add Syslog directive"
-msgstr "Add Syslog directive"
+msgstr "Adicionar diretiva Syslog"
 
 msgid "Add Catalog directive"
-msgstr "Add Catalog directive"
+msgstr "Adicionar diretiva Catalog"
 
 msgid "Add Director directive"
-msgstr "Add Director directive"
+msgstr "Adicionar diretiva Director"
 
 msgid "Add File directive"
-msgstr "Add File directive"
+msgstr "Adicionar diretiva File"
 
 msgid "Add Append directive"
-msgstr "Add Append directive"
+msgstr "Adicionar diretiva Append"
 
 msgid "Add Mail directive"
-msgstr "Add Mail directive"
+msgstr "Adicionar diretiva de e-mail"
 
 msgid "Add MailOnError directive"
-msgstr "Add MailOnError directive"
+msgstr "Adicionar diretiva MailOnError"
 
 msgid "Add MailOnSuccess directive"
-msgstr "Add MailOnSuccess directive"
+msgstr "Adicionar diretiva MailOnSucess"
 
 msgid "Add Operator directive"
-msgstr "Add Operator directive"
+msgstr "Adicionar diretiva de operador"
 
 msgid "Enable Bacula messages log window:"
-msgstr "Enable Bacula messages log window:"
+msgstr "Ativar janela de log de mensagens do Bacula:"
 
 msgid "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
-msgstr "The messages log window enables to review Bacula logs in one place available from almost every part on the interface. To collect logs is used the bconsole 'messages' command. The messages log window is displayed after clicking on the envelope icon at the top right side of the interface. This function is enabled by default. If enabled, it is available only for users with the Administrator role assigned."
+msgstr "A janela de log de mensagens permite rever logs Bacula em um só lugar disponível de quase todas as partes da interface. Para coletar os logs é usado o comando 'messages' do bconsole. A janela de log de mensagens é exibida depois de clicar no ícone do envelope no lado superior direito da interface. Esta função é habilitada por padrão. Se ativada, ela estará disponível apenas para usuários com a função Administrador atribuída."
 
 msgid "Copy configuration from:"
-msgstr "Copy configuration from:"
+msgstr "Copiar configuração de:"
 
 msgid "API basic users"
-msgstr "API basic users"
+msgstr "Usuários básicos da API"
 
 msgid "API OAuth2 clients"
-msgstr "API OAuth2 clients"
+msgstr "Clientes API OAuth2"
 
 msgid "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
-msgstr "The API basic users are configured on the API hosts and they are used to access the API hosts. Changes introduced on this page are directly done on currently used API host. You can use the basic user credentials to connect API hosts to the Baculum Web on the 'API hosts' tab. The basic user accounts are also possible to create directly in the panel of the Baculum API."
+msgstr "Os usuários básicos da API estão configurados nos hosts da API e são usados para acessar os hosts da API. As alterações introduzidas nesta página são feitas diretamente no host API atualmente utilizado. \n"
+"Você pode usar as credenciais básicas do usuário para conectar hosts da API no Baculum Web na aba 'Servidores da API'. As contas de usuário básicas também são possíveis de criar diretamente no painel da API do Baculum."
 
 msgid "Add new API basic user"
-msgstr "Add new API basic user"
+msgstr "Adicionar novo usuário básico de API"
 
 msgid "API basic username:"
-msgstr "API basic username:"
+msgstr "API nome de usuário básico:"
 
 msgid "API basic password:"
-msgstr "API basic password:"
+msgstr "Senha básica da API:"
 
 msgid "Retype password:"
-msgstr "Retype password:"
+msgstr "Redigite a senha:"
 
 msgid "Add API basic user account"
-msgstr "Add API basic user account"
+msgstr "Adicionar conta básica de usuário API"
 
 msgid "Edit API basic user account"
-msgstr "Edit API basic user account"
+msgstr "Editar conta de usuário básica da API"
 
 msgid "Password must be longer than 4 chars and not longer than 60 chars."
 msgstr "A senha deve ter mais de 4 caracteres e no máximo 60 caracteres."
