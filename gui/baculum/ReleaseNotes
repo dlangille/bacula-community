@@ -1,4 +1,41 @@
 
+               Release Notes for Baculum 11.0.5.7
+
+This is a minor new feature and bug fix release. The main new function is
+capability to restrict Bacula resources for basic users. There has also
+been added documentation for Bacula directives and we did many visual
+improvements in the Baculum Web interface. Finally, we updated Portuguese,
+Russian and Polish translations.
+
+New changes and fixes:
+
+Baculum Web:
+ - Add capability to assign dedicated bconsole config file to API basic users
+ - Add interface to manage API basic users from Web component side
+ - Add documentation for directives
+ - Reduce free spaces between interface elements - idea proposed by Sergey Zhidkov
+ - Add option to enable/disable messages log window - idea proposed by Bill Arlofski
+ - Add time range filters to job history page - idea proposed by Heitor Faria
+ - Add copy resource function to enable creating new resources based on others
+ - Visual improvements in interface
+ - Update Russian translations
+ - Update Portuguese translations
+ - Update Polish translations
+ - Unify buttons view
+ - Add password generator to password fields
+ - Improve wizards view and responsivity
+ - Add capability to close modal windows on clicking gray shadow
+ - Fix #2646 apply new user permissions immediately instead of after logging out and logging in
+ - Fix #2647 PHP warning about headers already sent on storage view page
+ - Unset default API host setting if default API host is no longer assigned to user
+
+Baculum API:
+ - Add API endpoints for API basic user management
+
+Bugs fixed/closed since last release:
+2646, 2647
+
+
                Release Notes for Baculum 11.0.5.6
 
 This is a bug fix release. It fixes a bug introduced in 11.0.5.5 that happens if
