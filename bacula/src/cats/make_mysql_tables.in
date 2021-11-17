@@ -546,6 +546,8 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('A', 'Canceled by user',90),
    ('F', 'Waiting for Client',15),
    ('S', 'Waiting for Storage daemon',15),
+   ('l', 'Doing data despooling',15),
+   ('L', 'Committing data (last despool)',15),
    ('m', 'Waiting for new media',15),
    ('M', 'Waiting for media mount',15),
    ('s', 'Waiting for storage resource',15),
@@ -556,7 +558,11 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('p', 'Waiting on higher priority jobs',15),
    ('i', 'Doing batch insert file records',15),
    ('I', 'Incomplete Job',25),
-   ('a', 'SD despooling attributes',15);
+   ('a', 'SD despooling attributes',15),
+   ('u', 'Cloud upload',15),
+   ('w', 'Cloud download',15),
+   ('q', 'Queued waiting for device',15),
+   ('W', 'Terminated normally with warnings',25);
 
 CREATE TABLE PathHierarchy
 (

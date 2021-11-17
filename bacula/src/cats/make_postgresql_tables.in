@@ -591,6 +591,10 @@ INSERT INTO Status (JobStatus,JobStatusLong) VALUES
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('M', 'Waiting for media mount',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('l', 'Doing data despooling',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('L', 'Committing data (last despool)',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('s', 'Waiting for storage resource',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('j', 'Waiting for job resource',15);
@@ -601,13 +605,21 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('t', 'Waiting on start time',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('u', 'Cloud upload',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('w', 'Cloud download',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('p', 'Waiting on higher priority jobs',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('q', 'Queued waiting for device',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('a', 'SD despooling attributes',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('i', 'Doing batch insert file records',15);
 INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('I', 'Incomplete Job',25);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('W', 'Terminated normally with warnings',25);
 
 CREATE TABLE Snapshot (
   SnapshotId	  serial,

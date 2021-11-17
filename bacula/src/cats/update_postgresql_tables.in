@@ -683,7 +683,20 @@ CREATE TABLE MetaAttachment
 
 CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
 CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
-CREATE INDEX meta_attachmentjobid ON MetaAttachment (JobId); 
+CREATE INDEX meta_attachmentjobid ON MetaAttachment (JobId);
+
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('l', 'Doing data despooling',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('L', 'Committing data (last despool)',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('u', 'Cloud upload',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('w', 'Cloud download',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('q', 'Queued waiting for device',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('W', 'Terminated normally with warnings',25);
 
 UPDATE Version SET VersionId=1025;
 commit;
