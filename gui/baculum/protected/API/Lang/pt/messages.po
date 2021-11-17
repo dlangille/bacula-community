@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2021-10-29 15:54\n"
+"PO-Revision-Date: 2021-11-17 02:11\n"
 "Project-Id-Version: b02f04a28aec0155df9503e3b78ae8cc\n"
 "POT-Creation-Date: \n"
 "Last-Translator: Wanderlei Hüttel <wanderlei.huttel@gmail.com>\n"
@@ -692,6 +692,6 @@ msgstr "Binários:"
 msgid "Configs:"
 msgstr "Configurações:"
 
-
 msgid "Dedicated Bconsole config"
-msgstr "Dedicated Bconsole config"
+msgstr "Configuração do Bconsole dedicado"
+
