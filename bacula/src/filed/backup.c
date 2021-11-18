@@ -1261,7 +1261,10 @@ static bool setup_compression(bctx_t &bctx)
    bctx.max_compress_len = 0;
    bctx.cbuf = NULL;
    bctx.cbuf2 = NULL;
+
+#if defined(HAVE_LZO) || defined(HAVE_ZSTD)
    memset(&bctx.ch, 0, sizeof(comp_stream_header));
+#endif
 
 # ifdef HAVE_LIBZ
    int zstat;
