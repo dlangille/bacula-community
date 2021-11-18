@@ -633,7 +633,7 @@ img.job_weather_icon {
 }
 
 .status_flex_row > div {
-	flex-basis: 140px;
+	flex-basis: 180px;
 	height: 28px;
 }
 
