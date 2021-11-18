@@ -546,7 +546,56 @@ bool is_name_valid(const char *name, POOLMEM **msg, const char *accept)
    return true;
 }
 
+/* Small helper method, so far used only by the PostgreSQL and MySQL plugins
+ * to check if name provided by the user can be used.
+ * Checks if given string does not contain suspicious characters, as well as
+ * informs the called if it's already double-quoted or not, to know if it needs
+ * some further processing.
+ * @ret false if no invalid character is found
+ * @ret true if some invalid character is found ('err' is filed with message in that case)
+ */
+bool check_for_invalid_chars(const char *str, POOLMEM **err, bool *quote_needed)
+{
+   *quote_needed = true;
+   int len = strlen(str);
+   for (int i=0; i<len; i++) {
+      switch (str[i]) {
+         case '\\':
+            pm_strcpy(err, "Found invalid \"\\\" character");
+            return true;
+         case '\'':
+            pm_strcpy(err, "Found invalid \"\'\" character");
+            return true;
+         case '$':
+            pm_strcpy(err, "Found invalid \"$\" character");
+            return true;
+         case '\"':
+            /* Only outer double quotes are allowed */
+            if (i == 0 || i == (len-1)) {
+               if (i == 0 && str[len-1] != '\"') {
+                  pm_strcpy(err, "Missing opening double quote");
+                  return true;
+               } else if (i == (len-1) && str[0] != '\"') {
+                  pm_strcpy(err, "Missing closing double quote");
+                  return true;
+               } else {
+                  *quote_needed = false;
+               }
+               break;
+            } else {
+               pm_strcpy(err, "Found invalid \'\"\' character");
+               return true;
+            }
 
+            return true;
+         default:
+            break;
+      }
+   }
+
+   /* No invalid character found */
+   return false;
+}
 
 /*
  * Add commas to a string, which is presumably

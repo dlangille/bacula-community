@@ -244,6 +244,8 @@ bool             is_name_valid           (const char *name, POOLMEM **msg);
 bool             is_name_valid           (const char *name, POOLMEM **msg, const char *accept);
 char             *get_next_tag(char **buf);
 
+bool check_for_invalid_chars(const char *str, POOLMEM **err, bool *quote_needed);
+
 /* jcr.c (most definitions are in src/jcr.h) */
 void     init_last_jobs_list();
 void     term_last_jobs_list();
