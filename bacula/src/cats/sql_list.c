@@ -36,6 +36,127 @@
  * -----------------------------------------------------------------------
  */
 
+/* We search resources for a specific tag, we just return the resource name
+ * itself and the result can be stored in a list for example
+ */
+bool BDB::bdb_search_tag_records(JCR *jcr, TAG_DBR *tag, DB_RESULT_HANDLER *result_handler, void *ctx)
+{
+   POOL_MEM tmp, where;
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+   char esc_name[MAX_ESCAPE_NAME_LENGTH];
+   uint64_t aclbits, aclbits_extra;
+
+   const char *name;
+   const char *id;
+   const char *table;
+
+   tag->gen_sql(jcr, this, &table, &name, &id, esc, esc_name, &aclbits, &aclbits_extra);
+
+   bdb_lock();
+   pm_strcpy(where, get_acls(aclbits, true)); /* get_acls() uses a specific object buffer */
+   const char *whereand = get_acls(aclbits, false);
+   const char *join = get_acl_join_filter(aclbits_extra);
+
+   if (table) {
+      if (tag->all) {
+         if (*esc_name) {
+            /* Display all resource for a tag */
+            Mmsg(tmp, "SELECT %s AS %s FROM Tag%s AS T JOIN %s USING (%s) %s WHERE T.Tag = '%s' %s",
+                 name, table, table, table, id, join, esc_name, whereand);
+         }
+      }
+      if (tag->limit > 0) {
+         char ed1[50];
+         pm_strcat(cmd, " LIMIT ");
+         pm_strcat(cmd, edit_uint64(tag->limit, ed1));
+      }
+      if (!bdb_sql_query(tmp.c_str(), result_handler, ctx)) {
+         bdb_unlock();
+         return false;
+      }
+   }
+   bdb_unlock();
+   return true;
+}
+
+/*
+ * Search Job record(s) that match JOB_DBR, the result can be stored in a alist for example
+ *
+ */
+bool BDB::bdb_search_job_records(JCR *jcr, JOB_DBR *jr,
+                                   DB_RESULT_HANDLER *handler,
+                                   void *ctx)
+{
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+   const char *join = "";
+   const char *where_tmp = "";
+
+   if (jr->Job[0] == 0) {
+      return false;
+   }
+
+   bdb_lock();
+   bdb_escape_string(jcr, esc, jr->Job, strlen(jr->Job));
+
+   /* The ACL can limit on two extra tables, Client and FileSet */
+   where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  |
+                        DB_ACL_BIT(DB_ACL_FILESET),
+                        0);
+
+   if (*where_tmp) {
+      join = get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)  |
+                                 DB_ACL_BIT(DB_ACL_FILESET));
+   }
+
+   Mmsg(cmd,
+        "SELECT Job "
+        "FROM Job "
+        " %s WHERE Job.Job ILIKE '%%%s%%' %s", join, esc, where_tmp);
+
+   if (jr->limit > 0) {
+      char ed1[50];
+      pm_strcat(cmd, " LIMIT ");
+      pm_strcat(cmd, edit_uint64(jr->limit, ed1));
+   }
+
+   if (!bdb_sql_query(cmd, handler, ctx)) {
+      bdb_unlock();
+      return false;
+   }
+   bdb_unlock();
+   return true;
+}
+
+/* Search for a client, return only the name */
+bool BDB::bdb_search_client_records(JCR *jcr, CLIENT_DBR *rec, DB_RESULT_HANDLER *callback, void *ctx)
+{
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+   const char *where_tmp = "";
+
+   bdb_lock();
+   bdb_escape_string(jcr, esc, rec->Name, strlen(rec->Name));
+
+   /* We can apply some ACLs for the Client table */
+   where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT), 0);
+
+   Mmsg(cmd, "SELECT Name "
+        "FROM Client WHERE Name ILIKE '%%%s%%' %s",
+        esc, where_tmp);
+
+   if (rec->limit > 0) {
+      char ed1[50];
+      pm_strcat(cmd, " LIMIT ");
+      pm_strcat(cmd, edit_uint64(rec->limit, ed1));
+   }
+
+   if (!bdb_sql_query(cmd, callback, ctx)) {
+      bdb_unlock();
+      return false;
+   }
+   bdb_unlock();
+   return true;
+}
+
 /*
  * Submit general SQL query
  */
@@ -127,7 +248,6 @@ void BDB::bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, 
    sql_free_result();
    bdb_unlock();
 }
-
 
 /*
  * List plugin objects types
@@ -304,6 +424,44 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
 
 /*
  * If VolumeName is non-zero, list the record for that Volume
+ */
+bool BDB::bdb_search_media_records(JCR *jcr, MEDIA_DBR *mdbr,
+                                   DB_RESULT_HANDLER *handler, void *ctx)
+{
+   char ed1[50];
+   char esc[MAX_ESCAPE_NAME_LENGTH];
+
+   if (mdbr->VolumeName[0] == 0) {
+      return false;
+   }
+
+   bdb_lock();
+   bdb_escape_string(jcr, esc, mdbr->VolumeName, strlen(mdbr->VolumeName));
+   const char *where = get_acl(DB_ACL_POOL, false);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_POOL)) : "";
+
+   if (mdbr->limit == 0) {
+      mdbr->limit = 50;
+   }
+
+   Mmsg(cmd, "SELECT VolumeName FROM Media %s WHERE Media.VolumeName ILIKE '%%%s%%' %s LIMIT %u",
+        join,
+        esc,
+        where,
+        mdbr->limit);
+
+   if (!bdb_sql_query(cmd, handler, ctx)) {
+      bdb_unlock();
+      return false;
+   }
+
+   sql_free_result();
+   bdb_unlock();
+   return true;
+}
+
+/*
+ * If VolumeName is non-zero, list the record for that Volume
  *   otherwise, list the Volumes in the Pool specified by PoolId
  */
 void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
@@ -320,6 +478,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
 
    if (type == VERT_LIST || type == JSON_LIST) {
       if (mdbr->VolumeName[0] != 0) {
+
          Mmsg(cmd, "SELECT MediaId,VolumeName,Slot,PoolId,"
             "MediaType,MediaTypeId,FirstWritten,LastWritten,LabelDate,VolJobs,"
             "VolFiles,VolBlocks,VolParts,VolCloudParts,Media.CacheRetention,VolMounts,VolBytes,"

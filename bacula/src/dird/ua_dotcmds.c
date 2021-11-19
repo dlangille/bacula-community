@@ -95,6 +95,7 @@ static bool dot_quit_cmd(UAContext *ua, const char *cmd);
 static bool dot_help_cmd(UAContext *ua, const char *cmd);
 static bool dot_add_events(UAContext *ua, const char *cmd);
 static int one_handler(void *ctx, int num_field, char **row);
+static bool dot_search(UAContext *ua, const char *cmd);
 
 struct dcmd_struct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help;const bool use_in_rs;};
 static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript */
@@ -118,6 +119,7 @@ static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript
  { NT_(".pools"),      poolscmd,                 NULL,       true},
  { NT_(".quit"),       dot_quit_cmd,             NULL,       false},
  { NT_(".putfile"),    putfile_cmd,              NULL,       false}, /* use @putfile */
+ { NT_(".search"),     dot_search,               NULL,       false},
  { NT_(".schedule"),   schedulescmd,             NULL,       false},
  { NT_(".sql"),        sql_cmd,                  NULL,       false},
  { NT_(".status"),     dot_status_cmd,           NULL,       false},
@@ -2735,5 +2737,189 @@ static bool dot_add_events(UAContext *ua, const char *cmd)
       ua->error_msg("Unable to send events, source, type or text parameter are missing\n");
    }
 bail_out:
+   return true;
+}
+
+enum {
+   CAT_VOLUME = (1<<0),
+   CAT_JOB    = (1<<1),
+   CAT_CLIENT = (1<<2),
+};
+
+#define CAT_ALL (CAT_VOLUME | CAT_JOB | CAT_CLIENT)
+
+/* Search over our different tables
+ *
+ * {
+ *   "error": 0,
+ *   "errmsg", "",
+ *   "type": "search",
+ *   "data": {
+ *      "volume": ["vol1", "vol2"],
+ *      "client": ["volA"],
+ *      "job": []
+ *   }
+ * }
+ *
+ */
+static bool dot_search(UAContext *ua, const char *cmd)
+{
+   uint32_t cat = 0;
+   uint64_t limit=0;
+   char *text = NULL;
+   const char *errmsg = NULL;
+   alist res(10, owned_by_alist);
+   OutputWriter out(ua->api_opts);
+   alist *r = &res;
+
+   for(int i=1; i < ua->argc ; i++) {
+      if (strcasecmp(ua->argk[i], NT_("limit")) == 0 && is_a_number(ua->argv[i])) {
+         limit = str_to_uint64(ua->argv[i]);
+
+      } else if (strcasecmp(ua->argk[i], NT_("category")) == 0) {
+         if (strcasecmp(NPRTB(ua->argv[i]), "all") == 0) {
+            cat = CAT_ALL;
+
+         } else if (strcasecmp(NPRTB(ua->argv[i]), "client") == 0) {
+            cat |= CAT_CLIENT;
+
+         } else if (strcasecmp(NPRTB(ua->argv[i]), "job") == 0) {
+            cat |= CAT_JOB;
+
+         } else if (strcasecmp(NPRTB(ua->argv[i]), "volume") == 0) {
+            cat |= CAT_VOLUME;
+
+         } else {
+            errmsg = "Incorrect category";
+            goto bail_out;
+         }
+
+      } else if (strcasecmp(ua->argk[i], NT_("text")) == 0) {
+         text = ua->argv[i];
+
+      } else {
+         errmsg = "Incorrect parameter";
+         goto bail_out;
+      }
+   }
+   if (!text || strlen(text) <= 3) {
+      errmsg = "Missing text to search";
+      goto bail_out;
+   }
+
+   /* TODO: check for nasty characters in text */
+   if (!cat) {
+      cat = CAT_ALL;
+   }
+   if (!limit) {
+      limit = 10;
+   }
+   if (!open_new_client_db(ua)) {
+      errmsg = "Unable to open the catalog";
+      goto bail_out;
+   }
+
+   /* We initialize the output */
+   out.get_output(OT_START_OBJ,
+                  OT_INT,    "error", 0,
+                  OT_STRING, "errmsg", "",
+                  OT_STRING, "type", "search",
+                  OT_END);
+   out.start_object("data");
+
+   if (text[0] == '#') {
+      /* search for a tag */
+      TAG_DBR tr;
+      r->destroy();
+      if (cat & CAT_CLIENT) {
+         tr.zero();
+         tr.all = true;
+         bstrncpy(tr.Name, text, sizeof(tr.Name));
+         strcpy(tr.Client, "1"); // To enable the Client search
+         if (!db_search_tag_records(ua->jcr, ua->db, &tr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query client tag";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "client", r, OT_END);
+
+      r->destroy();
+      if (cat  & CAT_JOB) {
+         tr.zero();
+         tr.all = true;
+         bstrncpy(tr.Name, text, sizeof(tr.Name));
+         strcpy(tr.Job, "1"); // To enable the Job search
+         if (!db_search_tag_records(ua->jcr, ua->db, &tr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query Job tag";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "job", r, OT_END);
+
+      r->destroy();
+      if (cat & CAT_VOLUME) {
+         tr.zero();
+         tr.all = true;
+         bstrncpy(tr.Name, text, sizeof(tr.Name));
+         strcpy(tr.Volume, "1"); // To enable the Volume search
+         if (!db_search_tag_records(ua->jcr, ua->db, &tr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query Volume tag";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "volume", r, OT_END);
+
+   } else {
+      r->destroy();
+      if (cat & CAT_VOLUME) {
+         /* Search in volumes */
+         MEDIA_DBR mdbr;
+         bstrncpy(mdbr.VolumeName, text, sizeof(mdbr.VolumeName));
+         mdbr.limit = limit;
+         if (!db_search_media_records(ua->jcr, ua->db, &mdbr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query Volume";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "volume", r, OT_END);
+
+      /* Search in clients */
+      r->destroy();
+      if (cat & CAT_CLIENT) {
+         CLIENT_DBR cr;
+         memset(&cr, 0, sizeof(cr));
+         cr.limit = limit;
+         bstrncpy(cr.Name, text, sizeof(cr.Name));
+         if (!db_search_client_records(ua->jcr, ua->db, &cr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query Client";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "client", &res, OT_END);
+
+      /* Search in Job */
+      r->destroy();
+      if (cat & CAT_JOB) {
+         JOB_DBR jr;
+         memset(&jr, 0, sizeof(jr));
+         jr.limit = limit;
+         bstrncpy(jr.Job, text, sizeof(jr.Job));
+         if (!db_search_job_records(ua->jcr, ua->db, &jr, db_string_list_handler, &r)) {
+            errmsg = "Unable to query Job";
+            goto bail_out;
+         }
+      }
+      out.get_output(OT_ALIST_STR, "job", &res, OT_END);
+   }
+   out.end_object();
+   ua->send_msg(out.get_output(OT_END_OBJ, OT_END));
+   return true;
+
+bail_out:
+   ua->send_msg(out.get_output(OT_CLEAR,
+                               OT_START_OBJ,
+                               OT_INT,    "error",  1,
+                               OT_STRING, "errmsg", errmsg,
+                               OT_END_OBJ, OT_END));
    return true;
 }

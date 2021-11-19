@@ -258,6 +258,15 @@ public:
    bool bdb_get_client_pool(JCR *jcr, alist *results);
 
 /* sql_list.c */
+   bool bdb_search_media_records(JCR *jcr, MEDIA_DBR *mdbr,
+                                 DB_RESULT_HANDLER *handler, void *ctx);
+   bool bdb_search_client_records(JCR *jcr, CLIENT_DBR *rec,
+                                  DB_RESULT_HANDLER *callback, void *ctx);
+   bool bdb_search_job_records(JCR *jcr, JOB_DBR *rec,
+                               DB_RESULT_HANDLER *callback, void *ctx);
+   bool bdb_search_tag_records(JCR *jcr, TAG_DBR *rec,
+                               DB_RESULT_HANDLER *callback, void *ctx);
+
    void bdb_list_pool_records(JCR *jcr, POOL_DBR *pr, DB_LIST_HANDLER sendit, void *ctx, e_list_type type);
    alist *bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER sendit, void *ctx, e_list_type type);
    void bdb_list_jobs_for_file(JCR *jcr, const char *client, const char *fname, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);

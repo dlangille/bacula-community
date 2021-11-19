@@ -468,6 +468,7 @@ public:
    char    sid[30];                   /* edited StorageId */
    bool    set_first_written;
    bool    set_label_date;
+   int     limit;                /* Limit the number of records returned with search */
 };
 
 #define MAX_UNAME_LENGTH 256
@@ -485,6 +486,8 @@ struct CLIENT_DBR {
    char Name[MAX_NAME_LENGTH];        /* Client name */
    char Uname[MAX_UNAME_LENGTH];      /* Uname for client */
    char Plugins[MAX_PLUGIN_LENGTH];   /* Plugin list for this client */
+
+   int limit;                         /* used by search */
 };
 
 /* Counter record as in database */
@@ -610,10 +613,13 @@ public:
    JobId_t JobId;                    /* JobId */
 
    bool    all;
+   int     limit;                    /* Used in search */
 
-   TAG_DBR() {};
+   TAG_DBR() {
+      zero();
+   };
    void zero() {
-      JobId = 0;
+      limit = JobId = 0;
       all = false;
       *Object = *Client = *Job = *Pool = *Volume = *Comment = *Name = '\0';
    };

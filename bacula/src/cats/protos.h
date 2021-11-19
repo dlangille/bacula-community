@@ -266,10 +266,19 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_get_snapshot_record(jcr, sr)
 #define db_get_job_statistics(jcr, mdb, jr)      \
            mdb->bdb_get_job_statistics(jcr, jr)
+
 /* sql_list.c */
 #define db_list_jobs_for_file(jcr, mdb, cli, fname, result_handler, ctx, type) \
            mdb->bdb_list_jobs_for_file(jcr, cli, fname, result_handler, ctx, type)
-#define db_list_pool_records(jcr, mdb, pr, sendit, ctx, type) \
+#define db_search_tag_records(jcr, mdb, tag, result_handler, ctx)      \
+           mdb->bdb_search_tag_records(jcr, tag, result_handler, ctx)
+#define db_search_media_records(jcr, mdb, rec, result_handler, ctx)      \
+           mdb->bdb_search_media_records(jcr, rec, result_handler, ctx)
+#define db_search_job_records(jcr, mdb, rec, result_handler, ctx)      \
+           mdb->bdb_search_job_records(jcr, rec, result_handler, ctx)
+#define db_search_client_records(jcr, mdb, rec, result_handler, ctx)      \
+           mdb->bdb_search_client_records(jcr, rec, result_handler, ctx)
+#define db_list_pool_records(jcr, mdb, pr, sendit, ctx, type)           \
            mdb->bdb_list_pool_records(jcr, pr, sendit, ctx, type)
 #define db_list_job_records(jcr, mdb, jr, sendit, ctx, type) \
            mdb->bdb_list_job_records(jcr, jr, sendit, ctx, type)
