@@ -162,6 +162,9 @@ RBSR *new_bsr()
 void free_bsr(rblist *bsr_list)
 {
    RBSR *bsr;
+   if (!bsr_list) {
+      return;                   /* Already done */
+   }
    foreach_rblist(bsr, bsr_list) {
       delete bsr->fi_list;
       if (bsr->VolParams) {

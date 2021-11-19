@@ -413,21 +413,23 @@ int restore_cmd(UAContext *ua, const char *cmd)
     *  line.
     */
    /* ***FIXME*** pass jobids on command line */
-   if (jcr->JobIds) {
-      free_pool_memory(jcr->JobIds);
-   }
+   free_and_null_pool_memory(jcr->JobIds);
    jcr->JobIds = rx.JobIds;
    rx.JobIds = NULL;
+
+   free_and_null_pool_memory(jcr->component_fname);
    jcr->component_fname = rx.component_fname;
    rx.component_fname = NULL;
+
    jcr->component_fd = rx.component_fd;
    rx.component_fd = NULL;
+   /* The Client might request the file list */
    if (jcr->bsr_list) {
       free_bsr(jcr->bsr_list);
    }
-   /* The Client might request the file list */
    jcr->bsr_list = rx.bsr_list;
    rx.bsr_list = NULL;
+
    parse_ua_args(ua);
    run_cmd(ua, ua->cmd);
    free_rx(&rx);
