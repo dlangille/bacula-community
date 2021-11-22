@@ -64,9 +64,13 @@ typedef enum {
    CRYPTO_DIGEST_MD5 = 1,
    CRYPTO_DIGEST_SHA1 = 2,
    CRYPTO_DIGEST_SHA256 = 3,
-   CRYPTO_DIGEST_SHA512 = 4
+   CRYPTO_DIGEST_SHA512 = 4,
+   CRYPTO_DIGEST_XXHASH64 = 5,
+   CRYPTO_DIGEST_XXH3_128 = 6,
+   CRYPTO_DIGEST_XXH3_64 = 7 /* Never released, maybe already deprecated ? */
 } crypto_digest_t;
 
+#define IS_XXHASH_DIGEST(type) (CRYPTO_DIGEST_XXHASH64<=(type) && (type)<=CRYPTO_DIGEST_XXH3_128)
 
 #ifdef HAVE_SHA2
 # define CRYPTO_DIGEST_DEFAULT CRYPTO_DIGEST_SHA256
@@ -100,6 +104,9 @@ typedef enum {
 #define CRYPTO_DIGEST_SHA1_SIZE 20    /* 160 bits */
 #define CRYPTO_DIGEST_SHA256_SIZE 32  /* 256 bits */
 #define CRYPTO_DIGEST_SHA512_SIZE 64  /* 512 bits */
+#define CRYPTO_DIGEST_XXHASH64_SIZE 8 /*  64bits */
+#define CRYPTO_DIGEST_XXH3_64_SIZE   8 /*  64bits */
+#define CRYPTO_DIGEST_XXH3_128_SIZE 16 /* 128bits */
 
 /* Maximum Message Digest Size */
 #ifdef HAVE_OPENSSL

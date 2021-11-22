@@ -163,6 +163,12 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
          return "contADATA-RECORD-HEADER";
       case STREAM_FILEEVENT:
          return _("FileEvent");
+      case STREAM_XXHASH64_DIGEST:
+         return "contXXHASH64";
+      case STREAM_XXH3_64_DIGEST:
+         return "contXXH3_63";
+      case STREAM_XXH3_128_DIGEST:
+         return "contXXH3_128";
       default:
          sprintf(buf, "%d", -stream);
          return buf;
@@ -242,6 +248,12 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
       return "ADATA-RECORD-HEADER";
    case STREAM_FILEEVENT:
       return _("FileEvent");
+   case STREAM_XXHASH64_DIGEST:
+      return "XXHASH64";
+   case STREAM_XXH3_64_DIGEST:
+      return "XXH3_63";
+   case STREAM_XXH3_128_DIGEST:
+      return "XXH3_128";
    default:
       sprintf(buf, "%d", stream);
       return buf;

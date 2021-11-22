@@ -946,6 +946,30 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       update_digest_record(db, digest, rec, CRYPTO_DIGEST_SHA512);
       break;
 
+   case STREAM_XXHASH64_DIGEST:
+      bin_to_base64(digest, sizeof(digest), (char *)rec->data, CRYPTO_DIGEST_XXHASH64_SIZE, true);
+      if (verbose > 1) {
+         Pmsg1(000, _("Got XXHASH64 record: %s\n"), digest);
+      }
+      update_digest_record(db, digest, rec, CRYPTO_DIGEST_XXHASH64);
+      break;
+
+   case STREAM_XXH3_64_DIGEST:
+      bin_to_base64(digest, sizeof(digest), (char *)rec->data, CRYPTO_DIGEST_XXH3_64_SIZE, true);
+      if (verbose > 1) {
+         Pmsg1(000, _("Got XXH3_64 record: %s\n"), digest);
+      }
+      update_digest_record(db, digest, rec, CRYPTO_DIGEST_XXH3_64);
+      break;
+
+   case STREAM_XXH3_128_DIGEST:
+      bin_to_base64(digest, sizeof(digest), (char *)rec->data, CRYPTO_DIGEST_XXH3_128_SIZE, true);
+      if (verbose > 1) {
+         Pmsg1(000, _("Got XXH3_128 record: %s\n"), digest);
+      }
+      update_digest_record(db, digest, rec, CRYPTO_DIGEST_XXH3_128);
+      break;
+
    case STREAM_ENCRYPTED_SESSION_DATA:
       // TODO landonf: Investigate crypto support in bscan
       if (verbose > 1) {

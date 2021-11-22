@@ -722,6 +722,9 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    case STREAM_SHA1_DIGEST:
    case STREAM_SHA256_DIGEST:
    case STREAM_SHA512_DIGEST:
+   case STREAM_XXHASH64_DIGEST:
+   case STREAM_XXH3_64_DIGEST:
+   case STREAM_XXH3_128_DIGEST:
       break;
 
    case STREAM_SIGNED_DIGEST:

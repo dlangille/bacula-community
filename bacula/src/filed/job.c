@@ -1985,6 +1985,18 @@ static int set_options(findFOPTS *fo, const char *opts)
             p++;
             break;
 #endif
+         case '5':
+            fo->flags |= FO_XXHASH64;
+            p++;
+            break;
+         case '6':
+            fo->flags |= FO_XXH3_64;
+            p++;
+            break;
+         case '7':
+            fo->flags |= FO_XXH3_128;
+            p++;
+            break;
          default:
             /*
              * If 2 or 3 is seen here, SHA2 is not configured, so

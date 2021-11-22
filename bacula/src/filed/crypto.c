@@ -96,8 +96,19 @@ bool crypto_setup_digests(bctx_t &bctx)
    } else if (ff_pkt->flags & FO_SHA512) {
       bctx.digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA512);
       bctx.digest_stream = STREAM_SHA512_DIGEST;
-   }
 
+   } else if (ff_pkt->flags & FO_XXHASH64) {
+      bctx.digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXHASH64);
+      bctx.digest_stream = STREAM_XXHASH64_DIGEST;
+
+   } else if (ff_pkt->flags & FO_XXH3_64) {
+      bctx.digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_64);
+      bctx.digest_stream = STREAM_XXH3_64_DIGEST;
+
+   } else if (ff_pkt->flags & FO_XXH3_128) {
+      bctx.digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_128);
+      bctx.digest_stream = STREAM_XXH3_128_DIGEST;
+   }
    /** Did digest initialization fail? */
    if (bctx.digest_stream != STREAM_NONE && bctx.digest == NULL) {
       Jmsg(jcr, M_WARNING, 0, _("%s digest initialization failed\n"),

@@ -235,6 +235,9 @@ struct s_ct digesttypes[] = {
    {"sha1",        CRYPTO_DIGEST_SHA1},
    {"sha256",      CRYPTO_DIGEST_SHA256},
 //   {"sha512",      CRYPTO_DIGEST_SHA512}, /* Not working yet */
+   {"xxhash64",    CRYPTO_DIGEST_XXHASH64},
+   {"xxh3_128",    CRYPTO_DIGEST_XXH3_128},
+//   {"xxh3_64",     CRYPTO_DIGEST_XXH3_64}, /* Never released, maybe already deprecated ? */
    {NULL,                             0}
 };
 

@@ -132,6 +132,7 @@
 #ifdef HAVE_OPENSSL /* How about OpenSSL? */
 
 #include "openssl-compat.h"
+#include "xxhash.h"
 
 /* ASN.1 Declarations */
 #define BACULA_ASN1_VERSION 0
@@ -582,19 +583,45 @@ void crypto_keypair_free(X509_KEYPAIR *keypair)
    free(keypair);
 }
 
-/*
- * Create a new message digest context of the specified type
- *  Returns: A pointer to a DIGEST object on success.
- *           NULL on failure.
- */
-DIGEST *crypto_digest_new(JCR *jcr, crypto_digest_t type)
+/* called by crypto_digest_new() to create an xxhash digest context */
+static DIGEST *xxhash_crypto_digest_new(JCR *jcr, crypto_digest_t type)
+{
+   void *state;
+
+   switch (type) {
+   case CRYPTO_DIGEST_XXHASH64:
+      state = (void*)XXH64_createState();
+      XXH64_reset((XXH64_state_t *)state, 0);
+      break;
+   case CRYPTO_DIGEST_XXH3_64:
+      state = (void*)XXH3_createState();
+      XXH3_64bits_reset((XXH3_state_t *)state);
+      break;
+   case CRYPTO_DIGEST_XXH3_128:
+      state = (void*)XXH3_createState();
+      XXH3_128bits_reset((XXH3_state_t *)state);
+      break;
+   default:
+      Jmsg1(jcr, M_ERROR, 0, _("Unsupported digest type: %d\n"), type);
+      return NULL;
+   }
+
+   DIGEST *digest;
+
+   digest = (DIGEST *)malloc(sizeof(DIGEST));
+   digest->type = type;
+   digest->jcr = jcr;
+   digest->ctx = (EVP_MD_CTX *)state; // TODO remove the trans-typage
+   Dmsg1(150, "crypto_digest_new jcr=%p\n", jcr);
+
+   return digest;
+}
+
+/* called by crypto_digest_new() to create an openssl digest context */
+static DIGEST *openssl_crypto_digest_new(JCR *jcr, crypto_digest_t type)
 {
    DIGEST *digest;
    const EVP_MD *md = NULL; /* Quell invalid uninitialized warnings */
-
-   if (!crypto_check_digest(jcr, type)) {
-      return NULL;
-   }
 
    digest = (DIGEST *)malloc(sizeof(DIGEST));
    digest->type = type;
@@ -645,18 +672,57 @@ err:
 }
 
 /*
+ * Create a new message digest context of the specified type
+ *  Returns: A pointer to a DIGEST object on success.
+ *           NULL on failure.
+ */
+DIGEST *crypto_digest_new(JCR *jcr, crypto_digest_t type)
+{
+   if (!crypto_check_digest(jcr, type)) {
+      return NULL;
+   }
+   if (IS_XXHASH_DIGEST(type)) {
+      return xxhash_crypto_digest_new(jcr, type);
+   }
+   return openssl_crypto_digest_new(jcr, type);
+}
+
+/*
  * Hash length bytes of data into the provided digest context.
  * Returns: true on success
  *          false on failure
  */
 bool crypto_digest_update(DIGEST *digest, const uint8_t *data, uint32_t length)
 {
-   if (EVP_DigestUpdate(digest->ctx, data, length) == 0) {
-      Dmsg0(150, "digest update failed\n");
-      openssl_post_errors(digest->jcr, M_ERROR, _("OpenSSL digest update failed"));
-      return false;
+   if (IS_XXHASH_DIGEST(digest->type)) {
+      int ret;
+      switch (digest->type) {
+      case CRYPTO_DIGEST_XXHASH64:
+         ret = XXH64_update((XXH64_state_t *)digest->ctx, data, length);
+         break;
+      case CRYPTO_DIGEST_XXH3_64:
+         ret = XXH3_64bits_update((XXH3_state_t *)digest->ctx, data, length);
+         break;
+      case CRYPTO_DIGEST_XXH3_128:
+         ret = XXH3_128bits_update((XXH3_state_t *)digest->ctx, data, length);
+         break;
+      default:
+         Dmsg1(150, "unknown digest %d\n", digest->type);
+         ret = XXH_ERROR;
+         break;
+      }
+      if (ret != XXH_OK) {
+         Dmsg0(150, "digest update failed\n");
+      }
+      return (ret == XXH_OK);
    } else {
-      return true;
+      if (EVP_DigestUpdate((EVP_MD_CTX *)digest->ctx, data, length) == 0) {
+         Dmsg0(150, "digest update failed\n");
+         openssl_post_errors(digest->jcr, M_ERROR, _("OpenSSL digest update failed"));
+         return false;
+      } else {
+         return true;
+      }
    }
 }
 
@@ -669,12 +735,41 @@ bool crypto_digest_update(DIGEST *digest, const uint8_t *data, uint32_t length)
  */
 bool crypto_digest_finalize(DIGEST *digest, uint8_t *dest, uint32_t *length)
 {
-   if (!EVP_DigestFinal(digest->ctx, dest, (unsigned int *)length)) {
-      Dmsg0(150, "digest finalize failed\n");
-      openssl_post_errors(digest->jcr, M_ERROR, _("OpenSSL digest finalize failed"));
-      return false;
+   if (IS_XXHASH_DIGEST(digest->type)) {
+      bool ret = true;
+      XXH64_hash_t val64;
+      XXH128_hash_t val128;   /* this is a struct */
+      switch (digest->type) {
+      case CRYPTO_DIGEST_XXHASH64:
+         *length = CRYPTO_DIGEST_XXHASH64_SIZE;
+         val64 = XXH64_digest((XXH64_state_t *)digest->ctx);
+         XXH64_canonicalFromHash((XXH64_canonical_t*)dest, val64);
+         break;
+      case CRYPTO_DIGEST_XXH3_64:
+         *length = CRYPTO_DIGEST_XXH3_64_SIZE;
+         val64 = XXH3_64bits_digest((XXH3_state_t *)digest->ctx);
+         XXH64_canonicalFromHash((XXH64_canonical_t*)dest, val64);
+      case CRYPTO_DIGEST_XXH3_128:
+         *length = CRYPTO_DIGEST_XXH3_128_SIZE;
+         val128 = XXH3_128bits_digest((XXH3_state_t *)digest->ctx);
+         XXH128_canonicalFromHash((XXH128_canonical_t *)dest, val128);
+         break;
+      default:
+         Dmsg1(150, "unknown digest %d\n", digest->type);
+         ret = false;
+         break;
+      }
+      return ret;
    } else {
-      return true;
+      unsigned int v;
+      if (!EVP_DigestFinal(digest->ctx, dest, &v)) {
+         Dmsg0(150, "digest finalize failed\n");
+         openssl_post_errors(digest->jcr, M_ERROR, _("OpenSSL digest finalize failed"));
+         return false;
+      } else {
+         *length = v;
+         return true;
+      }
    }
 }
 
@@ -683,8 +778,27 @@ bool crypto_digest_finalize(DIGEST *digest, uint8_t *dest, uint32_t *length)
  */
 void crypto_digest_free(DIGEST *digest)
 {
-  EVP_MD_CTX_free(digest->ctx);
-  free(digest);
+   switch (digest->type) {
+   case CRYPTO_DIGEST_MD5:
+   case CRYPTO_DIGEST_SHA1:
+#ifdef HAVE_SHA2
+   case CRYPTO_DIGEST_SHA256:
+   case CRYPTO_DIGEST_SHA512:
+#endif
+      EVP_MD_CTX_free((EVP_MD_CTX *)digest->ctx);
+      break;
+   case CRYPTO_DIGEST_XXHASH64:
+      XXH64_freeState((XXH64_state_t *)digest->ctx);
+      break;
+   case CRYPTO_DIGEST_XXH3_64:
+   case CRYPTO_DIGEST_XXH3_128:
+      XXH3_freeState((XXH3_state_t *)digest->ctx);
+      break;
+   default:
+      Dmsg1(150, "UNKNOWN digest %d !!!\n", digest->type);
+      break;
+   }
+   free(digest);
 }
 
 /*
@@ -1533,6 +1647,12 @@ const char *crypto_digest_name(DIGEST *digest)
       return "SHA256";
    case CRYPTO_DIGEST_SHA512:
       return "SHA512";
+   case CRYPTO_DIGEST_XXHASH64:
+      return "XXHASH64";
+   case CRYPTO_DIGEST_XXH3_64:
+      return "XXH3_64";
+   case CRYPTO_DIGEST_XXH3_128:
+      return "XXH3_128";
    case CRYPTO_DIGEST_NONE:
       return "None";
    default:
@@ -1556,6 +1676,12 @@ crypto_digest_t crypto_digest_stream_type(int stream)
       return CRYPTO_DIGEST_SHA256;
    case STREAM_SHA512_DIGEST:
       return CRYPTO_DIGEST_SHA512;
+   case STREAM_XXHASH64_DIGEST:
+      return CRYPTO_DIGEST_XXHASH64;
+   case STREAM_XXH3_64_DIGEST:
+      return CRYPTO_DIGEST_XXH3_64;
+   case STREAM_XXH3_128_DIGEST:
+      return CRYPTO_DIGEST_XXH3_128;
    default:
       return CRYPTO_DIGEST_NONE;
    }

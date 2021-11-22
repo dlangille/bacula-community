@@ -107,6 +107,9 @@
 #define STREAM_PLUGIN_META_CATALOG             36    /* Plugin metadata (to be stored in catalog) for file being backed up */
 #define STREAM_UNIX_ATTRIBUTE_UPDATE           37    /* File's updated metadata */
 #define STREAM_FILEEVENT                       38    /* FileEvent associated with the current object */
+#define STREAM_XXHASH64_DIGEST                 39    /* XXHASH64 digest for the file */
+#define STREAM_XXH3_64_DIGEST                  40    /* XXH3_64 digest for the file */
+#define STREAM_XXH3_128_DIGEST                 41    /* XXH3_128 digest for the file */
 
 #define STREAM_ADATA_BLOCK_HEADER             200    /* Adata block header */
 #define STREAM_ADATA_RECORD_HEADER            201    /* Adata record header */

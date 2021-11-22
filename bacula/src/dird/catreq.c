@@ -780,6 +780,18 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
          len = CRYPTO_DIGEST_SHA512_SIZE;
          type = CRYPTO_DIGEST_SHA512;
          break;
+      case STREAM_XXHASH64_DIGEST:
+         len = CRYPTO_DIGEST_XXHASH64_SIZE;
+         type = CRYPTO_DIGEST_XXHASH64;
+         break;
+      case STREAM_XXH3_64_DIGEST:
+         len = CRYPTO_DIGEST_XXH3_64_SIZE;
+         type = CRYPTO_DIGEST_XXH3_64;
+         break;
+      case STREAM_XXH3_128_DIGEST:
+         len = CRYPTO_DIGEST_XXH3_128_SIZE;
+         type = CRYPTO_DIGEST_XXH3_128;
+         break;
       default:
          /* Never reached ... */
          Jmsg(jcr, M_ERROR, 0, _("Catalog error updating file digest. Unsupported digest stream type: %d"),

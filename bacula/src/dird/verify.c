@@ -841,6 +841,15 @@ void get_attributes_and_compare_to_catalog(JCR *jcr, JobId_t JobId)
             case '3':                 /* compare SHA512 */
                do_Digest = CRYPTO_DIGEST_SHA512;
                break;
+            case '6':                 /* compare XXHASH64 */
+               do_Digest = CRYPTO_DIGEST_XXHASH64;
+               break;
+            case '7':                 /* compare XXH3_64 */
+               do_Digest = CRYPTO_DIGEST_XXH3_64;
+               break;
+            case '8':                 /* compare XXH3_128 */
+               do_Digest = CRYPTO_DIGEST_XXH3_128;
+               break;
             case ':':
             case 'V':
             default:

@@ -65,4 +65,8 @@
 #define FO_OFFSETS       (1<<30)      /* Keep I/O file offsets */
 #define FO_DEDUPLICATION (1ULL<<31)   /* Do deduplication */
 
+#define FO_XXHASH64      (1ULL<<32)   /* Do XXHASH64 checksum */
+#define FO_XXH3_64       (1ULL<<33)   /* Do XXH3_H64 checksum */
+#define FO_XXH3_128      (1ULL<<34)   /* Do XXH3_128 checksum */
+
 #endif /* __BFILEOPTSS_H */

@@ -238,6 +238,18 @@ static int verify_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       } else if (ff_pkt->flags & FO_SHA512) {
          digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA512);
          digest_stream = STREAM_SHA512_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXHASH64) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXHASH64);
+         digest_stream = STREAM_XXHASH64_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXH3_64) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_64);
+         digest_stream = STREAM_XXH3_64_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXH3_128) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_128);
+         digest_stream = STREAM_XXH3_128_DIGEST;
       }
 
       /* Did digest initialization fail? */
@@ -246,7 +258,7 @@ static int verify_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
               stream_to_ascii(digest_stream));
       }
 
-      /* compute MD5 or SHA1 hash */
+      /* compute MD5 or SHA??? or XXH??? hash */
       if (digest) {
          char md[CRYPTO_DIGEST_MAX_SIZE];
          uint32_t size;

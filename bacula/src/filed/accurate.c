@@ -405,6 +405,18 @@ static int check_checksum_diff(JCR *jcr, FF_PKT *ff_pkt, CurFile *elt)
       } else if (ff_pkt->flags & FO_SHA512) {
          digest = crypto_digest_new(jcr, CRYPTO_DIGEST_SHA512);
          digest_stream = STREAM_SHA512_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXHASH64) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXHASH64);
+         digest_stream = STREAM_XXHASH64_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXH3_64) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_64);
+         digest_stream = STREAM_XXH3_64_DIGEST;
+
+      } else if (ff_pkt->flags & FO_XXH3_128) {
+         digest = crypto_digest_new(jcr, CRYPTO_DIGEST_XXH3_128);
+         digest_stream = STREAM_XXH3_128_DIGEST;
       }
 
       /* Did digest initialization fail? */
@@ -631,6 +643,9 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
       case '1':                /* compare SHA1 */
       case '2':                /* compare SHA256 */
       case '3':                /* compare SHA512 */
+      case '6':                /* compare XXHASH64 */
+      case '7':                /* compare XXH3_64 */
+      case '8':                /* compare XXH3_128 */
          if (ff_pkt->type != FT_LNKSAVED &&
                (S_ISREG(ff_pkt->statp.st_mode) &&
                 ff_pkt->flags & (FO_MD5|FO_SHA1|FO_SHA256|FO_SHA512))) {

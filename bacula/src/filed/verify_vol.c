@@ -152,7 +152,10 @@ void v_ctx::scan_fileset()
          if ((strchr(fo->VerifyOpts, '1') != NULL) ||
              (strchr(fo->VerifyOpts, '2') != NULL) ||
              (strchr(fo->VerifyOpts, '3') != NULL) ||
-             (strchr(fo->VerifyOpts, '5') != NULL))
+             (strchr(fo->VerifyOpts, '5') != NULL) ||
+             (strchr(fo->VerifyOpts, '6') != NULL) ||
+             (strchr(fo->VerifyOpts, '7') != NULL) ||
+             (strchr(fo->VerifyOpts, '8') != NULL))
          {
             check_chksum = true;
          } 
@@ -171,6 +174,18 @@ void v_ctx::scan_fileset()
          }
          if (fo->flags & FO_SHA512) {
             digesttype = CRYPTO_DIGEST_SHA512;
+            return;
+         }
+         if (fo->flags & FO_XXHASH64) {
+            digesttype = CRYPTO_DIGEST_XXHASH64;
+            return;
+         }
+         if (fo->flags & FO_XXH3_64) {
+            digesttype = CRYPTO_DIGEST_XXH3_64;
+            return;
+         }
+         if (fo->flags & FO_XXH3_128) {
+            digesttype = CRYPTO_DIGEST_XXH3_128;
             return;
          }
       }
@@ -506,6 +521,21 @@ void do_verify_volume(JCR *jcr)
       case STREAM_SHA512_DIGEST:
          bin_to_base64(digest, sizeof(digest), (char *)bmsg->rbuf, CRYPTO_DIGEST_SHA512_SIZE, true);
          digest_code = "SHA512";
+         break;
+
+      case STREAM_XXHASH64_DIGEST:
+         bin_to_base64(digest, sizeof(digest), (char *)bmsg->rbuf, CRYPTO_DIGEST_XXHASH64_SIZE, true);
+         digest_code = "XXHASH64";
+         break;
+
+      case STREAM_XXH3_64_DIGEST:
+         bin_to_base64(digest, sizeof(digest), (char *)bmsg->rbuf, CRYPTO_DIGEST_XXH3_64_SIZE, true);
+         digest_code = "XXH3_64";
+         break;
+
+      case STREAM_XXH3_128_DIGEST:
+         bin_to_base64(digest, sizeof(digest), (char *)bmsg->rbuf, CRYPTO_DIGEST_XXH3_128_SIZE, true);
+         digest_code = "XXH3_128";
          break;
 
       default:
