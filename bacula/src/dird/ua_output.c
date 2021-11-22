@@ -737,8 +737,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                   return 1;
                }
 
-            } else if ((strcasecmp(ua->argk[j], NT_("objectid")) == 0) &&
-                        ua->argv[j]) {
+            } else if ((strcasecmp(ua->argk[j], NT_("objectid")) == 0) && ua->argv[j]) {
                if (is_a_number(ua->argv[j])) {
                   obj_r.ObjectId = str_to_uint64(ua->argv[j]);
                } else {
@@ -746,24 +745,31 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                   return 1;
                }
 
-            } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
+            } else if (strcasecmp(ua->argk[j], NT_("client")) == 0 && ua->argv[j]) {
                if (!acl_access_ok(ua, Client_ACL, ua->argk[j])) {
                   ua->error_msg(_("Access to Client=%s not authorized.\n"), ua->argv[j]);
                   return 0;
                }
                bstrncpy(obj_r.ClientName, ua->argv[j], sizeof(obj_r.ClientName));
 
-            } else if (strcasecmp(ua->argk[j], NT_("name")) == 0) {
+            } else if (strcasecmp(ua->argk[j], NT_("name")) == 0 && ua->argv[j]) {
                bstrncpy(obj_r.ObjectName, ua->argv[j], sizeof(obj_r.ObjectName));
 
-            } else if (strcasecmp(ua->argk[j], NT_("type")) == 0) {
+            } else if (strcasecmp(ua->argk[j], NT_("type")) == 0 && ua->argv[j]) {
                bstrncpy(obj_r.ObjectType, ua->argv[j], sizeof(obj_r.ObjectType));
 
-            } else if (strcasecmp(ua->argk[j], NT_("category")) == 0) {
+            } else if (strcasecmp(ua->argk[j], NT_("category")) == 0 && ua->argv[j]) {
                bstrncpy(obj_r.ObjectCategory, ua->argv[j], sizeof(obj_r.ObjectCategory));
 
-            } else if (strcasecmp(ua->argk[j], NT_("status")) == 0) {
-               obj_r.ObjectStatus = (int32_t)ua->argv[j][0];
+            } else if (strcasecmp(ua->argk[j], NT_("status")) == 0 && ua->argv[j]) {
+               int32_t status = (int32_t)ua->argv[j][0];
+               if ((status >= 'a' && status <= 'z') ||
+                   (status >= 'A' && status <= 'Z')) {
+                  obj_r.ObjectStatus = (int32_t)ua->argv[j][0];
+               } else {
+                  ua->error_msg(_("Invalid status argument\n"));
+                  return 1;
+               }
             } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
                obj_r.limit = atoi(ua->argv[j]);
 
