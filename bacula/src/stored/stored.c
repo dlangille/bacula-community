@@ -434,6 +434,16 @@ static int check_resources()
       OK = false;
    }
 
+   foreach_res(device, R_DEVICE) {
+      if (device->max_volume_size && (device->max_volume_size < 1024*1024)) {
+         Jmsg(NULL, M_FATAL, 0,
+               _("Invalid (too small) MaximumVolumeSize: %llu for device: %s. "
+                 "MaxVolSize should be bigger or equal to 1048576 bytes\n"),
+               device->max_volume_size, device->hdr.name);
+         OK = false;
+      }
+   }
+
    if (me && !me->messages) {
       me->messages = (MSGS *)GetNextRes(R_MSGS, NULL);
       if (!me->messages) {
