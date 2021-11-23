@@ -77,7 +77,7 @@ check_two_logs
 rm -rf ${cwd}/build/src/xxtestdir
 check_restore_diff
 
-grep '/xxtestdir' $tmp/log3.out > /dev/null
+grep 'Skipping ignored directory /xxtestdir' $tmp/log3.out > /dev/null
 if [ $? = 0 ]; then
     print_debug "ERROR: Should not see xxtestdir in estimate output"
     bstat=2
@@ -91,13 +91,13 @@ if [ $nb != 2 ]; then
     bstat=2
 fi
 
-grep $rscripts $tmp/log3.out > /dev/null
+grep 'Skipping ignored directory $rscripts' $tmp/log3.out > /dev/null
 if [ $? = 0 ]; then
     print_debug "ERROR: Should not $rscripts in estimate output"
     bstat=2
 fi
 
-grep $conf $tmp/log3.out > /dev/null
+grep 'Skipping ignored directory $conf' $tmp/log3.out > /dev/null
 if [ $? = 0 ]; then
     print_debug "ERROR: Should not $conf in estimate output"
     bstat=2
