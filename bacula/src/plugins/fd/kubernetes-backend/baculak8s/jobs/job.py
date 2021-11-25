@@ -52,6 +52,9 @@ class Job(metaclass=ABCMeta):
 
     def _start(self, expected_start_packet):
         self._read_start(expected_start_packet, onError=self._abort)
+        if self._params.get('level', 'F') != 'F':
+            logging.error("Unsupported backup level. Doing FULL backup.")
+            self._io.send_warning("Unsupported backup level. Doing FULL backup.")
         self._connect()
         self._io.send_eod()
 
