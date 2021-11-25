@@ -1,0 +1,369 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2015 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+# Attempt to backup and restore Kubernetes objects including namespaces and
+# persistent volumes configuration using Kubernetes plugin
+#
+#  The test assumes you have a working K8S cluster available with enought
+#  resources to handle test and a available "plugintest" namespace.
+#
+
+# $ kubectl apply -f plugintest.yaml
+# namespace/plugintest created
+# secret/plugintest-secrets created
+# configmap/plugintest-configmap created
+# service/plugintest-subdomain created
+# service/plugintest-nginx-service created
+# persistentvolumeclaim/plugintest-persistent-volume-claim created
+# pod/plugintest1 created
+# pod/plugintest2 created
+# replicaset.apps/plugintest-frontend created
+# deployment.apps/plugintest-nginx-deployment created
+# statefulset.apps/plugintest-nginx-web created
+# $ kubectl -n plugintest get pods -o wide
+# NAME                                           READY   STATUS    RESTARTS   AGE     IP          NODE                                     NOMINATED NODE   READINESS GATES
+# plugintest-frontend-twqkj                      1/1     Running   0          3m33s   10.0.2.30   gke-c-j6f8g-default-pool-5892648d-g32p   <none>           <none>
+# plugintest-frontend-w5z6s                      1/1     Running   0          3m33s   10.0.1.26   gke-c-j6f8g-default-pool-5892648d-50s4   <none>           <none>
+# plugintest-frontend-zvl98                      1/1     Running   0          3m33s   10.0.0.41   gke-c-j6f8g-default-pool-5892648d-3f8l   <none>           <none>
+# plugintest-nginx-deployment-557d8579b5-9r4z4   1/1     Running   0          3m32s   10.0.0.42   gke-c-j6f8g-default-pool-5892648d-3f8l   <none>           <none>
+# plugintest-nginx-deployment-557d8579b5-dmn4f   1/1     Running   0          3m32s   10.0.1.27   gke-c-j6f8g-default-pool-5892648d-50s4   <none>           <none>
+# plugintest-nginx-deployment-557d8579b5-kmbjs   1/1     Running   0          3m32s   10.0.0.43   gke-c-j6f8g-default-pool-5892648d-3f8l   <none>           <none>
+# plugintest-nginx-web-0                         1/1     Running   0          3m32s   10.0.1.28   gke-c-j6f8g-default-pool-5892648d-50s4   <none>           <none>
+# plugintest-nginx-web-1                         1/1     Running   0          3m9s    10.0.2.32   gke-c-j6f8g-default-pool-5892648d-g32p   <none>           <none>
+# plugintest-nginx-web-2                         1/1     Running   0          2m46s   10.0.0.44   gke-c-j6f8g-default-pool-5892648d-3f8l   <none>           <none>
+# plugintest1                                    1/1     Running   0          3m34s   10.0.2.31   gke-c-j6f8g-default-pool-5892648d-g32p   <none>           <none>
+# plugintest2                                    1/1     Running   0          3m33s   10.0.2.29   gke-c-j6f8g-default-pool-5892648d-g32p   <none>           <none>
+# $ kubectl -n plugintest get svc -o wide
+# NAME                       TYPE        CLUSTER-IP    EXTERNAL-IP   PORT(S)    AGE     SELECTOR
+# plugintest-nginx-service   ClusterIP   None          <none>        80/TCP     3m43s   app=plugintest-nginx-web
+# plugintest-subdomain       ClusterIP   10.3.244.64   <none>        1234/TCP   3m43s   name=plugintest
+# $ kubectl -n plugintest get pvc -o wide
+# NAME                                         STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+# plugintest-persistent-volume-claim           Bound    pvc-ca02fc8e-dea9-11e9-8dea-42010a8e0025   1Gi        RWO            standard       6m18s
+# plugintest-www-data-plugintest-nginx-web-0   Bound    pvc-cb881652-dea9-11e9-8dea-42010a8e0025   1Gi        RWO            standard       6m16s
+# plugintest-www-data-plugintest-nginx-web-1   Bound    pvc-d93ae99d-dea9-11e9-8dea-42010a8e0025   1Gi        RWO            standard       5m53s
+# plugintest-www-data-plugintest-nginx-web-2   Bound    pvc-e690586f-dea9-11e9-8dea-42010a8e0025   1Gi        RWO            standard       5m30s
+# $ kubectl -n plugintest get rs -o wide
+# NAME                                     DESIRED   CURRENT   READY   AGE     CONTAINERS                 IMAGES                                 SELECTOR
+# plugintest-frontend                      3         3         3       6m56s   plugintest-frontend-test   gcr.io/google_samples/gb-frontend:v3   tier=frontend
+# plugintest-nginx-deployment-557d8579b5   3         3         3       6m55s   plugintest-nginx           nginx:1.7.9                            app=plugintest-deployment,pod-template-hash=557d8579b5
+# $ kubectl -n plugintest get sts -o wide
+# NAME                   READY   AGE   CONTAINERS             IMAGES
+# plugintest-nginx-web   3/3     7m    plugintest-nginx-web   k8s.gcr.io/nginx-slim:0.8
+
+TestName="kubernetes-plugin-test"
+JobName="PluginKubernetesTest"
+FileSetName="TestPluginKubernetesSet"
+. scripts/functions
+. scripts/regress-utils.sh
+
+# export debug=1
+scripts/cleanup
+scripts/copy-kubernetes-plugin-confs
+printf "Preparing ... "
+
+# export requires variables
+setup_plugin_param "kubernetes:"
+if [ "x$KUBECONFIG" != "x" ]
+then
+   export KUBECONFIG
+   LPLUG="${LPLUG} config=\"$KUBECONFIG\""
+fi
+
+mkdir -p ${tmp}
+
+# check the requirements
+KNODES=`${KUBECTL} get nodes | grep Ready | wc -l`
+if [ $KNODES -eq 0 ]
+then
+   echo "A working Kubernetes cluster required!"
+   exit 1
+fi
+
+# check if plugintest namespace exist
+KPLUGTEST=`${KUBECTL} get ns | grep "^plugintest " | wc -l`
+if [ $KPLUGTEST -ne 0 -a "x$1" != "xforce" ]
+then
+   echo "Namespace \"plugintest\" exist on cluster and no force option specified!"
+   exit 1
+fi
+
+# prepare data
+printf "apply data ... "
+if [ $KPLUGTEST -ne 0 ]
+then
+   ${KUBECTL} delete ns plugintest 2>&1 > ${tmp}/kube.log
+fi
+${KUBECTL} apply -f scripts/kubernetes-plugintest.yaml 2>&1 >> ${tmp}/kube.log
+
+i=0
+SPIN=('-' '\\' '|' '/')
+printf "waiting to ready ...  "
+while true
+do
+   kstat=`${KUBECTL} -n plugintest get pods -o go-template='{{range .items}}{{.status.phase}}{{"\n"}}{{end}}' | grep -v Running | wc -l`
+   if [ $kstat -eq 0 ]
+   then
+      break
+   fi;
+   w=1
+   printf "\b${SPIN[(($i % 4))]}"
+   if [ $i -eq 600 ]
+   then
+      echo "Timeout waiting for test data to populate. Cannot continue!"
+      exit 1
+   fi
+   ((i++))
+   sleep 1
+done
+printf "\b"
+
+# wait abit to objects to populate.
+sleep 30
+
+# get variables
+printf "variables ... "
+${KUBECTL} get ns -o name > ${tmp}/allns.log
+${KUBECTL} get pv -o name > ${tmp}/allpv.log
+PV1=`${KUBECTL} -n plugintest get pvc/plugintest-persistent-volume-claim -o go-template='{{.spec.volumeName}}'`
+
+# prepare kubernetes backend
+export PLUGIN_WORKING=${cwd}/working
+
+echo "PV1: $PV1" > ${tmp}/objinfo.log
+
+out_sed="${tmp}/sed_tmp"
+echo "s%@LPLUG@%${LPLUG}%" > ${out_sed}
+echo "s%@PV1@%${PV1}%" >> ${out_sed}
+
+sed -i -f ${out_sed} ${conf}/bacula-dir.conf
+
+echo "done"
+
+start_test
+
+JOBID=1
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log.out
+label storage=File1 pool=Default volume=TestVolume001
+@#setdebug dir level=500 trace=1
+quit
+END_OF_DATA
+
+run_bacula
+
+# special case for all objects
+do_regress_estimate_test
+F=0
+RET=`grep "/@kubernetes/" ${cwd}/tmp/elog.out | grep "yaml" | wc -l`
+# 11+4+4+2+3
+RES=24
+echo "RET: $RET RES: $RES" >> ${tmp}/elog.out
+if [ $RET -le $RES ]
+then
+   F=1
+   ((estat++))
+fi
+regress_test_result ${F}
+
+# then estimate with data
+TEST=1
+do_regress_estimate_test ${TEST}
+F=0
+RET=`grep "/@kubernetes/namespaces/" ${tmp}/elog${TEST}.out | grep "yaml" | wc -l`
+RES=25
+PVRET=`grep "/@kubernetes/persistentvolumes/" ${tmp}/elog${TEST}.out | grep "yaml" | wc -l`
+echo "RET: $RET RES: $RES" PVRET: $PVRET >> ${cwd}/tmp/elog${TEST}.out
+if [ $RET -lt $RES -o $PVRET -eq 0 ]
+then
+   F=1
+   ((estat++))
+fi
+regress_test_result ${F}
+
+((TEST++))
+do_regress_estimate_test ${TEST}
+F=0
+RET=`grep "/@kubernetes/" ${tmp}/elog${TEST}.out | grep "yaml" | wc -l`
+RES=2
+echo "RET: $RET RES: $RES" >> ${cwd}/tmp/elog${TEST}.out
+if [ $RET -lt $RES ]
+then
+   F=1
+   ((estat++))
+fi
+regress_test_result ${F}
+
+((TEST++))
+do_regress_estimate_test ${TEST}
+F=0
+RET=`grep "/@kubernetes/" ${tmp}/elog${TEST}.out | grep "yaml" | wc -l`
+RES=26
+echo "RET: $RET RES: $RES" >> ${cwd}/tmp/elog${TEST}.out
+if [ $RET -lt $RES ]
+then
+   F=1
+   ((estat++))
+fi
+regress_test_result ${F}
+
+
+# listing tests goes to estimate tests
+TEST=1
+do_regress_listing_test ${TEST} "/"
+F=0
+RET=`grep "^drwxr-xr-x" ${cwd}/tmp/llog${TEST}.out | wc -l`
+echo "RET: $RET" >> ${cwd}/tmp/llog${TEST}.out
+if [ $RET -ne 3 ]
+then
+   F=1
+   estat=$((estat+1))
+fi
+regress_test_result ${F}
+
+allns=`cat ${tmp}/allns.log | wc -l`
+((TEST++))
+do_regress_listing_test ${TEST} "namespaces"
+F=0
+RET=`grep "^drwxr-xr-x" ${cwd}/tmp/llog${TEST}.out | wc -l`
+echo "RET: $RET ALLNS: ${allns}" >> ${cwd}/tmp/llog${TEST}.out
+if [ $RET -ne ${allns} ]
+then
+   F=1
+   estat=$((estat+1))
+fi
+regress_test_result ${F}
+
+allpv=`cat ${tmp}/allpv.log | wc -l`
+((TEST++))
+do_regress_listing_test ${TEST} "persistentvolumes"
+F=0
+RET=`grep "^-rw-r-----" ${cwd}/tmp/llog${TEST}.out | wc -l`
+echo "RET: $RET ALLPV: ${allpv}" >> ${cwd}/tmp/llog${TEST}.out
+if [ $RET -ne ${allpv} ]
+then
+   F=1
+   estat=$((estat+1))
+fi
+regress_test_result ${F}
+
+#
+# now do backups
+#
+bstat=0
+# first backup with data
+for TEST in `seq 1 3`
+do
+   do_regress_backup_test ${TEST}
+   check_regress_backup_statusT ${TEST}
+   F=$?
+   regress_test_result ${F}
+done
+
+# now, backup with warnings
+for TEST in `seq 11 13`
+do
+   do_regress_backup_test ${TEST}
+   check_regress_backup_statusW ${TEST}
+   F=$?
+   regress_test_result ${F}
+done
+
+# now, backup failed to test
+for TEST in `seq 21 22`
+do
+   do_regress_backup_test ${TEST}
+   check_regress_backup_statusE ${TEST}
+   F=$?
+   regress_test_result ${F}
+done
+
+#do_regress_backup_test 1 "incremental"
+#check_regress_backup_statusT 1
+#F=$?
+#regress_test_result ${F}
+
+# now remove some objects
+dstat=0
+
+TEST=1
+${KUBECTL} -n plugintest delete cm/plugintest-configmap 2>&1 > ${tmp}/rlog${TEST}.out
+do_regress_restore_test ${TEST} 1 "" "file=/@kubernetes/namespaces/plugintest/configmaps/plugintest-configmap.yaml"
+check_regress_restore_statusT ${TEST}
+F=$?
+# check if object restored on kubernetes
+${KUBECTL} -n plugintest get cm/plugintest-configmap 2>&1 >> ${tmp}/rlog${TEST}.out
+RET=`${KUBECTL} -n plugintest get cm/plugintest-configmap -o go-template='{{.metadata.name}}{{"\n"}}' 2>/dev/null | wc -l`
+echo "RET: $RET" >> ${tmp}/rlog${TEST}.out
+if [ $RET -ne 1 ]
+then
+   F=1
+   dstat=$((dstat+1))
+fi
+regress_test_result ${F}
+
+((TEST++))
+${KUBECTL} -n plugintest delete secret/plugintest-secrets 2>&1 > ${tmp}/rlog${TEST}.out
+do_regress_restore_test ${TEST} 1 "" "file=/@kubernetes/namespaces/plugintest/secrets/plugintest-secrets.yaml"
+check_regress_restore_statusT ${TEST}
+F=$?
+# check if object restored on kubernetes
+${KUBECTL} -n plugintest get secret/plugintest-secrets 2>&1 >> ${tmp}/rlog${TEST}.out
+RET=`${KUBECTL} -n plugintest get secret/plugintest-secrets -o go-template='{{.metadata.name}}{{"\n"}}' 2>/dev/null | wc -l`
+echo "RET: $RET" >> ${tmp}/rlog${TEST}.out
+if [ $RET -ne 1 ]
+then
+   F=1
+   dstat=$((dstat+1))
+fi
+regress_test_result ${F}
+
+((TEST++))
+${KUBECTL} delete ns/plugintest 2>&1 > ${tmp}/rlog${TEST}.out
+do_regress_restore_test ${TEST} 1 "" "select all"
+check_regress_restore_statusT ${TEST}
+F=$?
+# check if object restored on kubernetes, we have to wait until ready
+W=0
+if [ $F -eq 0 ]
+then
+   i=0
+   while true
+   do
+      kstat=`${KUBECTL} -n plugintest get pods -o go-template='{{range .items}}{{.status.phase}}{{"\n"}}{{end}}' | grep -v Running | wc -l`
+      if [ $kstat -eq 0 ]
+      then
+         break
+      fi;
+      if [ $i -eq 600 ]
+      then
+         echo "Timeout waiting for restore data to populate!"
+         W=1
+      fi
+      ((i++))
+      sleep 1
+   done
+fi
+if [ $W -eq 0 ]
+then
+   ${KUBECTL} -n plugintest get secret/plugintest-secrets 2>&1 >> ${tmp}/rlog${TEST}.out
+   RET=`${KUBECTL} -n plugintest get secret/plugintest-secrets -o go-template='{{.metadata.name}}{{"\n"}}' 2>/dev/null | wc -l`
+   echo "RET: $RET" >> ${tmp}/rlog${TEST}.out
+   if [ $RET -ne 1 ]
+   then
+      F=1
+      dstat=$((dstat+1))
+   fi
+   regress_test_result ${F}
+fi
+
+
+stop_bacula
+end_test

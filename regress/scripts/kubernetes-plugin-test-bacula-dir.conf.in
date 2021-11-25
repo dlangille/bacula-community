@@ -286,7 +286,7 @@ Storage {
   Address = @hostname@                # N.B. Use a fully qualified name here
   SDPort = @sdport@
   Password = "ccV3lVTsQRsdIUGyab0N4sMDavui2hOBkmpBU0aQKOr9"
-  Device = FileStorage
+  Device = FileStorage1
   Media Type = File1
 }
 
