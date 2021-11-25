@@ -284,16 +284,19 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, smart_
    argc = parser.argc - 1;
    parargc = argc + count;
    /* first parameters from plugin command saved during backup */
-   for (int i = 1; i < parser.argc; i++) {
-      param = new POOL_MEM(PM_FNAME);     // TODO: change to POOL_MEM
+   for (int i = 1; i < parser.argc; i++)
+   {
+      param = new POOL_MEM(PM_FNAME);
       found = false;
 
       int k;
       /* check if parameter overloaded by restore parameter */
-      if ((k = check_ini_param(parser.argk[i])) != -1){
+      if ((k = check_ini_param(parser.argk[i])) != -1)
+      {
          found = true;
          DMSG1(ctx, DINFO, "parse_plugin_command: %s found in restore parameters\n", parser.argk[i]);
-         if (render_param(ctx, *param, ini.items[k].handler, parser.argk[i], ini.items[k].val) != bRC_OK){
+         if (render_param(ctx, *param, ini.items[k].handler, parser.argk[i], ini.items[k].val) != bRC_OK)
+         {
             delete(param);
             return bRC_Error;
          }
@@ -312,7 +315,7 @@ bRC METAPLUGIN::parse_plugin_command(bpContext *ctx, const char *command, smart_
          }
       }
       /* param is always ended with '\n' */
-      DMSG(ctx, DINFO, "Param: %s", param);
+      DMSG(ctx, DINFO, "Param: %s", param->c_str());
 
       /* scan for abort_on_error parameter */
       if (strcasecmp(parser.argk[i], "abort_on_error") == 0){
@@ -1981,39 +1984,49 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
    }
 
    sp->plugin_obj.path = fname.c_str();
+   sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;   // default success status
    DMSG0(ctx, DDEBUG, "perform_read_pluginobject()\n");
    // loop on plugin objects parameters from backend and EOD
-   while (true){
-      if (backend.ctx->read_command(ctx, cmd) > 0){
+   while (true)
+   {
+      if (backend.ctx->read_command(ctx, cmd) > 0)
+      {
          DMSG(ctx, DDEBUG, "read_command(3): %s\n", cmd.c_str());
-         if (scan_parameter_str(cmd, "PLUGINOBJ_CAT:", plugin_obj_cat)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_CAT:", plugin_obj_cat))
+         {
             DMSG1(ctx, DDEBUG, "category: %s\n", plugin_obj_cat.c_str());
             sp->plugin_obj.object_category = plugin_obj_cat.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_TYPE:", plugin_obj_type)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_TYPE:", plugin_obj_type))
+         {
             DMSG1(ctx, DDEBUG, "type: %s\n", plugin_obj_type.c_str());
             sp->plugin_obj.object_type = plugin_obj_type.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_NAME:", plugin_obj_name)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_NAME:", plugin_obj_name))
+         {
             DMSG1(ctx, DDEBUG, "name: %s\n", plugin_obj_name.c_str());
             sp->plugin_obj.object_name = plugin_obj_name.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_SRC:", plugin_obj_src)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_SRC:", plugin_obj_src))
+         {
             DMSG1(ctx, DDEBUG, "src: %s\n", plugin_obj_src.c_str());
             sp->plugin_obj.object_source = plugin_obj_src.c_str();
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_UUID:", plugin_obj_uuid)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_UUID:", plugin_obj_uuid))
+         {
             DMSG1(ctx, DDEBUG, "uuid: %s\n", plugin_obj_uuid.c_str());
             sp->plugin_obj.object_uuid = plugin_obj_uuid.c_str();
             continue;
          }
          POOL_MEM param(PM_NAME);
-         if (scan_parameter_str(cmd, "PLUGINOBJ_SIZE:", param)){
-            if (!size_to_uint64(param.c_str(), strlen(param.c_str()), &plugin_obj_size)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_SIZE:", param))
+         {
+            if (!size_to_uint64(param.c_str(), strlen(param.c_str()), &plugin_obj_size))
+            {
                // error in convert
                DMSG1(ctx, DERROR, "Cannot convert Plugin Object Size to integer! p=%s\n", param.c_str());
                JMSG1(ctx, M_ERROR, "Cannot convert Plugin Object Size to integer! p=%s\n", param.c_str());
@@ -2023,11 +2036,39 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
             sp->plugin_obj.object_size = plugin_obj_size;
             continue;
          }
-         if (scan_parameter_str(cmd, "PLUGINOBJ_COUNT:", param)){
+         if (scan_parameter_str(cmd, "PLUGINOBJ_COUNT:", param))
+         {
             uint32_t count = str_to_int64(param.c_str());
             DMSG1(ctx, DDEBUG, "count: %lu\n", count);
             sp->plugin_obj.count = count;
             continue;
+         }
+         if (scan_parameter_str(cmd, "PLUGINOBJ_STATUS:", param))
+         {
+            DMSG1(ctx, DDEBUG, "status: %s\n", param.c_str());
+            // OK, ERROR, WARNING, FATAL
+            if (bstrcmp(param.c_str(), "OK"))
+            {
+               sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;
+               continue;
+            }
+            if (bstrcmp(param.c_str(), "WARNING"))
+            {
+               sp->plugin_obj.status = PLUG_OBJ_STATUS_WARNING;
+               continue;
+            }
+            if (bstrcmp(param.c_str(), "ERROR"))
+            {
+               sp->plugin_obj.status = PLUG_OBJ_STATUS_ERROR;
+               continue;
+            }
+            if (bstrcmp(param.c_str(), "FATAL"))
+            {
+               sp->plugin_obj.status = PLUG_OBJ_STATUS_FATAL;
+               continue;
+            }
+            DMSG0(ctx, DDEBUG, "unknown status, setting error\n");
+            sp->plugin_obj.status = PLUG_OBJ_STATUS_ERROR;
          }
          /* error in protocol */
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
@@ -2041,8 +2082,6 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
          if (backend.ctx->is_eod()){
             /* no more plugin object params to backup */
             DMSG0(ctx, DINFO, "No more Plugin Object params from backend.\n");
-            // pluginobject = false;
-            // pluginobjectsent = true;
             objectsent = true;
             return bRC_OK;
          }
@@ -2431,8 +2470,19 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
    sp->statp.st_blksize = 4096;
    sp->statp.st_blocks = sp->statp.st_size / 4096 + 1;
 
-   DMSG3(ctx, DINFO, "TSDebug: %ld(at) %ld(mt) %ld(ct)\n",
-         sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
+   switch (sp->type)
+   {
+   case FT_REG:
+   case FT_DIREND:
+   case FT_LNK:
+   case FT_SPEC:
+      DMSG3(ctx, DINFO, "TSDebug: %ld(at) %ld(mt) %ld(ct)\n",
+            sp->statp.st_atime, sp->statp.st_mtime, sp->statp.st_ctime);
+      break;
+
+   default:
+      break;
+   }
 
    return bRC_OK;
 }

@@ -51,7 +51,7 @@ TESTMETAPLUGINBACKENDOBJ = $(TESTMETAPLUGINBACKENDSRC:.c=.lo)
 # COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(ISO8601OBJ) $(EXECPROGOBJ)
 COMMONPLUGINOBJ = $(PLUGINLIBSOBJ) $(PTCOMMOBJ) $(METAPLUGINOBJ) $(PLUGINCLASSOBJ) $(PLUGINBASEOBJ)
 # COMMONPLUGINTESTS = iso8601_test
-COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test
+COMMONPLUGINTESTS = pluginlib_test smartalist_test smartptr_test commctx_test smartlock_test iso8601_test
 
 .c.lo:
 	@echo "Compiling $< ..."
