@@ -116,6 +116,10 @@ LIB_OBJS = \
 	$(OBJDIR)/flist.o \
 	$(OBJDIR)/bcrc32.o \
 	$(OBJDIR)/events.o \
+	$(OBJDIR)/cJSON.o \
+	$(OBJDIR)/cJSON_Utils.o \
+	$(OBJDIR)/xxhash.o \
+	$(OBJDIR)/xxh_x86dispatch.o \
 	$(EXTRA_LIB_OBJS)
 
 DLL_OBJS = \
@@ -189,6 +193,15 @@ $(OBJDIR)/%.o: %.c
 	@echo "Compiling $<"
 	$(call checkdir,$@)
 	$(ECHO_CMD)$(CXX) -D$(DLL_DEFINE) $(CFLAGS) -c $< -o $@
+
+# use -fno-asynchronous-unwind-tables to compile xxh_x86dispatch.c as "suggested" 
+# https://review.spdk.io/gerrit/plugins/gitiles/spdk/rocksdb/+/eeb3cf3f58385eac17654fcfeaf288e568673db8/CMakeLists.txt
+# https://github.com/pymc-devs/pymc/issues/4749
+# maybe there is something better to do
+$(OBJDIR)/xxh_x86dispatch.o: xxh_x86dispatch.c
+	@echo "Compiling $<"
+	$(call checkdir,$@)
+	$(ECHO_CMD)$(CXX) -fno-asynchronous-unwind-tables -D$(DLL_DEFINE) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.cpp
 	@echo "Compiling $<"
