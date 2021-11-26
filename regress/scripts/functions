@@ -648,14 +648,15 @@ EOF
           if [ $? -ne 0 ]; then
              echo "ERROR: Unable to validate json output in $tmp/1.json";
              cat $tmp/1.json
-             exit 1
+             estat=1
+             break
           else
               nb=`expr $nb + 1`
           fi
       done < $tmp/json.$$.list
       if [ $nb = 0 ]; then
           echo "ERROR: Unable to find json output in $tmp/json.$$.out"
-          exit 1
+          estat=1
       fi
    fi
    if [ "$CHECK_OPENFILE" != 0 ]; then
@@ -681,7 +682,7 @@ EOF
             echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
             echo "     Files still open!!" >>test.out
             echo " "
-            exit 1
+            estat=1
          fi
       fi
    fi
@@ -696,7 +697,7 @@ EOF
          echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     JobMedia is corrupted" >>test.out
          echo " "
-         exit 1
+         estat=1
       fi
    fi
    if [ "$CHECK_ENCRYPTION" != 0 -a "$FORCE_ENCRYPTION" = yes ]; then
@@ -710,7 +711,7 @@ EOF
          echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     Encryption problem" >>test.out
          echo " "
-         exit 1
+         estat=1
       fi
    fi
    if [ "$CHECK_JSON" != 0 ]; then
@@ -724,7 +725,7 @@ EOF
          echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     JSON Data is incorrect" >>test.out
          echo " "
-         exit 1
+         estat=1
       fi
    fi
    if [ "x$FORCE_CLOUD" = xyes ]; then
@@ -763,7 +764,7 @@ EOF
       echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
       echo "     SCSI lock still set" >>test.out
       echo " "
-      exit 1
+      estat=1
    fi
 }
 
