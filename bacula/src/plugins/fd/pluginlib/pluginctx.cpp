@@ -986,7 +986,7 @@ namespace pluginlib
       // extract original plugin context, basically it should be `this`
       PLUGINCLASS *pctx = (PLUGINCLASS *)ctx->pContext;
       // this ensures that handlePluginEvent is thread safe for extracted pContext
-      // smart_lock<smart_mutex> lg(&pctx->mutex); - removed on request
+      // lock_guard lg(&pctx->mutex); - removed on request
 
       if (job_cancelled) {
          return bRC_Error;
@@ -1931,7 +1931,7 @@ namespace pluginlib
 
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2214,7 +2214,7 @@ namespace pluginlib
 
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2316,7 +2316,7 @@ namespace pluginlib
 
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2428,7 +2428,7 @@ namespace pluginlib
    {
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2500,7 +2500,7 @@ namespace pluginlib
 
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2618,7 +2618,7 @@ namespace pluginlib
    {
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (job_cancelled) {
             return bRC_Error;
          }
@@ -2680,7 +2680,7 @@ namespace pluginlib
       if ((!CUSTOMNAMESPACE && isourpluginfname(PLUGINPREFIX, fname)) || (CUSTOMNAMESPACE && isourpluginfname(PLUGINNAMESPACE, fname)))
       {
          // synchronie access to job_cancelled variable
-         // smart_lock<smart_mutex> lg(&mutex); - removed on request
+         // lock_guard lg(&mutex); - removed on request
          if (!job_cancelled) {
             if (::checkFile != NULL) {
                return ::checkFile(ctx, fname);

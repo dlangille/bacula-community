@@ -1207,7 +1207,7 @@ bRC METAPLUGIN::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    // extract original plugin context, basically it should be `this`
    METAPLUGIN *pctx = (METAPLUGIN *)ctx->pContext;
    // this ensures that handlePluginEvent is thread safe for extracted pContext
-   // smart_lock<smart_mutex> lg(&pctx->mutex); - removed on request
+   // lock_guard lg(&pctx->mutex); - removed on request
 
    if (job_cancelled) {
       return bRC_Error;
@@ -2177,7 +2177,7 @@ bRC METAPLUGIN::pluginIO(bpContext *ctx, struct io_pkt *io)
 
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2507,7 +2507,7 @@ bRC METAPLUGIN::endBackupFile(bpContext *ctx)
 
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2611,7 +2611,7 @@ bRC METAPLUGIN::createFile(bpContext *ctx, struct restore_pkt *rp)
 
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2723,7 +2723,7 @@ bRC METAPLUGIN::handleXACLdata(bpContext *ctx, struct xacl_pkt *xacl)
 {
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2795,7 +2795,7 @@ bRC METAPLUGIN::queryParameter(bpContext *ctx, struct query_pkt *qp)
 
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2913,7 +2913,7 @@ bRC METAPLUGIN::metadataRestore(bpContext *ctx, struct meta_pkt *mp)
 {
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (job_cancelled) {
          return bRC_Error;
       }
@@ -2975,7 +2975,7 @@ bRC METAPLUGIN::checkFile(bpContext * ctx, char *fname)
    if ((!CUSTOMNAMESPACE && isourpluginfname(PLUGINPREFIX, fname)) || (CUSTOMNAMESPACE && isourpluginfname(PLUGINNAMESPACE, fname)))
    {
       // synchronie access to job_cancelled variable
-      // smart_lock<smart_mutex> lg(&mutex); - removed on request
+      // lock_guard lg(&mutex); - removed on request
       if (!job_cancelled) {
          if (::checkFile != NULL) {
             return ::checkFile(ctx, fname);
@@ -3020,7 +3020,7 @@ bRC backendctx_termination_func(PTCOMM *ptcomm, void *cp)
  */
 void METAPLUGIN::terminate_backends_oncancel(bpContext *ctx)
 {
-   // smart_lock<smart_mutex> lg(&mutex); - removed on request
+   // lock_guard lg(&mutex); - removed on request
    if (job_cancelled) {
       DMSG0(ctx, DINFO, "Ensure backend termination on cancelled job\n");
       backend.foreach_command_status(backendctx_termination_func, ctx);
