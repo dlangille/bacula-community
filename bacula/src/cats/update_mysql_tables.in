@@ -567,6 +567,7 @@ USE ${db_name};
 
 CREATE TABLE MetaEmail
 (
+    EmailPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
     EmailTenant     		TINYTEXT,
     EmailOwner       		TINYTEXT,
     EmailId          		TINYTEXT,
@@ -604,6 +605,7 @@ CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
 
 CREATE TABLE MetaAttachment
 {
+    AttachmentPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
     AttachmentTenant            TINYTEXT,
     AttachmentOwner    		TINYTEXT,
     AttachmentName     		TEXT,

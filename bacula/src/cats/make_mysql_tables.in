@@ -36,9 +36,10 @@ USE ${db_name};
 
 CREATE TABLE MetaEmail
 (
-    EmailTenant     		TINYBLOB,
-    EmailOwner       		TINYBLOB,
-    EmailId          		TINYBLOB,
+    EmailPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
+    EmailTenant     		TINYTEXT,
+    EmailOwner       		TINYTEXT,
+    EmailId          		TINYTEXT,
     EmailTime         		DATETIME,
     EmailTags         		BLOB,
     EmailSubject      		BLOB,
@@ -75,9 +76,12 @@ CREATE INDEX meta_emailfileindex_jobid on MetaEmail (Jobid, FileIndex);
 
 CREATE TABLE MetaAttachment
 {
-    AttachmentName     		BLOB,
-    AttachmentEmailId  		TINYBLOB,
-    AttachmentContentType 	TINYBLOB,
+    AttachmentPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
+    AttachmentTenant            TINYTEXT,
+    AttachmentOwner    		TINYTEXT,
+    AttachmentName     		TEXT,
+    AttachmentEmailId  		TINYTEXT,
+    AttachmentContentType 	TINYTEXT,
     AttachmentIsInline 		SMALLINT,
     AttachmentSize	 		INTEGER,
     Plugin      			TINYBLOB,
