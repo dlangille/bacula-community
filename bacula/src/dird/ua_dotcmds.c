@@ -2750,6 +2750,7 @@ enum {
 
 /* Search over our different tables
  *
+ * text=xxx [category=client|job|volume]
  * {
  *   "error": 0,
  *   "errmsg", "",
