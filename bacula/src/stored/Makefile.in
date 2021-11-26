@@ -356,7 +356,7 @@ acsls-changer.o: acsls-changer.c
 # this is a dirty fix for linking problem of the ACSLS static libraries. ACSLS libs are not compatible
 # with libtool.
 #
-# libdir points to /opt/bacula/lib, but libtools decides to store libraries to
+# libdir points to /opt/bacula/lib, but libtool decides to store libraries to
 # /opt/bacula/lib64 on some platforms. We can add the two directories in rpath
 # to workaround the problem.
 acsls-changer: Makefile $(ACSLSCHGOBJS)
