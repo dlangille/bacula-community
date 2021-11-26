@@ -4,34 +4,55 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # this script is dedicated to be use as a base for throughput testing
-# no as a regress test to highlight bug 
-# Use the dedup-plugin to generate the data and store data to /dev/null
+# no as a regress test to highlight bug
+# the data are going to a dummy device /dev/null
 # use "CatalogFiles = no"
 #
-# XPARAM COMMCOMP=(yes|no)
-# set COMMCOMP=no to disable comm line compression
-# XPARAM TLSPSKENABLE=(yes|no)
-# set TLSPSKENABLE=no to disable TLS-PSK
-# XPARAM LARGECHUNK=(yes|no)
-# when using the test-dedup plugin, set LARGECHUNK=no to use 5Kb chunk instead
-# of 64K
-# XPARAM SOURCE=(dedupplugin|zero|urandom)
-# by default the dedup plugin (qis used to generate data stream, you can use
-# /dev/zero or /dev/urandom
-# the size are fixed to 64GB for dedup plugin and /dev/zero and 64MB for urandom
-# This is about 1min, change the "size=64G" in the stream0.dedup file
-# or count=XXX in the dd command
-# use it like this
-# - setup the variables
-# - use grep to get the values you want
-# - also use some for loop to run multiple test at one
-# COMMCOMP=no TLSPSKENABLE=no SOURCE=dedupplugin LARGECHUNK=yes REGRESS_DEBUG=1 \
+# XPARAM DATASIZE=(10G|5G|20G|100G)
+# the size of data to handle, to make the test short or long
+# XPARAM COMMCOMP=(no|yes)
+# set COMMCOMP=yes to enable comm line compression
+# XPARAM TLSPSKENABLE=(no|yes)
+# set TLSPSKENABLE=yes to enable TLS-PSK
+# XPARAM BLOCKCHECKSUM=(no|yes)
+# set BLOCKCHECKSUM to yes to enable crc32 block checksum in the volume
+# XPARAM CHUNKSIZE=(64K|1K|5K|16K|32K)
+# when using the test-dedup plugin, set the size of chunk from 1K to 64K
+# other values than the ones above can be used
+# XPARAM SIGNATURE=(no|MD5|SHA1|SHA256|SHA512|XXH64|XXH3_64|XXH3_128)
+# setup the file signature
+# XPARAM SOURCE=(sparse|dedupplugin|zero|urandom)
+# the source of the $DATASIZE data
+# - sparse create and use sparse file (the fastest)
+# - dedupplugin use the plugin of the same name to generate a stream of random
+#   chunk $CHUNKSIZE long. More useful when used with dedup because each chunk
+#   is handled individually and create a hash in the index.
+#   The data are random and it is faster than urandom
+# - /dev/zero or /dev/urandom use dd and bpipe (to have a control on the size)
+#  to read the file
+#
+# USAGE:
+# - the option by default give the fastest result (everything is disabled
+# by default)
+# - use grep to extract the values you want
+# - use some "for" loop to run multiple test at one
+# - set REGRESS_DEBUG=1 to get all the information
+# COMMCOMP=no TLSPSKENABLE=no SOURCE=dedupplugin REGRESS_DEBUG=1 \
 # tests/fast-nodisk-test 2>&1 | egrep \
-# "Elapsed time:|SD Bytes Written:|Rate:|Comm Line Compression:"
+# "Elapsed time:|SD Bytes Written:|Rate:|Comm Line Compression:|CPU USAGE"
 #
 # for t in yes no ; do TLSPSKENABLE=$t REGRESS_DEBUG=1 tests/fast-nodisk-test \
 # 2>&1 | egrep "Elapsed time:|SD Bytes Written:|Rate:|Comm Line Compression:" ; done
 #
+#The CPU USAGE line report the usage of each daemon
+# for example below you can see that (93% vs 31%) the FD is working 3X more
+# than the SD
+# that the SD is spending half its time in doing system stuff (11% vs 19%)
+# while the FD is more busy doing calculation (the SHA512) than IO
+#
+# == SETUP BLOCKCHECKSUM=no SIGNATURE=SHA512 TLSPSKENABLE=no COMMCOMP=no SOURCE=sparse
+# CPU USAGE FD utime=59% stime=34% total=93%
+# CPU USAGE SD utime=11% stime=19% total=31%
 
 TestName="fast-nodisk-test"
 JobName=DedupPluginTest
@@ -47,22 +68,46 @@ unset FORCE_DEDUP
 unset FORCE_ALIGNED
 unset FORCE_CLOUD
 
-LARGECHUNK=${LARGECHUNK:-yes}
-if [ "$LARGECHUNK" != "yes" ] ; then
-   chunk_min_size=5K
-   chunk_max_size=5K
+DATASIZE=${DATASIZE:-10G}
+if [[ "$DATASIZE" =~ [1-9][0-9]+G ]]; then
+   true
 else
-   chunk_min_size=64K
-   chunk_max_size=64K
+   echo "Invalid DATA size value DATASIZE=$DATASIZE (expected xxG)" 1>&2
+   exit 1
 fi
 
-TLSPSKENABLE=${TLSPSKENABLE:-yes}
+CHUNKSIZE=${CHUNKSIZE:-64K}
+if [[ "$CHUNKSIZE" =~ [1-9][0-9]?K ]]; then
+   chunk_min_size=$CHUNKSIZE
+   chunk_max_size=$CHUNKSIZE
+else
+   echo "Invalid chunk size value CHUNKSIZE=$CHUNKSIZE (expected xxK)" 1>&2
+   exit 1
+fi
+
+SIGNATURE=${SIGNATURE:-no}
+if [[ "$SIGNATURE" =~ (MD5|SHA1|SHA256|SHA512|XXH64|XXH3_64|XXH3_128) ]] ; then
+   sed -i "s/#\s*signature=MD5/   signature=MD5/g" $conf/bacula-dir.conf
+   sed -i "s/signature=MD5/signature=$SIGNATURE/g" $conf/bacula-dir.conf
+elif [ "$SIGNATURE" = "no" ] ; then
+   sed -i "s/signature=MD5//g" $conf/bacula-dir.conf
+else
+   echo "Invalid SIGNATURE algorithm SIGNATURE=$SIGNATURE" 1>&2
+   exit 1
+fi
+
+TLSPSKENABLE=${TLSPSKENABLE:-no}
 if [ "$TLSPSKENABLE" != "yes" ] ; then
    $bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "FileDaemon")'
    $bperl -e 'add_attribute("$conf/bacula-sd.conf", "TlsPskEnable", "no", "Storage")'
 fi
 
-COMMCOMP=${COMMCOMP:-yes}
+BLOCKCHECKSUM=${BLOCKCHECKSUM:-no}
+if [ "$BLOCKCHECKSUM" != "yes" ] ; then
+   $bperl -e 'add_attribute("$conf/bacula-sd.conf", "BlockChecksum", "no", "Device")'
+fi
+
+COMMCOMP=${COMMCOMP:-no}
 echo $COMMCOMP
 if [ "$COMMCOMP" != "yes" ] ; then
    $bperl -e "add_attribute('$conf/bacula-sd.conf',  'CommCompression', 'no', 'Storage')"
@@ -70,15 +115,21 @@ if [ "$COMMCOMP" != "yes" ] ; then
    $bperl -e "add_attribute('$conf/bacula-fd.conf',  'CommCompression', 'no', 'FileDaemon')"
 fi
 
+size=${DATASIZE::-1}
+let count64=size*16*1024
+
 SOURCE=${SOURCE:-dedupplugin}
 if [ "$SOURCE" == "zero" ] ; then
-   sed -i "s%.*Plugin = .test-dedup.*%Plugin = \"bpipe:/bigfile:dd if=/dev/zero bs=64k count=1000000:/bin/true\"%" bin/*dir.conf
-fi
-if [ "$SOURCE" == "urandom" ] ; then
-   sed -i "s%.*Plugin = .test-dedup.*%Plugin = \"bpipe:/bigfile:dd if=/dev/urandom bs=64k count=1000:/bin/true\"%" bin/*dir.conf
+   sed -i "s%.*Plugin = .test-dedup.*%Plugin = \"bpipe:/bigfile:dd if=/dev/zero bs=64k count=$count64:/bin/true\"%" bin/*dir.conf
+elif [ "$SOURCE" == "urandom" ] ; then
+   sed -i "s%.*Plugin = .test-dedup.*%Plugin = \"bpipe:/bigfile:dd if=/dev/urandom bs=64k count=$count64:/bin/true\"%" bin/*dir.conf
+elif [ "$SOURCE" == "sparse" ] ; then
+   echo "${cwd}/tmp/bigsparse" >${cwd}/tmp/file-list
+   $bperl -e "add_attribute('$conf/bacula-dir.conf', 'FileSet', '\"Full Set\"', 'Job', 'DedupPluginTest')"
+   dd if=/dev/zero of=${cwd}/tmp/bigsparse count=1 bs=64k seek=$count64 2> /dev/null
 fi
 
-echo === SETUP === LARGECHUNK=$LARGECHUNK TLSPSKENABLE=$TLSPSKENABLE COMMCOMP=$COMMCOMP SOURCE=$SOURCE
+echo === SETUP === DATASIZE=$DATASIZE CHUNKSIZE=$CHUNKSIZE BLOCKCHECKSUM=$BLOCKCHECKSUM SIGNATURE=$SIGNATURE TLSPSKENABLE=$TLSPSKENABLE COMMCOMP=$COMMCOMP SOURCE=$SOURCE
 
 start_test
 
@@ -89,7 +140,7 @@ chunk_min_size=$chunk_min_size
 chunk_max_size=$chunk_max_size
 deviation=10
 seed=123
-size=8G
+size=$SIZE
 start=0M
 EOF
 
@@ -129,9 +180,10 @@ fd_stime=`cut -d " " -f 15 /proc/$fdpid/stat`
 sd_utime=`cut -d " " -f 14 /proc/$sdpid/stat`
 sd_stime=`cut -d " " -f 15 /proc/$sdpid/stat`
 
-echo CPU USAGE FD utime=$((fd_utime*100/delta)) stime=$((fd_stime*100/delta)) total=$(((fd_utime+fd_stime)*100/delta))
-echo CPU USAGE SD utime=$((sd_utime*100/delta)) stime=$((sd_stime*100/delta)) total=$(((sd_utime+sd_stime)*100/delta))
+echo "CPU USAGE FD utime=$((fd_utime*100/delta))% stime=$((fd_stime*100/delta))% total=$(((fd_utime+fd_stime)*100/delta))%"
+echo "CPU USAGE SD utime=$((sd_utime*100/delta))% stime=$((sd_stime*100/delta))% total=$(((sd_utime+sd_stime)*100/delta))%"
 
 stop_bacula
 
 end_test
+
