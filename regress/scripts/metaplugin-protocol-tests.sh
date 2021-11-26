@@ -95,7 +95,9 @@ run job=$JobBackup2 yes
 wait
 status client=$CLIENT
 messages
-llist objects job=$JobBackup2
+@#llist objects job=$JobBackup2
+llist objects objectid=1
+llist objects objectid=2
 messages
 @output
 quit
