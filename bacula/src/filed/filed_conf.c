@@ -823,6 +823,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
 
             res->res_client.messages = res_all.res_client.messages;
             res->res_client.disable_cmds = res_all.res_client.disable_cmds;
+            res->res_client.plugins = res_all.res_client.plugins;
             break;
          case R_COLLECTOR:
             if ((res = (URES *)GetResWithName(R_COLLECTOR, res_all.res_collector.hdr.name)) == NULL) {
