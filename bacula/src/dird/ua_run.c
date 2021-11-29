@@ -1000,6 +1000,8 @@ configure_again:
       ua->send_msg("%s\n", prompt.c_str());
    }
 
+   ASSERTD(nb < MAX_INI_ITEMS, "Check if we reach the MAX_INI_ITEMS defined");
+
    if (!get_cmd(ua, _("Use above plugin configuration? (yes/mod/no): "))) {
       ini->clear_items();
       return 0;
