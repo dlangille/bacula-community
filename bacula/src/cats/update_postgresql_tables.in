@@ -613,6 +613,8 @@ fi
 if [ "$DBVERSION" -eq 1024 ] ; then
     if psql -f - -d ${db_name} $* <<END-OF-DATA
 begin;
+ALTER TABLE Client ADD COLUMN Plugins TEXT DEFAULT '';
+
 CREATE TABLE MetaEmail
 (
     EmailTenant       		text,
