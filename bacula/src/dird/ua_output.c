@@ -336,7 +336,8 @@ bail_out:
  *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
- *  list metadata type=[email|attachment] from=<str> to=<str> cc=<str> tags=<str> 
+ *  list metadata type=[email|attachment] owner=xxx tenant=xxx jobid=<x,w,z> from=<str>
+ *             to=<str> cc=<str> tags=<str> 
  *             subject=<str> bodypreview=<str> all=<str> minsize=<int> maxsize=<int> 
  *             importance=<str> isread=<0|1> isdraft=<0|1>
  *             categories=<str> conversationid=<str> hasattachment=<0|1>
@@ -1027,8 +1028,8 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                meta_r.order = bstrcasecmp(ua->argv[j], "DESC");
             }
          }
-         if (*meta_r.Type == 0) {
-            ua->error_msg(_("Invalid type argument\n"));
+         if (!meta_r.check()) {
+            ua->error_msg(_("Invalid parameters. %s\n"), meta_r.errmsg);
             return 1;
          }
          db_list_metadata_records(ua->jcr, ua->db, &meta_r, prtit, ua, llist);

@@ -676,6 +676,25 @@ void META_DBR::get_all_keys(POOLMEM **where)
    }
 }
 
+bool META_DBR::check()
+{
+   if (!Type[0]) {
+      bsnprintf(errmsg, sizeof(errmsg), _("Type is not set"));
+      return false;
+   }
+
+   if (!Owner[0]) {
+      bsnprintf(errmsg, sizeof(errmsg), _("Owner is not set"));
+      return false;
+   }
+
+   if (!Tenant[0]) {
+      bsnprintf(errmsg, sizeof(errmsg), _("Tenant not set"));
+      return false;
+   }
+   return true;
+}
+
 void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
 {
    const char *prefix;
