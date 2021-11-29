@@ -971,7 +971,7 @@ static int plugin_display_options(UAContext *ua, JCR *jcr, ConfigFile *ini)
 configure_again:
    ua->send_msg(_("Plugin Restore Options\n"));
    ua->send_msg(_("Option               Current Value        Default Value\n"));
-   for (nb=0; ini->items[nb].name; nb++) {
+   for (nb=0; nb < MAX_INI_ITEMS && ini->items[nb].name ; nb++) {
 
       if (ini->items[nb].found) {
          /* When calling the handler, It will convert the value

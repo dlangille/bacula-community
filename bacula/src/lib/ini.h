@@ -84,7 +84,7 @@ struct ini_items {
 /* When reading a ini file, we limit the number of items that we
  *  can create
  */
-#define MAX_INI_ITEMS 32
+#define MAX_INI_ITEMS 64
 
 /* Special RestoreObject name used to get user input at restore time */
 #define INI_RESTORE_OBJECT_NAME    "RestoreOptions"
