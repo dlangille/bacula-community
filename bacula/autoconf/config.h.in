@@ -1042,6 +1042,9 @@
 /* Define to 1 if you have the `tcgetattr' function. */
 #undef HAVE_TCGETATTR
 
+/* Define to 1 if you have the `tzset' function. */
+#undef HAVE_TZSET
+
 /* Define to 1 if you have the <termcap.h> header file. */
 #undef HAVE_TERMCAP_H
 

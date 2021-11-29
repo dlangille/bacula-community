@@ -835,7 +835,9 @@ MAKE_SHELL=/bin/sh
 AC_SUBST(MAKE_SHELL)
 AC_HEADER_STAT
 AC_HEADER_DIRENT
-AC_CHECK_FUNCS(strcasecmp select setenv putenv tcgetattr)
+AC_CHECK_HEADERS(sys/fsuid.h)
+AC_CHECK_FUNCS(setfsgid setfsuid)
+AC_CHECK_FUNCS(strcasecmp select setenv putenv tcgetattr tzset)
 AC_CHECK_FUNCS(lstat lchown lchmod futimes fchmod fchown lutimes)
 AC_CHECK_FUNCS(nanosleep nl_langinfo)
 AC_CHECK_FUNCS(be64toh htobe64)
