@@ -251,6 +251,7 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    char buf[10], *port;
    BDB_POSTGRESQL *mdb = this;
    int print_msg=0;             /* 1: warning, 2: error, 3 fatal */
+   const char *tz = get_timezone();
 
    P(mutex);
    if (mdb->m_connected) {
@@ -348,6 +349,12 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    sql_query("SET datestyle TO 'ISO, YMD'");
    sql_query("SET cursor_tuple_fraction=1");
    sql_query("SET client_min_messages TO WARNING");
+
+   /* For the Timezone to the current director one */
+   if (tz && *tz) {
+      Mmsg(mdb->cmd, "SET timezone = '%s'", tz);
+      sql_query(mdb->cmd);
+   }
 
    /* 
     * Tell PostgreSQL we are using standard conforming strings and avoid warnings such as:

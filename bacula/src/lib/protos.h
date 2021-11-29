@@ -70,6 +70,7 @@ int display_global_item(HPKT &hpkt); //
 void display_collector_types(HPKT &hpkt);
 
 /* bsys.c */
+const char *get_timezone();
 int get_user_home_directory(const char *user, POOLMEM *&home);
 int get_home_directories(const char *grpname, alist *dirs);
 char *ucfirst(char *dest, const char *src, int len);

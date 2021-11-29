@@ -254,7 +254,6 @@ int main (int argc, char *argv[])
    bool no_signals = false;
    char *uid = NULL;
    char *gid = NULL;
-
    init_working_directory();
    /* DELETE ME when bugs in MA1512, MA1632 MA1639 are fixed */
    MA1512_reload_job_end_cb = reload_job_end_cb;

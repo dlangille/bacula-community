@@ -1819,6 +1819,34 @@ int get_home_directories(const char *grpname, alist *dirs)
    return (dirs->size() > 0) ? 0 : -1;
 }
 
+static pthread_once_t tz_control = PTHREAD_ONCE_INIT;
+static void init_timezone()
+{
+#ifdef HAVE_TZSET
+   tzset();
+
+#elif defined(HAVE_WIN32)
+   _tzset();
+#endif
+}
+
+const char *get_timezone()
+{
+   if (pthread_once(&tz_control, init_timezone) != 0) {
+      /* Should not fail, but tzname is initialized to GMT if needed */
+      Dmsg0(0, "pthread_once() call for init_timezone() failed\n");
+   }
+#ifdef HAVE_TZSET
+   if (*tzname[1]) {
+      return tzname[1];
+
+   } else if (*tzname[0]) {
+      return tzname[0];
+   }
+#endif
+   return "";
+}
+
 #ifdef TEST_PROGRAM
 
 #include "unittests.h"
