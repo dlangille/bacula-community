@@ -78,7 +78,7 @@ FileSet {
   Include {
     Options { signature=MD5 }
     Plugin = "kubernetes:"
-    Plugin = "kubernetes: regress_backup_other_file"
+    Plugin = "kubernetes: regress_backup_other_file regress_backup_external_stat"
   }
   Exclude {
     File = "/exclude/file1"
