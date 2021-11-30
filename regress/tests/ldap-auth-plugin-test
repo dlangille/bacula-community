@@ -16,7 +16,7 @@ scripts/copy-ldap-auth-plugin-confs
 start_local_slapd
 
 # Authentication Plugin = "ldap:binddn=@BINDDN@ bindpass=@BINDPASS@ url=ldap://localhost:3890 query=@LDAPQUERY@"
-db_name=$(cat ${tmp}/ldap_db_name)
+db_name=`cat ${tmp}/ldap_db_name`
 BINDDN="cn=root,dc=$db_name,dc=bacula,dc=com"
 BINDPASS=rootroot
 LDAPQUERY="dc=$db_name,dc=bacula,dc=com/(cn=%u)"
@@ -47,7 +47,7 @@ END_OF_DATA
 run_bacula
 
 # now check if we have ldap-dir loaded
-if [ "$(grep -c ldap-dir ${tmp}/log.out)" -lt 1 ]
+if [ `grep ldap ${tmp}/log.out | wc -l` -lt 1 ]
 then
    echo "BPAM LDAP Plugin is not loaded, cannot perform the test!"
    exit 1
@@ -58,26 +58,26 @@ printf "Authentication test ... "
 estat=0
 
 # check invalid login
-printf "admin\nadmin\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf > ${tmp}/log1.out 2>&1
-if [ "$(grep -c Version: ${tmp}/log1.out)" -gt 0 ]
+printf "admin\nadmin\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log1.out
+if [ `grep Version: ${tmp}/log1.out | wc -l` -gt 0 ]
 then
    printf "failed ... "
    estat=1
 else
-   if [ "$(grep -c "LDAP Authentication Successfull" ${working}/*.trace)" -gt 0 ]
+   if [ `grep "LDAP Authentication Successfull" ${working}/*.trace | wc -l` -gt 0 ]
    then
       estat=2
    fi
 fi
 
 # check proper login
-printf "root\nrootroot\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf > ${tmp}/log2.out 2>&1
-if [ "$(grep -c Version: ${tmp}/log2.out)" -lt 1 ]
+printf "root\nrootroot\nstatus dir\nquit\n" | ${bin}/bconsole -p -C ldaptest -c bconsole.auth-ldap-plugin.conf 2>&1 > ${tmp}/log2.out
+if [ `grep Version: ${tmp}/log2.out | wc -l` -lt 1 ]
 then
    printf "failed ... "
    estat=3
 else
-   if [ "$(grep -c "LDAP Authentication Successfull" ${working}/*.trace)" -lt 1 ]
+   if [ `grep "LDAP Authentication Successfull" ${working}/*.trace | wc -l` -lt 1 ]
    then
       estat=4
    fi
