@@ -73,6 +73,7 @@ bool regress_metadata_support = false;
 bool regress_standard_error_backup = false;
 bool regress_cancel_backup = false;
 bool regress_cancel_restore = false;
+bool regress_backup_external_stat = false;
 
 bool Job_Level_Incremental = false;
 
@@ -1211,6 +1212,19 @@ void perform_backup()
    signal_eod();
    signal_eod();
 
+   //
+   if (regress_backup_external_stat)
+   {
+      // the file with external stat(2) packet
+      snprintf(buf, BIGBUFLEN, "FNAME:%s/java/%d/stat.error\n", PLUGINPREFIX, mypid);
+      write_plugin('C', buf);
+      snprintf(buf, BIGBUFLEN, "STAT:%s\n", "/nonexistent.file");
+      write_plugin('C', buf);
+      write_plugin('I', "TEST18NEX");
+      signal_eod();
+      signal_eod();
+   }
+
    // this plugin object should be the latest item to backup
    if (regress_backup_plugin_objects)
    {
@@ -1669,67 +1683,88 @@ int main(int argc, char** argv) {
       // "regress_cancel_backup",
       // "regress_cancel_restore",
 
-      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0) {
+      if (strcmp(buf, "regress_error_plugin_params=1\n") == 0)
+      {
          regress_error_plugin_params = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_start_job=1\n") == 0) {
+      if (strcmp(buf, "regress_error_start_job=1\n") == 0)
+      {
          regress_error_start_job = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0) {
+      if (strcmp(buf, "regress_error_backup_no_files=1\n") == 0)
+      {
          regress_error_backup_no_files = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0) {
+      if (strcmp(buf, "regress_error_backup_stderr=1\n") == 0)
+      {
          regress_error_backup_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0) {
+      if (strcmp(buf, "regress_error_estimate_stderr=1\n") == 0)
+      {
          regress_error_estimate_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0) {
+      if (strcmp(buf, "regress_error_listing_stderr=1\n") == 0)
+      {
          regress_error_listing_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0) {
+      if (strcmp(buf, "regress_error_restore_stderr=1\n") == 0)
+      {
          regress_error_restore_stderr = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0) {
+      if (strcmp(buf, "regress_backup_plugin_objects=1\n") == 0)
+      {
          regress_backup_plugin_objects = true;
          continue;
       }
-      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0) {
+      if (strcmp(buf, "regress_error_backup_abort=1\n") == 0)
+      {
          regress_error_backup_abort = true;
          continue;
       }
-      if (strcmp(buf, "regress_backup_other_file=1\n") == 0) {
+      if (strcmp(buf, "regress_backup_other_file=1\n") == 0)
+      {
          regress_backup_other_file = true;
          continue;
       }
-      if (strcmp(buf, "regress_metadata_support=1\n") == 0) {
+      if (strcmp(buf, "regress_backup_external_stat=1\n") == 0)
+      {
+         regress_backup_external_stat = true;
+         continue;
+      }
+      if (strcmp(buf, "regress_metadata_support=1\n") == 0)
+      {
          regress_metadata_support = true;
          continue;
       }
-      if (strcmp(buf, "regress_standard_error_backup=1\n") == 0) {
+      if (strcmp(buf, "regress_standard_error_backup=1\n") == 0)
+      {
          regress_standard_error_backup = true;
          continue;
       }
-      if (strcmp(buf, "regress_cancel_backup=1\n") == 0) {
+      if (strcmp(buf, "regress_cancel_backup=1\n") == 0)
+      {
          regress_cancel_backup = true;
          continue;
       }
-      if (strcmp(buf, "regress_cancel_restore=1\n") == 0) {
+      if (strcmp(buf, "regress_cancel_restore=1\n") == 0)
+      {
          regress_cancel_restore = true;
          continue;
       }
-      if (sscanf(buf, "listing=%s\n", buf) == 1){
+      if (sscanf(buf, "listing=%s\n", buf) == 1)
+      {
          strcpy(listing, buf);
          continue;
       }
-      if (sscanf(buf, "query=%s\n", buf) == 1){
+      if (sscanf(buf, "query=%s\n", buf) == 1)
+      {
          strcpy(query, buf);
          continue;
       }
@@ -1739,14 +1774,17 @@ int main(int argc, char** argv) {
          continue;
       }
    }
-   if (regress_cancel_restore || regress_cancel_backup) {
-      if (signal(SIGUSR1, catch_function) == SIG_ERR){
+   if (regress_cancel_restore || regress_cancel_backup)
+   {
+      if (signal(SIGUSR1, catch_function) == SIG_ERR)
+      {
          LOG("Cannot setup signal handler!");
          exit(EXIT_BACKEND_SIGNAL_HANDLER_ERROR);
       }
    }
    write_plugin('I', "TEST3");
-   if (!regress_error_plugin_params){
+   if (!regress_error_plugin_params)
+   {
       signal_eod();
    } else {
       write_plugin('E', "We do not accept your TEST3E! AsRequest.");
@@ -1756,7 +1794,8 @@ int main(int argc, char** argv) {
    len = read_plugin(buf);
    write_plugin('I', "TEST4");
 
-   if (regress_error_start_job){
+   if (regress_error_start_job)
+   {
       write_plugin('A', "We do not accept your TEST4E! AsRequest.");
       goto Term;
    }

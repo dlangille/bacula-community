@@ -71,8 +71,12 @@ namespace attributes
          if (rc < 0)
          {
             // error
-            DMSG1(ctx, DERROR, "Invalid path: %s\n", param.c_str());
-            return Invalid_Stat_Packet;
+            berrno be;
+            DMSG3(ctx, DERROR, "Invalid STAT path: %s Err=%s (%d)\n", param.c_str(), be.bstrerror(), be.code());
+            JMSG3(ctx, M_ERROR, "Invalid STAT path: %s Err=%s (%d)\n", param.c_str(), be.bstrerror(), be.code());
+            memset(&sp->statp, 0, sizeof(sp->statp));
+            sp->type = FT_REG;
+            return Status_Handled;
          }
          // stat is working as expected
          DMSG1(ctx, DDEBUG, "read_scan_stat_command():stat: %o\n", sp->statp.st_mode);
@@ -97,7 +101,9 @@ namespace attributes
                   // error reading link value
                   DMSG2(ctx, DERROR, "Error reading link value. Err=%s (%d)", be.bstrerror(), be.code());
                   JMSG3(ctx, M_ERROR, "Error reading link value: %s, Err=%s (%d)", param.c_str(), be.bstrerror(), be.code());
-                  return Status_Error;
+                  memset(&sp->statp, 0, sizeof(sp->statp));
+                  sp->type = FT_REG;
+                  return Status_Handled;
                }
                lname.c_str()[rc] = '\0';
                sp->link = lname.c_str();

@@ -786,6 +786,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       "regress_error_restore_stderr",
       "regress_backup_plugin_objects",
       "regress_backup_other_file",
+      "regress_backup_external_stat",
       "regress_error_backup_abort",
       "regress_metadata_support",
       "regress_standard_error_backup",
@@ -2385,7 +2386,8 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
             return bRC_Error;
 
          case metaplugin::attributes::Status_OK:
-            if (sp->type != FT_LNK) {
+            if (sp->type != FT_LNK)
+            {
                reqparams--;
             }
             continue;
