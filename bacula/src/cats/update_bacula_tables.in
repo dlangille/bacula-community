@@ -47,4 +47,4 @@ if [ $db_type = postgresql -a "$UID" = 0 ]; then
 fi
 
 echo "Altering ${db_type} tables"
-$pre_command "@scriptdir@/updatedb/update_${db_type}_tables $*"
+$pre_command "@scriptdir@/update_${db_type}_tables $*"
