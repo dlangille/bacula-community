@@ -33,27 +33,28 @@ ALTER TABLE Client ADD COLUMN Plugins TINYBLOB DEFAULT '';
 CREATE TABLE MetaEmail
 (
     EmailPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
-    EmailTenant     		TINYTEXT,
-    EmailOwner       		TINYTEXT,
-    EmailId          		TINYTEXT,
+    EmailTenant     		VARCHAR(255),
+    EmailOwner       		VARCHAR(255),
+    EmailId          		VARCHAR(255),
     EmailTime         		DATETIME,
     EmailTags         		TEXT,
     EmailSubject      		TEXT,
     EmailFolderName   		TEXT,
-    EmailFrom         		TINYTEXT,
+    EmailFrom         		VARCHAR(255),
     EmailTo           		TEXT,
     EmailCc           		TEXT,
-    EmailInternetMessageId 	TINYTEXT,
+    EmailInternetMessageId 	VARCHAR(255),
     EmailBodyPreview  		TEXT,
-    EmailImportance   		TINYTEXT,
-    EmailConversationId    	TINYTEXT,
+    EmailImportance   		VARCHAR(255),
+    EmailConversationId    	VARCHAR(255),
     EmailIsRead       		TINYINT,
     EmailIsDraft      		TINYINT,
     EmailHasAttachment 		TINYINT,
     EmailSize	 			INTEGER,
-    Plugin       			TINYTEXT,
+    Plugin       			VARCHAR(255),
     FileIndex   	 		INTEGER,
-    JobId        			INTEGER
+    JobId        			INTEGER,
+    PRIMARY KEY(EmailPKId)
 );
 
 -- Requires TEXT instead of BLOB
@@ -69,19 +70,20 @@ CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
 CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
 
 CREATE TABLE MetaAttachment
-{
+(
     AttachmentPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
-    AttachmentTenant            TINYTEXT,
-    AttachmentOwner    		TINYTEXT,
+    AttachmentTenant            VARCHAR(255),
+    AttachmentOwner    		VARCHAR(255),
     AttachmentName     		TEXT,
-    AttachmentEmailId  		TINYTEXT,
-    AttachmentContentType 	TINYTEXT,
+    AttachmentEmailId  		VARCHAR(255),
+    AttachmentContentType 	VARCHAR(255),
     AttachmentIsInline 		SMALLINT,
     AttachmentSize	 		INTEGER,
-    Plugin      			TINYTEXT,
+    Plugin      			VARCHAR(255),
     FileIndex    			INTEGER,
-    JobId        			INTEGER
-};
+    JobId        			INTEGER,
+    PRIMARY KEY(AttachmentPKId)
+);
 
 CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
 CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
