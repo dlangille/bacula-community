@@ -385,6 +385,8 @@ bool do_mac(JCR *jcr)
    uint32_t store_port;
    STORE *rstore = NULL;
    STORE *wstore = NULL;
+   /* Keep original write storage source to set back during the cleanup */
+   POOL_MEM wsource_origin;
 
    /*
     * If wjcr is NULL, there is nothing to do for this job,
@@ -431,6 +433,9 @@ bool do_mac(JCR *jcr)
     */
    wjcr->store_mngr->reset_rwstorage();
    wjcr->store_mngr->set_wstorage(jcr->store_mngr->get_wstore_list(), _("MAC JOB"));
+
+   /* Remember original source */
+   pm_strcpy(wsource_origin, jcr->store_mngr->get_wsource());
    jcr->store_mngr->reset_wstorage();
 
    /* TODO: See priority with bandwidth parameter */
@@ -643,7 +648,7 @@ bool do_mac(JCR *jcr)
 
 bail_out:
    /* Put back jcr write storages for proper cleanup */
-   jcr->store_mngr->set_wstorage(wjcr->store_mngr->get_wstore_list(), "rollback");
+   jcr->store_mngr->set_wstorage(wjcr->store_mngr->get_wstore_list(), wsource_origin.c_str());
    wjcr->store_mngr->reset_wstorage();
    wjcr->file_bsock = NULL;
 
