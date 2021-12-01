@@ -428,7 +428,6 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
 bool BDB::bdb_search_media_records(JCR *jcr, MEDIA_DBR *mdbr,
                                    DB_RESULT_HANDLER *handler, void *ctx)
 {
-   char ed1[50];
    char esc[MAX_ESCAPE_NAME_LENGTH];
 
    if (mdbr->VolumeName[0] == 0) {
