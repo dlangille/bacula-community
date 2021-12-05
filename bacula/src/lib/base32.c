@@ -92,10 +92,10 @@ int bin_to_base32(const uint8_t *buf, int buflen, char *bin, int binlen)
 int main(int argc, char **argv)
 {
    Unittests t("base32");
-   uint8_t buf[512];
-   ok(bin_to_base32("test1", strlen("test1"), buf, sizeof(buf)) > 0, "test bin_to_base32()");
+   char buf[512];
+   ok(bin_to_base32((const uint8_t*)"test1", strlen("test1"), buf, sizeof(buf)) > 0, "test bin_to_base32()");
    is(buf, "ORSXG5BR", "Check result of base32 encoding");
-   is(bin_to_base32("test1", strlen("test1"), buf, 3), -1, "test bin_to_base32() with small buffer");
+   is(bin_to_base32((const uint8_t*)"test1", strlen("test1"), buf, 3), -1, "test bin_to_base32() with small buffer");
    return report();
 }
 
