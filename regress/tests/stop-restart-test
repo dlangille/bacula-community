@@ -51,7 +51,7 @@ messages
 setbandwidth limit=0 client
 @$out ${cwd}/tmp/log1.out
 restart
-2
+1
 1
 wait
 messages
