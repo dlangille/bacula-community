@@ -10,6 +10,8 @@ TestName="verify-vol-test"
 JobName=VerifyVol
 . scripts/functions
 
+require_linux
+
 cwd=`pwd`
 scripts/cleanup
 scripts/copy-test-confs
@@ -27,6 +29,9 @@ start_test
 # Create list of files being backed up and verified to compare afterwards
 files_listing=${cwd}/tmp/files
 find ${cwd}/build -print > ${files_listing}
+
+sed -i 's/, *!verified//g' bin/bacula-dir.conf
+sed -i 's/, *!verified//g' bin/bacula-fd.conf
 
 cat <<END_OF_DATA >tmp/bconcmds
 @output /dev/null
@@ -68,30 +73,41 @@ END_OF_DATA
 #  dd if=/dev/zero of=sparsefile bs=1 count=0 seek=10M
 #
 
+nb=0
+function print_info
+{
+    nb=`expr $nb + 1`
+    if [ $nb = 50 ]; then
+        print_debug "Output truncated after 50 errors"
+
+    elif [ $nb -lt 50 ]; then
+        print_debug $1
+    fi
+}
+
 run_bacula
 
 while IFS= read -r line <&3; do
    grep "Veryfying: ${line}" tmp/log2.out > /dev/null
    if [ $? -ne 0 ]; then
       estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/log2.out"
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log2.out"
    fi
    grep "Veryfying: ${line}" tmp/log3.out > /dev/null
    if [ $? -ne 0 ]; then
       estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/log3.out"
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log3.out"
    fi
    grep "Veryfying: ${line}" tmp/log4.out > /dev/null
    if [ $? -ne 0 ]; then
       estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/log4.out"
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log4.out"
    fi
 done 3< ${files_listing}
 
-sleep 2
 check_for_zombie_jobs storage=File
 stop_bacula
 
@@ -105,7 +121,7 @@ if test $rstat=0; then
 fi
 grep "^  Termination: *Verify OK" tmp/log4.out 2>&1 >/dev/null
 if [ $? != 0 ]; then
-    print_debug "ERROR: Verify job in error in $tmp/log4.out"
+    print_info "ERROR: Verify job in error in $tmp/log4.out"
     rstat=1
 fi
 dstat=0
@@ -144,20 +160,20 @@ while IFS= read -r line <&3; do
    grep "Veryfying: ${line}" tmp/log5.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
-      print_debug "Found ${line} file in verified files log, no files should be listed now!"
-      print_debug "see: ${cwd}/tmp/log5.out"
+      print_info "Found ${line} file in verified files log, no files should be listed now!"
+      print_info "see: ${cwd}/tmp/log5.out"
    fi
    grep "Veryfying: ${line}" tmp/log6.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
-      print_debug "Found ${line} file in verified files log, no files should be listed now!"
-      print_debug "see: ${cwd}/tmp/log6.out"
+      print_info "Found ${line} file in verified files log, no files should be listed now!"
+      print_info "see: ${cwd}/tmp/log6.out"
    fi
    grep "Veryfying: ${line}" tmp/log7.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
-      print_debug "Found ${line} file in verified files log, no files should be listed now!"
-      print_debug "see: ${cwd}/tmp/log7.out"
+      print_info "Found ${line} file in verified files log, no files should be listed now!"
+      print_info "see: ${cwd}/tmp/log7.out"
    fi
 done 3< ${files_listing}
 
