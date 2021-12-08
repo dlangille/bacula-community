@@ -911,6 +911,26 @@ char *level_to_str(char *buf, int len, int level)
    return buf;
 }
 
+/* Dump Storage Group (it's policy and group items) */
+void dump_storage_group(alist *list, const char *policy,
+      void sendit(void *sock, const char *fmt, ...), void *sock)
+{
+   if (list->size() == 0) {
+      return;
+   }
+
+   /* Policy can be specified explicitly, the default one is used otherwise */
+   const char *p = policy ? policy : StorageManager::get_default_policy();
+
+   sendit(sock, _("  --> StoragePolicy=%s StorageGroupSize=%d\n"), p, list->size());
+
+   STORE *store;
+   foreach_alist(store, list) {
+      sendit(sock, _("    --> "));
+      dump_resource(-R_STORAGE, (RES *)store, sendit, sock);
+   }
+}
+
 /* Dump contents of resource */
 void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt, ...), void *sock)
 {
@@ -1167,11 +1187,7 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
          sendit(sock, _("  --> MaxRunSchedTime=%u\n"), res->res_job.MaxRunSchedTime);
       }
       if (res->res_job.storage) {
-         STORE *store;
-         foreach_alist(store, res->res_job.storage) {
-            sendit(sock, _("  --> "));
-            dump_resource(-R_STORAGE, (RES *)store, sendit, sock);
-         }
+         dump_storage_group(res->res_pool.storage, res->res_pool.storage_policy, sendit, sock);
       }
       if (res->res_job.base) {
          JOB *job;
@@ -1477,11 +1493,7 @@ next_run:
          sendit(sock, _("      Catalog=%s\n"), res->res_pool.catalog->name());
       }
       if (res->res_pool.storage) {
-         STORE *store;
-         foreach_alist(store, res->res_pool.storage) {
-            sendit(sock, _("  --> "));
-            dump_resource(-R_STORAGE, (RES *)store, sendit, sock);
-         }
+         dump_storage_group(res->res_pool.storage, res->res_pool.storage_policy, sendit, sock);
       }
       if (res->res_pool.CopyPool) {
          POOL *copy;
