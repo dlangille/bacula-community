@@ -234,6 +234,15 @@ char *OutputWriter::start_list(const char *name, bool append)
       will_need_separator = false;
 
    } else {
+      if (*buf) {
+         int l = strlen(buf);
+         if (buf[l - 1] != separator) {
+            char ed1[2];
+            ed1[0] = separator;
+            ed1[1] = '\0';
+            pm_strcat(buf, ed1);
+         }
+      }
       pm_strcat(buf, name);
       pm_strcat(buf, ": [\n");
    }
