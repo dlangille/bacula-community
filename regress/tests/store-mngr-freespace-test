@@ -66,6 +66,7 @@ Pool {
   Maximum Volume Bytes = 50G          # Limit Volume size to something reasonable
   Maximum Volumes = 100               # Limit number of Volumes in Pool
   Storage = Disk3, Disk2, Disk1
+  Label Format = "Pool1-"
   Storage Group Policy = Free Space
 }
 
@@ -182,9 +183,6 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
 @$out  ${cwd}/tmp/log1.out
-label volume=TestVolume001 storage=Disk1 pool=FreeSpacePool slot=1 drive=0
-label volume=TestVolume002 storage=Disk2 pool=FreeSpacePool slot=1 drive=0
-label volume=TestVolume003 storage=Disk3 pool=FreeSpacePool slot=1 drive=0
 run job=FreeSpaceJob level=Full yes
 wait
 @$out  ${cwd}/tmp/log2.out
