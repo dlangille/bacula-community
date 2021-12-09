@@ -42,15 +42,50 @@ static int query_size_cmp(void *item1, void *item2) {
    return 1;
 }
 
+static bool build_query_size(DEVICE *dev, struct query_size **qs)
+{
+   uint64_t ts, fs = 0;
+   struct stat statp;
+   struct query_size *temp_qs;
+
+   /* Alloc helper struct, set correct size for this dev and add it to list
+    * so that later we can sum size of all unique devices */
+   temp_qs = (struct query_size *) malloc(sizeof(struct query_size));
+   if (!temp_qs) {
+      Dmsg1(dbglvl, "Failed to alloc query_size for dev: %s\n", dev->archive_name());
+      return false;
+   } else {
+      /* Make sure that freespace is valid and up to date */
+      if (!dev->update_freespace()) {
+         Dmsg1(dbglvl, "update_free space failed to for dev: %s\n", dev->archive_name());
+         return false;
+      }
+      dev->get_freespace(&fs, &ts);
+
+      temp_qs->size = fs;
+
+      /* devno can be empty when e.g. volume is not open, need to call stat() in that case */
+      if (dev->devno == 0 && (stat(dev->archive_name(), &statp) == 0)) {
+         temp_qs->devno = statp.st_dev;
+      } else {
+         temp_qs->devno = dev->devno;
+      }
+   }
+
+   *qs = temp_qs;
+
+   return true;
+}
+
 static bool query_freespace(JCR *jcr, const char *dev_name) {
    BSOCK *dir = jcr->dir_bsock;
    DEVRES *device;
    AUTOCHANGER *changer;
-   uint64_t ts, fs, free_sum = 0;
+   uint64_t free_sum = 0;
    struct query_size *qs;
    alist dev_list(10, not_owned_by_alist);
    dlist size_list;
-   bool found;
+   bool found = false;
 
    /* Device sent can be either single device or an autochanger */
    foreach_res(changer, R_AUTOCHANGER) {
@@ -59,20 +94,8 @@ static bool query_freespace(JCR *jcr, const char *dev_name) {
           * back to the DIR in response to the FreeSpace policy querying.
           * We may want to change it at some point if we see that some other calculations/reporting make more sense  */
          foreach_alist(device, changer->device) {
-            /* devno == 0 means that it's just an different directory of a device we already have */
-            if (device && device->dev->devno) {
-               device->dev->get_freespace(&fs, &ts);
-               /* Alloc helper struct, set correct size for this dev and add it to list
-                * so that later we can sum size of all unique devices */
-               qs = (struct query_size *) malloc(sizeof(struct query_size));
-               if (!qs) {
-                  Dmsg1(dbglvl, "Failed to alloc query_size for dev: %s, policy querying stopped\n", device->device_name);
-                  break;
-               } else {
-                  qs->size = fs;
-                  qs->devno = device->dev->devno;
-                  dev_list.append(qs);
-               }
+            if (build_query_size(device->dev, &qs)) {
+               dev_list.append(qs);
             }
          }
 
@@ -85,16 +108,10 @@ static bool query_freespace(JCR *jcr, const char *dev_name) {
       /* Device sent to query is a single device instead of an autochanger */
       foreach_res(device, R_DEVICE) {
          if (strcmp(device->hdr.name, dev_name) == 0) {
-            device->dev->get_freespace(&fs, &ts);
-            qs = (struct query_size *) malloc(sizeof(struct query_size));
-            if (!qs) {
-               Dmsg1(dbglvl, "Failed to alloc query_size for dev: %s, policy querying stopped\n", device->device_name);
-               break;
-            } else {
-               qs->size = fs;
-               qs->devno = device->dev->devno;
+            if (build_query_size(device->dev, &qs)) {
+               dev_list.append(qs);
             }
-            dev_list.append(qs);
+
             found = true;
             break;
          }
@@ -104,8 +121,12 @@ static bool query_freespace(JCR *jcr, const char *dev_name) {
    /* Add free size for each unique device */
    foreach_alist(qs, &dev_list) {
       struct query_size *tmp = (struct query_size *) size_list.binary_insert(qs, query_size_cmp);
-      if (tmp) {
+      if (tmp == qs) {
+         /* Unique item was added to the list, add it's size */
          free_sum+=tmp->size;
+      } else {
+         /* Since this item won't be used, we need to free it manually */
+         free(qs);
       }
    }
 

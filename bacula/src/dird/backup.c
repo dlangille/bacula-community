@@ -529,9 +529,7 @@ bool do_backup(JCR *jcr)
 
    if (jcr->store_mngr->get_wstore_list()->size() != 1) {
       wstore_group = true;
-   }
 
-   if (wstore_group) {
       /* Apply policy for the write storage list */
       jcr->store_mngr->apply_write_policy();
       Dmsg2(100, "Configured storages: %s, source: %s\n",
