@@ -634,6 +634,10 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('q', 'Queued waiting for device',15),
    ('W', 'Terminated normally with warnings',25);
 
+ALTER TABLE RestoreObject MODIFY ObjectName MEDIUMBLOB;
+ALTER TABLE RestoreObject MODIFY PluginName BLOB;
+ALTER TABLE Object MODIFY PluginName BLOB;
+
 UPDATE Version SET VersionId=1025;
 END-OF-DATA
     then
