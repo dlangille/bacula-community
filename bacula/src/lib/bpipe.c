@@ -567,3 +567,85 @@ bail_out:
    free(buf);
    return stat1;
 }
+
+/*
+ * Helper method to build the commands to run for the plugins,
+ * so that command is executed in form of executable file.
+ * This way we are much less liable to problems like string escaping.
+ * If user is given, then the tmp file ownership is changed onto that user,
+ * permissions are open otherwise.
+ *
+ * in:
+ *    cmd - Plugin command to write into the executable file
+ *    tmp - where to store tmp command file
+ *    dest - created filename
+ *    JobId - job id, used to create unique filename
+ *    user - file is owned by this user [optional]
+ *    tmp_list - if not null then file created is added to the list for further cleanup
+ *    err - buffer where error messages are stored
+ *
+ * out:
+ *    true - in case of success, file can be executed
+ *    false - in casef of error, no file was created
+ */
+bool make_tmp_cmd(const char *cmd, const char *tmp, POOLMEM **dest, uint32_t JobId, const char* user,
+                         alist *tmp_list, POOLMEM **err)
+{
+   bool ret = false;
+   berrno be;
+
+   Mmsg(dest, "%s/cmd.%d.XXXXXX", tmp, JobId);
+
+   int temp_fd = mkstemp(*dest);
+   if (temp_fd < 0) {
+      Mmsg(err, "Unable to create temporary file %s. ERR=%s\n", *dest, be.bstrerror());
+      return false;
+   }
+
+   if (tmp_list) {
+      tmp_list->append(bstrdup(*dest)); // Delete at the end
+   }
+
+   /* Write command that was previously built */
+   size_t bytes = write(temp_fd, cmd, strlen(cmd));
+   if (bytes != strlen(cmd)) {
+      Mmsg(err, "Unable to write to %s, expected: %d written: %d error: %s\n",
+            *dest, strlen(cmd), bytes, be.bstrerror(errno));
+      goto bail_out;
+   }
+
+   /* Make tmp command file executable for the user in which context we run the commands
+    * (if possible) */
+   if (user && getuid() == 0) {
+      struct passwd *pwd = getpwnam(user);
+      if (pwd == NULL) {
+         Mmsg(err, "getwnam failed for %s, error: %s\n", user, be.bstrerror(errno));
+         goto bail_out;
+      }
+
+      if (bchown(temp_fd, *dest, pwd->pw_uid, pwd->pw_gid) < 0) {
+         Mmsg(err, "bchown failed for %s, error: %s\n", user, be.bstrerror(errno));
+         goto bail_out;
+      }
+
+      /* Only the file's owner can run the command file in this case */
+      if (bchmod(temp_fd, *dest, S_IXUSR|S_IRUSR) < 0) {
+         Mmsg(err, "bchmod failed for %s, error: %s\n", *dest, be.bstrerror(errno));
+         goto bail_out;
+      }
+   } else {
+      /* We are either not root or no user to change was specified at all.
+       * Permissions need to be quite open in this case, Read access is needed for the bpipe,
+       * which is used later on */
+      if (bchmod(temp_fd, *dest, S_IXUSR|S_IRUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH) < 0) {
+         Mmsg(err, "bchmod failed for %s, error: %s\n", *dest, be.bstrerror(errno));
+         goto bail_out;
+      }
+   }
+
+   ret = true;
+
+bail_out:
+   close(temp_fd);
+   return ret;
+}

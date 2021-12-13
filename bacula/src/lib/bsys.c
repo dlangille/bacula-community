@@ -1668,6 +1668,46 @@ FILE *bfopen(const char *path, const char *mode)
    return fp;
 }
 
+/* Helper method to use fchown() whenever possible, chown() otherwise */
+int bchown(int fd, const char *path, uid_t uid, gid_t gid)
+{
+#ifdef HAVE_FCHOWN
+   if (fd) {
+      return fchown(fd, uid, gid);
+      Dmsg3(100, "Calling fchown for file descriptor %d uid: %ld gid: %ld\n", fd, uid, gid);
+   } else if (path) {
+      Dmsg3(100, "Calling chown for file %s uid: %ld gid: %ld\n", path, uid, gid);
+      return chown(path, uid, gid);
+   } else {
+      Dmsg0(100, "bchown failed, neither the fd nor path was specified\n");
+      return -1;
+   }
+#else
+      Dmsg3(100, "Calling chown for file %s uid: %ld gid: %ld\n", path, uid, gid);
+      return chown(path, uid, gid);
+#endif
+}
+
+/* Helper method to use fchmod() whenever possible, chmod() otherwise */
+int bchmod(int fd, const char *path, mode_t mode)
+{
+#ifdef HAVE_FCHOWN
+   if (fd) {
+      Dmsg2(100, "Calling chmod for file descriptor %d mode: %d\n", fd, mode);
+      return fchmod(fd, mode);
+   } else if (path) {
+      Dmsg2(100, "Calling chmod for file: %s mode: %d\n", path, mode);
+      return chmod(path, mode);
+   } else {
+      Dmsg0(100, "bchmod failed, neither the fd nor path was specified\n");
+      return -1;
+   }
+#else
+      Dmsg2(100, "Calling chmod for file: %s mode: %d\n", path, mode);
+      return chmod(path, mode);
+#endif
+}
+
 /* Used to test the program */
 static int init_size=1024;
 static int dbglevel=500;

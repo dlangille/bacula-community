@@ -164,6 +164,10 @@ BPIPE *          open_bpipe(char *prog, int wait, const char *mode, char *envp[]
 int              close_wpipe(BPIPE *bpipe);
 int              close_epipe(BPIPE *bpipe);
 int              close_bpipe(BPIPE *bpipe);
+bool             make_tmp_cmd(const char *cmd, const char *tmp, POOLMEM **dest,
+                              uint32_t JobId, const char* user, alist *tmp_list, POOLMEM **err);
+int bchown(int fd, const char *path, uid_t uid, gid_t gid);
+int bchmod(int fd, const char *path, mode_t mode);
 
 /* cram-md5.c */
 bool cram_md5_respond(BSOCK *bs, const char *password, int *tls_remote_need, int *compatible, bool use_bs_msg=false);
