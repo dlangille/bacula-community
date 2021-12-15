@@ -1187,7 +1187,7 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
          sendit(sock, _("  --> MaxRunSchedTime=%u\n"), res->res_job.MaxRunSchedTime);
       }
       if (res->res_job.storage) {
-         dump_storage_group(res->res_pool.storage, res->res_pool.storage_policy, sendit, sock);
+         dump_storage_group(res->res_job.storage, res->res_job.storage_policy, sendit, sock);
       }
       if (res->res_job.base) {
          JOB *job;
