@@ -766,7 +766,7 @@ uint32_t transfer_manager::append_status(POOL_MEM& msg, bool verbose)
    POOLMEM *tmp_msg = get_pool_memory(PM_MESSAGE);
    lock_guard lg_stat(m_stat_mutex);
    uint32_t ret = Mmsg(tmp_msg, _("(%sB/s) (ETA %d s) "
-            "Queued=%d %sB, Waiting=%d %sB, Processed=%d %sB, Done=%d %sB, Failed=%d %sB\n"),
+            "Queued=%d %sB, Waiting=%d %sB, Processing=%d %sB, Done=%d %sB, Failed=%d %sB\n"),
             edit_uint64_with_suffix(m_stat_average_rate, ec0), m_stat_eta/ONE_SEC,
             m_stat_nb_transfer_queued,  edit_uint64_with_suffix(m_stat_size_queued, ec1),
             m_stat_nb_transfer_waiting,  edit_uint64_with_suffix(m_stat_size_waiting, ec2),
