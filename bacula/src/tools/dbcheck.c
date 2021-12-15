@@ -956,7 +956,9 @@ static void eliminate_orphaned_job_records()
     */
    query = "SELECT Job.JobId,Job.Name FROM Job "
            "LEFT OUTER JOIN Client ON (Job.ClientId=Client.ClientId) "
-           "WHERE Client.Name IS NULL";
+           "WHERE Client.Name IS NULL "
+       "UNION "
+            "SELECT Job.JobId, Job.Name FROM Job LEFT JOIN JobMedia USING (JobId) WHERE JobMediaId IS NULL and Type = 'B' and JobStatus = 'T' AND JobFiles > 0 AND JobBytes > 0" ;
    if (verbose > 1) {
       printf_tstamp("%s\n", query);
    }
@@ -978,12 +980,34 @@ static void eliminate_orphaned_job_records()
       return;
    }
    if (fix && id_list.num_ids > 0) {
+      db_sql_query(db, "BEGIN", NULL, NULL);
+      printf_tstamp(_("Deleting %d orphaned TagJob records.\n"), id_list.num_ids);
+      delete_id_list("DELETE FROM TagJob WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting %d orphaned File records.\n"), id_list.num_ids);
+      delete_id_list("DELETE FROM File WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting %d orphaned BaseFile records.\n"), id_list.num_ids);
+      delete_id_list("DELETE FROM BaseFiles WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting %d orphaned PathVisibility records.\n"), id_list.num_ids);
+      delete_id_list("DELETE FROM PathVisibility WHERE JobId=%s", &id_list);
+
       printf_tstamp(_("Deleting %d orphaned Job records.\n"), id_list.num_ids);
       delete_id_list("DELETE FROM Job WHERE JobId=%s", &id_list);
+
       printf_tstamp(_("Deleting JobMedia records of orphaned Job records.\n"));
       delete_id_list("DELETE FROM JobMedia WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting Object records of orphaned Job records.\n"));
+      delete_id_list("DELETE FROM Object WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting Object records of orphaned Job records.\n"));
+      delete_id_list("DELETE FROM RestoreObject WHERE JobId=%s", &id_list);
+
       printf_tstamp(_("Deleting Log records of orphaned Job records.\n"));
       delete_id_list("DELETE FROM Log WHERE JobId=%s", &id_list);
+      db_sql_query(db, "COMMIT", NULL, NULL);
    }
 }
 
