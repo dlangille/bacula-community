@@ -125,16 +125,17 @@ static bool get_needed_caps()
    cap_t caps = NULL;
    char *cap_text = NULL;
    bool ret = false;
+   berrno be;
 
    caps = cap_get_proc();
    if (!caps) {
-      Dmsg1(90, "Calling cap_get_proc() failed, errno: %d!\n", errno);
+      Dmsg1(90, "Calling cap_get_proc() failed, ERR=%s\n", be.bstrerror());
       goto bail_out;
    }
 
    cap_text = cap_to_text(caps, NULL);
    if (!cap_text) {
-      Dmsg1(90, "Calling cap_get_proc() failed, errno: %d!\n", errno);
+      Dmsg1(90, "Calling cap_get_proc() failed, ERR=%s\n", be.bstrerror());
       goto bail_out;
    }
 
@@ -142,21 +143,40 @@ static bool get_needed_caps()
    ret = strstr(cap_text, caps_needed) == NULL ? false : true;
 
 bail_out:
-      if (cap_text) {
-         cap_free(cap_text);
-      }
-      if (caps) {
-         cap_free(caps);
-      }
-      if (ret) {
-         Dmsg0(90, "Have needed caps, APPEND and IMMUTABLE flags can be used for volumes.\n");
-      } else {
-         Dmsg0(90, "Do not have needed caps, APPEND and IMMUTABLE flags cannot be used for volumes.\n");
-      }
-      return ret;
+   if (cap_text) {
+      cap_free(cap_text);
+   }
+   if (caps) {
+      cap_free(caps);
+   }
+   if (ret) {
+      Dmsg0(90, "Have needed caps, APPEND and IMMUTABLE flags can be used for volumes.\n");
+   } else {
+      Dmsg0(90, "Do not have needed caps, APPEND and IMMUTABLE flags cannot be used for volumes.\n");
+   }
+   return ret;
 }
 #else
-static bool get_needed_caps() { return false; }
+static bool get_needed_caps()
+{
+   /* Determine why we fail here */
+   bool linux, libcap;
+#if defined(HAVE_LINUX_OS)
+   linux = true;
+#else
+   linux = false;
+#endif // HAVE_LINUX_OS
+
+#if defined(HAVE_LIBCAP)
+   libcap = true;
+#else
+   libcap = false;
+#endif // HAVE_LIBCAP
+
+   Dmsg0(90, "Returning from mocked get_needed_caps(), linux: %d libcap: %d\n",
+         linux, libcap);
+   return false;
+}
 #endif   // HAVE_LINUX_OS && HAVE_LIBCAP
 
 /*********************************************************************

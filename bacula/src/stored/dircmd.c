@@ -1044,6 +1044,7 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
       if (!dev->open_device(dcr, mode)) {
          /* Open with 'READ_WRITE' fails if immutable flag is set, check if that's the case */
          if (dev->check_for_immutable(volname)) {
+            Dmsg1(DT_VOLUME|50, "Volume %s has the 'Immutable' flag set, need to clear it\n", volname);
             /* Volume has immutable flag set, we need to clear it */
             if (dev->clear_immutable(volname)) {
                /* It should be now possible to open the device with desired mode */
@@ -1052,7 +1053,7 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
                }
             } else {
                dir->fsend(_("3929 Unable to clear immutable flag for device: \"%s\". ERR=%s\n"),
-                     dev->bstrerror());
+                     dev->print_name(), dev->bstrerror());
             }
          }
       } else {
