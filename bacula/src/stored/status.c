@@ -643,6 +643,22 @@ static void list_status_header(STATUS_PKT *sp)
       ((rblist *)res_head[R_AUTOCHANGER-r_first]->res_list)->size());
    sendit(msg, len, sp);
    list_plugins(sp);
+
+   bool append_only, immutable;
+#if defined(HAVE_APPEND_FL)
+   append_only = true;
+#else
+   append_only = false;
+#endif // HAVE_APPEND_FL
+
+#if defined(HAVE_IMMUTABLE_FL)
+   immutable = true;
+#else
+   immutable = false;
+#endif // HAVE_IMMUTABLE_FL
+   len = Mmsg(msg, " Capabilities needed: %d append_only support: %d immutable support: %d\n",
+         got_caps_needed, append_only, immutable);
+   sendit(msg, len, sp);
 }
 
 static void send_blocked_status(DEVICE *dev, STATUS_PKT *sp)
