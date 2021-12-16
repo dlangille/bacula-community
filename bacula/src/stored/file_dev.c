@@ -570,6 +570,12 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
    get_volume_fpath(vol_name, fname.handle());
 
    if (stat(fname.c_str(), &sp)) {
+      if (errno == ENOENT) {
+         /* Volume does not exist at all so we can just proceed */
+         return true;
+      }
+
+      /* We have an error otherwise */
       berrno be;
       Mmsg2(errmsg, "Failed to stat %s, ERR=%s", fname.c_str(), be.bstrerror());
       return false;
