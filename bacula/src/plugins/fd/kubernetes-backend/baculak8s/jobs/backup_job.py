@@ -74,25 +74,26 @@ class BackupJob(EstimationJob):
             count: Number of POD
         """
         logging.debug("PO_PODS: {}".format(self._plugin.pods_counter))
-        po_pods = PluginObject("/{}/".format(defaultk8spath),
-                               "Kubernetes PODs",
-                               cat="Container",
-                               potype="POD",
-                               src=self._plugin.po_source_data,
-                               uuid=self._plugin.po_source_data,
-                               count=self._plugin.pods_counter)
-        self._io.send_plugin_object(po_pods)
+        if self._plugin.pods_counter > 0:
+            po_pods = PluginObject("/{}/".format(defaultk8spath),
+                                "Kubernetes PODs",
+                                cat="Container",
+                                potype="POD",
+                                src=self._plugin.po_source_data,
+                                uuid=self._plugin.po_source_data,
+                                count=self._plugin.pods_counter)
+            self._io.send_plugin_object(po_pods)
         logging.debug("PO_PVCS: {} {}".format(self._plugin.pvcs_counter, self._plugin.pvcs_totalsize))
-        po_pvcs = PluginObject("/{}/".format(defaultk8spath),
-                               "Kubernetes Persistent Volume Claims",
-                               cat="Container",
-                               potype="PVC",
-                               src=self._plugin.po_source_data,
-                               uuid=self._plugin.po_source_data,
-                               count=self._plugin.pvcs_counter,
-                               size=self._plugin.pvcs_totalsize)
-        logging.debug("PO_PVCS: {}".format(po_pvcs))
-        self._io.send_plugin_object(po_pvcs)
+        if self._plugin.pvcs_counter > 0:
+            po_pvcs = PluginObject("/{}/".format(defaultk8spath),
+                                "Kubernetes Persistent Volume Claims",
+                                cat="Container",
+                                potype="PVC",
+                                src=self._plugin.po_source_data,
+                                uuid=self._plugin.po_source_data,
+                                count=self._plugin.pvcs_counter,
+                                size=self._plugin.pvcs_totalsize)
+            self._io.send_plugin_object(po_pvcs)
 
     def _backup_file(self, data):
         file_info = data.get('fi')
