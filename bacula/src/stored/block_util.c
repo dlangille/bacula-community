@@ -620,7 +620,7 @@ bool is_user_volume_size_reached(DCR *dcr, bool quiet)
             dev->getVolCatName());
       }
 
-      if (dev->device->protect_vols) {
+      if (dev->device->set_vol_immutable) {
          /* Set volume as immutable */
          if (!dev->set_immutable(dev->getVolCatName())) {
             /* We may proceed with that but warn the user */

@@ -246,10 +246,12 @@ bool DEVICE::truncate(DCR *dcr)
    Dmsg2(100, "Truncate adata=%d fd=%d\n", dev->adata, dev->m_fd);
 
    /* Need to clear the APPEND flag before truncating */
-   if (!clear_append_only(dcr->VolumeName)) {
-      Mmsg2(errmsg, _("Unable to clear append_only flag for volume %s on device %s.\n"),
-            dcr->VolumeName, print_name());
-      return false;
+   if (dev->device->set_vol_append_only) {
+      if (!clear_append_only(dcr->VolumeName)) {
+         Mmsg2(errmsg, _("Unable to clear append_only flag for volume %s on device %s.\n"),
+               dcr->VolumeName, print_name());
+         return false;
+      }
    }
 
    if (ftruncate(dev->m_fd, 0) != 0) {
@@ -556,7 +558,7 @@ void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
  */
 bool file_dev::check_volume_protection_time(const char *vol_name)
 {
-   if (!device->protect_vols) {
+   if (!device->set_vol_immutable) {
       Dmsg1(DT_VOLUME|50, "ProtectVolumes turned off for volume: %s\n", vol_name);
       return true;
    }

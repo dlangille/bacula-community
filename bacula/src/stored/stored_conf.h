@@ -223,7 +223,8 @@ public:
    bool enabled;                      /* Set when enabled (default) */
    bool autoselect;                   /* Automatically select from AutoChanger */
    bool read_only;                    /* Drive is read only */
-   bool protect_vols;                 /* Protect Volumes */
+   bool set_vol_append_only;          /* Set 'Append Only' filesystem flag for volumes */
+   bool set_vol_immutable;            /* Set 'Immutable' filesystem flag for volumes */
    utime_t min_volume_protection_time;         /* Minimum Volume Protection Time */
    uint32_t drive_index;              /* Autochanger drive index */
    uint32_t cap_bits;                 /* Capabilities of this device */
