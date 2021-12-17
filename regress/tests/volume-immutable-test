@@ -10,7 +10,7 @@
 # This test creates temporary bacula-sd.service file so that we can run SD
 # as systemd service.
 #
-TestName="volume-append-many-vols-test"
+TestName="volume-immutable-test"
 JobName=append
 
 . scripts/functions
@@ -53,8 +53,10 @@ $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumVolumeSize", "50M", "De
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumVolumeSize", "50M", "Device", "FileChgr1-Dev2")'
 
 # Set some protection directives
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ProtectVolumes", "yes", "Device", "FileChgr1-Dev1")'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ProtectVolumes", "yes", "Device", "FileChgr1-Dev2")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "Device", "FileChgr1-Dev1")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "Device", "FileChgr1-Dev2")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeImmutable", "yes", "Device", "FileChgr1-Dev1")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeImmutable", "yes", "Device", "FileChgr1-Dev2")'
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MinimumVolumeProtectionTime", "10seconds", "Device", "FileChgr1-Dev1")'
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "MinimumVolumeProtectionTime", "10seconds", "Device", "FileChgr1-Dev2")'
 

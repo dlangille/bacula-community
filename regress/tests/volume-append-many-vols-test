@@ -30,6 +30,9 @@ cleanup()
 
 trap 'cleanup' EXIT INT TERM
 
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "Device", "FileChgr1-Dev1")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "Device", "FileChgr1-Dev2")'
+
 # Create temporary bacula-sd.service file so that we can run SD as systemd service
 scripts/create_sed
 sed -f ${tmp}/sed_tmp ${cwd}/build/platforms/systemd/bacula-sd.service.in > ${tmp}/test-bacula-sd.service
