@@ -755,7 +755,35 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plug_meta = p_ctx->meta_mgr;
       Dmsg0(0, "Insert metadata!!!!!! CV.pdf\n");
       return bRC_OK;
+   } else if (p_ctx->nb_obj == 9) {
+      time_t now = time(NULL);
 
+      p_ctx->nb_obj++;
+
+      sp->type = FT_REG;
+      sp->fname = "/@size_update_file@";
+      sp->statp.st_mode = 0640;
+      sp->statp.st_ctime = now;
+      sp->statp.st_mtime = now;
+      sp->statp.st_atime = now;
+      sp->statp.st_size = -1; /* Size is unknown at the beginning, should be updated in the next step */
+      sp->statp.st_blksize = 4096;
+
+      Dmsg0(0, "@size_update_file@ initial step\n");
+      return bRC_OK;
+
+   } else if (p_ctx->nb_obj == 10) {
+
+      p_ctx->nb_obj++;
+
+      sp->type = FT_REG;
+      sp->fname = "/@size_update_file@";
+      sp->stat_update = true;    /* File attributes should be updated */
+      sp->statp.st_size = 666;   /* Update size */
+      sp->statp.st_mode = 0777;  /* Update perissions */
+
+      Dmsg0(0, "@size_update_file@ update size\n");
+      return bRC_OK;
    } else {
       return bRC_Stop;
    }
