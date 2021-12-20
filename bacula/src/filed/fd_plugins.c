@@ -680,6 +680,10 @@ int plugin_save(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
          if (plug_func(plugin)->startBackupFile(jcr->plugin_ctx, &sp) != bRC_OK) {
             goto bail_out;
          }
+
+         /* Set the flag if the plugin wants to update file's attributues */
+         ff_pkt->stat_update = sp.stat_update;
+
          if (sp.type == 0) {
             Jmsg1(jcr, M_FATAL, 0, _("Command plugin \"%s\": no type in startBackupFile packet.\n"),
                cmd);

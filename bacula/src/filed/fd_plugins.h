@@ -298,6 +298,7 @@ struct save_pkt {
    bool portable;                     /* set if data format is portable */
    bool accurate_found;               /* Found in accurate list (valid after check_changes()) */
    bool do_dedup;                     /* True if we deal with a dedup storage system */
+   bool stat_update;                  /* True if only file's metada needds to be updated */
    char *cmd;                         /* command */
    struct restore_object restore_obj; /* Info about restore object */
    struct plugin_object plugin_obj;   /* Plugin Object */
