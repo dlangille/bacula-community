@@ -584,7 +584,7 @@ void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
 bool file_dev::check_volume_protection_time(const char *vol_name)
 {
    if (!device->set_vol_immutable) {
-      Dmsg1(DT_VOLUME|50, "ProtectVolumes turned off for volume: %s\n", vol_name);
+      Dmsg1(DT_VOLUME|50, "SetVolumeImmutable turned off for volume: %s\n", vol_name);
       return true;
    }
 
