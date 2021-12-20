@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run test-plugin-fd and check if plugin file attributes are updated in the end.
+#
+TestName="test-plugin-size-update-test"
+JobName=TestPluginTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-plugin-confs
+file=encrypt-bug.jpg
+rm -rf ${cwd}/tmp/*
+echo "${cwd}/build/src" >${cwd}/tmp/file-list
+
+# Build and install the test plugin
+cd ${cwd}/build/src/plugins/fd
+make
+if [ $? -ne 0 ]; then
+   print_debug "Failed to build test plugin!"
+   exit 1
+fi
+
+make install-test-plugin
+if [ $? -ne 0 ]; then
+   print_debug "Failed to install test plugin!"
+   exit 1
+fi
+
+cd ${cwd}
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File1 volume=TestVolume001
+run job=$JobName storage=File1 yes
+wait
+messages
+@$out ${cwd}/tmp/log2.out
+restore jobid=1
+dir
+q
+quit
+END_OF_DATA
+
+run_bacula
+
+# Check if testfile metadata is updated
+# Check for size update
+n=`grep '@size_update_file@' ${cwd}/tmp/log2.out | grep 666 | wc -l`
+if [ $n -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Did not find updated file size, @see tmp/log2.out"
+fi
+
+# Check for permissions update
+n=`grep '@size_update_file@' ${cwd}/tmp/log2.out | grep '\-rwxrwxrwx' | wc -l`
+if [ $n -ne 1 ]; then
+   estat=1
+   print_debug "ERROR: Did not find updated file size, @see tmp/log2.out"
+fi
+
+
+stop_bacula
+
+end_test
