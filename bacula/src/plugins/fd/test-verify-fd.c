@@ -296,6 +296,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
 {
    char buf[512];
    verifyplug *self = get_self(ctx);
+   ssize_t nb;
    if (!self) {
       return bRC_Error;
    }
@@ -321,9 +322,9 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
 
    case IO_WRITE:
       Dmsg(ctx, dbglvl, "verifyplug: writing\n");
-      io->status = write(fileno(self->pfd->wfd), io->buf, io->count);
+      nb = write(fileno(self->pfd->wfd), io->buf, io->count);
       
-      if (io->status == 0) {
+      if (nb != io->count) {
          Jmsg(ctx, M_ERROR, 
               "Write error\n");
          return bRC_Error;
