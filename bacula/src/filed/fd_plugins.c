@@ -2704,16 +2704,15 @@ bRC plugin_verify_data_update(JCR *jcr, char *data, int size)
          io.win32 = false;
          io.lerror = 0;
          io.status = -1;
-         plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
+         ret = plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
          if (io.win32) {
             errno = b_errno_win32;
          } else {
             errno = io.io_errno;
          }
-         if (io.status != 0) {
+         if (io.status < 0) {
             ret = bRC_Error;
          }
-         
       }
    }
    jcr->plugin_ctx = NULL;
@@ -2762,13 +2761,13 @@ bRC plugin_verify_data_open(JCR *jcr,  ATTR *attr)
             io.win32 = false;
             io.lerror = 0;
             io.status = -1;
-            plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
+            bRC ret = plug_func(jcr->plugin)->pluginIO(jcr->plugin_ctx, &io);
             if (io.win32) {
                errno = b_errno_win32;
             } else {
                errno = io.io_errno;
             }
-            if (io.status >= 0) { // -1 in case of error
+            if (ret == bRC_OK && io.status >= 0) { // -1 in case of error
                bctx->verifyFileCalled = true;
             }
          }
