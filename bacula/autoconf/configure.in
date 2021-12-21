@@ -3705,8 +3705,10 @@ dnl
 AC_CHECK_HEADERS(sys/prctl.h sys/capability.h)
 AC_CHECK_FUNCS(prctl setreuid)
 AC_CHECK_LIB([cap], [cap_set_proc], [CAP_LIBS="-lcap"], [CAP_LIBS=])
+have_libcap="no"
 if test x$CAP_LIBS = x-lcap; then
    AC_DEFINE(HAVE_LIBCAP, 1, [Define if you have libcap])
+   have_libcap="yes"
 fi
 AC_SUBST(CAP_LIBS)
 
@@ -4373,6 +4375,8 @@ Configuration on `date`:
    ZLIB support:              ${have_zlib}
    LZO support:               ${have_lzo}
    S3 support:                ${have_libs3}
+   LIBCAP support: 	     ${have_libcap}
+   ZSTD support:             ${support_zstd}
    enable-smartalloc:         ${support_smartalloc}
    enable-lockmgr:            ${support_lockmgr}
    bat support:               ${support_bat}
