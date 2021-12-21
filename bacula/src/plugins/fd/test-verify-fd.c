@@ -333,7 +333,6 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
 
    /* Cleanup things during close */
    case IO_CLOSE:
-      io->status = 0;
       if (close_bpipe(self->pfd) == 0) {
          Jmsg(ctx, M_INFO, _("File %s matching pattern\n"), self->fname);
       }
@@ -341,7 +340,6 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
 
    case IO_SEEK:
       /* Seek not needed for this plugin, we don't use real sparse file */
-      io->status = 0;
       break;
    }
    return bRC_OK;
