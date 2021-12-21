@@ -1139,6 +1139,14 @@ void perform_backup()
          write_plugin('D', "This is a binary data!");
       signal_eod();
 
+      write_plugin('C', "METADATA_STREAM\n");
+      const size_t _mdlargebuf_len = 300000;
+      unsigned char *_mdlargebuf = (unsigned char *)malloc(_mdlargebuf_len);
+      memset(_mdlargebuf, '0', _mdlargebuf_len);
+      write_plugin_bin(_mdlargebuf, _mdlargebuf_len);
+      free(_mdlargebuf);
+      signal_eod();
+
       // disabled intentionally
       // write_plugin('C', "METADATA_CATALOG\n");
       //    write_plugin('D', "TABLE1: { field1: \"value1\", field2: \"value2\", field3: \"value3\"}");
