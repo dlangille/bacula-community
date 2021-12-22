@@ -173,8 +173,8 @@ static bool get_needed_caps()
    libcap = false;
 #endif // HAVE_LIBCAP
 
-   Dmsg2(90, "Returning from mocked get_needed_caps(), islinux: %d libcap: %d\n",
-         linux, libcap);
+   Dmsg2(90, "Returning from mocked get_needed_caps(), linux: %d libcap: %d\n",
+         islinux, libcap);
    return false;
 }
 #endif   // HAVE_LINUX_OS && HAVE_LIBCAP
