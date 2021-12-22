@@ -1322,10 +1322,10 @@ static bool check_resources()
          OK = false;
       }
 
-      if (pool->MaxVolBytes && (pool->MaxVolBytes < 1024*1024)) {
+      if (pool->MaxVolBytes && (pool->MaxVolBytes < 1000000)) {
          Jmsg(NULL, M_FATAL, 0,
                _("Invalid (too small) MaximumVolumeBytes: %llu for pool: %s. "
-                 "MaxVolBytes should be bigger or equal to 1048576 bytes\n"),
+                 "MaxVolBytes should be bigger or equal to 1MB\n"),
                pool->MaxVolBytes, pool->hdr.name);
          OK = false;
       }
