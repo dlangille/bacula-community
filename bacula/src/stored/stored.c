@@ -160,11 +160,11 @@ bail_out:
 static bool get_needed_caps()
 {
    /* Determine why we fail here */
-   bool linux, libcap;
+   bool islinux, libcap;
 #if defined(HAVE_LINUX_OS)
-   linux = true;
+   islinux = true;
 #else
-   linux = false;
+   islinux = false;
 #endif // HAVE_LINUX_OS
 
 #if defined(HAVE_LIBCAP)
@@ -173,7 +173,7 @@ static bool get_needed_caps()
    libcap = false;
 #endif // HAVE_LIBCAP
 
-   Dmsg2(90, "Returning from mocked get_needed_caps(), linux: %d libcap: %d\n",
+   Dmsg2(90, "Returning from mocked get_needed_caps(), islinux: %d libcap: %d\n",
          linux, libcap);
    return false;
 }
