@@ -72,7 +72,7 @@ if [ "$version" != "$version_fd" ]; then
     estat=1
 fi
 
-grep delta-fd.so $tmp/log4.out > /dev/null
+grep delta $tmp/log4.out > /dev/null
 if [ $? != 0 ]; then
     print_debug "ERROR: Can't find delta plugin in the status output"
     estat=2
