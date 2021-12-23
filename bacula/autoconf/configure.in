@@ -977,6 +977,12 @@ CFLAGS="${saved_CFLAGS}"
 
 dnl ----------------------------------------------------------------
 
+AC_ARG_WITH(zstd,
+    AC_HELP_STRING([--with-zstd@<:@=DIR@:>@], [Include ZSTD support. DIR is the ZSTD base]),
+    [
+	with_zstd_directory=${withval}
+    ]
+)
 
 ZSTD_LIBS="-lzstd"
 ZSTD_INC=""
