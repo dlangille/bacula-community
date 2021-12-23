@@ -656,8 +656,9 @@ static void list_status_header(STATUS_PKT *sp)
 #else
    immutable = false;
 #endif // HAVE_IMMUTABLE_FL
-   len = Mmsg(msg, " Capabilities needed: %d append_only support: %d immutable support: %d\n",
-         got_caps_needed, append_only, immutable);
+   len = Mmsg(msg, " Caps: %s, %s\n",
+         append_only ? "APPEND_ONLY" : "!APPEND_ONLY",
+         immutable ? "IMMUTABLE" : "!IMMUTABLE");
    sendit(msg, len, sp);
 }
 
