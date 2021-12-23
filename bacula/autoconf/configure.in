@@ -976,6 +976,7 @@ LIBS="${saved_LIBS}"
 CFLAGS="${saved_CFLAGS}"
 
 dnl ----------------------------------------------------------------
+with_zstd_directory=no
 
 AC_ARG_WITH(zstd,
     AC_HELP_STRING([--with-zstd@<:@=DIR@:>@], [Include ZSTD support. DIR is the ZSTD base]),
@@ -1000,10 +1001,10 @@ if test "x$with_zstd_directory" != "xno"; then
          ZSTD_INC="-I$with_zstd_directory/include $ZSTD_INC"
       fi
       if test -d "$with_zstd_directory/lib"; then
-      	 ZSTD_LIBS="$with_zstd_directory/lib/libzstd.a $ZSTD_LIBS"
+      	 ZSTD_LIBS="$with_zstd_directory/lib/libzstd.a"
       fi
       if test -d "$with_zstd_directory/lib64"; then
-      	 ZSTD_LIBS="$with_zstd_directory/lib64/libzstd.a $ZSTD_LIBS"
+      	 ZSTD_LIBS="$with_zstd_directory/lib64/libzstd.a"
       fi
    fi
 
@@ -1012,7 +1013,6 @@ if test "x$with_zstd_directory" != "xno"; then
 fi
 
 AC_CHECK_HEADER(zstd.h,,[error="Can't find ZSTD header."])
-AC_CHECK_LIB(zstd,ZSTD_createCCtx,,[error="Can't find ZSTD library."])
 
 if test x"${error}" == "x"; then
     support_zstd=yes
