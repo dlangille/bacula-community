@@ -997,7 +997,7 @@ if test "x$with_zstd_directory" != "xno"; then
       # Make sure the $with_zstd_directory also makes sense
       #
       if test -d "$with_zstd_directory/include"; then
-      	 ZSTD_INC="-I$with_zstd_directory/include ZSTD_INC"
+         ZSTD_INC="-I$with_zstd_directory/include $ZSTD_INC"
       fi
       if test -d "$with_zstd_directory/lib"; then
       	 ZSTD_LIBS="$with_zstd_directory/lib/libzstd.a $ZSTD_LIBS"
