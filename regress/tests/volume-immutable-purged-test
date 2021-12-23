@@ -3,14 +3,11 @@
 # Copyright (C) 2000-2021 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-# Test if Volumes created automatically by bacula during backup
-# are set with the APPEND flag, so that it cannot be overwritten accidentally.
-# Check if Full volumes have the IMMUTABLE flag so that it cannot be modified.
-# Check if volume can be relabeled after protection time expiration.
-# This test creates temporary bacula-sd.service file so that we can run SD
-# as systemd service.
+# Test for bug #8566 and similar.
+# Test if for purged volumes the Volume Protection Time is respected and no error message is printed during trying
+# to use such volume.
 #
-TestName="volume-immutable-test"
+TestName="volume-immutable-purged-test"
 JobName=append
 
 . scripts/functions
@@ -57,8 +54,6 @@ $bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeAppendOnly", "yes", "Device", "FileChgr1-Dev2")'
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeImmutable", "yes", "Device", "FileChgr1-Dev1")'
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "SetVolumeImmutable", "yes", "Device", "FileChgr1-Dev2")'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MinimumVolumeProtectionTime", "10seconds", "Device", "FileChgr1-Dev1")'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MinimumVolumeProtectionTime", "10seconds", "Device", "FileChgr1-Dev2")'
 
 # Run FD and DIR the usual way, SD has to be run with systemd
 ${bin}/bacula-ctl-fd start
@@ -85,6 +80,15 @@ messages
 run job=$JobName yes
 wait
 messages
+@$out $tmp/log2.out
+list volumes
+purge volume=Vol-0001
+list volumes
+@$out $tmp/log3.out
+run job=$JobName level=Full yes
+wait
+messages
+list volumes
 quit
 END_OF_DATA
 
@@ -96,48 +100,11 @@ if [ ${backup_res} -ne 1 ]; then
    print_debug "ERROR: JobId 1 did not succed, see ${tmp}/log2.out!"
 fi
 
-# Check how many volumes were created
-n_vols=`grep 'Volume name(s):' $tmp/log1.out | grep -o 'Vol-' | wc -l`
-
-# Check if all of the volumes created have the flag set
-append_find=`lsattr ${tmp}/Vol-* -l | grep 'Append_Only' | wc -l`
-if [ ${append_find} -ne ${n_vols} ]; then
+# Check if messages about skipping Immutable volumes was logged
+n=`cat $tmp/log3.out| grep "Volume name(s):" | grep "Vol-0003|Vol-0004|Vol-0005" | wc -l`
+if [ ${n} -eq 0 ]; then
    estat=1
-   print_debug "ERROR: Expected ${n_vols} volumes with the Append flag set, found ${append_find} instead!"
-fi
-
-# We expect n_vols-1 volumes to be marked as Immutable (last one still has some space on it)
-immutable_find=`lsattr ${tmp}/Vol-* -l | grep 'Immutable' | wc -l`
-immutable_expected=$((n_vols-1))
-if [ ${immutable_find} -ne $immutable_expected ]; then
-   estat=1
-   print_debug "ERROR: Expected ${immutable_expected} volumes with the Immputable flag set, found ${immutable_find} instead!"
-fi
-
-cat <<END_OF_DATA >$tmp/bconcmds
-@$out $tmp/log2.out
-purge volume=Vol-0001
-relabel oldvolume=Vol-0001 volume=RelabeledVol-0001 slot=0 pool=Default storage=File1 drive=0
-@$out $tmp/log3.out
-@sleep 20
-relabel oldvolume=Vol-0001 volume=RelabeledVol-0001 slot=0 pool=Default storage=File1 drive=0
-quit
-END_OF_DATA
-
-run_bconsole
-
-# Check if volume has not been relabeled before expiration time
-label_res=`cat $tmp/log2.out| grep "Cannot open Volume Vol-0001 for writing/truncating, because Minimum Volume Protection Time hasn't expired yet" | wc -l`
-if [ ${label_res} -ne 1 ]; then
-   estat=1
-   print_debug "ERROR: Failed to relabel volume, see ${tmp}/log2.out!"
-fi
-
-# Check if volume is relabeled and has correct state after waiting some more time
-label_res=`cat $tmp/log3.out| grep '3000 OK label' | grep 'RelabeledVol-0001' | wc -l`
-if [ ${label_res} -ne 1 ]; then
-   estat=1
-   print_debug "ERROR: Failed to relabel volume to 'RelabeledVol-0001, see ${tmp}/log3.out!"
+   print_debug "ERROR: Wrong volumes used for backup, see ${tmp}/log3.out!"
 fi
 
 sudo systemctl stop test-bacula-sd
