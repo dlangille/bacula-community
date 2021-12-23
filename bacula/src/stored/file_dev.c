@@ -192,17 +192,42 @@ bool file_dev::open_device(DCR *dcr, int omode)
          archive_name.c_str(), mode);
    /* Use system open() */
    if ((m_fd = ::open(archive_name.c_str(), mode|O_CLOEXEC|append, 0640)) < 0) {
-      berrno be;
-      dev_errno = errno;
-      Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
-            archive_name.c_str(), mode_to_str(omode), be.bstrerror());
-      Dmsg1(40, "open failed: %s", errmsg);
-   } else {
+      /* Open may fail if we want to write to the Immutable volume */
+      if (errno == EPERM && check_for_immutable(getVolCatName())) {
+         /* Volume has immutable flag set, we need to clear it */
+         if (!check_volume_protection_time(getVolCatName())) {
+            /* Volume cannot be reused yet */
+            MmsgD1(dbglvl, errmsg, _("Cannot open Volume %s for writing/truncating, "
+                     "because Minimum Volume Protection Time hasn't expired yet\n"),
+                  getVolCatName());
+         } else {
+            /* Flag can be cleared, volume can probably be reused */
+            if (clear_immutable(getVolCatName())) {
+               /* It should be now possible to open the device with desired mode */
+               if ((m_fd = ::open(archive_name.c_str(), mode|O_CLOEXEC|append, 0640)) < 0) {
+                  berrno be;
+                  dev_errno = errno;
+                  Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
+                        archive_name.c_str(), mode_to_str(omode), be.bstrerror());
+                  Dmsg1(40, "open failed: %s", errmsg);
+               }
+            }
+         }
+      } else {
+         /* Volume is not immutable, that should succeed */
+         berrno be;
+         dev_errno = errno;
+         Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
+               archive_name.c_str(), mode_to_str(omode), be.bstrerror());
+         Dmsg1(40, "open failed: %s", errmsg);
+      }
+   }
+
+   if (m_fd >= 0) {
       /* Open is OK, now let device get control */
       Dmsg2(40, "Did open(%s,%s,0640)\n", archive_name.c_str(), mode_to_str(omode));
       device_specific_open(dcr);
-   }
-   if (m_fd >= 0) {
+
       dev_errno = 0;
       file = 0;
       file_addr = 0;

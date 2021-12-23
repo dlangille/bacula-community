@@ -834,6 +834,14 @@ bool DCR::can_i_write_volume()
       Dmsg1(100, "Found in read list; cannot write vol=%s\n", VolumeName);
       return false;
    }
+
+   if (dev->check_for_immutable(VolumeName)) {
+      MmsgD1(dbglvl, jcr->errmsg, _("Skipping writing onto Volume %s, "
+                                    "because Volume's Protection Period has not expired yet\n"),
+             VolumeName);
+      return false;
+   }
+
    return can_i_use_volume();
 }
 
