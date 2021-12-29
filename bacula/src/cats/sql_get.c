@@ -126,7 +126,7 @@ bool BDB::bdb_get_file_record(JCR *jcr, JOB_DBR *jr, FILE_DBR *fdbr)
       if (fdbr->PathId && fdbr->Filename) {
          Mmsg(cmd,
               "SELECT FileId, LStat, MD5, FileIndex FROM File WHERE File.JobId=%s AND File.PathId=%s AND "
-              "File.Filename='%s'",
+              "File.Filename='%s' ORDER BY DeltaSeq DESC LIMIT 1",
               edit_int64(fdbr->JobId, ed1),
               edit_int64(fdbr->PathId, ed2),
               fdbr->Filename);

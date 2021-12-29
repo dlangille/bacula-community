@@ -1067,6 +1067,9 @@ void BDB::bdb_list_files_for_job(JCR *jcr, JobId_t jobid, int deleted, DB_LIST_H
            ") AS F JOIN Path ON (Path.PathId=F.PathId) %s %s",
            edit_int64(jobid, ed1), opt, ed1, join, where);
    } else {
+      /* Note: For some files with attributes update may be listed twice here.
+       *       We may consider adding 'DISTICT' to the query, but since it could
+       *       make query much longer it would be nice to handle it in some different way. */
       Mmsg(cmd, "SELECT Path.Path||F.Filename AS Filename "
            "FROM (SELECT PathId, Filename, JobId FROM File WHERE JobId=%s %s"
                   "UNION ALL "
