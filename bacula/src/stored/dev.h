@@ -604,7 +604,7 @@ public:
    virtual bool set_immutable(const char *vol_name) { return true; };
    virtual bool clear_immutable(const char *vol_name) { return true; };
    virtual bool check_volume_protection_time(const char *vol_name) { return true; };
-   virtual bool check_for_immutable(const char *vol_name) { return true; };
+   virtual bool check_for_immutable(const char *vol_name) { return false; };
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};
    virtual const char *print_full_type() { return print_type();};

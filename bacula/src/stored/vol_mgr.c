@@ -835,7 +835,7 @@ bool DCR::can_i_write_volume()
       return false;
    }
 
-   if (dev->check_for_immutable(VolumeName)) {
+   if (dev->device->set_vol_immutable && dev->check_for_immutable(VolumeName)) {
       MmsgD1(dbglvl, jcr->errmsg, _("Skipping writing onto Volume %s, "
                                     "because Volume's Protection Period has not expired yet\n"),
              VolumeName);
