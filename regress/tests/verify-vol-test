@@ -74,7 +74,7 @@ END_OF_DATA
 #
 
 nb=0
-function print_info
+print_info()
 {
     nb=`expr $nb + 1`
     if [ $nb = 50 ]; then
