@@ -278,7 +278,7 @@ void print_ls_output(JCR *jcr, ATTR *attr, int message_type /* M_RESTORED */)
                 guid->uid_to_name(attr->statp.st_uid, en1, sizeof(en1)),
                 guid->gid_to_name(attr->statp.st_gid, en2, sizeof(en2)));
    p += sprintf(p, " %18.18s ", edit_int64(attr->statp.st_size, ec1));
-   p = encode_time(attr->statp.st_ctime, p);
+   p = encode_time(attr->statp.st_mtime, p);
    *p++ = ' ';
    *p++ = ' ';
    for (f=attr->ofname; *f && (p-buf) < (int)sizeof(buf)-10; ) {
