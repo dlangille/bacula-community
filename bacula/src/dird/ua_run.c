@@ -177,7 +177,7 @@ int run_cmd(UAContext *ua, const char *cmd)
          break; /* error get out of while loop */
       }
 
-      if (!get_cmd(ua, _("OK to run? (yes/mod/no): "))) {
+      if (!get_cmd(ua, _("OK to run? (Yes/mod/no): "))) {
          break; /* error get out of while loop */
       }
 
@@ -1002,7 +1002,7 @@ configure_again:
 
    ASSERTD(nb < MAX_INI_ITEMS, "Check if we reach the MAX_INI_ITEMS defined");
 
-   if (!get_cmd(ua, _("Use above plugin configuration? (yes/mod/no): "))) {
+   if (!get_cmd(ua, _("Use above plugin configuration? (Yes/mod/no): "))) {
       ini->clear_items();
       return 0;
    }
