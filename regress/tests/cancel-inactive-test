@@ -9,6 +9,7 @@
 #
 use strict;
 
+use lib '.';
 # use bacula functions
 use scripts::functions;
 
