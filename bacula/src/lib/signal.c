@@ -157,9 +157,9 @@ extern "C" void signal_handler(int sig)
       char buf[400];
       pid_t pid;
       int exelen = strlen(exepath);
-
-      fprintf(stderr, _("Kaboom! %s, %s got signal %d - %s at %s. Attempting traceback.\n"),
-              exename, my_name, sig, get_signal_name(sig), fail_time);
+      fprintf(stderr, _("Kaboom! %s, %s got signal %d - %s at %s. Attempting traceback. thread#=[%ld]\n"),
+              exename, my_name, sig, get_signal_name(sig), fail_time,
+              (long int) bthread_get_thread_id());
       fprintf(stderr, _("Kaboom! exepath=%s\n"), exepath);
 
       if (exelen + 12 > (int)sizeof(btpath)) {
