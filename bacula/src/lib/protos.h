@@ -127,6 +127,7 @@ int       Zdeflate(char *in, int in_len, char *out, int &out_len);
 int       Zinflate(char *in, int in_len, char *out, int &out_len);
 void      stack_trace();
 void      gdb_stack_trace();
+void      gdb_traceback();
 void      gdb_print_local(int level);
 
 int       safer_unlink(const char *pathname, const char *regex);

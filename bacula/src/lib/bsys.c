@@ -1187,6 +1187,27 @@ void gdb_stack_trace()
    }
 }
 
+void gdb_traceback()
+{
+   char name_buf[512];
+   char syscom[1024];
+   BPIPE *bpipe;
+
+   snprintf(syscom, sizeof(syscom), "gdb --batch -n -ex \"thread apply all bt\" %s %d", name_buf, getpid());
+   bpipe = open_bpipe(syscom, 0, "r");
+   if (bpipe) {
+      bool ok = false;
+      char buf[1000];
+      while (fgets(buf, sizeof(buf), bpipe->rfd)) {
+         Pmsg1(000, "    %s", buf);
+      }
+      if (close_bpipe(bpipe) !=0) {
+         return;
+      }
+   }
+}
+
+
 void gdb_print_local(int level)
 {
    char name_buf[512];
