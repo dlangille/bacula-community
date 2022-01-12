@@ -213,6 +213,7 @@ static void *dir_heartbeat_thread(void *arg)
    }
    dir->close();
    jcr->hb_status = -1;         // Mark as stopped
+   free_jcr(jcr);
    return NULL;
 }
 
@@ -222,6 +223,7 @@ static void *dir_heartbeat_thread(void *arg)
 void start_dir_heartbeat(JCR *jcr)
 {
    if (!no_signals && (me->heartbeat_interval > 0)) {
+      jcr->inc_use_count();
       jcr->dir_bsock->set_locking();
       pthread_create(&jcr->heartbeat_id, NULL, dir_heartbeat_thread, (void *)jcr);
    }
