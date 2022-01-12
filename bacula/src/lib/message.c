@@ -1367,6 +1367,43 @@ p_msg(const char *file, int line, int level, const char *fmt,...)
     pt_out(buf);
 }
 
+/*********************************************************************
+ *
+ *  This subroutine can be called via GDB dynamic printing "dprintf"
+ *  command to dynamically add sort of Dmsg().
+ *  These message will goes into the trace file with other Dmsg output
+ *
+ *  see README.dynlog.txt for more
+ */
+void gdb_dprintf(const char *fmt,...)
+{
+    char      buf[5000];
+    int       len = 0; /* space used in buf */
+    va_list   arg_ptr;
+    int       details = TRUE;
+    if (dbg_timestamp) {
+       utime_t mtime = time(NULL);
+       bstrftimes(buf+len, sizeof(buf)-len, mtime);
+       len = strlen(buf);
+       buf[len++] = ' ';
+    }
+#ifdef FULL_LOCATION
+       if (details) {
+          if (dbg_thread) {
+             len += bsnprintf(buf+len, sizeof(buf)-len, "%s[%lld]: ",
+                             my_name, bthread_get_thread_id());
+          } else {
+             len += bsnprintf(buf+len, sizeof(buf)-len, "%s: ",
+                   my_name);
+          }
+       }
+#endif
+    va_start(arg_ptr, fmt);
+    bvsnprintf(buf+len, sizeof(buf)-len, (char *)fmt, arg_ptr);
+    va_end(arg_ptr);
+
+    pt_out(buf);
+}
 
 /*********************************************************************
  *
