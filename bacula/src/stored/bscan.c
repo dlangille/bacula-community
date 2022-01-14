@@ -1171,7 +1171,7 @@ static bool update_media_record(BDB *db, MEDIA_DBR *mr)
 
    /* Set last written to now, so that user has a month
     * (because of retention period set to 1month), to inspect recovered volume */
-   mr->LastWritten = (utime_t)time(NUL);
+   mr->LastWritten = (utime_t)time(NULL);
    if (!db_update_media_record(bjcr, db, mr)) {
       Pmsg1(0, _("Could not update media record. ERR=%s\n"), db_strerror(db));
       return false;;
