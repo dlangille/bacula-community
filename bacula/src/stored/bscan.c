@@ -1120,6 +1120,8 @@ static int create_media_record(BDB *db, MEDIA_DBR *mr, VOLUME_LABEL *vl)
       mr->set_first_written = true; /* Save FirstWritten during update_media */
       mr->FirstWritten = btime_to_utime(vl->write_btime);
       mr->LabelDate    = btime_to_utime(vl->label_btime);
+      /* Set label date in the catalog */
+      mr->set_label_date = true;
    } else {
       /* DEPRECATED DO NOT USE */
       dt.julian_day_number = vl->write_date;
@@ -1167,7 +1169,9 @@ static bool update_media_record(BDB *db, MEDIA_DBR *mr)
       return true;
    }
 
-   mr->LastWritten = lasttime;
+   /* Set last written to now, so that user has a month
+    * (because of retention period set to 1month), to inspect recovered volume */
+   mr->LastWritten = (utime_t)time(NUL);
    if (!db_update_media_record(bjcr, db, mr)) {
       Pmsg1(0, _("Could not update media record. ERR=%s\n"), db_strerror(db));
       return false;;
@@ -1184,7 +1188,7 @@ static int create_pool_record(BDB *db, POOL_DBR *pr)
 {
    pr->NumVols++;
    pr->UseCatalog = 1;
-   pr->VolRetention = 355 * 3600 * 24; /* 1 year */
+   pr->VolRetention = 31 * 3600 * 24; /* 1 month */
 
    if (!update_db) {
       return 1;
