@@ -661,7 +661,11 @@ class Lab:
         f.write("""\
 # The plugin unlink the file just after open()
 # echo "$$ `date` $@" >> /tmp/log
-while [ -f {tmp}/dedupstreams.conf ] ; do sleep 1; done
+
+# if inotifywait is installed then use it to "instantly" detect that the file
+# as been deleted from the direcory (aka "consumed") else wait 1s
+wait_cmd="`which inotifywait` -t 5 -e delete {tmp}" || wait_cmd="sleep 1"
+while [ -f {tmp}/dedupstreams.conf ] ; do $wait_cmd; done
 for var in "$@" ; do
    if [ "${{var}}" = "next" ] ; then
       var=0
