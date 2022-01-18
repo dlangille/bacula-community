@@ -1196,7 +1196,6 @@ void gdb_traceback()
    snprintf(syscom, sizeof(syscom), "gdb --batch -n -ex \"thread apply all bt\" %s %d", name_buf, getpid());
    bpipe = open_bpipe(syscom, 0, "r");
    if (bpipe) {
-      bool ok = false;
       char buf[1000];
       while (fgets(buf, sizeof(buf), bpipe->rfd)) {
          Pmsg1(000, "    %s", buf);

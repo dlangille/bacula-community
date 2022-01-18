@@ -761,7 +761,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       p_ctx->nb_obj++;
 
       sp->type = FT_REG;
-      sp->fname = "/@size_update_file@";
+      sp->fname = (char *)"/@size_update_file@";
       sp->statp.st_mode = 0640;
       sp->statp.st_ctime = now;
       sp->statp.st_mtime = now;
@@ -777,7 +777,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       p_ctx->nb_obj++;
 
       sp->type = FT_REG;
-      sp->fname = "/@size_update_file@";
+      sp->fname = (char *)"/@size_update_file@";
       sp->stat_update = true;    /* File attributes should be updated */
       sp->statp.st_size = 666;   /* Update size */
       sp->statp.st_mode = 0777;  /* Update perissions */
