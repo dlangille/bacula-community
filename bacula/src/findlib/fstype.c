@@ -330,6 +330,7 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
       case 0x012FD16D:     fstype = "xiafs"; break;
       case 0x9123683e:     fstype = "btrfs"; break;
       case 0x7461636f:     fstype = "ocfs2"; break;         /* OCFS2_SUPER_MAGIC */
+      case 0x2fc12fc1:     fstype = "zfs"; break;
 
 #if 0       /* These need confirmation */
       case 0x6B414653:     fstype = "afs"; break;           /* AFS_FS_MAGIC */
