@@ -239,6 +239,104 @@ static int pgsql_check_database_encoding(JCR *jcr, BDB_POSTGRESQL *mdb)
 }
 
 /*
+ * Get the time offset of the Postgress server in second, can be negative
+ *
+ * SELECT CURRENT_TIMESTAMP;
+ * 2022-01-20 07:49:35.19033-05  <== US/Eastern  ==> return -5*3600
+ * 2022-01-20 16:27:30.096223+03:30 <== Asia/Tehran  ==> return 3*3600+30*60
+ * 2022-01-20 12:59:33.42909+00 <= UTC  ==> return 0
+ */
+int get_utc_off(const char *st, int *offset)
+{
+   int err = 0; /* no error */
+   const char *p = st;
+   int i = strlen(p) - 1;
+   int off = 0;
+   int off_multiplier = 60;
+   bool got_colon = false;
+   /* searching for [0-9:+-] starting from the end */
+   while (i>=0) {
+      if (isdigit(p[i])) {
+         off = off + (p[i]-'0') * off_multiplier;
+         switch (off_multiplier) {
+         case 60:
+            off_multiplier = 600; break;
+         case 600:
+            off_multiplier = 3600; break;
+         case 3600:
+            off_multiplier = 36000; break;
+         case 36000:
+            off_multiplier = 0; break;
+         case 0:
+            err = 1; // too much digit
+         default:
+            break;
+         }
+      } else if (p[i] == ':') {
+         got_colon = true;
+         if (off_multiplier != 3600) {
+            err = 1;
+         }
+      } else if (p[i] == '+' || p[i] == '-' || (p[i] == ' ' && off_multiplier == 3600)) {
+         if (got_colon && off_multiplier != 0) {
+            err = 1;
+         }
+         if (off_multiplier == 3600) {
+            off *= 60; // there was no minutes (no colon)
+         }
+         if (p[i] == '-') {
+            off = - off;
+         }
+         *offset = off;
+         return err;
+      }
+      i--;
+   }
+   return 1;
+}
+
+/* return current system time zone offset in second using strfstime()
+ */
+int get_system_utc_offset()
+{
+   char buf[128];
+   time_t now;
+   struct tm tm;
+
+    time(&now);
+    localtime_r(&now, &tm);
+    int l=strftime(buf, sizeof(buf), "%z", &tm);
+    /* expect "+hhmm" or "-hhmm" */
+    if (l != 5) {
+       return 0; /* Unknown timezone on the system (Windows can do that) */
+    }
+    int off = ((buf[1]-'0')*10+(buf[2]-'0'))*3600 + ((buf[3]-'0')*10+(buf[4]-'0'))*60;
+    if (buf[0] == '-') {
+       off = -off;
+    }
+    return off;
+}
+
+static int pgsql_get_utc_offset(BDB_POSTGRESQL *mdb, int *offset)
+{
+   SQL_ROW row;
+
+   if (!mdb->sql_query("SELECT CURRENT_TIMESTAMP;", QF_STORE_RESULT)) {
+      return M_ERROR;
+   }
+
+   if ((row = mdb->sql_fetch_row()) == NULL) {
+      Mmsg1(mdb->errmsg, _("Can't retrieve time offset. Error fetching row: %s\n"), mdb->sql_strerror());
+      return M_ERROR;
+   }
+   int err = get_utc_off(row[0], offset);
+   if (err) {
+      Mmsg1(mdb->errmsg, _("Can't retrieve time offset. Invalid time format: %s\n"), row[0]);
+      return M_WARNING;
+   }
+   return 0;
+}
+/*
  * Now actually open the database.  This can generate errors,
  *   which are returned in the errmsg
  *
@@ -251,7 +349,6 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    char buf[10], *port;
    BDB_POSTGRESQL *mdb = this;
    int print_msg=0;             /* 1: warning, 2: error, 3 fatal */
-   const char *tz = get_timezone();
 
    P(mutex);
    if (mdb->m_connected) {
@@ -350,10 +447,22 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
    sql_query("SET cursor_tuple_fraction=1");
    sql_query("SET client_min_messages TO WARNING");
 
-   /* For the Timezone to the current director one */
-   if (tz && *tz) {
-      Mmsg(mdb->cmd, "SET timezone = '%s'", tz);
-      sql_query(mdb->cmd);
+   /* Check that PGSQL timezone match system timezone  */
+   {
+      int pgsql_offset = 0;
+      int sys_offset = get_system_utc_offset();
+      int ret = pgsql_get_utc_offset(this, &pgsql_offset);
+      if (ret != 0) {
+         Jmsg(jcr, ret, 0, "%s", errmsg);
+      } else {
+         if (sys_offset != pgsql_offset) {
+            /* try again in case we would be just on Daylight Saving Time switch */
+            sys_offset = get_system_utc_offset();
+         }
+         if (sys_offset != pgsql_offset) {
+            Jmsg(jcr, M_WARNING, 0, _("Postgresql and sytem timezone mismatch detected\n"));
+         }
+      }
    }
 
    /* 
