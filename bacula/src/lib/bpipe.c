@@ -614,6 +614,8 @@ bool make_tmp_cmd(const char *cmd, const char *tmp, POOLMEM **dest, uint32_t Job
       goto bail_out;
    }
 
+   /* This function is not designed to run on windows systems. TBI */
+#ifndef HAVE_WIN32
    /* Make tmp command file executable for the user in which context we run the commands
     * (if possible) */
    if (user && getuid() == 0) {
@@ -642,6 +644,7 @@ bool make_tmp_cmd(const char *cmd, const char *tmp, POOLMEM **dest, uint32_t Job
          goto bail_out;
       }
    }
+#endif  // HAVE_WIN32
 
    ret = true;
 
