@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test if itermediate Job statuses are reported for Before and After Job Runscripts.
+#
+. scripts/functions
+
+TestName="runscript-job-status-test"
+JobName=backup
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Job {
+  Name = "backup_after"
+    FileSet = "Full Set"
+    JobDefs = DefaultJob
+    RunScript {
+      Command = "/bin/sleep 10"
+      RunsWhen = After
+      RunsOnClient = no
+      #FailJobOnError = no
+   }
+}
+
+Job {
+  Name = "backup_before"
+    FileSet = "Full Set"
+    JobDefs = DefaultJob
+    RunScript {
+      Command = "/bin/sleep 10"
+      RunsWhen = Before
+      RunsOnClient = no
+      #FailJobOnError = no
+   }
+}
+END_OF_DATA
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/RUN_ALL_OK.log
+label volume=TestVolume001 storage=File2 pool=File slot=1 drive=0
+run job=backup_before yes
+@sleep 5
+@$out ${cwd}/tmp/status_before.log
+status dir
+@$out ${cwd}/tmp/backup_before.log
+wait
+messages
+run job=backup_after yes
+@sleep 10
+@$out ${cwd}/tmp/status_after.log
+status dir
+@$out ${cwd}/tmp/backup_after.log
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+status=`cat $tmp/status_before.log | grep 'executing Before Job Scripts'`
+if [ "$status" = "" ]; then
+    print_debug "Did not found information about the BeforeJob script, see $tmp/status_before.log"
+    estat=1
+fi
+
+status=`cat $tmp/status_after.log | grep 'executing After Job Scripts'`
+if [ "$status" = "" ]; then
+    print_debug "Did not found information about the AfterJob script, see $tmp/status_after.log"
+    estat=1
+fi
+
+stop_bacula
+
+end_test
