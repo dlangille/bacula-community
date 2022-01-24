@@ -130,6 +130,8 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
             Dmsg4(200, "runscript: Run it because SCRIPT_Before (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure,
                   jcr->JobStatus );
+            /* Set job task code */
+            jcr->job_task = JOB_TASK_BEFORE_SCRIPT;
             runit = true;
          }
       }
@@ -142,6 +144,8 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
             Dmsg4(200, "runscript: Run it because SCRIPT_AfterVSS (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure,
                   jcr->JobStatus );
+            /* Set job task code */
+            jcr->job_task = JOB_TASK_AFTER_SCRIPT;
             runit = true;
          }
       }
@@ -156,6 +160,8 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
             Dmsg4(200, "runscript: Run it because SCRIPT_After (%s,%i,%i,%c)\n",
                   script->command, script->on_success, script->on_failure,
                   jcr->JobStatus );
+            /* Set job task code */
+            jcr->job_task = JOB_TASK_AFTER_SCRIPT;
             runit = true;
          }
       }
@@ -171,6 +177,9 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
          }
       }
    }
+
+   /* Script ended, reset operation code */
+   jcr->job_task = JOB_TASK_ZERO;
 
    return ret;
 }

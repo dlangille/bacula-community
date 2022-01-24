@@ -1221,6 +1221,7 @@ static void list_running_jobs(UAContext *ua)
    bool pool_mem = false;
    OutputWriter ow(ua->api_opts);
    JobId_t jid = 0;
+   POOL_MEM msg_buf;
 
    if ((i = find_arg_with_value(ua, "jobid")) >= 0) {
       jid = str_to_int64(ua->argv[i]);
@@ -1443,10 +1444,18 @@ static void list_running_jobs(UAContext *ua)
          break;
       }
 
+      uint32_t curr_op = jcr->job_task;
+      if (curr_op != 0) {
+         /* We can add some more descriptive message */
+         Mmsg(msg_buf, "%s (%s)", msg, get_job_task(curr_op));
+      } else {
+         pm_strcpy(msg_buf, msg);
+      }
+
       if (ua->api == 1) {
          bash_spaces(jcr->comment);
          ua->send_msg(_("%6d\t%-6s\t%-20s\t%s\t%s\n"),
-                      jcr->JobId, level, jcr->Job, msg, jcr->comment);
+                      jcr->JobId, level, jcr->Job, msg_buf.c_str(), jcr->comment);
          unbash_spaces(jcr->comment);
 
       } else if (ua->api > 1) {
@@ -1460,7 +1469,7 @@ static void list_running_jobs(UAContext *ua)
                        OT_JOBLEVEL,"level",     jcr->getJobLevel(),
                        OT_JOBTYPE, "type",      jcr->getJobType(),
                        OT_JOBSTATUS,"status",   status,
-                       OT_STRING,  "status_desc",msg,
+                       OT_STRING,  "status_desc",msg_buf.c_str(),
                        OT_STRING,  "comment",   jcr->comment,
                        OT_SIZE,    "jobbytes",  jcr->JobBytes,
                        OT_INT32,   "jobfiles",  jcr->JobFiles,
@@ -1486,7 +1495,7 @@ static void list_running_jobs(UAContext *ua)
             jcr->JobId, b1, level,
             edit_uint64_with_commas(jcr->JobFiles, b2),
             edit_uint64_with_suffix(jcr->JobBytes, b3),
-            jcr->job->name(), msg);
+            jcr->job->name(), msg_buf.c_str());
       }
 
       if (pool_mem) {

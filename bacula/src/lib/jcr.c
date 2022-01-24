@@ -80,6 +80,15 @@ pthread_once_t key_once = PTHREAD_ONCE_INIT;
 
 static char Job_status[] = "Status JobId=%ld JobStatus=%d\n";
 
+/* Mapping of operation code to operation description */
+const struct job_task job_task_map[] = {
+   { JOB_TASK_ZERO, "\0" },
+   { JOB_TASK_BEFORE_SCRIPT, "executing Before Job Scripts" },
+   { JOB_TASK_AFTER_SCRIPT, "executing After Job Scripts" }
+};
+
+const uint32_t job_task_map_size = sizeof(job_task_map) / sizeof(job_task);
+
 void lock_jobs()
 {
    P(job_start_mutex);
@@ -395,6 +404,7 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
    jcr->setJobType(JT_SYSTEM);           /* internal job until defined */
    jcr->setJobLevel(L_NONE);
    jcr->setJobStatus(JS_Created);        /* ready to run */
+   jcr->job_task = JOB_TASK_ZERO;
 #ifndef HAVE_WIN32
    struct sigaction sigtimer;
    sigtimer.sa_flags = 0;
@@ -1208,6 +1218,18 @@ int get_next_jobid_from_list(char **p, uint32_t *JobId)
    *p = q;
    *JobId = str_to_int64(jobid);
    return 1;
+}
+
+/* Get description of operation by given job task code */
+const char *get_job_task(uint32_t op_code)
+{
+   for (uint32_t i=0; i<job_task_map_size; i++) {
+      if (job_task_map[i].op_code == op_code) {
+         return job_task_map[i].op_message;
+      }
+   }
+
+   return NULL;
 }
 
 /*

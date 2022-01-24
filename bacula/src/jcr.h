@@ -92,6 +92,22 @@
 #define JS_CloudUpload           'u'  /* Cloud upload */
 #define JS_CloudDownload         'w'  /* Cloud download */
 
+/* Helper for more descriptive job status */
+enum {
+   JOB_TASK_ZERO = 0,
+   JOB_TASK_BEFORE_SCRIPT = 100,
+   JOB_TASK_AFTER_SCRIPT
+};
+
+struct job_task {
+   const uint32_t op_code;
+   const char *op_message;
+};
+
+
+const char *get_job_task(uint32_t op_code);
+
+
 /* Migration selection types. Do not change the order. */
 enum {
    MT_SMALLEST_VOL = 1,
@@ -258,7 +274,10 @@ public:
    char Job[MAX_NAME_LENGTH];         /* Unique name of this Job */
    char event[MAX_NAME_LENGTH];       /* Current event (python) */
    uint32_t eventType;                /* Current event type (plugin) */
-
+   uint32_t job_task;                 /* Used to add description of current opearion being executed
+                                         (e.g. 'running AfterJob script').
+                                         If not 0, it can be used to make current job
+                                         status more descriptive. */
    uint32_t JobId;                    /* Director's JobId */
    uint32_t VolSessionId;
    uint32_t VolSessionTime;

@@ -1004,7 +1004,6 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
    int mode;
    const char *volname = (relabel == 1) ? oldname : newname;
    uint64_t volCatBytes;
-   bool opened = false;
 
    if (!obtain_device_block(dev,
                             &hold,
