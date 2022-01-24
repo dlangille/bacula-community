@@ -920,6 +920,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             }
          }
          db_list_events_records(ua->jcr,ua->db, &event, prtit, ua, llist);
+         return 1;
 
       } else if (strcasecmp(ua->argk[i], NT_("tag")) == 0) {
          return tag_cmd(ua, cmd);
