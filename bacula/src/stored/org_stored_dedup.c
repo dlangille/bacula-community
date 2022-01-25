@@ -36,7 +36,7 @@ void dedup_get_limits(int64_t *nofile, int64_t *memlock)
 }
 
 /* dump the status of all dedupengines */
-void list_dedupengines(char *cmd, STATUS_PKT *sp)
+void list_dedupengines(char *cmd, STATUS_PKT *sp, const char *target)
 {
 }
 

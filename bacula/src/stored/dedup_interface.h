@@ -22,7 +22,7 @@
 
 bool is_dedup_server_side(DEVICE *dev, int32_t stream, uint64_t stream_len);
 bool is_dedup_ref(DEV_RECORD *rec, bool lazy);
-void list_dedupengines(char *cmd, STATUS_PKT *sp);
+void list_dedupengines(char *cmd, STATUS_PKT *sp, const char *target);
 void dedup_get_limits(int64_t *nofile, int64_t *memlock);
 bool dedup_parse_filter(char *fltr);
 void dedup_filter_record(int verbose, DCR *dcr, DEV_RECORD *rec, char *dedup_msg, int len);

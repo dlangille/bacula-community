@@ -607,7 +607,7 @@ static void do_storage_status(UAContext *ua, STORE *store, char *cmd)
             sd->fsend(".status %s api=%d api_opts=%s",
                    cmd, ua->api, ua->api_opts);
          }
-      } else {
+      } else if (strcasecmp(cmd, "devices") == 0) {
          i = find_arg_with_value(ua, "device");
          if (i>0) {
             Mmsg(devname, "device=%s", ua->argv[i]);
@@ -615,6 +615,17 @@ static void do_storage_status(UAContext *ua, STORE *store, char *cmd)
          }
          sd->fsend(".status %s api=%d api_opts=%s %s",
                    cmd, ua->api, ua->api_opts, devname.c_str());
+      } else if (strcasecmp(cmd, "dedupengines") == 0) {
+         i = find_arg_with_value(ua, "dedupengine");
+         if (i>0) {
+            Mmsg(devname, "dedupengine=%s", ua->argv[i]);
+            bash_spaces(devname.c_str());
+         }
+         sd->fsend(".status %s api=%d api_opts=%s %s",
+                   cmd, ua->api, ua->api_opts, devname.c_str());
+      } else {
+         sd->fsend(".status %s api=%d api_opts=%s",
+                   cmd, ua->api, ua->api_opts);
       }
    } else {
       sd->fsend("status");
