@@ -289,6 +289,7 @@ public:
    void bdb_list_snapshot_records(JCR *jcr, SNAPSHOT_DBR *sdbr,
               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_files(JCR *jcr, FILE_DBR *fr, DB_RESULT_HANDLER *sendit, void *ctx);
+   void bdb_list_metadata_owner_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    /* sql_update.c */
    bool bdb_update_job_start_record(JCR *jcr, JOB_DBR *jr);

@@ -687,12 +687,6 @@ bool META_DBR::check()
       bsnprintf(errmsg, sizeof(errmsg), _("Type is not set"));
       return false;
    }
-
-   if (!Owner[0]) {
-      bsnprintf(errmsg, sizeof(errmsg), _("Owner is not set"));
-      return false;
-   }
-
    if (!Tenant[0]) {
       bsnprintf(errmsg, sizeof(errmsg), _("Tenant not set"));
       return false;
@@ -762,6 +756,12 @@ void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
          pm_strcat(where, ") ");
       }
 
+      if (ClientName[0] != 0) {
+         db_escape_string(jcr, jcr->db, esc.c_str(), ClientName, strlen(ClientName));
+         Mmsg(tmp, " Client.Name='%s'", esc.c_str());
+         append_filter(where, tmp.c_str());
+      }
+
       if (ConversationId[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), ConversationId, strlen(ConversationId));
          Mmsg(tmp, " MetaEmail.EmailConversationId = '%s'", esc.c_str());
@@ -808,7 +808,11 @@ void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
 
    if (Owner[0]) {
       db_escape_string(jcr, jcr->db, esc.c_str(), Owner, strlen(Owner));
-      Mmsg(tmp, " Meta%s.%sOwner = '%s'", Type, Type, esc.c_str());
+      if (strchr(Owner, '%')) {
+         Mmsg(tmp, " Meta%s.%sOwner ILIKE '%s'", Type, Type, esc.c_str());
+      } else {
+         Mmsg(tmp, " Meta%s.%sOwner = '%s'", Type, Type, esc.c_str());
+      }
       append_filter(where, tmp.c_str());
    }
 

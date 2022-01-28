@@ -138,7 +138,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> |\n"
        "\t\t source=<str> | code=<str> | type=<str> ]\n"
        "\tobjects [jobid=<jobid> client=<cli> type=<str> | category=<str> | status=<S> | limit=<int> | order=<asc|desc> ]\n"
-       "\tmetadata type=<email|attachment> tenant=<str> owner=<str>\n"
+       "\tmetadata type=<email|attachment> tenant=<str> [owner=<str>]\n"
        "\t    [jobid=<jobids> client=<cc> order=<Asc|desc> limit=<nn> orderby=<time> offset=<nn>]\n"
        "\t    [from=<str> to=<str> cc=<str> tags=<str> subject=<str> bodypreview=<str> all=<str>\n"
        "\t    minsize=<int> maxsize=<int> importance=<str> isread=<0|1> isdraft=<0|1> categories=<str>\n"

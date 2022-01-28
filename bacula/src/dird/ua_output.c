@@ -336,7 +336,8 @@ bail_out:
  *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
- *  list metadata type=[email|attachment] owner=xxx tenant=xxx jobid=<x,w,z> from=<str>
+ *  list metadata type=[email|attachment] tenant=xxx owner=xxx jobid=<x,w,z> client=<cli>
+ *             from=<str>
  *             to=<str> cc=<str> tags=<str> 
  *             subject=<str> bodypreview=<str> all=<str> minsize=<int> maxsize=<int> 
  *             importance=<str> isread=<0|1> isdraft=<0|1>
@@ -930,7 +931,10 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          META_DBR meta_r;
 
          for (j=i+1; j<ua->argc; j++) {
-            if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
+            if (!ua->argv[j]) {
+               ua->error_msg(_("Invalid %s argument. Expecting value\n"), ua->argk[j]);
+               return 1;
+            } else if (strcasecmp(ua->argk[j], NT_("jobid")) == 0) {
                if (is_a_number_list(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
                   meta_r.JobIds = ua->argv[j];
                 } else {
@@ -1021,16 +1025,16 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("hasattachment")) == 0) {
                meta_r.HasAttachment = str_to_uint64(ua->argv[j]);
 
-            } else if (strcasecmp(ua->argk[j], NT_("offset")) == 0 && ua->argv[j]) {
+            } else if (strcasecmp(ua->argk[j], NT_("offset")) == 0) {
                meta_r.offset = atoi(ua->argv[j]);
 
-            } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0 && ua->argv[j]) {
+            } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0) {
                meta_r.limit = atoi(ua->argv[j]);
 
-            } else if (strcasecmp(ua->argk[j], NT_("orderby")) == 0 && ua->argv[j]) {
+            } else if (strcasecmp(ua->argk[j], NT_("orderby")) == 0) {
                meta_r.orderby = bstrcasecmp(ua->argv[j], "Time") == 1;
 
-            } else if (strcasecmp(ua->argk[j], NT_("order")) == 0 && ua->argv[j]) {
+            } else if (strcasecmp(ua->argk[j], NT_("order")) == 0) {
                /* Other order are tested before */
                meta_r.order = bstrcasecmp(ua->argv[j], "DESC");
             }

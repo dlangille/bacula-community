@@ -1295,11 +1295,85 @@ void BDB::bdb_list_tag_records(JCR *jcr, TAG_DBR *tag, DB_LIST_HANDLER *result_h
    bdb_unlock();
 }
 
+/* List Owner in the metadata table */
+void BDB::bdb_list_metadata_owner_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+   POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
+
+   bdb_lock();
+   meta_r->create_db_filter(jcr, this, where.handle());
+   const char *where_filter = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
+                                       DB_ACL_BIT(DB_ACL_CLIENT), strcmp(where.c_str(), "") == 0);
+
+   const char *join_filter = (*where_filter && meta_r->ClientName[0] == 0) ?
+      get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+
+   if (meta_r->ClientName[0] != 0) {
+      Mmsg(join, " JOIN Job ON (Job.JobId = Meta%s.JobId) JOIN Client USING (ClientId) ", meta_r->Type);
+
+   } else if (*where_filter) {  // We add manually the Job join filter part
+      Mmsg(join, " JOIN Job ON (Job.JobId = Meta%s.JobId) ", meta_r->Type);
+   }
+
+   if (where_filter && *where_filter) {
+      pm_strcat(where, where_filter);
+   }
+
+   if (join_filter && *join_filter) {
+      pm_strcat(join, join_filter);
+   }
+ 
+   if (meta_r->limit > 0) {
+      Mmsg(tmp, " LIMIT %d ", meta_r->limit);
+      pm_strcat(where, tmp.c_str());
+   }
+
+   if (meta_r->offset > 0) {
+      Mmsg(tmp, " OFFSET %ld ", meta_r->offset);
+      pm_strcat(where, tmp.c_str());
+   }
+
+   switch (type) {
+   case JSON_LIST:
+   case VERT_LIST:
+   case HORZ_LIST:
+      Mmsg(cmd,
+           "SELECT DISTINCT %sOwner "
+           "FROM Meta%s %s %s",
+           meta_r->Type, meta_r->Type, join.c_str(), where.c_str());
+         break;
+   default:
+         break;
+   }
+   Dmsg1(DT_SQL|50, "%s\n", cmd);
+   if (!QueryDB(jcr, cmd)) {
+      Jmsg(jcr, M_ERROR, 0, _("Query %s failed!\n"), cmd);
+      bdb_unlock();
+      return;
+   }
+   if (strcmp(meta_r->Type, "Email") == 0) {
+      Mmsg(esc, "metadataemail");
+   } else {
+      Mmsg(esc, "metaattachment");
+   }
+   
+   list_result(jcr, this, esc.c_str(), sendit, ctx, type);
+
+   sql_free_result();
+   bdb_unlock();
+}
+
 /*
  * List plugin objects (search is based on object provided)
  */
 void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
+   if (!meta_r->Owner[0] || strchr(meta_r->Owner, '%')) {
+      /* List Owners */
+      bdb_list_metadata_owner_records(jcr, meta_r, sendit, ctx, type);
+      return;
+   }
+
    POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
    bdb_lock();
    //TODO add ACL part
@@ -1313,9 +1387,6 @@ void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER 
       get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
    if (meta_r->ClientName[0] != 0) {
-      bdb_escape_string(jcr, esc.c_str(), meta_r->ClientName, strlen(meta_r->ClientName));
-      Mmsg(tmp, " Client.Name='%s'", esc.c_str());
-      append_filter(where.handle(), tmp.c_str());
       Mmsg(join, " JOIN Job ON (Job.JobId = Meta%s.JobId) JOIN Client USING (ClientId) ", meta_r->Type);
 
    } else if (*where_filter) {  // We add manually the Job join filter part
