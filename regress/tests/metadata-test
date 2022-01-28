@@ -224,7 +224,7 @@ exit (scalar(@{$j->{data}}) == 1);'
     grep '{' $tmp/log_$mode.8.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
-exit (scalar(@{$j->{data}}) == 2 && $j->[0]->{emailtime} eq "2021-09-15 12:39:19");'
+exit (scalar(@{$j->{data}}) == 2 && $j->{data}->[0]->{emailtime} eq "2021-09-15 12:39:19");'
 
     if [ $? != 1 ]; then
         print_debug "ERROR: Incorrect data in $tmp/log_$mode.8.out"
@@ -235,7 +235,7 @@ exit (scalar(@{$j->{data}}) == 2 && $j->[0]->{emailtime} eq "2021-09-15 12:39:19
     grep '{' $tmp/log_$mode.9.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
-exit (scalar(@{$j->{data}}) == 2 && $j->[0]->{emailtime} eq "2021-09-15 12:40:19");'
+exit (scalar(@{$j->{data}}) == 2 && $j->{data}->[0]->{emailtime} eq "2021-09-15 12:40:19");'
 
     if [ $? != 1 ]; then
         print_debug "ERROR: Incorrect data in $tmp/log_$mode.9.out"
@@ -279,7 +279,7 @@ exit (scalar(@{$j->{data}}) == 1);'
     grep '{' $tmp/log_$mode.13.out | perl -MJSON -e '
 $l = <>; 
 $j = JSON::decode_json($l) ;
-exit (scalar(@{$j->{data}}) == 2 && $j->[0]->{emailsize} < 100000);'
+exit (scalar(@{$j->{data}}) == 2 && $j->{data}->[0]->{emailsize} < 100000);'
 
     if [ $? != 1 ]; then
         print_debug "ERROR: Incorrect data in $tmp/log_$mode.13.out"
