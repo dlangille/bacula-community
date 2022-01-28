@@ -63,9 +63,16 @@ class DirectiveDoc extends WebModule {
 			$resource_type = 'Job';
 		}
 
-		$doc = '';
-		$doc_file = Prado::getPathOfNamespace(self::DOC_PATH, self::DOC_EXT);
-		if (is_null(self::$dom) && file_exists($doc_file)) {
+		$doc = $doc_file = '';
+		$lang = $this->getModule('web_config')->getLanguage();
+		$doc_lang_file = Prado::getPathOfNamespace(self::DOC_PATH . '_' . $lang, self::DOC_EXT);
+		$doc_en_file = Prado::getPathOfNamespace(self::DOC_PATH, self::DOC_EXT);
+		if (file_exists($doc_lang_file)) {
+			$doc_file = $doc_lang_file;
+		} elseif (file_exists($doc_en_file)) {
+			$doc_file = $doc_en_file;
+		}
+		if (is_null(self::$dom) && !empty($doc_file)) {
 			$dom = new DOMDocument();
 			$dom->loadHTMLFile($doc_file);
 			self::$dom = $dom;
