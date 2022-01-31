@@ -116,11 +116,15 @@ setdebug level=50 tags=sql trace=1 dir
 .jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
 @$out $tmp/log_console.20.out
 .jlist metadata type=email owner=yyyy tenant=yyyy all="eric"
+@$out $tmp/log_console.21.out
+.jlist metadata type=email tenant=xxxx
+@$out $tmp/log_console.22.out
+.jlist metadata type=email tenant=xxxx owner=x%
 setdebug level=0 tags= dir
 run job=NightlySave fileset=TestPluginSet2 pool=Default storage=File1 yes
 wait
 messages
-@$out $tmp/log.21.out
+@$out $tmp/log.23.out
 .jlist metadata type=email owner=xxxx tenant=xxxx
 quit
 END_OF_DATA
@@ -161,6 +165,10 @@ setdebug level=50 tags=sql dir
 .jlist metadata type=attachment owner=xxxx tenant=xxxx name=CV id=AAMkAGZmZjBlMjI0LTMxMmEtNDFkMi1hM2Yx
 @$out $tmp/log_restricted.20.out
 .jlist metadata type=email owner=yyyy tenant=yyyy all="eric"
+@$out $tmp/log_restricted.21.out
+.jlist metadata type=email tenant=xxxx
+@$out $tmp/log_restricted.22.out
+.jlist metadata type=email tenant=xxxx owner=x%
 setdebug level=0 tags= dir
 quit
 END_OF_DATA
@@ -382,10 +390,32 @@ exit (scalar(@{$j->{data}}) == 0);'
         print_debug "ERROR: Incorrect data in $tmp/log_$mode.20.out"
         estat=1
     fi
+
+    # Should find  email, owner/tenant filter
+    grep '\[' $tmp/log_$mode.21.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.21.out"
+        estat=1
+    fi
+
+    # Should find  email, owner/tenant filter
+    grep '\[' $tmp/log_$mode.22.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 1);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.22.out"
+        estat=1
+    fi
 done
 
     # Should find 4 email, owner/tenant filter. Same query for both
-grep '\[' $tmp/log.21.out | perl -MJSON -e '
+grep '\[' $tmp/log.23.out | perl -MJSON -e '
 $l = <>;
 $j = JSON::decode_json($l) ;
 exit (scalar(@{$j->{data}}) == 4);'
