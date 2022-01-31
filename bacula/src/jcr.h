@@ -92,10 +92,13 @@
 #define JS_CloudUpload           'u'  /* Cloud upload */
 #define JS_CloudDownload         'w'  /* Cloud download */
 
-/* Helper for more descriptive job status */
+/* Helper for more descriptive job status 
+ * Edit jcr.c as well for the string mapping
+ */
 enum {
    JOB_TASK_ZERO = 0,
    JOB_TASK_BEFORE_SCRIPT = 100,
+   JOB_TASK_ENDJOB_SCRIPT,
    JOB_TASK_AFTER_SCRIPT
 };
 

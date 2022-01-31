@@ -2481,10 +2481,12 @@ static void store_runscript_when(LEX *lc, RES_ITEM *item, int index, int pass)
       *(uint32_t *)(item->value) = SCRIPT_AfterVSS;
    } else if (strcasecmp(lc->str, "aftersnapshot") == 0) {
       *(uint32_t *)(item->value) = SCRIPT_AfterVSS;
+   } else if (strcasecmp(lc->str, "endjob") == 0) {
+      *(uint32_t *)(item->value) = SCRIPT_EndJob;
    } else if (strcasecmp(lc->str, "always") == 0) {
       *(uint32_t *)(item->value) = SCRIPT_Any;
    } else {
-      scan_err2(lc, _("Expect %s, got: %s"), "Before, After, AfterVSS or Always", lc->str);
+      scan_err2(lc, _("Expect %s, got: %s"), "Before, EndJob, After, AfterVSS or Always", lc->str);
    }
    scan_to_eol(lc);
 }

@@ -832,6 +832,8 @@ int send_runscripts_commands(JCR *jcr)
                result = send_runscript_with_old_proto(jcr, cmd->when, msg);
 
             } else {
+               /* On the FileDaemon, EndJob is a synonym of After */
+               cmd->when = (cmd->when == SCRIPT_EndJob) ? SCRIPT_After : cmd->when;
                fd->fsend(runscript, cmd->on_success,
                                     cmd->on_failure,
                                     cmd->fail_on_error,

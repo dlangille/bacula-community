@@ -82,9 +82,10 @@ static char Job_status[] = "Status JobId=%ld JobStatus=%d\n";
 
 /* Mapping of operation code to operation description */
 const struct job_task job_task_map[] = {
-   { JOB_TASK_ZERO, "\0" },
-   { JOB_TASK_BEFORE_SCRIPT, "executing Before Job Scripts" },
-   { JOB_TASK_AFTER_SCRIPT, "executing After Job Scripts" }
+   { JOB_TASK_ZERO, "" },
+   { JOB_TASK_BEFORE_SCRIPT, _("executing Before Job Scripts") },
+   { JOB_TASK_ENDJOB_SCRIPT, _("executing End Job Scripts") },
+   { JOB_TASK_AFTER_SCRIPT, _("executing After Job Scripts") }
 };
 
 const uint32_t job_task_map_size = sizeof(job_task_map) / sizeof(job_task);

@@ -107,6 +107,8 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
       when = SCRIPT_Before;
    } else if (bstrcmp(label, NT_("ClientAfterVSS"))) {
       when = SCRIPT_AfterVSS;
+   } else if (bstrcmp(label, NT_("EndJob"))) {
+      when = SCRIPT_EndJob;
    } else {
       when = SCRIPT_After;
    }
@@ -146,6 +148,23 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
                   jcr->JobStatus );
             /* Set job task code */
             jcr->job_task = JOB_TASK_AFTER_SCRIPT;
+            runit = true;
+         }
+      }
+
+      if ((script->when & SCRIPT_EndJob) && (when & SCRIPT_EndJob)) {
+         Dmsg1(0, "EndJob jobstatus=%c\n", jcr->JobStatus);
+         if ((script->on_success &&
+              (jcr->JobStatus == JS_Terminated || jcr->JobStatus == JS_Warnings))
+            || (script->on_failure &&
+                (job_canceled(jcr) || jcr->JobStatus == JS_Differences))
+            )
+         {
+            Dmsg4(200, "runscript: Run it because SCRIPT_EndJob (%s,%i,%i,%c)\n",
+                  script->command, script->on_success, script->on_failure,
+                  jcr->JobStatus );
+            /* Set job task code */
+            jcr->job_task = JOB_TASK_ENDJOB_SCRIPT;
             runit = true;
          }
       }
