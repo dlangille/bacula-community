@@ -17,6 +17,8 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 
+/* Written by Eric Bollengier 2009 */
+
 #include "bacula.h"
 #include "cats.h" 
 #if HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL

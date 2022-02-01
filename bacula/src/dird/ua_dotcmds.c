@@ -85,7 +85,7 @@ static bool dot_bvfs_get_bootstrap(UAContext *ua, const char *cmd);
 static bool dot_bvfs_get_fileindex(UAContext *ua, const char *cmd);
 static bool dot_bvfs_get_delta(UAContext *ua, const char *cmd);
 static bool dot_bvfs_delete_fileid(UAContext *ua, const char *cmd);
-static void bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len);
+static bool bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len);
 static bool dot_setuid(UAContext *ua, const char *cmd);
 static bool dot_querycmd(UAContext *ua, const char *cmd);
 static bool putfile_cmd(UAContext *ua, const char *cmd);
@@ -674,7 +674,7 @@ static int get_client_jobids(UAContext *ua, Bvfs *fs)
    char limit[50];
    alist clients(10, owned_by_alist);
    db_list_ctx jobids;
-   bool ret;
+   bool ret, use_all_jobtype=false;
 
    int pos = find_arg_with_value(ua, "client");
    if (pos < 0) {
@@ -688,14 +688,15 @@ static int get_client_jobids(UAContext *ua, Bvfs *fs)
    parse_list(ua->argv[pos], &clients);
 
    db_lock(ua->db);
-   bvfs_get_filter(ua, where, limit, sizeof(limit));
+   use_all_jobtype = bvfs_get_filter(ua, where, limit, sizeof(limit));
    Mmsg(ua->db->cmd,
       "SELECT JobId "
         "FROM Job JOIN Client USING (ClientId) "
          "WHERE Client.Name IN (%s) "
-           "AND Job.Type = 'B' AND Job.JobStatus IN ('T', 'W') %s "
+           "AND %s AND Job.JobStatus IN ('T', 'W') %s "
          "ORDER By JobTDate ASC %s",
            fs->escape_list(&clients),
+           use_all_jobtype ? " Job.Type IN ('B', 'C', 'M') " : " Job.Type = 'B' ",
            where.c_str(), limit);
    ret = db_sql_query(ua->db, ua->db->cmd, db_list_handler, &jobids);
    db_unlock(ua->db);
@@ -1587,12 +1588,17 @@ static char *get_argument(UAContext *ua, const char *arg, char *esc, bool conver
    return esc;
 }
 
-/* The DB should be locked */
-static void bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len)
+/* The DB should be locked 
+ * Return:
+ * true: Can select all kind of job type (M, C, B) (we have  a job or a jobid)
+ * false: Filter on Backup jobs
+ */
+static bool bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len)
 {
    POOL_MEM tmp;
    char esc_name[MAX_ESCAPE_NAME_LENGTH];
-
+   bool ret = false;
+   
    if (get_argument(ua, "jobname", esc_name, true) != NULL) {
       Mmsg(where, "AND Job.Job LIKE '%s' ", esc_name);
    }
@@ -1607,12 +1613,14 @@ static void bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len
       if (strcmp(esc_name, "0") != 0) {
          Mmsg(tmp, "AND Job.JobId = '%s' ", esc_name);
          pm_strcat(where, tmp.c_str());
+         ret = true;
       }
    }
 
    if (get_argument(ua, "ujobid", esc_name, false) != NULL) {
       Mmsg(tmp, "AND Job.Job = '%s' ", esc_name);
       pm_strcat(where, tmp.c_str());
+      ret = true;
    }
 
    if (get_argument(ua, "start", esc_name, false) != NULL) {
@@ -1631,6 +1639,7 @@ static void bvfs_get_filter(UAContext *ua, POOL_MEM &where, char *limit, int len
          bsnprintf(limit, len, "LIMIT %s ", esc_name);
       }
    }
+   return ret;
 }
 
 /* .bvfs_get_jobs client=xxx [ujobid=yyyy] [jobname=<glob>] [fileset=<glob>] [start=<ts>] [end=<ts>]
@@ -1643,6 +1652,8 @@ static bool dot_bvfs_get_jobs(UAContext *ua, const char *cmd)
    POOL_MEM where;
    char esc_cli[MAX_ESCAPE_NAME_LENGTH];
    char limit[MAX_ESCAPE_NAME_LENGTH];
+   bool use_all_jobtype=false;
+
    if (!open_new_client_db(ua)) {
       return true;
    }
@@ -1662,15 +1673,17 @@ static bool dot_bvfs_get_jobs(UAContext *ua, const char *cmd)
    db_escape_string(ua->jcr, ua->db, esc_cli,
                     ua->argv[pos], strlen(ua->argv[pos]));
 
-   bvfs_get_filter(ua, where, limit, sizeof(limit));
+   use_all_jobtype = bvfs_get_filter(ua, where, limit, sizeof(limit));
 
    Mmsg(ua->db->cmd,
         "SELECT JobId, JobTDate, HasCache, Job "
           "FROM Job JOIN Client USING (ClientId) JOIN FileSet USING (FileSetId) "
-         "WHERE Client.Name = '%s' AND Job.Type = 'B' AND Job.JobStatus IN ('T', 'W') "
+         "WHERE Client.Name = '%s' AND %s AND Job.JobStatus IN ('T', 'W') "
             "%s "
          "ORDER By JobTDate DESC %s",
-        esc_cli, where.c_str(), limit);
+        esc_cli,
+        use_all_jobtype ? " Job.Type IN ('B', 'C', 'M') " : " Job.Type = 'B' ",
+        where.c_str(), limit);
 
    db_sql_query(ua->db, ua->db->cmd, jobs_handler, ua);
    db_unlock(ua->db);
