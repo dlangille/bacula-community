@@ -235,7 +235,7 @@ bool is_comment_legal(UAContext *ua, const char *name)
       return 0;
    }
    len = strlen(name);
-   if (len >= MAX_NAME_LENGTH) {
+   if (len >= 4096) {
       if (ua) {
          ua->error_msg(_("Comment too long.\n"));
       }
