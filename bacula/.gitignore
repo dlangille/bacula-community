@@ -860,9 +860,13 @@ updatedb/update_postgresql_tables_1016_to_1017
 updatedb/update_postgresql_tables_1017_to_1018
 updatedb/update_postgresql_tables_1018_to_1019
 updatedb/update_postgresql_tables_1019_to_1020
+updatedb/update_postgresql_tables_1020_to_1021
 updatedb/update_postgresql_tables_1021_to_1022
 updatedb/update_postgresql_tables_1022_to_1023
-
+updatedb/update_mysql_tables_1020_to_1021
+updatedb/update_mysql_tables_1021_to_1022
+updatedb/update_mysql_tables_1022_to_1023
+updatedb/update_mysql_tables_1023_to_1024
 # /docs/
 /docs/manual-fr-base
 /docs/manual-de-base
