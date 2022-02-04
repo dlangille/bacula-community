@@ -392,6 +392,19 @@ static bool setup_start_date(const char *val, bool days, char *dest, uint32_t de
    return true;
 }
 
+/* shortcuts for the list object category=xx command */
+struct object_category_sc_t {
+   const char *name;
+   const char *value;
+};
+
+static
+struct object_category_sc_t object_category_sc[] = {
+   NT_("db"), NT_("Database"),
+   NT_("vm"), NT_("Virtual Machine"),
+   NULL, NULL
+};
+
 static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 {
    POOLMEM *VolumeName;
@@ -761,7 +774,14 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                bstrncpy(obj_r.ObjectType, ua->argv[j], sizeof(obj_r.ObjectType));
 
             } else if (strcasecmp(ua->argk[j], NT_("category")) == 0 && ua->argv[j]) {
-               bstrncpy(obj_r.ObjectCategory, ua->argv[j], sizeof(obj_r.ObjectCategory));
+               const char *val = ua->argv[j];
+               for (int i=0 ; object_category_sc[i].name ; i++) {
+                  if (strcasecmp(val, object_category_sc[i].name) == 0) {
+                     val = object_category_sc[i].value;
+                     break;
+                  }
+               }
+               bstrncpy(obj_r.ObjectCategory, val, sizeof(obj_r.ObjectCategory));
 
             } else if (strcasecmp(ua->argk[j], NT_("status")) == 0 && ua->argv[j]) {
                int32_t status = (int32_t)ua->argv[j][0];
