@@ -105,8 +105,10 @@ char *edit_uint64_with_commas(uint64_t val, char *buf)
  * factor.  The buf array inherits a 27 byte minimim length
  * requirement from edit_unit64_with_commas(), although the output
  * string is limited to eight characters.
+ * When with_space is true (default) a space is inserted between
+ * the value and the suffix
  */
-char *edit_uint64_with_suffix(uint64_t val, char *buf)
+char *edit_uint64_with_suffix(uint64_t val, char *buf, bool with_space)
 {
   int commas = 0;
   char *c, mbuf[50];
@@ -128,7 +130,7 @@ char *edit_uint64_with_suffix(uint64_t val, char *buf)
 
   if (commas >= suffixes)
     commas = suffixes - 1;
-  bsnprintf(buf, 27, "%s %s", mbuf, suffix[commas]);
+  bsnprintf(buf, 27, with_space?"%s %s":"%s%s", mbuf, suffix[commas]);
   return buf;
 }
 
