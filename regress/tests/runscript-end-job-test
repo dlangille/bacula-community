@@ -3,7 +3,7 @@
 # Copyright (C) 2000-2021 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
-#  Test RunScript with EndJob parameter. By default failing such script should fail the job,
+#  Test RunScript with AtJobCompletion parameter. By default failing such script should fail the job,
 #  even if the job itself succeeded.
 #
 . scripts/functions
@@ -24,7 +24,7 @@ Job {
     JobDefs = DefaultJob
     RunScript {
       Command = "/bin/false afterbackup"
-      RunsWhen = EndJob
+      RunsWhen = AtJobCompletion
       RunsOnClient = no
       #FailJobOnError = no
    }
@@ -36,7 +36,7 @@ Job {
   JobDefs = DefaultJob
   RunScript {
       Command = "/bin/false afteradmin"
-      RunsWhen = EndJob
+      RunsWhen = AtJobCompletion
       RunsOnClient = no
       #FailJobOnError = no
   }
@@ -47,7 +47,7 @@ Job {
   Type = Restore
   JobDefs = DefaultJob
    RunScript  {
-      RunsWhen = EndJob
+      RunsWhen = AtJobCompletion
       RunsOnClient = no
       Command = "/bin/false afterrestore"
       #FailJobOnError = no
@@ -60,7 +60,7 @@ Job {
   JobDefs = DefaultJob
   Selection Type = PoolUncopiedJobs
    RunScript  {
-      RunsWhen = EndJob
+      RunsWhen = AtJobCompletion
       RunsOnClient = no
       Command = "/bin/false aftercopy"
       #FailJobOnError = no
@@ -73,7 +73,7 @@ Job {
   Type = Verify
   Level = VolumeToCatalog
   RunScript  {
-     RunsWhen = EndJob
+     RunsWhen = AtJobCompletion
      RunsOnClient = no
      Command = "/bin/false afterverify"
      #FailJobOnError = no
@@ -137,9 +137,9 @@ END_OF_DATA
 
 run_bacula
 
-grep 'shell command: run EndJob "/bin/false afterbackup"' ${cwd}/tmp/backup_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterbackup"' ${cwd}/tmp/backup_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/backup_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/backup_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/backup_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Backup Error' > /dev/null
@@ -152,9 +152,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false aftercopy"' ${cwd}/tmp/copy_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false aftercopy"' ${cwd}/tmp/copy_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/copy_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/copy_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/copy_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Copying Error' > /dev/null
@@ -167,9 +167,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false afterrestore"' ${cwd}/tmp/restore_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterrestore"' ${cwd}/tmp/restore_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/restore_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/restore_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/restore_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Restore Error' > /dev/null
@@ -182,9 +182,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false afteradmin"' ${cwd}/tmp/admin_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afteradmin"' ${cwd}/tmp/admin_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/admin_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/admin_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/admin_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Admin Error' > /dev/null
@@ -197,9 +197,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false afterverify"' ${cwd}/tmp/verify_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterverify"' ${cwd}/tmp/verify_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/verify_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/verify_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/verify_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Verify Error' > /dev/null
@@ -265,9 +265,9 @@ END_OF_DATA
 
 run_bconsole
 
-grep 'shell command: run EndJob "/bin/false afterbackup"' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterbackup"' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/no_fail_backup_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/no_fail_backup_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Backup OK -- with warnings' > /dev/null
@@ -285,9 +285,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false aftercopy"' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false aftercopy"' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/no_fail_copy_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/no_fail_copy_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Copying OK -- with warnings' > /dev/null
@@ -301,9 +301,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
 fi
 
 
-grep 'shell command: run EndJob "/bin/false afterrestore"' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterrestore"' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/no_fail_restore_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/no_fail_restore_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Restore OK -- with errors' > /dev/null
@@ -317,9 +317,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
 fi
 
 
-grep 'shell command: run EndJob "/bin/false afteradmin"' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afteradmin"' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/no_fail_admin_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/no_fail_admin_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Admin OK -- with warnings' > /dev/null
@@ -332,9 +332,9 @@ if [ $a != 0 -o $b != 0 -o $c != 0 -o $d != 0 ] ; then
    estat=1
 fi
 
-grep 'shell command: run EndJob "/bin/false afterverify"' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
+grep 'shell command: run AtJobCompletion "/bin/false afterverify"' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
 a=$?
-grep 'Error: Runscript: EndJob returned non-zero status=1' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
+grep 'Error: Runscript: AtJobCompletion returned non-zero status=1' ${cwd}/tmp/no_fail_verify_dir.log >/dev/null
 b=$?
 status=`cat ${cwd}/tmp/no_fail_verify_dir.log | grep 'Termination:' | tr -s ' ' | cut -d ':' -f 2 | sed 's/*//g'`
 echo ${status} | grep 'Verify OK -- with warnings' > /dev/null
