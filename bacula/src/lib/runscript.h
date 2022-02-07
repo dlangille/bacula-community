@@ -49,7 +49,7 @@ enum {
    SCRIPT_After  = (1<<0),      /* AfterJob */
    SCRIPT_Before = (1<<1),      /* BeforeJob */
    SCRIPT_AfterVSS = (1<<2),    /* BeforeJob and After VSS */
-   SCRIPT_EndJob = (1<<3),      /* Before AfterJob on the Director, take status in account */
+   SCRIPT_AtJobCompletion = (1<<3),  /* Before AfterJob on the Director, take status in account */
    SCRIPT_Any    = SCRIPT_Before | SCRIPT_After
 };
 

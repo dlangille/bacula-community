@@ -855,7 +855,7 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
       }
    }
-   run_scripts(jcr, jcr->job->RunScripts, "EndJob");
+   run_scripts(jcr, jcr->job->RunScripts, "AtJobCompletion");
 
    /* Runscript could have changed JobStatus,
     * now check if it should be changed in the report or not */

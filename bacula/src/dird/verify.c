@@ -472,7 +472,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
    /* Job needs to be marked as terminated before running the after runscript */
    jcr->setJobStatus(TermCode);
 
-   run_scripts(jcr, jcr->job->RunScripts, "EndJob");
+   run_scripts(jcr, jcr->job->RunScripts, "AtJobCompletion");
 
    /* Runscript could have changed JobStatus,
     * now check if it should be changed in the report or not */
