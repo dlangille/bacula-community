@@ -1588,7 +1588,7 @@ int get_group_members(const char *name, alist *users)
 {
    int ret = -1;
    /* Need to create implementation for other OSes */
-#ifdef HAVE_LINUX_OS
+#if defined(HAVE_LINUX_OS) && defined(HAVE_GETPWENT_R)
 #ifndef __ANDROID__
    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
    struct group grp, *pgrp;
