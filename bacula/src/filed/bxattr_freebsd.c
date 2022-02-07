@@ -187,17 +187,17 @@ bail_out:
             break;
          }
          if (xattr->name){
-            free_pool_memory(name_gen);
+            free_pool_memory(xattr->name);
          }
          if (xattr->value){
-            free(xattr->value);
+            free_pool_memory(xattr->value);
          }
          free(xattr);
       }
       delete xattr_list;
    }
    if (xlist != NULL){
-      free(xlist);
+      free_pool_memory(xlist);
    }
 
    return rc;
