@@ -309,17 +309,17 @@ void do_verify_volume(JCR *jcr)
    fdmsg->start_read_sock();
    bmessage *bmsg = fdmsg->new_msg(); /* get a message, to exchange with fdmsg */
 
-   if (have_zstd) {
-      ZSTD_DCtx *pZSTD = ZSTD_createDCtx();
-      jcr->ZSTD_decompress_workset = pZSTD;
-   }
+#ifdef HAVE_ZSTD
+   ZSTD_DCtx *pZSTD = ZSTD_createDCtx();
+   jcr->ZSTD_decompress_workset = pZSTD;
+#endif
 
-   if (have_lzo) {
-      if (lzo_init() != LZO_E_OK) {
-         Jmsg(jcr, M_FATAL, 0, _("LZO init failed\n"));
-         goto bail_out;
-      }
+#ifdef HAVE_LZO
+   if (lzo_init() != LZO_E_OK) {
+      Jmsg(jcr, M_FATAL, 0, _("LZO init failed\n"));
+      goto bail_out;
    }
+#endif
 
    /*
     * Get a record from the Storage daemon
