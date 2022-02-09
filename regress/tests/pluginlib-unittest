@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This is the pluginlib unit test
+#
+
+TestName="pluginlib-unittest"
+. scripts/functions
+make -C $src/src/plugins/fd/pluginlib pluginlib_test
+
+$src/src/plugins/fd/pluginlib/pluginlib_test
+exit $?
+
