@@ -154,7 +154,7 @@ bool _is(const char *file, int l, const char *op, const char *str, const char *s
    if (!value) {
       err++;
       if (err < 1000) {
-         Pmsg6(-1, "ERR %.80s %s:%i on %s %s == %s\n", label, file, l, op, str, str2);
+         Pmsg6(-1, "ERR %.80s %s:%i on %s [%s] == [%s]\n", label, file, l, op, str, str2);
       } else if (err == 1000) {
          Pmsg0(-1, "ERR Too much errors\n");
       }
