@@ -126,6 +126,23 @@ int main()
       ok(strcmp((char*)list.next(), "Eric") == 0, "check element Eric");
       ok(strcmp((char*)list.next(), "Kern") == 0, "check element Kern");
    }
+   {
+      alist list;
+      plugutil_str_split_to_alist(list, "key: 'value'", ':');
+      is(list.size(), 2, "split: key: value");
+      is((char*)list.get(0), "key", "split: check key");
+      is((char*)list.get(1), "'value'", "split: check value (without extra space)");
+   }
+   {
+      alist list;
+      plugutil_str_split_to_alist(list, NULL);
+      is(list.size(), 0, "split: NULL");
+   }
+   {
+      alist list;
+      plugutil_str_split_to_alist(list, "");
+      is(list.size(), 0, "split: empty");
+   }
 
    POOL_MEM cmd1(PM_NAME);
    POOL_MEM param(PM_NAME);
