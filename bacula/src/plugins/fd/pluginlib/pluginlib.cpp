@@ -291,7 +291,7 @@ void plugutil_str_split_to_alist(alist  *list, const char * str, const char sep)
 }
 
 /**
- * @brief It splits a string `str` into a separate substrings split on `sep` character.
+ * @brief It splits a string `str` into a separate substrings split on `sep` character. Leading and trailing spaces are removed.
  *
  * @param list a list used to populate split results
  * @param str a string to split
@@ -316,6 +316,12 @@ void plugutil_str_split_to_alist(alist &list, const char * str, const char sep)
             buf.c_str()[q - p] = '\0';
             p = q + 1;     // next element
          }
+         /* The following cleanup has been added to split strings such as
+          * item1: value  => 'item1', 'value'  and not 'item1', ' value'
+          */
+         strip_leading_space(buf.c_str());
+         strip_trailing_junk(buf.c_str());
+
          // in buf we have splitted string part
          const char * s = bstrdup(buf.c_str());
          list.append((void*)s);

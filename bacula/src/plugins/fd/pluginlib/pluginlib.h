@@ -91,6 +91,8 @@ extern const char *PLUGINNAME;
    if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4 );
 #define DMSG6(ctx,level,msg,var1,var2,var3,var4,var5,var6) \
    if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4, var5, var6 );
+#define DMSG7(ctx,level,msg,var1,var2,var3,var4,var5,var6,var7)             \
+   if (ctx) bfuncs->DebugMessage ( ctx, __FILE__, __LINE__, level, "%s " msg, PLUGINPREFIX, var1, var2, var3, var4, var5, var6, var7);
 
 /* fixed debug level definitions */
 #define D1  1                    /* debug for every error */
