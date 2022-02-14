@@ -21,7 +21,7 @@ DEFINES = \
 
 LDFLAGS:=$(LDFLAGS) -lstdc++
 
-vpath %.c $(MAINDIR)/src/tools $(MAINDIR)/src/dird $(MAINDIR)/src/plugins/fd
+vpath %.c $(MAINDIR)/src/tools $(MAINDIR)/src/dird $(MAINDIR)/src/plugins/fd $(MAINDIR)/src/lib
 vpath %.cpp $(MAINDIR)/src/tools $(MAINDIR)/src/dird $(MAINDIR)/src/tools/cdp-client
 
 ##########################################################################
@@ -45,7 +45,8 @@ ALL_OBJS = \
 	$(OBJDIR)/testfind.o \
 	$(OBJDIR)/testls.o \
 	$(OBJDIR)/bregex.o \
-	$(OBJDIR)/bwild.o
+	$(OBJDIR)/bwild.o \
+	$(OBJDIR)/bpipe-test.o
 
 ##########################################################################
 
@@ -77,9 +78,10 @@ clean:
 	$(call clean_exe,$(BINDIR)/bsock_meeting_test.exe)
 	$(call clean_exe,$(BINDIR)/thread.exe)
 	$(call clean_exe,$(BINDIR)/cdp-client.exe)
+	$(call clean_exe,$(BINDIR)/bpipe-test.exe)
 	$(ECHO_CMD)rm -rf $(OBJDIRS)
 
-tests: $(BINDIR)/bsock_meeting_test.exe $(BINDIR)/thread.exe
+tests: $(BINDIR)/bpipe-test.exe $(BINDIR)/bsock_meeting_test.exe $(BINDIR)/thread.exe 
 
 
 #
@@ -129,6 +131,9 @@ TEST_LIBS = \
 	-lcomctl32
 
 $(BINDIR)/bsock_meeting_test.exe: $(OBJDIR)/bsock_meeting_test.o $(OBJDIR)/unittests.o $(LIBS_BACULA)
+	$(call link_conapp,$(TEST_LIBS))
+
+$(BINDIR)/bpipe-test.exe: $(OBJDIR)/bpipe-test.o $(OBJDIR)/unittests.o $(LIBS_BACULA)
 	$(call link_conapp,$(TEST_LIBS))
 
 $(BINDIR)/cdp-client.exe: $(OBJDIR)/cdp-client.o $(OBJDIR)/backupservice.o $(OBJDIR)/folderwatcher.o $(OBJDIR)/journal.o $(LIBS_BACULA)

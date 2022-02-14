@@ -262,7 +262,7 @@ int main (int argc, char *argv[])
    Unittests t("BsockMeeting", true, true);
    InitWinAPIWrapper();
    WSA_Init();
-   start_heap = sbrk(0);
+   mark_heap();
    bindtextdomain("bacula", LOCALEDIR);
    textdomain("bacula");
    init_stack_dump();

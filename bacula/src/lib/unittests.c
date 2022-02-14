@@ -454,7 +454,7 @@ void fsu_mkpath(const char *newPath)
    free_and_null_pool_memory(syscmd);
 #else
    POOLMEM *fullPath = get_pool_memory(PM_MESSAGE);
-   Mmsg(fullPath, "%s", dirPath, newPath);
+   Mmsg(fullPath, "%s", newPath);
    int rc = _mkdir(fullPath);
    if (rc < 0) {
       printf("ERROR : Could not create path %s. Error: %s\n",

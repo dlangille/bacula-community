@@ -1255,7 +1255,7 @@ bail_out:
 #else /* HAVE_BACKTRACE && HAVE_GCC */
 void stack_trace() {}
 void gdb_stack_trace() {}
-void gdb_print_local() {}
+void gdb_print_local(int level) {}
 #endif /* HAVE_BACKTRACE && HAVE_GCC */
 
 #ifdef HAVE_SYS_STATVFS_H
