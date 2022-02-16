@@ -338,7 +338,7 @@ static void responseCompleteCallback(
    void *callbackCtx)
 {
    bacula_ctx *ctx = (bacula_ctx *)callbackCtx;
-   const char *msg;
+   const char *msg = NULL;
 
    Enter(dbglvl);
    if (ctx) {
@@ -347,7 +347,9 @@ static void responseCompleteCallback(
    if (status < 0 || status > S3ErrorsSize) {
       status = (S3Status)S3ErrorsSize;
    }
-   msg = oops->message;
+   if (oops) {
+      msg = oops->message;
+   }
    if (!msg) {
       msg = S3Errors[status];
    }
