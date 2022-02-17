@@ -981,6 +981,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             } else if (strcasecmp(ua->argk[j], NT_("to")) == 0) {
                bstrncpy(meta_r.To, ua->argv[j], sizeof(meta_r.To));
 
+            } else if (strcasecmp(ua->argk[j], NT_("foldername")) == 0) {
+               bstrncpy(meta_r.FolderName, ua->argv[j], sizeof(meta_r.FolderName));
+
             } else if (strcasecmp(ua->argk[j], NT_("cc")) == 0) {
                bstrncpy(meta_r.Cc, ua->argv[j], sizeof(meta_r.Cc));
 
