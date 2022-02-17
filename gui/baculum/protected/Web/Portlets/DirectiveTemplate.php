@@ -56,6 +56,7 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 	const DISABLED = 'Disabled';
 	const SHOW_RESET_BUTTON = 'ShowResetButton';
 	const SHOW_REMOVE_BUTTON = 'ShowRemoveButton';
+	const DOC = 'Doc';
 
 	public $doc;
 
@@ -122,7 +123,7 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 			$this->createDirective();
 			$this->setIsDirectiveCreated(true);
 			$this->copyAttributes();
-			$this->setDoc();
+			$this->createDoc();
 		}
 
 		// show directives existing in config or all
@@ -327,15 +328,28 @@ class DirectiveTemplate extends DirectiveControlTemplate implements IDirectiveFi
 		$this->setViewState(self::SHOW_REMOVE_BUTTON, $show);
 	}
 
-	public function setDoc() {
-		$component_type = $this->getComponentType();
-		$resource_type = $this->getResourceType();
-		$directive_name = $this->getDirectiveName();
-		$this->doc = $this->Application->getModule('doc_dir')->getDoc(
-			$component_type,
-			$resource_type,
-			$directive_name
-		);
+	public function createDoc() {
+		$doc = $this->getDoc();
+		if (!empty($doc)) {
+			$this->doc = $doc;
+		} else {
+			$component_type = $this->getComponentType();
+			$resource_type = $this->getResourceType();
+			$directive_name = $this->getDirectiveName();
+			$this->doc = $this->Application->getModule('doc_dir')->getDoc(
+				$component_type,
+				$resource_type,
+				$directive_name
+			);
+		}
+	}
+
+	public function setDoc($doc) {
+		$this->setViewState(self::DOC, $doc);
+	}
+
+	public function getDoc() {
+		return $this->getViewState(self::DOC, '');
 	}
 }
 ?>
