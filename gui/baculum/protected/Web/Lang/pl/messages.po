@@ -3961,10 +3961,11 @@ msgid "To"
 msgstr "To"
 
 msgid "Job age on the job status graph"
-msgstr "Job age on the job status graph"
+msgstr "Wiek zadań na wykresie statusu zadań"
 
 msgid "Set age for jobs to display the job summary pie graph on the dashboard page. Setting zero means displaying the graph for all jobs without limitation."
-msgstr "Set age for jobs to display the job summary pie graph on the dashboard page. Setting zero means displaying the graph for all jobs without limitation."
+msgstr "Ustaw maksymalny wiek dla zadań do wyświetlenia na wykresie statusu zadań na stronie głównej. Ustawienie zera oznacza wyświetlanie wykresu dla wszystkich zadań bez limitu."
 
 msgid "last %time %unit"
-msgstr "last %time %unit"
+msgstr "ostatni %time %unit"
+
