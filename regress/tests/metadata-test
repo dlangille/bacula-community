@@ -126,6 +126,14 @@ wait
 messages
 @$out $tmp/log.23.out
 .jlist metadata type=email owner=xxxx tenant=xxxx
+@$out $tmp/log.24.out
+.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/octet-stream
+@$out $tmp/log.25.out
+.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/jpg
+@$out $tmp/log.26.out
+.jlist metadata type=attachment tenant=xxxx owner=xxxx isinline=0
+@$out $tmp/log.27.out
+.jlist metadata type=attachment tenant=xxxx owner=xxxx isinline=1
 quit
 END_OF_DATA
 
@@ -421,7 +429,51 @@ $j = JSON::decode_json($l) ;
 exit (scalar(@{$j->{data}}) == 4);'
 
 if [ $? != 1 ]; then
-    print_debug "ERROR: Incorrect data in $tmp/log.21.out"
+    print_debug "ERROR: Incorrect data in $tmp/log.23.out"
+    estat=1
+fi
+
+    # Should find 1 attachment,
+grep '\[' $tmp/log.24.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log.24.out"
+    estat=1
+fi
+
+    # Should find 0 attachment,
+grep '\[' $tmp/log.25.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log.25.out"
+    estat=1
+fi
+
+    # Should find 0 attachment,
+grep '\[' $tmp/log.26.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log.26.out"
+    estat=1
+fi
+
+    # Should find 0 attachment,
+grep '\[' $tmp/log.27.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 0);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log.26.out"
     estat=1
 fi
 
