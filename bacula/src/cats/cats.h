@@ -650,6 +650,7 @@ public:
    int     HasAttachment;
    int     isDraft;
    int     isRead;
+   int     isInline;
    uint64_t offset;
    uint32_t limit;
    int     order;
@@ -675,15 +676,18 @@ public:
    char    Plugin[MAX_NAME_LENGTH];
    char    Name[MAX_SEARCH_LENGTH];
    char    FolderName[MAX_SEARCH_LENGTH];
+   char    ContentType[MAX_SEARCH_LENGTH];
    char    errmsg[MAX_NAME_LENGTH];
    META_DBR(): MinSize(-1), MaxSize(-1), HasAttachment(-1),
-               isDraft(-1), isRead(-1), offset(0), limit(512), order(0), orderby(0), all(false)
+               isDraft(-1), isRead(-1), isInline(-1), offset(0), limit(512),
+               order(0), orderby(0), all(false)
    {
       JobIds = NULL;
       *Id = *Tenant = *Owner = 0;
       *ClientName = *From = *To = *Cc = *Subject = *Tags = 0;
       *BodyPreview = *Type = *ConversationId = *Category = 0;
       *FolderName = *Name = *MinTime = *MaxTime = *Plugin = 0;
+      *ContentType = 0;
       *errmsg = 0;
    };
    ~META_DBR() {};

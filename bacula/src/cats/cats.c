@@ -809,6 +809,17 @@ void META_DBR::create_db_filter(JCR *jcr, BDB *db, POOLMEM **where)
          db->search_op(jcr, "MetaAttachment.AttachmentName", Name, esc.handle(), tmp.handle());
          append_AND_OR_filter(and_or, where, tmp.c_str());
       }
+
+      if (isInline >= 0) {
+         Mmsg(tmp, " MetaAttachment.AttachmentIsInline = %d", isInline);
+         append_filter(where, tmp.c_str());
+      }
+
+      if (ContentType[0]) {
+         db_escape_string(jcr, jcr->db, esc.c_str(), ContentType, strlen(ContentType));
+         Mmsg(tmp, " MetaAttachment.AttachmentContentType = '%s'", esc.c_str());
+         append_filter(where, tmp.c_str());
+      }
    }
 
    if (Owner[0]) {
