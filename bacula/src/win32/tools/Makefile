@@ -46,7 +46,8 @@ ALL_OBJS = \
 	$(OBJDIR)/testls.o \
 	$(OBJDIR)/bregex.o \
 	$(OBJDIR)/bwild.o \
-	$(OBJDIR)/bpipe-test.o
+	$(OBJDIR)/bpipe-test.o\
+	$(OBJDIR)/windows-env-test.o
 
 ##########################################################################
 
@@ -79,9 +80,10 @@ clean:
 	$(call clean_exe,$(BINDIR)/thread.exe)
 	$(call clean_exe,$(BINDIR)/cdp-client.exe)
 	$(call clean_exe,$(BINDIR)/bpipe-test.exe)
+	$(call clean_exe,$(BINDIR)/windows-env-test.exe)
 	$(ECHO_CMD)rm -rf $(OBJDIRS)
 
-tests: $(BINDIR)/bpipe-test.exe $(BINDIR)/bsock_meeting_test.exe $(BINDIR)/thread.exe 
+tests: $(BINDIR)/bpipe-test.exe $(BINDIR)/windows-env-test.exe $(BINDIR)/bsock_meeting_test.exe $(BINDIR)/thread.exe 
 
 
 #
@@ -134,6 +136,9 @@ $(BINDIR)/bsock_meeting_test.exe: $(OBJDIR)/bsock_meeting_test.o $(OBJDIR)/unitt
 	$(call link_conapp,$(TEST_LIBS))
 
 $(BINDIR)/bpipe-test.exe: $(OBJDIR)/bpipe-test.o $(OBJDIR)/unittests.o $(LIBS_BACULA)
+	$(call link_conapp,$(TEST_LIBS))
+
+$(BINDIR)/windows-env-test.exe: $(OBJDIR)/windows-env-test.o $(OBJDIR)/unittests.o $(LIBS_BACULA)
 	$(call link_conapp,$(TEST_LIBS))
 
 $(BINDIR)/cdp-client.exe: $(OBJDIR)/cdp-client.o $(OBJDIR)/backupservice.o $(OBJDIR)/folderwatcher.o $(OBJDIR)/journal.o $(LIBS_BACULA)
