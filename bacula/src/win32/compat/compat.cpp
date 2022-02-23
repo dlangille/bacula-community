@@ -42,7 +42,7 @@
  * the 64 bit version.
  */
 
-static const int dbglvl = 500;
+static const int dbglvl = 0;
 
 #define b_errno_win32 (1<<29)
 
@@ -2422,7 +2422,8 @@ GetApplicationName(const char *cmdline, char **pexe, const char **pargs)
 static BOOL
 CreateChildProcessW(const char *comspec, const char *cmdLine,
                     PROCESS_INFORMATION *hProcInfo,
-                    HANDLE in, HANDLE out, HANDLE err)
+                    HANDLE in, HANDLE out, HANDLE err,
+                    LPVOID envp)
 {
    STARTUPINFOW siStartInfo;
    BOOL bFuncRetn = FALSE;
@@ -2442,12 +2443,69 @@ CreateChildProcessW(const char *comspec, const char *cmdLine,
    // Convert argument to WCHAR
    POOLMEM *cmdLine_wchar = get_pool_memory(PM_FNAME);
    POOLMEM *comspec_wchar = get_pool_memory(PM_FNAME);
+   POOLMEM *env_wchar = NULL;
 
    UTF8_2_wchar(&cmdLine_wchar, cmdLine);
    UTF8_2_wchar(&comspec_wchar, comspec);
 
-   // Create the child process.
-   Dmsg2(dbglvl, "Calling CreateProcess(%s, %s, ...)\n", comspec_wchar, cmdLine_wchar);
+   if (envp) {
+
+      /* compute required size in bytes*/
+      uint32_t buffer_size = 0, ori_size = 0;
+      /* Get all original env vars */
+      wchar_t * wori_env = GetEnvironmentStringsW();
+      /* Sliding pointer on wori_env */
+      wchar_t * p_wori_env = wori_env;
+      /* Advance p_wori_env until we end on the trailing wchar_t('\0') */
+      while (*p_wori_env)
+      {
+         buffer_size += (lstrlenW(p_wori_env) + 1)*sizeof(wchar_t);
+         p_wori_env += lstrlenW(p_wori_env) + 1;
+      }
+      /* keep track of original env vars size */
+      ori_size = buffer_size;
+      /* parse envp */
+      char **c_env = (char**)envp;
+      char *p_env = NULL;
+      for (int i = 0; (p_env = (char *)c_env[i]); i++) {
+         buffer_size += (strlen(p_env)+1)*sizeof(wchar_t);
+      }
+      /* terminal wchar_t('\0') */ 
+      buffer_size += sizeof(wchar_t);
+      Dmsg1(dbglvl, "env var buffer size = %d\n", buffer_size);
+
+      /* build new env block */
+      env_wchar = get_pool_memory(PM_FNAME);
+      /* reallocate once with the predicted buffer size */
+      env_wchar = check_pool_memory_size(env_wchar, buffer_size);
+      /* Sliding pointer on env_wchar */
+      POOLMEM *p_env_wchar = env_wchar;
+      /* copy the original env vars */
+      pm_memcpy(&env_wchar, (char*) wori_env, ori_size);
+      p_env_wchar += ori_size;
+      
+      /* release original env vars block */
+      FreeEnvironmentStringsW((LPWCH)wori_env);
+
+      /* concat our env vars */
+      POOLMEM *p_wenv = get_pool_memory(PM_MESSAGE);
+      for (int i = 0; (p_env = (char *)c_env[i]); i++) {
+         /* convert env var to wchar_t */
+         int32_t conv_size = UTF8_2_wchar(&p_wenv, p_env);
+         /* steal the terminal \0 */
+         memcpy(p_env_wchar, p_wenv, (conv_size)*sizeof(wchar_t));
+         p_env_wchar += (conv_size)*sizeof(wchar_t);
+      }
+      free_pool_memory(p_wenv);
+      /* trailing wchar_t('\0') */
+      *p_env_wchar++ = '\0';
+      *p_env_wchar++ = '\0';
+   }
+
+   wchar_t *p = (wchar_t *)cmdLine_wchar;
+   Dmsg2(dbglvl, "UTF8_2_wchar Convert cmdLine %s => %ls\n", cmdLine, p);
+   p = (wchar_t *)comspec_wchar;
+   Dmsg2(dbglvl, "UTF8_2_wchar Convert comspec %s => %ls\n", comspec, p);
 
    // try to execute program
    bFuncRetn = p_CreateProcessW((WCHAR*)comspec_wchar,
@@ -2455,14 +2513,17 @@ CreateChildProcessW(const char *comspec, const char *cmdLine,
                                 NULL,      // process security attributes
                                 NULL,      // primary thread security attributes
                                 TRUE,      // handles are inherited
-                                0,         // creation flags
-                                NULL,      // use parent's environment
+                                env_wchar ? CREATE_UNICODE_ENVIRONMENT : 0, // creation flags
+                                env_wchar, // use parent's environment
                                 NULL,      // use parent's current directory
                                 &siStartInfo,  // STARTUPINFO pointer
                                 hProcInfo);   // receives PROCESS_INFORMATION
    free_pool_memory(cmdLine_wchar);
    free_pool_memory(comspec_wchar);
-
+   if (env_wchar) {
+      free_pool_memory(env_wchar);
+   }
+   Dmsg0(dbglvl, "CreateProcessW done.\n");
    return bFuncRetn;
 }
 
@@ -2473,7 +2534,8 @@ CreateChildProcessW(const char *comspec, const char *cmdLine,
 static BOOL
 CreateChildProcessA(const char *comspec, char *cmdLine,
                     PROCESS_INFORMATION *hProcInfo,
-                    HANDLE in, HANDLE out, HANDLE err)
+                    HANDLE in, HANDLE out, HANDLE err,
+                    LPVOID envp)
 {
    STARTUPINFOA siStartInfo;
    BOOL bFuncRetn = FALSE;
@@ -2489,6 +2551,55 @@ CreateChildProcessA(const char *comspec, char *cmdLine,
    siStartInfo.hStdOutput = out;
    siStartInfo.hStdError = err;
 
+   POOLMEM *env_char = NULL;
+
+   if (envp) {
+
+      /* compute required size in bytes*/
+      uint32_t buffer_size = 0, ori_size = 0;
+      /* Get all original env vars */
+      char * ori_env = GetEnvironmentStringsA();
+      /* Sliding pointer on wori_env */
+      char * p_ori_env = ori_env;
+      /* Advance p_wori_env until we end on the trailing wchar_t('\0') */
+      while (*p_ori_env)
+      {
+         buffer_size += (lstrlenA(p_ori_env) + 1);
+         p_ori_env += lstrlenA(p_ori_env) + 1;
+      }
+      /* keep track of original env vars size */
+      ori_size = buffer_size;
+      /* parse envp */
+      char **c_env = (char**)envp;
+      char *p_env = NULL;
+      for (int i = 0; (p_env = (char *)c_env[i]); i++) {
+         buffer_size += (strlen(p_env)+1);
+      }
+      /* terminal '\0' */ 
+      buffer_size += 1;
+      Dmsg1(dbglvl, "env var buffer size = %d\n", buffer_size);
+
+      /* build new env block */
+      env_char = get_pool_memory(PM_FNAME);
+      /* reallocate once with the predicted buffer size */
+      env_char = check_pool_memory_size(env_char, buffer_size);
+      /* Sliding pointer on env_wchar */
+      POOLMEM *p_env_char = env_char;
+      /* copy the original env vars */
+      pm_memcpy(&env_char, (char*) ori_env, ori_size);
+      p_env_char += ori_size;
+      
+      /* release original env vars block */
+      FreeEnvironmentStringsA((LPCH)ori_env);
+
+      /* concat our env vars */
+      for (int i = 0; (p_env = (char *)c_env[i]); i++) {
+         /* steal the terminal \0 */
+         memcpy(p_env_char, p_env, strlen(p_env)+1);
+         p_env_char += strlen(p_env)+1;
+      }
+      *p_env_char++ = '\0';
+   }
    // Create the child process.
    Dmsg2(dbglvl, "Calling CreateProcess(%s, %s, ...)\n", comspec, cmdLine);
 
@@ -2499,19 +2610,27 @@ CreateChildProcessA(const char *comspec, char *cmdLine,
                                 NULL,     // primary thread security attributes
                                 TRUE,     // handles are inherited
                                 0,        // creation flags
-                                NULL,     // use parent's environment
+                                env_char,     // use parent's environment
                                 NULL,     // use parent's current directory
                                 &siStartInfo,// STARTUPINFO pointer
                                 hProcInfo);// receives PROCESS_INFORMATION
+
+   if (env_char) {
+      free_pool_memory(env_char);
+   }
+
    return bFuncRetn;
 }
 
 /**
  * OK, so it would seem CreateProcess only handles true executables:
  * .com or .exe files.  So grab $COMSPEC value and pass command line to it.
+ * envp[] contains environment variables that will be ADDED to the current process env vars set
+ * envp[] should be formatted as follow: ["VALUE1=NAME1","VALUE2=NAME2","VALUE3=NAME3"]
  */
 HANDLE
-CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err)
+CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err,
+                    char * envp[] = NULL)
 {
    static const char *comspec = NULL;
    PROCESS_INFORMATION piProcInfo;
@@ -2554,10 +2673,10 @@ CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err)
    // New function disabled
    if (p_CreateProcessW && p_MultiByteToWideChar) {
       bFuncRetn = CreateChildProcessW(comspec, cmdLine.c_str(), &piProcInfo,
-                                      in, out, err);
+                                      in, out, err, envp);
    } else {
       bFuncRetn = CreateChildProcessA(comspec, cmdLine.c_str(), &piProcInfo,
-                                      in, out, err);
+                                      in, out, err, envp);
    }
 
    if (bFuncRetn == 0) {
@@ -2568,6 +2687,7 @@ CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err)
    // we don't need a handle on the process primary thread so we close
    // this now.
    CloseHandle(piProcInfo.hThread);
+   Dmsg0(dbglvl, "  CreateProcess exits OK\n");
    return piProcInfo.hProcess;
 }
 
@@ -2710,7 +2830,8 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
         CreateChildProcess(prog,             // commandline
                            hChildStdinRd,    // stdin HANDLE
                            hChildStdoutWr,   // stdout HANDLE
-                           (mode_map & MODE_STDERR) ? hChildStderrWr:hChildStdoutWr);  // stderr HANDLE
+                           (mode_map & MODE_STDERR) ? hChildStderrWr:hChildStdoutWr,   // stderr HANDLE
+                           envp); // envp  environment variables are added to the current process env var set.
 
     if ((HANDLE) bpipe->worker_pid == INVALID_HANDLE_VALUE) {
        ErrorExit("CreateChildProcess failed");
