@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This script is used to test multiple devices grouped in
+# the director configuration. We check specifically the
+# device order, read-only devices should be used to run
+# restore jobs.
+#
+TestName="read-only-device-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Label Format", "Vol", "Pool", "Default")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolData",    "no",  "Job")'
+
+$bperl -e 'add_virtual_changer("v1", 10)'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "Drive-8")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "Drive-9")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "LabelMedia", "yes", "Device")'
+
+disable_plugins
+
+echo "$cwd/build" >${cwd}/tmp/file-list
+
+change_jobname $JobName
+start_test
+bstat=0
+
+# test with autolabel
+#
+#
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+run level=full job=backup storage=v1 pool=Default yes
+run level=full job=backup storage=v1 pool=Default yes
+run level=full job=backup storage=v1 pool=Default yes
+messages
+status storage=v1
+status dir
+wait
+messages
+@$out $tmp/log2.out
+run level=full job=backup storage=v1 pool=Default yes
+restore select all done yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+check_two_logs
+#check_restore_diff
+
+grep 'Using Device "Drive-8" to read' $tmp/log2.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find Drive-8 in the restore job in $tmp/log2.out"
+    rstat=1
+fi
+
+grep 'Using Device "Drive-0" to write' $tmp/log1.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find Drive-0 in the backup job in $tmp/log1.out"
+    bstat=1
+fi
+
+end_test
