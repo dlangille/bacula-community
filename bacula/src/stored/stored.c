@@ -603,10 +603,30 @@ static int check_resources()
       }
    }
 
+   /* During the device selection, if we put read-only device first,
+    * they will be selected automatically during a restore, so we
+    * reorder the list to keep the device order, but put read-only
+    * devices first.
+    */
    foreach_res(changer, R_AUTOCHANGER) {
+      alist *org_list = changer->device;
+      alist *new_list = New(alist(org_list->size(), not_owned_by_alist));
+      /* We loop two times to keep the order of the devices
+       * per type (readonly/read-write)
+       */
       foreach_alist(device, changer->device) {
          device->cap_bits |= CAP_AUTOCHANGER;
+         if (device->read_only) {
+            new_list->append(device);
+         }
       }
+      foreach_alist(device, changer->device) {
+         if (!device->read_only) {
+            new_list->append(device);
+         }
+      }
+      changer->device = new_list;
+      delete org_list;
    }
 
    CLOUD *cloud;
