@@ -120,7 +120,6 @@ void    init_block_write(DEV_BLOCK *block);
 void    empty_block(DEV_BLOCK *block);
 void    free_block(DEV_BLOCK *block);
 void    print_block_read_errors(JCR *jcr, DEV_BLOCK *block);
-void    ser_block_header(DEV_BLOCK *block);
 bool    is_block_empty(DEV_BLOCK *block);
 bool    terminate_writing_volume(DCR *dcr);
 
