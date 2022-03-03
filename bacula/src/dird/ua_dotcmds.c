@@ -823,13 +823,13 @@ bail_out:
    return ret;
 }
 
-/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2 objectid=1,2
+/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2 fileindex=fidx,jobid,fidx,jobid objectid=1,2
  */
 static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
 {
    DBId_t pathid=0;
    int limit=2000, offset=0, i;
-   char *path=NULL, *jobid = NULL, *username=NULL;
+   char *path=NULL, *jobid = NULL, *username=NULL, *fileindex=NULL;
    db_list_ctx jobids, fileid, dirid;
    bool object = false, ret = false;
 
@@ -864,12 +864,34 @@ static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
       }
       fileid.add(ua->argv[i]);
    }
+
    if ((i = find_arg_with_value(ua, "dirid")) >= 0) {
       if (ua->argv[i][0] != '\0' && !is_a_number_list(ua->argv[i])) {
          ua->error_msg("Please provide dirid as a list of integers!\n");
          return true;
       }
       dirid.add(ua->argv[i]);
+   }
+
+   if ((i = find_arg_with_value(ua, "fileindex")) >= 0) {
+      if (ua->argv[i][0] != '\0' && !is_a_number_list(ua->argv[i])) {
+         ua->error_msg("Please provide fileid as a list of integers!\n");
+         return true;
+      }
+
+      int64_t jobid, fidx;
+      sellist sel;
+      sel.set_string(ua->argv[i], true);
+
+      /* check the format */
+      foreach_sellist(jobid, &sel) {
+         fidx = sel.next();
+         if (fidx <= 0) {
+            ua->error_msg("Please provide jobid,fileindex as a list of integers!\n");
+            return true;
+         }
+      }
+      fileindex = ua->argv[i];
    }
 
    if (object) {
@@ -896,7 +918,7 @@ static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
    if ((i = find_arg(ua, "nodelta")) >= 0) {
       fs.set_compute_delta(false);
    }
-   if (fs.compute_restore_list(fileid.list, dirid.list, path)) {
+   if (fs.compute_restore_list(fileid.list, dirid.list, fileindex, path)) {
       ua->send_msg("OK\n");
    } else {
       ua->error_msg("Can't create restore list\n");

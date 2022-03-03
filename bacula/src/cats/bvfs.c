@@ -1525,7 +1525,7 @@ bail_out:
    return ret;
 }
 
-bool Bvfs::compute_restore_list(char *fileid, char *dirid, char *output_table)
+bool Bvfs::compute_restore_list(char *fileid, char *dirid, char *fileindex, char *output_table)
 {
    POOL_MEM query;
    POOL_MEM tmp, tmp2;
@@ -1537,11 +1537,13 @@ bool Bvfs::compute_restore_list(char *fileid, char *dirid, char *output_table)
    bool use_insert_hardlinks_fast = false;
 
    /* check args */
-   if ((*fileid   && !is_a_number_list(fileid))  ||
-       (*dirid    && !is_a_number_list(dirid))   ||
-       (!*fileid && !*dirid)|| (!output_table)
+   if ((fileid    && *fileid    && !is_a_number_list(fileid))  ||
+       (dirid     && *dirid     && !is_a_number_list(dirid))   ||
+       (fileindex && *fileindex && !is_a_number_list(fileindex)) ||
+       (!*fileid && !*dirid && (!fileindex || !*fileindex)) || (!output_table)
       )
    {
+      Dmsg0(dbglevel, "Invalid parameters\n");
       return false;
    }
    if (!check_temp(output_table)) {
@@ -1573,6 +1575,31 @@ bool Bvfs::compute_restore_list(char *fileid, char *dirid, char *output_table)
                  "FROM File JOIN Job USING (JobId) WHERE FileId IN (%s)",
            fileid);
       pm_strcat(query, tmp.c_str());
+   }
+
+   if (fileindex && *fileindex) { /* Select files with their fileindex */
+      int64_t jobid, fidx;
+      sellist sel;
+      sel.set_string(fileindex, true);
+
+      /* check the format */
+      foreach_sellist(jobid, &sel) {
+         fidx = sel.next();
+         if (fidx <= 0) {
+            goto bail_out;
+         }
+         if (init) {
+            query.strcat(" UNION ");
+         }
+         Mmsg(tmp,"SELECT Job.JobId, JobTDate, FileIndex, Filename, "
+                          "PathId, FileId "
+                 "FROM File JOIN Job USING (JobId) "
+                 "WHERE JobId = %lld AND FileIndex = %lld AND JobId IN (%s) ",
+              jobid, fidx, jobids);
+
+         pm_strcat(query, tmp.c_str());
+         init=true;
+      }
    }
 
    /* Add a directory content */

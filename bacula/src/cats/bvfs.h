@@ -241,7 +241,7 @@ public:
    void clear_cache();
 
    /* Compute restore list */
-   bool compute_restore_list(char *fileid, char *dirid, char *output_table);
+   bool compute_restore_list(char *fileid, char *dirid, char *fileindex, char *output_table);
 
    /* Drop previous restore list */
    bool drop_restore_list(char *output_table);
