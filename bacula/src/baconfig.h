@@ -203,6 +203,9 @@ void InitWinAPIWrapper();
 /* Maximum Name length including EOS */
 #define MAX_NAME_LENGTH 128
 
+/* Maximum Name length for Plugin Object values as UUID, Category, SRC, etc. including EOS */
+#define MAX_PLUGINOBJ_NAME_LENGTH 512
+
 /* Maximum escaped Name lenght including EOS 2*MAX_NAME_LENGTH+1 */
 #define MAX_ESCAPE_NAME_LENGTH 257
 
