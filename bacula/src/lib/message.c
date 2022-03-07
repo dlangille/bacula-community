@@ -1915,10 +1915,12 @@ void dequeue_daemon_messages(JCR *jcr)
    if (daemon_msg_queue && !dequeuing_daemon_msgs) {
       P(daemon_msg_queue_mutex);
       dequeuing_daemon_msgs = true;
-      jcr->dequeuing_msgs = true;
-      JobId = jcr->JobId;
-      jcr->JobId = 0;       /* set daemon JobId == 0 */
-      if (jcr->dir_bsock) jcr->dir_bsock->suppress_error_messages(true);
+      if (jcr != NULL) {
+         jcr->dequeuing_msgs = true;
+         JobId = jcr->JobId;
+         jcr->JobId = 0;       /* set daemon JobId == 0 */
+         if (jcr->dir_bsock) jcr->dir_bsock->suppress_error_messages(true);
+      }
       foreach_dlist(item, daemon_msg_queue) {
          if (item->type == M_FATAL || item->type == M_ERROR) {
             item->type = M_SECURITY;
@@ -1932,11 +1934,13 @@ void dequeue_daemon_messages(JCR *jcr)
                  item->repeat+1, item->msg);
          }
       }
-      if (jcr->dir_bsock) jcr->dir_bsock->suppress_error_messages(false);
       /* Remove messages just sent */
       daemon_msg_queue->destroy();
-      jcr->JobId = JobId;   /* restore JobId */
-      jcr->dequeuing_msgs = false;
+      if (jcr != NULL) {
+         if (jcr->dir_bsock) jcr->dir_bsock->suppress_error_messages(false);
+         jcr->JobId = JobId;   /* restore JobId */
+         jcr->dequeuing_msgs = false;
+      }
       dequeuing_daemon_msgs = false;
       V(daemon_msg_queue_mutex);
    }

@@ -453,14 +453,14 @@ bool BDB_POSTGRESQL::bdb_open_database(JCR *jcr)
       int sys_offset = get_system_utc_offset();
       int ret = pgsql_get_utc_offset(this, &pgsql_offset);
       if (ret != 0) {
-         Jmsg(jcr, ret, 0, "%s", errmsg);
+         Qmsg(jcr, ret, 0, "%s", errmsg);
       } else {
          if (sys_offset != pgsql_offset) {
             /* try again in case we would be just on Daylight Saving Time switch */
             sys_offset = get_system_utc_offset();
          }
          if (sys_offset != pgsql_offset) {
-            Jmsg(jcr, M_WARNING, 0, _("Postgresql and sytem timezone mismatch detected\n"));
+            Qmsg(jcr, M_WARNING, 0, _("Postgresql and system timezone mismatch detected\n"));
          }
       }
    }
@@ -483,6 +483,7 @@ get_out:
    if (print_msg) {
       Jmsg(jcr, print_msg, 0, "%s", errmsg);
    }
+   dequeue_daemon_messages(jcr);
    return retval; 
 } 
 
