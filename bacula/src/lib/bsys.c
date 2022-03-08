@@ -1110,7 +1110,7 @@ void stack_trace()
                char buf[1000];
                *buf = '\0';
                while (fgets(buf, sizeof(buf), bpipe->rfd)) {
-                  Pmsg1(000, "    %s\n", buf);
+                  Pmsg1(000, "    %s", buf);
                }
                if (close_bpipe(bpipe) == 0) {
                   ok = true;
