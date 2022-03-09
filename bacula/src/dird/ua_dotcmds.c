@@ -823,7 +823,7 @@ bail_out:
    return ret;
 }
 
-/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2 fileindex=fidx,jobid,fidx,jobid objectid=1,2
+/* .bvfs_restore path=b2XXXXX jobid=1,2 fileid=1,2 dirid=1,2 fileindex=jobid,fidx,jobid,fidx objectid=1,2
  */
 static bool dot_bvfs_restore(UAContext *ua, const char *cmd)
 {
