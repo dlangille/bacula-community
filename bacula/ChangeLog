@@ -1,3 +1,265 @@
+        ChangeLog for Bacula Enterprise version 11.0.6
+
+
+10Mar22
+ - win32: Update to OPENSSL 1.1.1m
+ - Fix PSK detection in ./configure.in
+
+01Mar22
+ - Update copyright year
+
+20Feb22
+ - baculum: Update Polish translations
+
+17Feb22
+ - baculum: Add option to set job age for job status summary graph on dashboard 
+  page
+
+14Feb22
+ - baculum: Fix file search for text that isn't lower-case in MySQL/MariaDB 
+  database
+
+07Feb22
+ - Add new autoconf macro
+ - Fix #2654 About compilation issue on Alpine Linux
+ - Add check for getpwent_r in ./configure
+ - Fix #2656 About segfault in XATTR code for FreeBSD
+
+03Feb22
+ - baculum: Fix displaying directive sections in resouce configuration
+ - baculum: Fix #2653 create new resource by copying configuration from other 
+  resource
+
+28Jan22
+ - baculum: Add capability to provide translated directive documentation file
+
+13Jan22
+ - Fix issue with MySQL 8 in src/cats/grant_mysql_privileges
+
+18Nov21
+ - baculum: Enlarge boxes with resource count in status director - reported by 
+  Sergey Zhidkov
+
+17Nov21
+ - baculum: Update Portuguese translations
+
+16Nov21
+ - baculum: Update Russian translations
+ - baculum: Improve wizards view and responsivity
+
+15Nov21
+ - baculum: Update Russian translations
+
+14Nov21
+ - baculum: Add time range filters to job history page - idea proposed by Heitor 
+  Faria
+ - baculum: Add password generator added to password fields
+
+12Nov21
+ - baculum: Add interface to manage basic users from Web component side
+ - baculum: Add API endpoints for API basic user management
+ - baculum: Add capability to assign dedicated bconsole config file to API basic 
+  users
+
+10Nov21
+ - baculum: Reduce free space between interface elements - idea proposed by 
+  Sergey Zhidkov
+ - baculum: Add copy resource function to enable duplicating resources
+
+09Nov21
+ - baculum: Fix #2647 PHP warning about headers already sent on storage view 
+  page
+
+08Nov21
+ - baculum: Add option to enable/disable messages log window - idea proposed by 
+  Bill Arlofski
+ - baculum: Misc visual improvements
+
+07Nov21
+ - baculum: Unset default API host setting if default API host is no longer 
+  assigned to user
+ - baculum: Unify buttons view
+ - baculum: Add capability to close modal windows on clicking gray shadow
+
+06Nov21
+ - baculum: Visual improvements in interface
+ - baculum: Fix displaying documentation for jobdefs directives
+ - baculum: Add documentation for directives
+
+05Nov21
+ - baculum: Fix #2646 apply new user permissions immediately instead of after 
+  logging out and logging in
+
+01Nov21
+ - baculum: Fix undefined index error if user did not use Bacula configuration 
+  function
+ - baculum: Update Russian translations
+
+31Oct21
+ - baculum: Move all external dependencies to vendor directory
+
+29Oct21
+ - baculum: Fix running job number on some pages
+ - baculum: Update Portuguese translations
+ - baculum: Loading pages optimization
+
+28Oct21
+ - baculum: Update Polish translations
+
+27Oct21
+ - baculum: Fix #2642 add tool to re-assigning volumes from one pool to another
+
+23Oct21
+ - baculum: Add warning to running job status if job needs media
+
+21Oct21
+ - baculum: New migrate job wizard
+
+10Oct21
+ - Remove debugging information
+ - Remove extraneous file committed in error
+ - Get regression testing working on FreeBSD
+ - baculum: Add capability to use pre-defined paths in API config wizard - idea 
+  proposed by Heitor Faria
+
+28Sep21
+ - baculum: Improve sun icon for displaying job status weather - idea proposed 
+  by Heitor Faria
+
+18Sep21
+ - baculum: Do not require using some job resource values to ease using jobdefs  - idea proposed by Heitor Faria
+
+06Sep21
+ - Fix #8126 About strange ouput for the .status client command
+
+10Aug21
+ - Fix #7998 About dir crashing for client intiated backup
+ - Fix org#2627 About DIR crashing for copy jobs and resource rename
+
+02Aug21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+ - baculum: Update Polish translations
+
+31Jul21
+ - baculum: Fix displaying issue in restore browser - reported by Sergey Zhidkov
+ - baculum: Remove redundant statistics pages
+ - baculum: New advanced schedule settings
+ - baculum: Fix remove storage resource if autochanger directive is set
+ - baculum: Fix auto-scrolling in windows with configuration
+ - baculum: Fix error about expected port number when writing component main 
+  resource
+
+15Jul21
+ - baculum: Update Russian translations
+ - baculum: Update Portuguese translations
+
+14Jul21
+ - baculum: Update Russian translations
+ - baculum: Update Polish translations
+ - baculum: Fix table width on schedule list page
+
+13Jul21
+ - baculum: Update API documentation
+ - baculum: Backup job wizard improvements
+ - baculum: New copy job wizard
+ - baculum: Add to directive controls option to hide reset button and remove 
+  button
+ - baculum: Add to config API endpoint parameter to apply jobdefs in results
+
+12Jul21
+ - baculum: Fix loading dashboard page if job status is created but not yet 
+  running
+
+10Jul21
+ - baculum: Fix legend in job status pie chart on job view page
+ - baculum: Change buttons on dasboard page - reported by Sergey Zhidkov
+ - baculum: Add jump to previous/next error navigation in messages window
+
+09Jul21
+ - baculum: Move resource monitor and error message box to separate modules
+ - baculum: Make table texts translatable - reported by Sergey Zhidkov
+ - baculum: Make job status pie chart smaller - idea proposed by Sergey Zhidkov
+ - baculum: Reduce size of icons in run job window and on dashboard page
+
+08Jul21
+ - baculum: Make job status pie chart clickable and direct to job history page 
+  with filtered results - idea proposed by Bill Arlofski
+
+07Jul21
+ - baculum: Fix opening job details in job table on main dashboard page - 
+  reported by Sergey Zhidkov
+ - baculum: Fix required fields in jobdefs forms
+
+06Jul21
+ - baculum: Update Portuguese translations
+ - baculum: Update Russian translations
+
+05Jul21
+ - baculum: Remove old configure page
+ - baculum: Add console page to configure consoles
+
+04Jul21
+ - baculum: Update Russian translations
+ - baculum: New director page with graphical/text status and with configure 
+  director resources
+ - baculum: Add director show API endpoint
+ - baculum: Improve checking director in status director API endpoint
+
+02Jul21
+ - baculum: Fixes to support PHP 8
+
+30Jun21
+ - baculum: Apply PRADO framework patches to support PHP 8
+
+29Jun21
+ - Fix org#2623 About .ls/estimate command not printing files correctly
+
+28Jun21
+ - baculum: Fix problem with listing directories in restore wizard - reported by 
+  Tomasz Swiderski
+ - Fix MySQL default connection in the grant_mysql_privileges script
+
+27Jun21
+ - baculum: Fix component autochanger schemas in OpenAPI documentation
+ - baculum: New delete volumes bulk action on volume list page
+ - baculum: Add to API deleting volume from the catalog endpoint
+ - baculum: Set responsive priority for job list table
+
+26Jun21
+ - baculum: Reorganize dasboard page - idea proposed by Sergey Zhidkov
+ - baculum: Fix missing texts in translation files - reported by Sergey Zhidkov
+ - baculum: Add new columns to job list page - idea proposed by Sergey Zhidkov
+ - baculum: Add JSON output parameter to show client(s), show job(s), show 
+  pool(s) API endpoints
+
+16Jun21
+ - Fix db_get_accurate_jobids() with concurrent queries on the same jobs
+
+15Jun21
+ - Adjust sample-query.sql file for new catalog schema
+
+14Jun21
+ - Fix org#2622 About incorrect behavior of the MaxDiffInterval directive
+
+08Jun21
+ - Fix #7776 About FD error not correctly reported in the job log
+
+07Jun21
+ - rpms: Do not build with tcp_wrapper on Fedora 31
+ - rpms: Fix libs3 installation path
+ - Update depkgs version to use latest libs3
+
+05Jun21
+ - rpms: Remove tcp_wrappers for cloud-storage rpm
+ - rpms: Fix #2615 - Missing bacula-sd-cloud-s3-driver-<version>.so
+ - rpms: Fix mysql devel package dependency for rhel/centos 7
+ - rpms: Disable tcp_wrapper for rhel8 in bacula.spec.in
+ - rpms: Fix #2599 - bacula-postgresql conflicts with bacula-mysql
+
+Bugs fixed/closed since last release:
+2599 2615 2622 2623 2627 2642 2646 2647 2653 2654 2656 7776 7998 8126
+
         ChangeLog for Bacula Enterprise version 11.0.5
 
 
