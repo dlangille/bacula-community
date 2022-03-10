@@ -24,14 +24,14 @@
 #define COMMUNITY 1      /* Define to create a Windows community binary */
 
 /* Note: there can be only *one* VERSION in this file */
-#define VERSION "11.0.5"
-#define BDATE   "03 June 2021"
-#define LSMDATE "03Jun21"
+#define VERSION "11.0.6"
+#define BDATE   "10 March 2021"
+#define LSMDATE "10Mar22"
 
 #define RELEASE 1   /* Use ONLY in rpms */
 
 #define PROG_COPYRIGHT "Copyright (C) %d-2021 Kern Sibbald.\n"
-#define BYEAR "2021"       /* year for copyright messages in progs */
+#define BYEAR "2022"       /* year for copyright messages in progs */
 
 /*
  * Versions of packages needed to build Bacula components
