@@ -1,4 +1,93 @@
 
+               Release Notes for Baculum 11.0.6
+
+This is a minor new feature and bug fix release. The goal of this version is
+providing functions which make work with Bacula easier. We prepared friendly
+wizards to create various Bacula jobs, each configuration directive has now
+the official Bacula documentation available directly on the interface. There
+has been also done work to ease preparing restricted Bacula resources for
+users. As always we updated Portuguese, Russian and Polish translations.
+
+New changes:
+ - New advanced schedule settings
+ - New copy job wizard
+ - New migrate job wizard
+ - New director page with graphical/text status and with configure director resources
+ - New delete volumes bulk action on volume list page
+ - Loading pages optimization
+ - Add documentation for directives
+ - Support for PHP 8
+ - Backup job wizard improvements
+ - Add warning to running job status if job needs media
+ - Add interface to manage API basic users from Web component side
+ - Add capability to assign dedicated bconsole config file to API basic users
+ - Add copy resource function to enable creating new resources based on others
+ - Reorganize dasboard page - idea proposed by Sergey Zhidkov
+ - Update Portuguese translations
+ - Update Russian translations
+ - Update Polish translations
+ - Add API endpoints for API basic user management
+ - Unset default API host setting if default API host is no longer assigned to user
+ - Add console page to configure consoles
+ - Visual improvements in interface
+ - Unify buttons view
+ - Improve wizards view and responsivity
+ - Add password generator to password fields
+ - Make job status pie chart clickable and direct to job history page with filtered results - idea proposed by Bill Arlofski
+ - Add option to set job age for job status summary graph on dashboard page
+ - Add capability to provide translated directive documentation file
+ - Add new columns to job list page - idea proposed by Sergey Zhidkov
+ - Add time range filters to job history page - idea proposed by Heitor Faria
+ - Add option to enable/disable messages log window - idea proposed by Bill Arlofski
+ - Move all external dependencies to vendor directory
+ - Add jump to previous/next error navigation in messages window
+ - Add director show command API endpoint
+ - Add to API deleting volume from the catalog
+ - Remove old configure page
+ - Remove redundant statistics pages
+ - Enlarge boxes with resource count in status director - reported by Sergey Zhidkov
+ - Reduce free spaces between interface elements - idea proposed by Sergey Zhidkov
+ - Add capability to close modal windows on clicking gray shadow
+ - Add capability to use pre-defined paths in API config wizard - idea proposed by Heitor Faria
+ - Improve sun icon for displaying job status weather - idea proposed by Heitor Faria
+ - Do not require using some job resource values to ease using jobdefs - idea proposed by Heitor Faria
+ - Update API documentation
+ - Apply PRADO framework patches to support PHP 8
+ - Improve checking director in status director API endpoint
+ - Change buttons on dasboard page - reported by Sergey Zhidkov
+ - Make table texts translatable - reported by Sergey Zhidkov
+ - Make job status pie chart smaller - idea proposed by Sergey Zhidkov
+ - Add to directive controls option to hide reset button and remove button
+ - Add to config API endpoint parameter to apply jobdefs in results
+ - Move resource monitor and error message box to separate modules
+ - Reduce size of icons in run job window and on dashboard page
+ - Fix opening job details in job table on main dashboard page - reported by Sergey Zhidkov
+ - Set responsive priority for job list table
+ - Add JSON output parameter to show client(s), show job(s), show pool(s) API endpoints
+
+Fixes:
+ - Fix #2646 apply new user permissions immediately instead of after logging out and logging in
+ - Fix undefined index error if user not use Bacula configuration function
+ - Fix displaying issue in restore browser - reported by Sergey Zhidkov
+ - Fix file search for text that isn't lower-case in MySQL/MariaDB database
+ - Fix running job number on some pages
+ - Fix problem with listing directories in restore wizard - reported by Tomasz Świderski
+ - Fix error about expected port number when writing component main resource
+ - Fix remove storage resource if autochanger directive is set
+ - Fix displaying directive sections in resouce configuration
+ - Fix loading dashboard page if job status is created but not yet running
+ - Fix #2653 create new resource by copying configuration from other resource
+ - Fix required fields in jobdefs forms
+ - Fix missing texts in translation files - reported by Sergey Zhidkov
+ - Fix #2647 PHP warning about headers already sent on storage view page
+ - Fix displaying documentation for jobdefs directives
+ - Fix #2642 add tool to re-assigning volumes from one pool to another
+ - Fix legend in job status pie chart on job view page
+ - Fix auto-scrolling in windows with configuration
+ - Fix table width on schedule list page
+ - Fix component autochanger schemas in OpenAPI documentation
+
+
                Release Notes for Baculum 11.0.5.7
 
 This is a minor new feature and bug fix release. The main new function is
