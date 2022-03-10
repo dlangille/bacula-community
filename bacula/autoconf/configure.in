@@ -947,7 +947,18 @@ if test "x$with_openssl_directory" != "xno"; then
 	  support_crypto="no"
       ]
    )
-
+   AC_TRY_LINK(
+      [
+         #include <openssl/ssl.h>
+      ], [
+         SSL_CTX_set_psk_client_callback(NULL, NULL);
+         SSL_CTX_set_psk_server_callback(NULL, NULL);
+      ], [
+         support_tls_psk="yes"
+      ], [
+         support_tls_psk="no"
+      ]
+   )
    AC_TRY_LINK(
       [
 	  #include <openssl/evp.h>
@@ -975,8 +986,33 @@ if test "x$with_openssl_directory" != "xno"; then
 	  ac_cv_openssl_export="yes"
       ]
    )
+   AC_TRY_LINK(
+      [
+         #include <openssl/fips.h>
+      ], [
+         FIPS_mode_set(1);
+      ], [
+         AC_DEFINE(HAVE_FIPS)
+          AC_MSG_RESULT([checking for FIPS... yes])
+      ], [
+         AC_MSG_RESULT([checkint for FIPS... no])
+      ]
+   )
 
+   AC_TRY_LINK(
+      [
+         #include <openssl/opensslv.h>
+      ], [
+         OPENSSL_VERSION_TEXT;
+      ], [
+         AC_DEFINE(HAVE_OPENSSL_VERSION_TEXT)
+      ], [
+      ]
+   )
    AC_MSG_RESULT([$support_tls])
+   if test "$support_tls_psk" = "yes"; then
+      AC_DEFINE(HAVE_TLS_PSK, 1, [Define if TLS PSK support should be enabled])
+   fi
    if test "$support_tls" = "yes"; then
       AC_DEFINE(HAVE_OPENSSL, 1, [Define if OpenSSL library is available])
       AC_DEFINE(HAVE_TLS, 1, [Define if TLS support should be enabled])
@@ -2440,6 +2476,8 @@ AC_CHECK_FUNCS(inet_ntop, [AC_DEFINE(HAVE_INET_NTOP)])
 AC_CHECK_FUNCS(gethostbyname2, [AC_DEFINE(HAVE_GETHOSTBYNAME2)])
 AC_CHECK_FUNCS(getnameinfo, [AC_DEFINE(HAVE_GETNAMEINFO)])
 
+dnl Check for poll() function
+AC_CHECK_FUNCS(poll, [AC_DEFINE(HAVE_POLL)])
 
 dnl ----------------------------
 dnl check sa_len of sockaddr
@@ -2461,6 +2499,28 @@ AC_CACHE_CHECK(for struct sockaddr has a sa_len field, ac_cv_struct_sockaddr_sa_
 
 if test $ac_cv_struct_sockaddr_sa_len = yes; then
   AC_DEFINE(HAVE_SA_LEN, 1, [Define if sa_len field exists in struct sockaddr])
+fi
+
+dnl ----------------------------
+dnl check sockaddr_storage
+dnl ----------------------------
+AC_CACHE_CHECK(for struct sockaddr_storage, ac_cv_struct_sockaddr_storage,
+   [
+       AC_TRY_COMPILE(
+         [
+             #include <sys/socket.h>
+         ], [
+             struct sockaddr_storage s; 
+         ], [
+            ac_cv_struct_sockaddr_storage=yes
+         ], [ac_cv_struct_sockaddr_storage=no
+         ]
+       )
+   ]
+)
+
+if test $ac_cv_struct_sockaddr_storage = yes; then
+  AC_DEFINE(HAVE_SOCKADDR_STORAGE, 1, [Define if struct sockaddr_storage exists])
 fi
 
 dnl
