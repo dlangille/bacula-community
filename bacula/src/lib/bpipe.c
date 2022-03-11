@@ -577,7 +577,7 @@ bail_out:
  *
  * in:
  *    cmd - Plugin command to write into the executable file
- *    tmp - where to store tmp command file
+ *    tmp - directory on disk where to store temporary command file
  *    dest - created filename
  *    JobId - job id, used to create unique filename
  *    user - file is owned by this user [optional]
