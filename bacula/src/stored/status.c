@@ -1162,7 +1162,7 @@ bool qstatus_cmd(JCR *jcr)
    char *cmd;
    char *device=NULL;
    char *collname=NULL;
-   char *dedupengine=NULL;
+   char *name=NULL;
    int api = true;
 
    sp.bs = dir;
@@ -1199,9 +1199,9 @@ bool qstatus_cmd(JCR *jcr)
       } else if (!strcmp(argk[i], "api_opts") && argv[i]) {
          bstrncpy(sp.api_opts, argv[i], sizeof(sp.api_opts));
       }
-      else if (!strcmp(argk[i], "dedupengine") && argv[i]) {
-         dedupengine = argv[i];
-         unbash_spaces(dedupengine);
+      else if (!strcmp(argk[i], "name") && argv[i]) {
+         name = argv[i];
+         unbash_spaces(name);
       }
    }
 
@@ -1246,10 +1246,10 @@ bool qstatus_cmd(JCR *jcr)
        sp.api = api;
        show_config(&sp);
    /* ***BEEF*** */
-   } else if (strcasecmp(cmd, "dedupengines") == 0 ||
+   } else if (strcasecmp(cmd, "dedupengine") == 0 ||
               strcasecmp(cmd, "dedupengineandzerostats") == 0) {
       sp.api = api;
-      list_dedupengines(cmd, &sp, dedupengine);
+      list_dedupengines(cmd, &sp, name);
    } else if (strcasecmp(cmd, "shstore") == 0) {
       list_shared_storage(&sp, dir->msg);
    } else if (strcasecmp(cmd, "cloud") == 0) {
