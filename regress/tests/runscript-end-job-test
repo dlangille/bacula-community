@@ -98,7 +98,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/sql_backup_dir.log
-select jobstatus from job where jobid=2;
+select JobStatus from Job where JobId=2;
 
 @$out ${cwd}/tmp/copy_dir.log
 run job=copy-job yes
@@ -106,7 +106,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/sql_copy_dir.log
-select jobstatus from job where jobid=3;
+select JobStatus from Job where JobId=3;
 
 @$out ${cwd}/tmp/restore_dir.log
 restore restorejob=restore_dir where=${cwd}/tmp/bacula-restores select all done yes
@@ -114,7 +114,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/sql_restore_dir.log
-select jobstatus from job where jobid=5;
+select JobStatus from Job where JobId=5;
 
 @$out ${cwd}/tmp/admin_dir.log
 run job=admin yes
@@ -122,7 +122,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/sql_admin_dir.log
-select jobstatus from job where jobid=6;
+select JobStatus from Job where JobId=6;
 
 @$out ${cwd}/tmp/verify_dir.log
 run job=VerifyVolume yes
@@ -130,7 +130,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/sql_verify_dir.log
-select jobstatus from job where jobid=6;
+select JobStatus from Job where JobId=6;
 
 quit
 END_OF_DATA
@@ -226,7 +226,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/no_fail_sql_backup_dir.log
-select jobstatus from job where jobid=8;
+select JobStatus from Job where JobId=8;
 
 @$out ${cwd}/tmp/no_fail_copy_dir.log
 run job=copy-job yes
@@ -234,7 +234,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/no_fail_sql_copy_dir.log
-select jobstatus from job where jobid=9;
+select JobStatus from Job where JobId=9;
 
 @$out ${cwd}/tmp/no_fail_restore_dir.log
 restore restorejob=restore_dir where=${cwd}/tmp/bacula-restores select all done yes
@@ -242,7 +242,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/no_fail_sql_restore_dir.log
-select jobstatus from job where jobid=11;
+select JobStatus from Job where JobId=11;
 
 @$out ${cwd}/tmp/no_fail_admin_dir.log
 run job=admin yes
@@ -250,7 +250,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/no_fail_sql_admin_dir.log
-select jobstatus from job where jobid=12;
+select JobStatus from Job where JobId=12;
 
 @$out ${cwd}/tmp/no_fail_verify_dir.log
 run job=VerifyVolume yes
@@ -258,7 +258,7 @@ wait
 messages
 sql
 @$out ${cwd}/tmp/no_fail_sql_verify_dir.log
-select jobstatus from job where jobid=13;
+select JobStatus from Job where JobId=13;
 
 quit
 END_OF_DATA
