@@ -234,6 +234,9 @@ devclean: realclean
 	if test $(srcdir) = .; then $(MAKE) realclean; fi
 	(cd $(srcdir); $(RMF) Makefile)
 
+install-debug-tags_test: debug-tags_test
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) debug-tags_test $(DESTDIR)$(sbindir)/
+
 install-fs-io-error: fs-io-error
 	$(INSTALL_PROGRAM) fs-io-error $(DESTDIR)$(sbindir)/fs-io-error
 
