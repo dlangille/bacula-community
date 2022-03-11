@@ -7,7 +7,7 @@
 #
 TestName="debug-tags_test"
 . scripts/functions
-make -C $src/src/tools $TestName
+make -C $src/src/tools install-$TestName
 
 $bin/$TestName
 exit $?
