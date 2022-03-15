@@ -51,8 +51,8 @@ stop_bacula
 
 cat <<END_OF_DATA >$tmp/dbcheck.cmd
 1
-14
 15
+16
 END_OF_DATA
 
 cat $tmp/dbcheck.cmd | $bin/dbcheck -n 10 $working $db_name $db_user $db_password | tee $tmp/1.out
