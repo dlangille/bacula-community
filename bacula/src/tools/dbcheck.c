@@ -81,6 +81,8 @@ static void eliminate_orphaned_job_records();
 static void eliminate_admin_records();
 static void eliminate_restore_records();
 static void eliminate_verify_records();
+static void eliminate_orphaned_object_records();
+static void eliminate_orphaned_meta_records();
 static void repair_bad_paths();
 static void do_interactive_mode();
 static bool yes_no(const char *prompt);
@@ -349,6 +351,8 @@ int main (int argc, char *argv[])
       eliminate_orphaned_job_records();
       eliminate_admin_records();
       eliminate_restore_records();
+      eliminate_orphaned_meta_records();
+//      eliminate_orphaned_object_records();
    } else {
       do_interactive_mode();
    }
@@ -391,12 +395,13 @@ static void do_interactive_mode()
 "     7) Eliminate orphaned Path records\n"
 "     8) Eliminate orphaned FileSet records\n"
 "     9) Eliminate orphaned Client records\n"
-"    10) Eliminate orphaned Job records\n"
-"    11) Eliminate all Admin records\n"
-"    12) Eliminate all Restore records\n"
-"    13) Eliminate all Verify records\n"
-"    14) All (3-13)\n"
-"    15) Quit\n"));
+"    10) Eliminate orphaned Meta data records\n"
+"    11) Eliminate orphaned Job records\n"
+"    12) Eliminate all Admin records\n"
+"    13) Eliminate all Restore records\n"
+"    14) Eliminate all Verify records\n"
+"    15) All (3-14)\n"
+"    16) Quit\n"));
        } else {
          printf(_("\n"
 "     1) Toggle modify database flag\n"
@@ -408,12 +413,13 @@ static void do_interactive_mode()
 "     7) Check for orphaned Path records\n"
 "     8) Check for orphaned FileSet records\n"
 "     9) Check for orphaned Client records\n"
-"    10) Check for orphaned Job records\n"
-"    11) Check for all Admin records\n"
-"    12) Check for all Restore records\n"
-"    13) Eliminate all Verify records\n"
-"    14) All (3-13)\n"
-"    15) Quit\n"));
+"    10) Check all orphaned Meta data records\n"
+"    11) Check for orphaned Job records\n"
+"    12) Check for all Admin records\n"
+"    13) Check for all Restore records\n"
+"    14) Check all Verify records\n"
+"    15) All (3-14)\n"
+"    16) Quit\n"));
        }
 
       cmd = get_cmd(_("Select function number: "));
@@ -456,18 +462,21 @@ static void do_interactive_mode()
             eliminate_orphaned_client_records();
             break;
          case 10:
-            eliminate_orphaned_job_records();
+            eliminate_orphaned_meta_records();
             break;
          case 11:
-            eliminate_admin_records();
+            eliminate_orphaned_job_records();
             break;
          case 12:
-            eliminate_restore_records();
+            eliminate_admin_records();
             break;
          case 13:
-            eliminate_verify_records();
+            eliminate_restore_records();
             break;
          case 14:
+            eliminate_verify_records();
+            break;
+         case 15:
             repair_bad_paths();
             eliminate_duplicate_paths();
             eliminate_orphaned_jobmedia_records();
@@ -475,12 +484,13 @@ static void do_interactive_mode()
             eliminate_orphaned_path_records();
             eliminate_orphaned_fileset_records();
             eliminate_orphaned_client_records();
+            eliminate_orphaned_meta_records();
             eliminate_orphaned_job_records();
             eliminate_admin_records();
             eliminate_restore_records();
             eliminate_verify_records();
             break;
-         case 15:
+         case 16:
             quit = true;
             break;
          }
@@ -801,13 +811,94 @@ static void eliminate_orphaned_file_records()
    }
 }
 
+static void eliminate_orphaned_object_records()
+{
+   POOL_MEM query;
+   const char *q = "SELECT Object.ObjectId,Job.JobId FROM Object "
+                "LEFT OUTER JOIN Job ON (Object.JobId=Job.JobId) "
+               "WHERE Job.JobId IS NULL LIMIT %llu";
+   Mmsg(query, q, nb_changes);
+
+   printf_tstamp(_("Checking for orphaned Object entries.\n"));
+   if (verbose > 1) {
+      printf_tstamp("%s\n", query.c_str());
+   }
+   if (!make_id_list(query.c_str(), &id_list)) {
+      exit(1);
+   }
+   /* Loop doing 300000 at a time */
+   while (id_list.num_ids != 0) {
+      printf_tstamp(_("Found %d orphaned Object records.\n"), id_list.num_ids);
+      if (name_list.num_ids && verbose && yes_no(_("Print them? (yes/no): "))) {
+         for (int i=0; i < id_list.num_ids; i++) {
+            char ed1[50];
+            bsnprintf(buf, sizeof(buf),
+"SELECT Object.ObjectId.JobId,Object.ObjectName FROM Object "
+"WHERE Object.ObjectId=%s",
+               edit_int64(id_list.Id[i], ed1));
+            if (!db_sql_query(db, buf, print_file_handler, NULL)) {
+               printf_tstamp("%s\n", db_strerror(db));
+            }
+         }
+      }
+      if (quit) {
+         return;
+      }
+      if (fix && id_list.num_ids > 0) {
+         printf_tstamp(_("Deleting %d orphaned Object records.\n"), id_list.num_ids);
+         delete_id_list("DELETE FROM Object WHERE ObjectId=%s", &id_list);
+      } else {
+         break;                       /* get out if not updating db */
+      }
+      if (!make_id_list(query.c_str(), &id_list)) {
+         exit(1);
+      }
+   }
+}
+
+static void eliminate_orphaned_meta_records()
+{
+   const char *q;
+   db_int64_ctx lctx1, lctx2;
+   printf_tstamp(_("Checking for orphaned Meta entries.\n"));
+
+   q = "SELECT COUNT(1) FROM MetaEmail WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+   if (!db_sql_query(db, q, db_int64_handler, &lctx1)) {
+      printf_tstamp("%s\n", db_strerror(db));
+   }
+
+   printf_tstamp(_("Found %lld orphaned MetaEmail records.\n"), lctx1.value);
+   
+   q = "SELECT COUNT(1) FROM MetaAttachment WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+   if (!db_sql_query(db, q, db_int64_handler, &lctx2)) {
+      printf_tstamp("%s\n", db_strerror(db));
+   }
+
+   printf_tstamp(_("Found %lld orphaned MetaAttachment records.\n"), lctx2.value);
+
+   if (fix && lctx1.count > 0) {
+      printf_tstamp(_("Deleting %lld orphaned MetaEmail records.\n"), lctx1.value);
+      q = "DELETE FROM MetaEmail WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+      if (!db_sql_query(db, q, NULL, NULL)) {
+         printf_tstamp("%s\n", db_strerror(db));
+      }
+   }
+   if (fix && lctx2.count > 0) {
+      printf_tstamp(_("Deleting %lld orphaned MetaEmail records.\n"), lctx1.value);
+      q = "DELETE FROM MetaAttachment WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+      if (!db_sql_query(db, q, NULL, NULL)) {
+         printf_tstamp("%s\n", db_strerror(db));
+      }
+   }
+}
+
 static void eliminate_orphaned_path_records()
 {
    db_int64_ctx lctx;
    lctx.count=0;
    db_sql_query(db, "SELECT 1 FROM Job WHERE HasCache=1 LIMIT 1", 
                 db_int64_handler, &lctx);
-
+   printf_tstamp(_("Found %lld orphaned MetaEmail records.\n"), lctx.value);
    /* The BVFS code uses Path records that are not in the File table, for
     * example if a Job has /home/test/ BVFS will need to create a Path record /
     * and /home/ to work correctly
@@ -1001,6 +1092,10 @@ static void eliminate_orphaned_job_records()
 
       printf_tstamp(_("Deleting Object records of orphaned Job records.\n"));
       delete_id_list("DELETE FROM Object WHERE JobId=%s", &id_list);
+
+      printf_tstamp(_("Deleting Meta records of orphaned Job records.\n"));
+      delete_id_list("DELETE FROM MetaEmail WHERE JobId=%s", &id_list);
+      delete_id_list("DELETE FROM MetaAttachment WHERE JobId=%s", &id_list);
 
       printf_tstamp(_("Deleting Object records of orphaned Job records.\n"));
       delete_id_list("DELETE FROM RestoreObject WHERE JobId=%s", &id_list);
