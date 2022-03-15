@@ -361,6 +361,14 @@ void purge_files_from_jobs(UAContext *ua, char *jobs)
 {
    POOL_MEM query(PM_MESSAGE);
 
+   Mmsg(query, "DELETE FROM MetaEmail WHERE JobId IN (%s)", jobs);
+   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
+   Dmsg1(050, "Delete MetaEmail sql=%s\n", query.c_str());
+
+   Mmsg(query, "DELETE FROM MetaAttachment WHERE JobId IN (%s)", jobs);
+   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
+   Dmsg1(050, "Delete MetaAttachment sql=%s\n", query.c_str());
+
    Mmsg(query, "DELETE FROM TagJob WHERE JobId IN (%s)", jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete TagJob sql=%s\n", query.c_str());
