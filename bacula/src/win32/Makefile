@@ -187,3 +187,7 @@ Makefile.inc:
 		-e "s^@WIN32INCDIR@^$${INCDIR}^" \
 		-e "s^@WIN32DLLDIR@^$${DLLDIR}^" < Makefile.inc.in > $@
 	@grep EXTRA ../../autoconf/Make.common >> $@
+
+# Used to build windows dependency in a docker container for example
+depkgs-win.tar.gz: External-mingw-w64 External-mingw32 build-depkgs-mingw32 build-depkgs-mingw-w64
+	git archive --format tar.gz --prefix git/bacula/src/win32/ HEAD patches build-depkgs-mingw* External-mingw* > depkgs-win.tar.gz
