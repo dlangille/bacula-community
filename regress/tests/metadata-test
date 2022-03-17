@@ -125,15 +125,19 @@ run job=NightlySave fileset=TestPluginSet2 pool=Default storage=File1 yes
 wait
 messages
 @$out $tmp/log.23.out
-.jlist metadata type=email owner=xxxx tenant=xxxx
+.jlist metadata type=email owner=xxxx tenant=xxxx alljobs
 @$out $tmp/log.24.out
-.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/octet-stream
+.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/octet-stream alljobs
 @$out $tmp/log.25.out
-.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/jpg
+.jlist metadata type=attachment tenant=xxxx owner=xxxx contenttype=application/jpg alljobs
 @$out $tmp/log.26.out
-.jlist metadata type=attachment tenant=xxxx owner=xxxx isinline=0
+.jlist metadata type=attachment tenant=xxxx owner=xxxx isinline=0 alljobs
 @$out $tmp/log.27.out
 .jlist metadata type=attachment tenant=xxxx owner=xxxx isinline=1
+@$out $tmp/log_console.28.out
+.jlist metadata type=email owner=xxxx tenant=xxxx
+@$out $tmp/log_console.29.out
+.jlist metadata type=email owner=xxxx tenant=xxxx alljobs
 quit
 END_OF_DATA
 
@@ -177,6 +181,10 @@ setdebug level=50 tags=sql dir
 .jlist metadata type=email tenant=xxxx
 @$out $tmp/log_restricted.22.out
 .jlist metadata type=email tenant=xxxx owner=x%
+@$out $tmp/log_restricted.28.out
+.jlist metadata type=email owner=xxxx tenant=xxxx
+@$out $tmp/log_restricted.29.out
+.jlist metadata type=email owner=xxxx tenant=xxxx alljobs
 setdebug level=0 tags= dir
 quit
 END_OF_DATA
@@ -191,6 +199,14 @@ if [ $nb != 2 ]; then
     print_debug "ERROR: Should find two emails in the catalog"
     estat=1
 fi
+
+
+# We use the PERL JSON module to check the output of the .jlist command
+# The json data is stored in $j object
+# the data array reference is stored in $j->{data}
+# a member of the array can be accessed via $j->{data}->[0]->{member}
+# the data array itself can be accessed by @{ $j->{data} }
+# the size of the array is available via scalar( @{ $j->{data} } )
 
 for mode in console restricted
 do
@@ -420,7 +436,42 @@ exit (scalar(@{$j->{data}}) == 1);'
         print_debug "ERROR: Incorrect data in $tmp/log_$mode.22.out"
         estat=1
     fi
+
+    # Should find 2 emails (unique, only the last occurrence)
+    grep '\[' $tmp/log_$mode.28.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 2);'
+
+    if [ $? != 1 ]; then
+        print_debug "ERROR: Incorrect data in $tmp/log_$mode.28.out"
+        estat=1
+    fi
 done
+
+# Should find 4 emails (all versions)
+grep '\[' $tmp/log_console.29.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 4);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log_console.29.out"
+    estat=1
+fi
+
+# Should find 2 emails (all versions, but with ACL applied)
+grep '\[' $tmp/log_restricted.29.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log_restricted.29.out"
+    estat=1
+fi
+
+
 
     # Should find 4 email, owner/tenant filter. Same query for both
 grep '\[' $tmp/log.23.out | perl -MJSON -e '
