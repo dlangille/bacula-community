@@ -656,6 +656,7 @@ public:
    int     order;
    int     orderby;             // 0: JobId, FileIndex  1: EmailTime
    bool    all;
+   bool    alljobs;             // query all jobs, else return only the last version
    char   *JobIds;
 
    char    Id[MAX_SEARCH_LENGTH];
@@ -680,7 +681,7 @@ public:
    char    errmsg[MAX_NAME_LENGTH];
    META_DBR(): MinSize(-1), MaxSize(-1), HasAttachment(-1),
                isDraft(-1), isRead(-1), isInline(-1), offset(0), limit(512),
-               order(0), orderby(0), all(false)
+               order(0), orderby(0), all(false),alljobs(false)
    {
       JobIds = NULL;
       *Id = *Tenant = *Owner = 0;

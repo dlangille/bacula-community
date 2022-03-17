@@ -343,7 +343,7 @@ bail_out:
  *             importance=<str> isread=<0|1> isdraft=<0|1>
  *             categories=<str> conversationid=<str> hasattachment=<0|1>
  *             starttime=<time> endtime=<time>
- *             limit=<int> offset=<int>  order=<Asc|desc>
+ *             limit=<int> offset=<int>  order=<Asc|desc> alljobs
  *             emailid=<str>
  *
  *  Note: keyword "long" is before the first command on the command 
@@ -951,7 +951,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          META_DBR meta_r;
 
          for (j=i+1; j<ua->argc; j++) {
-            if (!ua->argv[j]) {
+            if (strcasecmp(ua->argk[j], NT_("alljobs")) == 0) {
+               meta_r.alljobs = 1;
+            } else if (!ua->argv[j]) {
                ua->error_msg(_("Invalid %s argument. Expecting value\n"), ua->argk[j]);
                return 1;
             } else if (strcasecmp(ua->argk[j], NT_("jobid")) == 0) {

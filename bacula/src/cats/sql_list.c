@@ -1301,7 +1301,14 @@ void BDB::bdb_list_metadata_owner_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HA
    POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
 
    bdb_lock();
+   /* We use the command line to generate the SQL query with what the user
+    * want to filter 
+    */
    meta_r->create_db_filter(jcr, this, where.handle());
+
+   /* We also apply ACL via SQL (here on the Client name and the Job name) if we
+    * are in a restricted console
+    */
    const char *where_filter = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                        DB_ACL_BIT(DB_ACL_CLIENT), strcmp(where.c_str(), "") == 0);
 
@@ -1373,7 +1380,7 @@ void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER 
       bdb_list_metadata_owner_records(jcr, meta_r, sendit, ctx, type);
       return;
    }
-
+   const char *k1="";           // set to Attachment if it is appropriate
    POOL_MEM esc(PM_MESSAGE), tmp(PM_MESSAGE), where(PM_MESSAGE), join(PM_MESSAGE);
    bdb_lock();
    //TODO add ACL part
@@ -1394,6 +1401,7 @@ void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER 
    }
 
    if (strcmp(meta_r->Type, "Attachment") == 0) {
+      k1 = "Attachment";
       pm_strcat(join, " JOIN MetaEmail ON (EmailId = AttachmentEmailId AND MetaEmail.JobId = MetaAttachment.JobId) ");
    }
    
@@ -1403,6 +1411,23 @@ void BDB::bdb_list_metadata_records(JCR *jcr, META_DBR *meta_r, DB_LIST_HANDLER 
 
    if (join_filter && *join_filter) {
       pm_strcat(join, join_filter);
+   }
+
+   if (!meta_r->alljobs) {
+      /* The idea is to get only the last occurence of each email. The key differentiator is
+       * the EmailId, and we use the Job table via the StartTime to select the latest version
+       * 
+       * should give
+       * AND MetaEmail.JobId = (SELECT JobId FROM Job JOIN MetaEmail AS B USING (JobId) <ACL filters> 
+       *  WHERE MetaEmail.EmailId=B.EmailId <ACL filters> ORDER BY StartTime DESC LIMIT 1
+       * or
+       * AND MetaAttachment.JobId = (SELECT JobId FROM Job JOIN MetaAttachment AS B USING (JobId) <ACL filters> 
+       *  WHERE MetaAttachment.AttachmentEmailId=B.AttachmentEmailId <ACL filters> ORDER BY StartTime DESC LIMIT 1
+       */ 
+      Mmsg(tmp,
+           " AND Meta%s.JobId = (SELECT JobId FROM Job JOIN Meta%s AS B USING (JobId) %s WHERE Meta%s.%sEmailId=B.%sEmailId %s ORDER BY StartTime DESC LIMIT 1) ",
+                  meta_r->Type,                            meta_r->Type,           join_filter,  meta_r->Type, k1,  k1,  where_filter);
+      pm_strcat(where, tmp.c_str());
    }
    
    if (meta_r->orderby == 1) {
