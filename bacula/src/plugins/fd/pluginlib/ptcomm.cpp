@@ -127,6 +127,7 @@ void PTCOMM::terminate(bpContext *ctx)
 
    if (worker_pid) {
       /* terminate the backend */
+	  DMSG(ctx, DINFO, "Killing backend with PID=%d\n", worker_pid);
       kill(worker_pid, SIGTERM);
    }
 
@@ -346,7 +347,6 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char *cmd, bool any)
          DMSG0(ctx, DERROR, "PTCOMM cannot get packet header from backend.\n");
          JMSG0(ctx, M_FATAL, "PTCOMM cannot get packet header from backend.\n");
          f_eod = f_error = f_fatal = true;
-         terminate(ctx);
          return -1;
       }
 
@@ -374,9 +374,8 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char *cmd, bool any)
       if (header.status == 'C' || header.status == 'D') {
          if (!any) {
             if (header.status != *cmd) {
-               DMSG2(ctx, DERROR, "Protocol error. Expected packet: %c got: %c\n", *cmd, header.status);
-               JMSG2(ctx, M_FATAL, "Protocol error. Expected packet: %c got: %c\n", *cmd, header.status);
-               terminate(ctx);
+               DMSG3(ctx, DERROR, "Protocol error. Expected packet: %c got: %c:%s\n", *cmd, header.status, header.length);
+               JMSG3(ctx, M_FATAL, "Protocol error. Expected packet: %c got: %c:%s\n", *cmd, header.status, header.length);
                return -1;
             }
          } else {
@@ -473,7 +472,6 @@ int32_t PTCOMM::recvbackend_header(bpContext *ctx, char *cmd, bool any)
       default:
          DMSG2(ctx, DERROR, "Protocol error. Unknown packet: %c:%s\n", header.status, header.length);
          JMSG2(ctx, M_FATAL, "Protocol error. Unknown packet: %c:%s\n", header.status, header.length);
-         terminate(ctx);
          return -1;
       }
    }
