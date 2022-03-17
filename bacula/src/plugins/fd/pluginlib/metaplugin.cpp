@@ -1374,7 +1374,7 @@ bRC METAPLUGIN::perform_read_data(bpContext *ctx, struct io_pkt *io)
       io->status = rc;
       io->io_errno = EIO;
       // We should get here only with Protocol errors, so we should terminate backends, as this is always fatal
-      cancel_all_backends(ctx);
+      backendctx_cancel_func(backend.ctx, ctx);
       return bRC_Error;
    }
    io->status = rc;
@@ -1534,7 +1534,7 @@ bRC METAPLUGIN::perform_read_acl(bpContext *ctx)
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
       // In protocol error situations, the communication has no chance to continue, so we need to kill the backend
-      cancel_all_backends(ctx);
+      backendctx_cancel_func(backend.ctx, ctx);
       return bRC_Error;
    }
 
@@ -1572,7 +1572,7 @@ bRC METAPLUGIN::perform_read_xattr(bpContext *ctx)
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
       // In protocol error situations, the communication has no chance to continue, so we need to kill the backend
-      cancel_all_backends(ctx);
+      backendctx_cancel_func(backend.ctx, ctx);
       return bRC_Error;
    }
    readxattr = true;
@@ -1604,7 +1604,7 @@ bRC METAPLUGIN::perform_read_metadata_info(bpContext *ctx, metadata_type type, s
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
       // In protocol error situations, the communication has no chance to continue, so we need to kill the backend
-      cancel_all_backends(ctx);
+      backendctx_cancel_func(backend.ctx, ctx);
       return bRC_Error;
    }
 
@@ -1822,7 +1822,7 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
          // In protocol error situations, the communication has no chance to continue, so we need to kill the backend
-         cancel_all_backends(ctx);
+         backendctx_cancel_func(backend.ctx, ctx);
          return bRC_Error;
       } else {
          if (backend.ctx->is_fatal()){
@@ -2084,7 +2084,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
          /* error in protocol */
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
-         cancel_all_backends(ctx);
+         backendctx_cancel_func(backend.ctx, ctx);
          return bRC_Error;
       } else {
          if (backend.ctx->is_fatal()){
@@ -2470,7 +2470,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
          DMSG0(ctx, DERROR, "Protocol error, not enough file attributes from backend.\n");
          JMSG0(ctx, M_FATAL, "Protocol error, not enough file attributes from backend.\n");
          // In protocol error situations, the communication has no chance to continue, so we need to kill the backend
-         cancel_all_backends(ctx);
+         backendctx_cancel_func(backend.ctx, ctx);
          return bRC_Error;
       }
 
