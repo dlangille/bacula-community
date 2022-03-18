@@ -1531,6 +1531,7 @@ bRC METAPLUGIN::perform_read_acl(bpContext *ctx)
    if (!backend.ctx->read_ack(ctx)){
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
 
@@ -1567,6 +1568,7 @@ bRC METAPLUGIN::perform_read_xattr(bpContext *ctx)
    if (!backend.ctx->read_ack(ctx)){
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
    readxattr = true;
@@ -1597,6 +1599,7 @@ bRC METAPLUGIN::perform_read_metadata_info(bpContext *ctx, metadata_type type, s
    if (!backend.ctx->read_ack(ctx)){
       /* should get EOD */
       DMSG0(ctx, DERROR, "Protocol error, should get EOD.\n");
+      backend.ctx->terminate(ctx);
       return bRC_Error;
    }
 
@@ -1813,6 +1816,7 @@ bRC METAPLUGIN::perform_read_metacommands(bpContext *ctx)
          /* error in protocol */
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
+         backend.ctx->terminate(ctx);
          return bRC_Error;
       } else {
          if (backend.ctx->is_fatal()){
@@ -2074,6 +2078,7 @@ bRC METAPLUGIN::perform_read_pluginobject(bpContext *ctx, struct save_pkt *sp)
          /* error in protocol */
          DMSG(ctx, DERROR, "Protocol error, got unknown command: %s\n", cmd.c_str());
          JMSG(ctx, M_FATAL, "Protocol error, got unknown command: %s\n", cmd.c_str());
+         backend.ctx->terminate(ctx);
          return bRC_Error;
       } else {
          if (backend.ctx->is_fatal()){
@@ -2458,6 +2463,7 @@ bRC METAPLUGIN::startBackupFile(bpContext *ctx, struct save_pkt *sp)
       if (reqparams > 0) {
          DMSG0(ctx, DERROR, "Protocol error, not enough file attributes from backend.\n");
          JMSG0(ctx, M_FATAL, "Protocol error, not enough file attributes from backend.\n");
+         backend.ctx->terminate(ctx);
          return bRC_Error;
       }
 
