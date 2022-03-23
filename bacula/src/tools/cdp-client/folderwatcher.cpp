@@ -249,7 +249,7 @@ FolderWatcher::~FolderWatcher()
    }
 }
 
-#else
+#else  // HAVE_WIN32
 
 BOOL IsDirectory(LPCTSTR szPath)
 {
@@ -281,7 +281,7 @@ void *thread_watcher(void *arg) {
 
       if (!ReadDirectoryChangesW(watcher->_dirHandle, (LPVOID) pBuffer,
                bsize, true,
-               FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE, 
+               FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_SIZE, 
                &dwBytesReturned,
                &overlapped,
                NULL)) {
