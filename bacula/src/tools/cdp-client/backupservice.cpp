@@ -38,7 +38,8 @@ void BackupService::start(const char *spoolPath, Journal *j)
        err_msg = w->watch(rec->path);
 
        if (err_msg != NULL) {
-          Dmsg2(0, "Error while trying to watch %s. %s", rec->path, err_msg); 
+          Dmsg2(0, "Error while trying to watch %s. %s", rec->path, err_msg);
+          free_and_null_pool_memory(err_msg);
        } else {
           _watchers[rec->path] = w;
        }
@@ -63,7 +64,7 @@ POOLMEM *BackupService::watch(const char *folder)
         _journal->writeFolderRecord(rec);
         _watchers[rec.path] = w;
     } else {
-        Dmsg2(0, "Error while trying to watch %s. %s", fpath, err_msg); 
+        Dmsg2(0, "Error while trying to watch %s. %s", fpath, err_msg);
         delete w;
     }
 
