@@ -1,0 +1,147 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test 'list joblog' command with jobid and pattern parameters
+#
+TestName="list-joblog-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<EOF >> $conf/bacula-dir.conf
+Console {
+  Name = cons1
+  Password = xxx
+  JobAcl    = $JobName
+  ClientAcl = *-fd
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = $tmp/test-bkp-fd-restore, $tmp/test1-fd-restore, $tmp/test-rst-fd-restore-1, $tmp/test-rst-fd-restore-2
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+EOF
+
+cat <<EOF >> $tmp/bconsole.conf1
+Console {
+  Name = cons1
+  Password = xxx
+}
+Director {
+  Name = 127.0.0.1-dir
+  DIRPort = $BASEPORT
+  address = 127.0.0.1
+  Password = notused
+}
+EOF
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName yes
+wait
+messages
+restore select all done yes where=$tmp/bacula-restores
+wait
+messages
+setdebug level=50 tags=sql trace=1 dir
+quit
+END_OF_DATA
+
+run_bacula
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log2.out
+.jlist joblog jobid=1
+@$out $tmp/log3.out
+.jlist joblog jobid=2
+@$out $tmp/log4.out
+.jlist joblog pattern=TLS jobid=1
+@$out $tmp/log5.out
+.jlist joblog pattern=TLS
+quit
+END_OF_DATA
+
+run_bconsole
+
+sed s:/log:/rlog: $tmp/bconcmds > $tmp/1
+
+$bin/bconsole -c $tmp/bconsole.conf1 < $tmp/1
+
+stop_bacula
+
+grep '{' $tmp/log2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}));'
+if [ $? -lt 5 ]; then
+    print_debug "ERROR: Should find more than 5 lines of log in $tmp/log2.out"
+    estat=1
+fi
+
+grep '{' $tmp/log3.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}));'
+if [ $? -lt 5 ]; then
+    print_debug "ERROR: Should find more than 5 lines of log in $tmp/log3.out"
+    estat=1
+fi
+
+grep '{' $tmp/log4.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 3 && $j->{data}[0]->{jobid} == 1);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 3 lines about TLS for jobid=1 in $tmp/log4.out"
+    estat=1
+fi
+
+grep '{' $tmp/log5.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 6 && $j->{data}[0]->{jobid} == 1 && $j->{data}[3]->{jobid} == 2);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 6 lines about TLS for jobid=1 and 2 in $tmp/log5.out"
+    estat=1
+fi
+
+# check for restricted console
+
+
+grep '{' $tmp/rlog2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}));'
+if [ $? -lt 5 ]; then
+    print_debug "ERROR: Should find more than 5 lines of log in $tmp/rlog2.out"
+    estat=1
+fi
+
+grep '{' $tmp/rlog3.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}));'
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find 0 line of log in $tmp/rlog3.out"
+    estat=1
+fi
+
+grep '{' $tmp/rlog4.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 3 && $j->{data}[0]->{jobid} == 1);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 3 lines about TLS for jobid=1 in $tmp/rlog4.out"
+    estat=1
+fi
+
+grep '{' $tmp/rlog5.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) == 3 && $j->{data}[0]->{jobid} == 1 && $j->{data}[1]->{jobid} == 1);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 3 lines about TLS for jobid=1 in $tmp/rlog5.out"
+    estat=1
+fi
+
+
+end_test
