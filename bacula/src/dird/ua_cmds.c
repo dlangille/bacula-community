@@ -133,7 +133,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("list"),       list_cmd,      _("List objects from catalog"),
    NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name>] [job=<name>] [tag=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [days=<n>] [hours=<n>] [limit=<n>] [order=<asc|desc>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files [type=<deleted|all>] jobid=<nn> | copies jobid=<nn> |\n"
-       "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
+       "\tjoblog [pattern=<str>] jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot | \n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients | jobmedia [jobid=<nn> volume=<s>] |\n"
        "\tevents [type=<str> | limit=<int> | order=<asc|desc> | days=<int> | start=<time-specification> | end=<time-specification> |\n"
        "\t\t source=<str> | code=<str> | type=<str> ]\n"

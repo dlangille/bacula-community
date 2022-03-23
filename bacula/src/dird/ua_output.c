@@ -321,7 +321,8 @@ bail_out:
  *  list jobname=name   - same as above
  *  list jobmedia jobid=<nn>
  *  list jobmedia job=name
- *  list joblog jobid=<nn>
+ *  list joblog pattern=xxx jobid=<nn> 
+ *  list joblog pattern=xxx jobid=<nn> 
  *  list joblog job=name
  *  list files [type=<deleted|all>] jobid=<nn> - list files saved for job nn
  *  list files [type=<deleted|all>] job=name
@@ -619,25 +620,31 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
       /* List JOBLOG */
       } else if (strcasecmp(ua->argk[i], NT_("joblog")) == 0) {
          bool done = false;
+         const char *pattern=NULL;
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("ujobid")) == 0 && ua->argv[j]) {
                bstrncpy(jr.Job, ua->argv[j], MAX_NAME_LENGTH);
                jr.JobId = 0;
                db_get_job_record(ua->jcr, ua->db, &jr);
                jobid = jr.JobId;
+
             } else if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
                jobid = str_to_int64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("pattern")) == 0 && ua->argv[j]) {
+               pattern = ua->argv[j];
+               continue;
+
             } else {
                continue;
             }
-            db_list_joblog_records(ua->jcr, ua->db, jobid, prtit, ua, llist);
+            db_list_joblog_records(ua->jcr, ua->db, jobid, pattern, prtit, ua, llist);
             done = true;
          }
          if (!done) {
             /* List for all jobs (jobid=0) */
-            db_list_joblog_records(ua->jcr, ua->db, 0, prtit, ua, llist);
+            db_list_joblog_records(ua->jcr, ua->db, 0, pattern, prtit, ua, llist);
          }
-
 
       /* List POOLS */
       } else if (strcasecmp(ua->argk[i], NT_("pool")) == 0 ||
@@ -1098,6 +1105,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                  || strcasecmp(ua->argk[i], NT_("daemon")) == 0
                  || strcasecmp(ua->argk[i], NT_("code")) == 0
                  || strcasecmp(ua->argk[i], NT_("offset")) == 0
+                 || strcasecmp(ua->argk[i], NT_("pattern")) == 0
          ) {
          /* Ignore it */
       } else if (strcasecmp(ua->argk[i], NT_("snapshot")) == 0 ||

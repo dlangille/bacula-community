@@ -791,36 +791,57 @@ bail_out:
    bdb_unlock();
 }
 
-void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId,
+void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId, const char *pattern,
                               DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   char ed1[50];
- 
-   if (JobId <= 0) {
+   if (JobId <= 0 && !pattern) {
       return;
    }
+
+   POOL_MEM tmp, where2;
+   char ed1[50];
    bdb_lock();
+
+   if (JobId > 0) {
+      Mmsg(tmp, "Log.JobId=%s", edit_int64(JobId, ed1));
+      append_filter(where2.handle(), tmp.c_str());
+   }
+   
+   if (pattern) {
+      POOL_MEM esc;
+      esc.check_size(strlen(pattern) * 2 + 1);
+      bdb_escape_string(jcr, esc.c_str(), pattern, strlen(pattern));
+      Mmsg(tmp, "Log.LogText ILIKE '%%%s%%' ", esc.c_str());
+      append_filter(where2.handle(), tmp.c_str());
+   }
 
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_CLIENT), false);
+                                DB_ACL_BIT(DB_ACL_CLIENT), where2.c_str()[0] == '\0');
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
-
-   if (type == VERT_LIST || type == JSON_LIST) {
+   
+   if (type == VERT_LIST) {
       Mmsg(cmd, "SELECT Time,LogText FROM Log %s "
-           "WHERE Log.JobId=%s %s ORDER BY LogId ASC",
+           "%s %s ORDER BY LogId ASC",
            join,
-           edit_int64(JobId, ed1),
+           where2.c_str(),
+           where);
+
+   } else if (type == JSON_LIST) {
+      Mmsg(cmd, "SELECT JobId, Time,LogText FROM Log %s "
+           "%s %s ORDER BY LogId ASC",
+           join,
+           where2.c_str(),
            where);
 
    } else {
       Mmsg(cmd, "SELECT LogText FROM Log %s "
-           "WHERE Log.JobId=%s %s ORDER BY LogId ASC",
+           "%s %s ORDER BY LogId ASC",
            join,
-           edit_int64(JobId, ed1),
+           where2.c_str(),
            where);
    }
    Dmsg1(DT_SQL|50, "q=%s\n", cmd);

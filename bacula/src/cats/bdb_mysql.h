@@ -46,7 +46,7 @@ public:
    bool bdb_open_database(JCR *jcr);
    void bdb_close_database(JCR *jcr);
    void bdb_thread_cleanup(void);
-   void bdb_escape_string(JCR *jcr, char *snew, char *old, int len);
+   void bdb_escape_string(JCR *jcr, char *snew, const char *old, int len);
    char *bdb_escape_object(JCR *jcr, char *old, int len);
    void bdb_unescape_object(JCR *jcr, char *from, int32_t expected_len,
                            POOLMEM **dest, int32_t *len);

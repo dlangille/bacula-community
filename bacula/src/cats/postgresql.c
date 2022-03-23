@@ -566,7 +566,7 @@ void BDB_POSTGRESQL::bdb_thread_cleanup(void)
  *    string must be long enough (max 2*old+1) to hold
  *    the escaped output.
  */
-void BDB_POSTGRESQL::bdb_escape_string(JCR *jcr, char *snew, char *old, int len)
+void BDB_POSTGRESQL::bdb_escape_string(JCR *jcr, char *snew, const char *old, int len)
 {
    BDB_POSTGRESQL *mdb = this;
    int failed; 

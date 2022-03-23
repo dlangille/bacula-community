@@ -318,7 +318,7 @@ void BDB_SQLITE::bdb_thread_cleanup(void)
  *   string must be long enough (max 2*old+1) to hold 
  *   the escaped output. 
  */ 
-void BDB_SQLITE::bdb_escape_string(JCR *jcr, char *snew, char *sold, int len) 
+void BDB_SQLITE::bdb_escape_string(JCR *jcr, char *snew, const char *sold, int len) 
 {  
    char *n, *o; 
  

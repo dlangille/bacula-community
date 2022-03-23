@@ -441,7 +441,7 @@ void BDB_MYSQL::bdb_thread_cleanup(void)
  *   string must be long enough (max 2*old+1) to hold 
  *   the escaped output. 
  */ 
-void BDB_MYSQL::bdb_escape_string(JCR *jcr, char *snew, char *old, int len) 
+void BDB_MYSQL::bdb_escape_string(JCR *jcr, char *snew, const char *old, int len) 
 { 
    BDB_MYSQL *mdb = this; 
    mysql_real_escape_string(mdb->m_db_handle, snew, old, len); 

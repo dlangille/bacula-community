@@ -275,7 +275,7 @@ public:
    void bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_jobmedia_records(JCR *jcr, JobId_t JobId, char *volume, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_filemedia_records(JCR *jcr, JobId_t JobId, uint32_t FileIndex, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
-   void bdb_list_joblog_records(JCR *jcr, JobId_t JobId, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_joblog_records(JCR *jcr, JobId_t JobId, const char *pattern, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    int  bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_LIST_HANDLER *sendit, void *ctx, int verbose, e_list_type type);
    void bdb_list_client_records(JCR *jcr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_copies_records(JCR *jcr, uint32_t limit, char *jobids, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
@@ -307,7 +307,7 @@ public:
    bool bdb_update_snapshot_record(JCR *jcr, SNAPSHOT_DBR *sr);
 
    /* Pure virtual low level methods */
-   virtual void bdb_escape_string(JCR *jcr, char *snew, char *old, int len) = 0;
+   virtual void bdb_escape_string(JCR *jcr, char *snew, const char *old, int len) = 0;
    virtual char *bdb_escape_object(JCR *jcr, char *old, int len) = 0;
    virtual void bdb_unescape_object(JCR *jcr, char *from, int32_t expected_len,
                    POOLMEM **dest, int32_t *len) = 0;
