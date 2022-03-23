@@ -186,6 +186,7 @@ ADD_TEST(disk:many-reload-test "@regressdir@/tests/many-reload-test")
 # Broken
 #ADD_TEST(disk:maxbw-test "@regressdir@/tests/maxbw-test")
 ADD_TEST(disk:zstd-test "@regressdir@/tests/zstd-test")
+ADD_TEST(disk:list-joblog-test "@regressdir@/tests/list-joblog-test")
 ADD_TEST(disk:list-jobmedia-test "@regressdir@/tests/list-jobmedia-test")
 # Broken
 #ADD_TEST(disk:maxbw-test "@regressdir@/tests/maxbw-test")
