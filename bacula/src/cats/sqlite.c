@@ -320,7 +320,8 @@ void BDB_SQLITE::bdb_thread_cleanup(void)
  */ 
 void BDB_SQLITE::bdb_escape_string(JCR *jcr, char *snew, const char *sold, int len) 
 {  
-   char *n, *o; 
+   char *n;
+   const char *o;
  
    n = snew; 
    o = sold; 
