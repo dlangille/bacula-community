@@ -472,7 +472,7 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
       }
    } else {
       dev->dev_errno = EIO;
-      Mmsg4(dev->errmsg, _("Volume data error at %d:%d! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
+      Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
             dev->get_hi_addr(block->BlockAddr),
             dev->get_low_addr(block->BlockAddr),
             BLKHDR2_ID, Id);
