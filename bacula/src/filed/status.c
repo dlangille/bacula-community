@@ -274,7 +274,8 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
 {
    int total_sec, inst_sec;
    uint64_t total_bps, inst_bps;
-   POOL_MEM msg(PM_MESSAGE);
+   POOL_MEM msg(PM_MESSAGE), fname(PM_FNAME);
+   BREGEXP *re;
    char b1[50], b2[50], b3[50], b4[50], b5[50], b6[50];
    int len;
    bool found = false;
@@ -282,6 +283,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
    time_t now = time(NULL);
    char dt[MAX_TIME_LENGTH];
 
+   re = new_bregexp("!password=[^ ]+!password=***!i");
    Dmsg0(1000, "Begin status jcr loop.\n");
    len = Mmsg(msg, _("\nRunning Jobs:\n"));
    sendit(msg.c_str(), len, sp);
@@ -368,8 +370,11 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
       sendit(msg.c_str(), len, sp);
       if (njcr->JobFiles > 0) {
          njcr->lock();
-         len = Mmsg(msg, _("    Processing file: %s\n"), njcr->last_fname);
+         pm_strcpy(fname, njcr->last_fname);
          njcr->unlock();
+
+         /* We strip the password from the filename if we find it */
+         len = Mmsg(msg, _("    Processing file: %s\n"), re->replace(fname.c_str()));
          sendit(msg.c_str(), len, sp);
       }
 
@@ -391,6 +396,7 @@ static void  list_running_jobs_plain(STATUS_PKT *sp)
       sendit(msg.c_str(), len, sp);
    }
    sendit(_("====\n"), 5, sp);
+   free_bregexp(re);
 }
 
 /*
