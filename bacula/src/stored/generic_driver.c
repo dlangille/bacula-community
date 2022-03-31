@@ -757,22 +757,22 @@ size_t move_cloud_part_read_cb(char *res, size_t size, void* arg)
 
 bool generic_driver::move_cloud_part(const char *VolumeName, uint32_t apart , const char *to, cancel_callback *cancel_cb, POOLMEM *&err, int& exists)
 {
-      /* retrieve the output message into err */
-      read_callback rcb;
-      rcb.fct = &move_cloud_part_read_cb;
-      move_cloud_part_read_cb_arg arg;
-      arg.msg = err;
-      rcb.arg = (void*)&arg;
+   /* retrieve the output message into err */
+   read_callback rcb;
+   rcb.fct = &move_cloud_part_read_cb;
+   move_cloud_part_read_cb_arg arg;
+   arg.msg = err;
+   rcb.arg = (void*)&arg;
 
-      int ret = call_fct("move", VolumeName, (int)apart, &rcb, NULL, cancel_cb, err, to);
-      /* 0 = OK (either because the part has been moved or because it doesn't exists) */
-      if (ret == 0) {
-         /* copied part is return by the read callback */
-         exists = strlen(err);
-         return true;
-      }
+   int ret = call_fct("move", VolumeName, (int)apart, &rcb, NULL, cancel_cb, err, to);
+   /* 0 = OK (either because the part has been moved or because it doesn't exists) */
+   if (ret == 0) {
+      /* copied part is return by the read callback */
+      exists = strlen(err);
+      return true;
+   }
 
-      return false;
+   return false;
 }
 
 
@@ -871,6 +871,8 @@ int generic_driver::copy_cloud_part_to_cache(transfer *xfer)
       }
 
       free(fname);
+
+      if (ret==0xED) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
       return (ret==0) ? CLOUD_DRIVER_COPY_PART_TO_CACHE_OK:CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
 
    } else {
@@ -905,6 +907,8 @@ int generic_driver::copy_cloud_part_to_cache(transfer *xfer)
       } else {
          bmemzero(xfer->m_hash64, 64);
       }
+
+      if (ret==0xED) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
       return (ret==0) ? CLOUD_DRIVER_COPY_PART_TO_CACHE_OK:CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
    }
    return CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
@@ -919,6 +923,13 @@ bool generic_driver::restore_cloud_object(transfer *xfer, const char *cloud_fnam
 }
 bool generic_driver::is_waiting_on_server(transfer *xfer)
 {
+   Dmsg2(dbglvl, "generic_driver::is_waiting_on_server for %spart%d.\n", xfer->m_volume_name, xfer->m_part);
+   if (strstr(driver_command, "aws_cloud_driver") != NULL) {
+      Dmsg0(dbglvl, "call_fct wait_on_restore\n");
+      int ret = call_fct("wait_on_restore",xfer->m_volume_name, xfer->m_part, NULL, NULL, NULL, xfer->m_message, NULL);
+      Dmsg1(dbglvl, "wait_on_restore returns %d\n", ret);
+      return (ret == 0);
+   }
    return false;
 }
 

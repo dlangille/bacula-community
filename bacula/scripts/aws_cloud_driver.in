@@ -29,6 +29,10 @@ from multiprocessing import Pool, cpu_count
 from inspect import stack
 import logging
 
+
+# RETRY DOWNLOAD
+RETRY_DOWNLOAD = 0xED
+
 def vol_ls():
    try:
       logging.info("enter vol_ls")
@@ -103,8 +107,14 @@ def ls():
 def download():
    try:
       logging.info("enter download")
-      return call(["aws", "s3", "cp",
-            os.path.join(cloud_path, volume, part), "-", "--only-show-errors"])
+      proc = Popen(["aws", "s3", "cp",
+            os.path.join(cloud_path, volume, part), "-", "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      output,err = proc.communicate()
+      logging.debug("download proc communicate output:{0} , err:{1}".format(output,err))
+      if err.find("An error occurred (InvalidObjectState) when calling the GetObject operation") != -1:
+         restore()
+         return RETRY_DOWNLOAD
+      return proc.returncode
    except OSError as o:
       logging.exception("download OSError exception")
       sys.stderr.write("{2} OSError({0}): {1}\n".format(o.errno, o.strerror, stack()[0][3]))
@@ -220,6 +230,62 @@ def move():
       sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
    return 1
 
+def restore():
+   try:
+      logging.info("enter restore {0}".format(os.path.join(cloud_path, volume, part)))
+      proc = Popen(["aws", "s3api", "restore-object", 
+                    #"--restore-request", "'{""Days": {0}, "GlacierJobParameters" : {"Tier" : "{1}"}}'.format(10,"Bulk"), #TODO: [BC-256] pass days and tier for restore
+                    "--restore-request", "Days=10",
+                    "--bucket", bucket,
+                    "--key", os.path.join(volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True) 
+      output,err = proc.communicate()
+      logging.debug("restore proc communicate output:{0} , err:{1}".format(output,err))
+      if err:
+         logging.error("restore got error {0}".format(err))
+         sys.stderr.write(err)
+      if output:
+         logging.info("restore got ouput {0}".format(output))
+         sys.stdout.write(output)
+      return proc.returncode
+   except OSError as o:
+      logging.exception("restore OSError exception")
+      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
+   except ValueError as v:
+      logging.exception("restore ValueError exception")
+      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
+   except:
+      logging.exception("restore Generic exception")
+      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   return 1
+
+def wait_on_restore():
+   try:
+      logging.info("enter wait_on_restore {0}".format(os.path.join(cloud_path, volume, part)))
+      proc = Popen(["aws", "s3api", "head-object", 
+                    "--bucket", bucket,
+                    "--key", os.path.join(volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True) 
+      output,err = proc.communicate()
+      logging.debug("wait_on_restore proc communicate output:{0} , err:{1}".format(output,err))
+      if err:
+         logging.error("wait_on_restore got error {0}".format(err))
+         sys.stderr.write(err)
+      if output:
+         logging.info("wait_on_restore got ouput {0}".format(output))
+         j = json.loads(output)
+         if "Restore" in j and j["Restore"] and j["Restore"]=='ongoing-request="true"':
+            logging.info("!Restore=ongoing-request detected in json!")
+            return 0
+   except OSError as o:
+      logging.exception("wait_on_restore OSError exception")
+      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
+   except ValueError as v:
+      logging.exception("wait_on_restore ValueError exception")
+      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
+   except:
+      logging.exception("wait_on_restore Generic exception")
+      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   return 1
+
 
 if __name__ == '__main__':
    # initialize the return code with a weird value
@@ -265,7 +331,8 @@ if __name__ == '__main__':
          "download":download,
          "delete":delete,
          "upload":upload,
-         "move":move
+         "move":move,
+         "wait_on_restore":wait_on_restore
       }
 
       if sys.argv[1] in switcher:
