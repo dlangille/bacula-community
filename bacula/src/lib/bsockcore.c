@@ -38,6 +38,7 @@
 #include "jcr.h"
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <netinet/in.h>
 
 #define BSOCKCORE_DEBUG_LVL    900
 
