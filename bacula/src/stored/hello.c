@@ -127,6 +127,11 @@ bool validate_dir_hello(JCR* jcr)
       Qmsg3(jcr, M_SECURITY, 0, _("Connection from unknown Director %s at %s:%s rejected.\n"
             "Please see " MANUAL_AUTH_URL " for help.\n"),
             dirname, dir->who(), dir->host());
+
+      events_send_msg(jcr, "SS0001", EVENTS_TYPE_SECURITY,
+                      dir->host(), (intptr_t)jcr,
+                      "Authentication failed from %s",
+                      dir->host());
       free_pool_memory(dirname);
       sleep(5);
       return false;

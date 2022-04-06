@@ -353,10 +353,6 @@ static void *handle_director_request(BSOCK *dir)
    bool found, quit;
    bool first = true;
    JCR *jcr;
-
-   char from[512];
-   dir->get_peer(from, sizeof(from));
-
    suspendres_t suspend;
    prevent_os_suspensions(suspend);   /* do not suspend during backup/restore */
 
@@ -457,9 +453,11 @@ static void *handle_director_request(BSOCK *dir)
 
 bail_out:
    /* Keep track of the important events */
-   if (dir && !jcr->authenticated) {
+   if (dir && jcr && !jcr->authenticated) {
       events_send_msg(jcr, "FS0001", EVENTS_TYPE_SECURITY,
-                      from, (intptr_t)jcr, "Authentication failed");
+                      dir->host(), (intptr_t)jcr,
+                      "Authentication failed from %s",
+                      dir->host());
    }
 
    dequeue_messages(jcr);  /* send any queued messages, will no longer impact

@@ -229,6 +229,10 @@ static void *handle_UA_client_request(void *arg)
 
    user->recv();             /* Get first message */
    if (!authenticate_user_agent(ua)) {
+      events_send_msg(ua->jcr, "DS0001", EVENTS_TYPE_SECURITY,
+                      user->host(), (intptr_t)ua->jcr,
+                      "Authentication failed from %s",
+                      user->host());
       goto getout;
    }
 
