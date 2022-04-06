@@ -353,6 +353,10 @@ static void *handle_director_request(BSOCK *dir)
    bool found, quit;
    bool first = true;
    JCR *jcr;
+
+   char from[512];
+   dir->get_peer(from, sizeof(from));
+
    suspendres_t suspend;
    prevent_os_suspensions(suspend);   /* do not suspend during backup/restore */
 
@@ -441,7 +445,6 @@ static void *handle_director_request(BSOCK *dir)
       dir->fsend(EndJob, jcr->JobStatus, jcr->JobFiles,
               jcr->ReadBytes, jcr->JobBytes, jcr->JobErrors, vss,
               encrypt, CommBytes, CommCompressedBytes);
-      //Dmsg0(0, dir->msg);
    }
 
    generate_daemon_event(jcr, "JobEnd");
@@ -453,6 +456,12 @@ static void *handle_director_request(BSOCK *dir)
                    (intptr_t)jcr, "Director disconnection");
 
 bail_out:
+   /* Keep track of the important events */
+   if (dir && !jcr->authenticated) {
+      events_send_msg(jcr, "FS0001", EVENTS_TYPE_SECURITY,
+                      from, (intptr_t)jcr, "Authentication failed");
+   }
+
    dequeue_messages(jcr);  /* send any queued messages, will no longer impact
                             * the job status... */
    dequeue_daemon_messages(jcr);
