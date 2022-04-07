@@ -1,0 +1,112 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Cloud transfer test. Exercice the retry-waiting mecanism introduced to support S3 GLACIER restoration
+# Will work with all drivers but is mostly design to be run with file_driver.
+#
+TestName="cloud-transfer-test"
+JobName=NightlySave
+. scripts/functions
+
+require_cloud
+
+#config is required for cloud cleanup
+scripts/copy-test-confs
+scripts/cleanup
+
+FORCE_FILE_SET=${FORCE_FILE_SET:-"${cwd}/build"}
+echo "$FORCE_FILE_SET" >${cwd}/tmp/file-list
+
+export CLOUD_FILE_DRIVER_SIMULATE_DELAYED_TRANSFER=250
+
+start_test
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumPartSize", "10000000", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumUploadBandwidth", "4MB/s", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumDownloadBandwidth", "4MB/s", "Cloud")'
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Max Run Time", "5days", "Job", "RestoreFiles")'
+
+##### Label
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=Vol1
+END_OF_DATA
+
+# do label
+run_bacula
+
+###### Backup
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+@#setdebug level=500 storage
+run job=$JobName level=Full yes
+wait
+list volumes
+llist volume=Vol1
+messages
+truncate cache volume=Vol1 storage=File
+END_OF_DATA
+
+run_bconsole
+
+##### might want to wait a couple hours/days here when using a real cloud so transfer to glacier is effective...
+echo "Wait for glacier transfer to be completed and type enter..."
+read a
+
+###### Restore
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@# 
+@# now do a restore
+@#
+@$out ${cwd}/tmp/log2.out
+truncate cache volume=Vol1 storage=File
+@exec "ls -l ${cwd}/tmp/Vol1"
+setdebug tags=cloud level=50 trace=1 storage
+restore where=${cwd}/tmp/bacula-restores storage=File jobid=1
+mark *
+done
+yes
+wait
+messages
+sql
+select * from JobMedia;
+quit
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File 
+stop_bacula
+
+###### Tests 
+check_two_logs
+
+# test only part.2
+# we should get retry in the sd debug trace file
+grep "JobId=2 Vol1/part.2 download to cache=.* retry... " ${working}/*-sd.trace 2>&1 >/dev/null
+if test $? -ne 0; then
+    echo "Error: No retry done waiting for transfer"
+    estat=2
+fi
+
+grep "JobId=2 Vol1/part.2 waiting..." ${working}/*-sd.trace 2>&1 >/dev/null
+if test $? -ne 0; then
+    echo "Error: No waiting done for transfer"
+    estat=2
+fi
+# we should get ready! in the sd debug trace file
+grep "JobId=2 Vol1/part.2 is ready!" ${working}/*-sd.trace 2>&1 >/dev/null
+if test $? -ne 0; then
+    echo "Error: No ready found for transfer"
+    estat=2
+fi
+
+end_test
