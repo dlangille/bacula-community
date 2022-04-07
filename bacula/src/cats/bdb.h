@@ -147,7 +147,7 @@ public:
    char *bdb_strerror() { return errmsg; };
    bool bdb_check_version(JCR *jcr);
    bool bdb_check_settings(JCR *jcr, int64_t *starttime, int val1, int64_t val2);
-   bool bdb_open_batch_connexion(JCR *jcr);
+   bool bdb_open_batch_connection(JCR *jcr);
    bool bdb_check_max_connections(JCR *jcr, uint32_t max_concurrent_jobs);
    virtual const char *search_op(JCR *jcr, const char *table_col, char *value, POOLMEM **esc, POOLMEM **dest);
 

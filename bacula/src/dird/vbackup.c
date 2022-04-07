@@ -597,8 +597,8 @@ static bool create_bootstrap_file(JCR *jcr, char *jobids)
 
 #define new_get_file_list
 #ifdef new_get_file_list
-   if (!db_open_batch_connexion(jcr, jcr->db)) {
-      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connexion");
+   if (!db_open_batch_connection(jcr, jcr->db)) {
+      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connection");
       return false;
    }
    /* If the new Job is a Full, we don't need to keep deleted records,
@@ -644,5 +644,6 @@ static bool create_bootstrap_file(JCR *jcr, char *jobids)
         jcr->ExpectedFiles);
    free_ua_context(ua);
    free_bsr(rx.bsr_list);
+   dir_close_batch_connection(jcr);
    return jcr->ExpectedFiles==0?false:true;
 }

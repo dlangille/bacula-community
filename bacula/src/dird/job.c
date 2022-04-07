@@ -1545,6 +1545,16 @@ void dird_free_jcr_pointers(JCR *jcr)
    free_and_null_pool_memory(jcr->media_type);
 }
 
+/* Close an existing batch connection */
+void dir_close_batch_connection(JCR *jcr)
+{
+   if (jcr->db_batch) {
+      db_close_database(jcr, jcr->db_batch);
+      jcr->db_batch = NULL;
+      jcr->batch_started = false;
+   }
+}
+
 /*
  * Free the Job Control Record if no one is still using it.
  *  Called from main free_jcr() routine in src/lib/jcr.c so
@@ -1571,16 +1581,11 @@ void dird_free_jcr(JCR *jcr)
       pthread_cond_destroy(&jcr->term_wait);
       jcr->term_wait_inited = false;
    }
-   if (jcr->db_batch) {
-      db_close_database(jcr, jcr->db_batch);
-      jcr->db_batch = NULL;
-      jcr->batch_started = false;
-   }
+   dir_close_batch_connection(jcr);
    if (jcr->db) {
       db_close_database(jcr, jcr->db);
       jcr->db = NULL;
    }
-
    free_and_null_pool_memory(jcr->stime);
    free_and_null_pool_memory(jcr->fname);
    free_and_null_pool_memory(jcr->pool_source);

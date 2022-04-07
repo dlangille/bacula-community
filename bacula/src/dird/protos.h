@@ -149,6 +149,7 @@ extern bool run_console_command(JCR *jcr, const char *cmd);
 extern void sd_msg_thread_send_signal(JCR *jcr, int sig);
 void terminate_sd_msg_chan_thread(JCR *jcr);
 bool flush_file_records(JCR *jcr);
+void dir_close_batch_connection(JCR *jcr);
 
 /* jobq.c */
 extern bool inc_read_store(JCR *jcr);

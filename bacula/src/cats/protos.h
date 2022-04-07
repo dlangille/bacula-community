@@ -92,8 +92,8 @@ int db_int_handler(void *ctx, int num_fields, char **row);
 void bdb_debug_print(JCR *jcr, FILE *fp);
 void db_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
 
-#define db_open_batch_connexion(jcr, mdb) \
-           mdb->bdb_open_batch_connexion(jcr)
+#define db_open_batch_connection(jcr, mdb) \
+           mdb->bdb_open_batch_connection(jcr)
 #define db_strerror(mdb) \
            mdb->bdb_strerror()
 #define db_debug_print(jcr, fp) \

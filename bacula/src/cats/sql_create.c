@@ -930,7 +930,7 @@ bool BDB::bdb_create_batch_file_attributes_record(JCR *jcr, ATTR_DBR *ar)
 
    /* Open the dedicated connexion */
    if (!jcr->batch_started) {
-      if (!bdb_open_batch_connexion(jcr)) {
+      if (!bdb_open_batch_connection(jcr)) {
          return false;     /* error already printed */
       }
       if (!jcr->db_batch->sql_batch_start(jcr)) {

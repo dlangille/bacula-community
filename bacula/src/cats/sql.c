@@ -1258,12 +1258,12 @@ json_list:
    json_list_end(send, ctx, 0, "");
    return mdb->sql_num_rows();
 } 
- 
+
 /* 
- * Open a new connexion to mdb catalog. This function is used 
+ * Open a new connection to mdb catalog. This function is used 
  * by batch and accurate mode. 
  */ 
-bool BDB::bdb_open_batch_connexion(JCR *jcr) 
+bool BDB::bdb_open_batch_connection(JCR *jcr) 
 { 
    bool multi_db; 
  

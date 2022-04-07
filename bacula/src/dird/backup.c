@@ -315,8 +315,8 @@ bool send_accurate_current_files(JCR *jcr)
    Dmsg2(200, "jobids=%s nb=%s\n", jobids.list, nb.list);
    jcr->file_bsock->fsend("accurate files=%s\n", nb.list);
 
-   if (!db_open_batch_connexion(jcr, jcr->db)) {
-      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connexion");
+   if (!db_open_batch_connection(jcr, jcr->db)) {
+      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connection");
       return false;  /* Fail */
    }
 
@@ -342,8 +342,10 @@ bool send_accurate_current_files(JCR *jcr)
       }
    }
 
-   /* TODO: close the batch connection ? (can be used very soon) */
    jcr->file_bsock->signal(BNET_EOD);
+
+   /* The connection can be used very soon, but it's taking a lot of resources */
+   dir_close_batch_connection(jcr);
    return true;
 }
 
