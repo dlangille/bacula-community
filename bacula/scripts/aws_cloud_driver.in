@@ -108,10 +108,10 @@ def download():
    try:
       logging.info("enter download")
       proc = Popen(["aws", "s3", "cp",
-            os.path.join(cloud_path, volume, part), "-", "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+            os.path.join(cloud_path, volume, part), "-", "--only-show-errors"], stderr=PIPE)
       output,err = proc.communicate()
       logging.debug("download proc communicate output:{0} , err:{1}".format(output,err))
-      if err.find("An error occurred (InvalidObjectState) when calling the GetObject operation") != -1:
+      if err and err.find("An error occurred (InvalidObjectState) when calling the GetObject operation") != -1:
          restore()
          return RETRY_DOWNLOAD
       return proc.returncode
@@ -234,8 +234,7 @@ def restore():
    try:
       logging.info("enter restore {0}".format(os.path.join(cloud_path, volume, part)))
       proc = Popen(["aws", "s3api", "restore-object", 
-                    #"--restore-request", "'{""Days": {0}, "GlacierJobParameters" : {"Tier" : "{1}"}}'.format(10,"Bulk"), #TODO: [BC-256] pass days and tier for restore
-                    "--restore-request", "Days=10",
+                    "--restore-request", "{{\"Days\": {0}, \"GlacierJobParameters\" : {{\"Tier\" : \"{1}\"}}}}".format(transfer_retention_days,transfer_priority),
                     "--bucket", bucket,
                     "--key", os.path.join(volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True) 
       output,err = proc.communicate()
@@ -273,7 +272,7 @@ def wait_on_restore():
          logging.info("wait_on_restore got ouput {0}".format(output))
          j = json.loads(output)
          if "Restore" in j and j["Restore"] and j["Restore"]=='ongoing-request="true"':
-            logging.info("!Restore=ongoing-request detected in json!")
+            logging.info("Ongoing restore detected")
             return 0
    except OSError as o:
       logging.exception("wait_on_restore OSError exception")
@@ -318,12 +317,20 @@ if __name__ == '__main__':
       region=os.environ['CLOUD_REGION']
       protocol=os.environ['CLOUD_PROTOCOL']
       uri_type=os.environ['CLOUD_URI_TYPE']
+      transfer_priority_switcher = {
+         "0":"Expedited",
+         "1":"Standard",
+         "2":"Bulk"
+      }
+      t_prio = os.environ['CLOUD_TRANSFER_PRIORITY']
+      transfer_priority = transfer_priority_switcher[t_prio]
+      transfer_retention_days = os.environ['CLOUD_TRANSFER_RETENTION_DAYS']
       
       os.environ['AWS_DEFAULT_REGION'] = region
       os.environ['AWS_ACCESS_KEY_ID'] = access_key
       os.environ['AWS_SECRET_ACCESS_KEY'] = secret_key
 
-      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type))
+      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}, transfer_prio {7}, tranfer_ret {8}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type, transfer_priority, transfer_retention_days))
 
       switcher = {
          "vol_ls":vol_ls,
