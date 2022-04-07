@@ -141,11 +141,13 @@ private:
    POOLMEM *max_concurrent_downloads_env;
    POOLMEM *upload_limit_env;
    POOLMEM *download_limit_env;
+   POOLMEM *transfer_priority_env;
+   POOLMEM *transfer_retention_env;
    POOLMEM *unset_lctime_env;
    POOLMEM *debug_env;
    POOLMEM *working_path_env;
    POOLMEM *home_path_env;
-   char *envs[21];
+   char *envs[23];
 };
 
 #endif /* GENERIC_CLOUD_DRIVER_H*/

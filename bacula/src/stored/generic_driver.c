@@ -33,6 +33,7 @@
 const int64_t dbglvl = DT_CLOUD|50;
 const size_t block_size = 4096;
 const int TIMEOUT = 0;
+const int RETRY_DOWNLOAD = 0xED;
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,6 +108,8 @@ generic_driver::generic_driver()
    max_concurrent_downloads_env = get_pool_memory(PM_NAME);
    upload_limit_env = get_pool_memory(PM_NAME);
    download_limit_env = get_pool_memory(PM_NAME);
+   transfer_priority_env = get_pool_memory(PM_NAME);
+   transfer_retention_env = get_pool_memory(PM_NAME);
    unset_lctime_env = get_pool_memory(PM_NAME);
    debug_env = get_pool_memory(PM_NAME);
    working_path_env = get_pool_memory(PM_NAME);
@@ -131,6 +134,8 @@ generic_driver::~generic_driver()
    free_pool_memory(max_concurrent_downloads_env);
    free_pool_memory(upload_limit_env);
    free_pool_memory(download_limit_env);
+   free_pool_memory(transfer_priority_env);
+   free_pool_memory(transfer_retention_env);
    free_pool_memory(unset_lctime_env);
    free_pool_memory(debug_env);
    free_pool_memory(working_path_env);
@@ -230,25 +235,41 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       pm_strcat(download_limit_env, b);
       envs[15] = download_limit_env;
 
+      sprintf(b, "%d", cloud->transfer_priority);
+      pm_strcpy(transfer_priority_env, "CLOUD_TRANSFER_PRIORITY=");
+      pm_strcat(transfer_priority_env, b);
+      envs[16] = transfer_priority_env;
+
+      uint32_t transfer_retention_days = cloud->transfer_retention / (3600 * 24);
+      /* at least 1 day retention period */
+      if (transfer_retention_days <= 0) {
+         transfer_retention_days = 1;
+      }
+
+      sprintf(b, "%d", transfer_retention_days);
+      pm_strcpy(transfer_retention_env, "CLOUD_TRANSFER_RETENTION_DAYS=");
+      pm_strcat(transfer_retention_env, b);
+      envs[17] = transfer_retention_env;
+
       pm_strcpy(debug_env, "CLOUD_DEBUG=");
       if (chk_dbglvl(dbglvl)) pm_strcat(debug_env, "TRUE");
-      envs[16] = debug_env;
+      envs[18] = debug_env;
 
       pm_strcpy(working_path_env, "CLOUD_WORKING_PATH=");
       pm_strcat(working_path_env, working_directory);
-      envs[17] = working_path_env;
+      envs[19] = working_path_env;
 
       pm_strcpy(home_path_env, "HOME="); /* child default home location */
       pm_strcat(home_path_env, working_directory);
-      envs[18] = home_path_env;
+      envs[20] = home_path_env;
 
       if (driver_command && strstr(driver_command, "was_cloud_driver") != NULL) {
          pm_strcpy(unset_lctime_env, "LC_TIME=");
-         envs[19] = unset_lctime_env;
+         envs[21] = unset_lctime_env;
       } else {
-         envs[19] = NULL;
+         envs[21] = NULL;
       }
-      envs[20] = NULL;
+      envs[22] = NULL;
 
       return true;
    }
@@ -403,7 +424,7 @@ int generic_driver::call_fct(char* cmd,
    /* recheck debug level */
    pm_strcpy(debug_env, "CLOUD_DEBUG=");
    if (chk_dbglvl(dbglvl)) pm_strcat(debug_env, "TRUE");
-   envs[16] = debug_env;
+   envs[18] = debug_env;
 
    if (chk_dbglvl(dbglvl)) {
       Dmsg1(dbglvl, "cmd=%s\n", cmd);
@@ -872,7 +893,7 @@ int generic_driver::copy_cloud_part_to_cache(transfer *xfer)
 
       free(fname);
 
-      if (ret==0xED) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
+      if (ret==RETRY_DOWNLOAD) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
       return (ret==0) ? CLOUD_DRIVER_COPY_PART_TO_CACHE_OK:CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
 
    } else {
@@ -908,7 +929,7 @@ int generic_driver::copy_cloud_part_to_cache(transfer *xfer)
          bmemzero(xfer->m_hash64, 64);
       }
 
-      if (ret==0xED) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
+      if (ret==RETRY_DOWNLOAD) return CLOUD_DRIVER_COPY_PART_TO_CACHE_RETRY;
       return (ret==0) ? CLOUD_DRIVER_COPY_PART_TO_CACHE_OK:CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
    }
    return CLOUD_DRIVER_COPY_PART_TO_CACHE_ERROR;
