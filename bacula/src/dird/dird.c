@@ -659,6 +659,27 @@ static void connect_and_init_globals()
    }
 }
 
+/* We store messages into a alist for the reload command,
+ * the first message is the error level, then we have the
+ * message itself
+ */
+#define reload_append_msg0(lst, pm, level, format) do { \
+  char code[2];    \
+  code[0] = level; \
+  code[1] = 0;     \
+  lst->append(bstrdup(code));   \
+  lst->append(bstrdup(format)); \
+ } while(0)
+
+#define reload_append_msg1(lst, pm, level, format, arg1) do { \
+  char code[2];    \
+  code[0] = level; \
+  code[1] = 0;     \
+  lst->append(bstrdup(code));       \
+  Mmsg(pm, format, arg1);           \
+  lst->append(bstrdup(pm.c_str())); \
+  } while(0)
+
 /*
  * If we get here, we have received a SIGHUP, which means to
  *    reread our configuration file.
@@ -678,8 +699,7 @@ static void connect_and_init_globals()
  *   resources, but a SYSTEM job is not since it *should* not have any
  *   permanent pointers to jobs.
  */
-extern "C"
-void reload_config(int sig)
+bool reload_config(int sig, alist *msglist)
 {
    static bool already_here = false;
 #if !defined(HAVE_WIN32)
@@ -687,9 +707,11 @@ void reload_config(int sig)
 #endif
    JCR *jcr;
    int njobs = 0;                     /* number of running jobs */
+   bool ret = false;
    int table, rtable;
    bool ok=false;
    int tries=0;
+   POOL_MEM msg;
 
    /* Wait to do the reload */
    do {
@@ -697,9 +719,10 @@ void reload_config(int sig)
       if (already_here) {
          V(reload_mutex);
          if (tries++ > 10) {
-            Qmsg(NULL, M_INFO, 0, _("Already doing a reload request, "
-                                    "request ignored.\n"));
-            return;
+            reload_append_msg0(msglist, msg, M_INFO,
+                               _("Already doing a reload request, "
+                                 "request ignored.\n"));
+            return false;
          }
          Dmsg0(10, "Already doing a reload request, waiting a bit\n");
          bmicrosleep(1, 0);
@@ -724,8 +747,9 @@ void reload_config(int sig)
 
    table = find_free_reload_table_entry();
    if (table < 0) {
-      Qmsg(NULL, M_ERROR, 0, _("Too many (%d) open reload requests. "
-                               "Request ignored.\n"), max_reloads);
+      reload_append_msg1(msglist, msg, M_ERROR,
+                         _("Too many (%d) open reload requests. "
+                           "Request ignored.\n"), max_reloads);
       goto bail_out;
    }
 
@@ -745,11 +769,12 @@ void reload_config(int sig)
        */
       rtable = find_free_reload_table_entry();    /* save new, bad table */
       if (rtable < 0) {
-         Qmsg(NULL, M_ERROR, 0, _("Please correct configuration file: %s\n"), configfile);
-         Qmsg(NULL, M_ERROR_TERM, 0, _("Out of reload table entries. Giving up.\n"));
+         reload_append_msg1(msglist, msg, M_ERROR, _("Please correct configuration file: %s\n"), configfile);
+         reload_append_msg0(msglist, msg, M_ERROR_TERM, _("Out of reload table entries. Giving up.\n"));
+
       } else {
-         Qmsg(NULL, M_ERROR, 0, _("Please correct configuration file: %s\n"), configfile);
-         Qmsg(NULL, M_ERROR, 0, _("Resetting previous configuration.\n"));
+         reload_append_msg1(msglist, msg, M_ERROR, _("Please correct configuration file: %s\n"), configfile);
+         reload_append_msg0(msglist, msg, M_ERROR, _("Resetting previous configuration.\n"));
       }
       /* Save broken res_head pointer */
       reload_table[rtable].res_head = res_head;
@@ -784,6 +809,7 @@ void reload_config(int sig)
       events_send_msg(NULL, "DD0005",
                       EVENTS_TYPE_DAEMON, "*Director*",
                       (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director configuration reloaded");
+      ret = true;               // reload ok
    }
 
    /* Reset other globals */
@@ -813,6 +839,7 @@ bail_out:
    signal(SIGHUP, reload_config);
 #endif
    already_here = false;
+   return ret;
 }
 
 /* Cleanup and then exit */
@@ -903,6 +930,25 @@ void terminate_dird(int sig)
    lmgr_cleanup_main();
    sm_dump(false);
    exit(sig);
+}
+
+extern "C"
+void reload_config(int sig)
+{
+   alist msg(owned_by_alist, 5);
+   // list of strings M_LEVEL, message
+   if (!reload_config(sig, &msg)) {
+      char *m, *code;
+      while (!msg.empty()) {
+         code = (char *)msg.remove(0);
+         m = (char *)msg.remove(0);
+
+         Qmsg(NULL, code[0], 0, "%s", m);
+
+         free(code);
+         free(m);
+      }
+   }
 }
 
 /*

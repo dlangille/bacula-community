@@ -1832,12 +1832,32 @@ static int time_cmd(UAContext *ua, const char *cmd)
 /*
  * reload the conf file
  */
-extern "C" void reload_config(int sig);
 
 static int reload_cmd(UAContext *ua, const char *cmd)
 {
+   alist msg(owned_by_alist, 5);
    ua->send_events("DC0019", EVENTS_TYPE_COMMAND, "reload");
-   reload_config(1);
+
+   /* msgs is a list of message_level + message 
+    * We display through the UAContext the messages
+    * properly
+    */
+   if (!reload_config(1, &msg)) {
+      char *m, *code;
+      while (!msg.empty()) {
+         code = (char *)msg.remove(0);
+         m = (char *)msg.remove(0);
+
+         if (code[0] == M_INFO) {
+            ua->send_msg("%s", m);
+
+         } else {
+            ua->error_msg("%s", m);
+         }
+         free(code);
+         free(m);
+      }
+   }
    return 1;
 }
 

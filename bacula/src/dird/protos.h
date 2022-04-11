@@ -371,6 +371,9 @@ bool update_snapshot(UAContext *ua);
 int prune_snapshot(UAContext *ua);
 bool send_snapshot_retention(JCR *jcr, utime_t val);
 
+/* dird.c */
+bool reload_config(int sig, alist *msglist);
+
 /* ua_collect.c */
 bool update_permanent_stats(void *data);
 void initialize_statcollector();
