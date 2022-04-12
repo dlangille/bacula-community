@@ -415,9 +415,11 @@ bool GetWindowsVersionString(LPTSTR osbuf, int maxsiz)
          return false;
       }
       p += size-1;
-      *p++ = ' ';
-      *p++ = '(';
    }
+
+   bstrncat(osbuf, " (build ", maxsiz);
+   p += 8;
+
    hr = RegQueryValueExA(currentVersionKey, "CurrentBuild", NULL, &type, NULL, &size);
    if (hr == ERROR_MORE_DATA || hr == ERROR_SUCCESS) {
       hr = RegQueryValueExA(currentVersionKey, "CurrentBuild", NULL, &type, (LPBYTE)p, &size);
@@ -426,6 +428,27 @@ bool GetWindowsVersionString(LPTSTR osbuf, int maxsiz)
       }
       p += size-1;
       *p++ = ')';
+   }
+
+   hr = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment", 0, KEY_ALL_ACCESS, &currentVersionKey);
+   if (hr != ERROR_SUCCESS) {
+      return false;
+   }
+
+   char buf[80];
+   hr = RegQueryValueExA(currentVersionKey, "PROCESSOR_ARCHITECTURE", NULL, &type, NULL, &size);
+   if (hr == ERROR_MORE_DATA || hr == ERROR_SUCCESS) {
+      hr = RegQueryValueExA(currentVersionKey, "PROCESSOR_ARCHITECTURE", NULL, &type, (LPBYTE)buf, &size);
+      if (hr != ERROR_SUCCESS) {
+         return false;
+      }
+      if (strstr(buf,"64")) {
+         bstrncat(osbuf, TEXT(", 64-bit"), maxsiz);
+      } else {
+         bstrncat(osbuf, TEXT(", 32-bit"), maxsiz);
+      }
+
+      p += 8;
    }
    return true;
 }
