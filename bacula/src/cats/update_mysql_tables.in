@@ -6,8 +6,8 @@
 # Shell script to update MySQL tables to Bacula version 15.0.x
 #
 
-OLDVERSION=1024
-NEWVERSION=1025
+OLDVERSION=1025
+NEWVERSION=1026
 
 echo " "
 echo "This script will update a Bacula MySQL database"
@@ -637,7 +637,8 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
 ALTER TABLE RestoreObject MODIFY ObjectName MEDIUMBLOB;
 ALTER TABLE RestoreObject MODIFY PluginName BLOB;
 ALTER TABLE Object MODIFY PluginName BLOB;
-
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
+  ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1025');
 UPDATE Version SET VersionId=1025;
 END-OF-DATA
     then
@@ -645,6 +646,24 @@ END-OF-DATA
         getVersion
     else
         echo "Update of Bacula MySQL tables 1024 to 1025 failed."
+        exit 1
+    fi
+fi
+
+
+if [ "$DBVERSION" -eq 1025 ] ; then
+    if mysql $* -f  <<END-OF-DATA
+USE ${db_name};
+CREATE INDEX meta_emailid on MetaEmail (EmailId);
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
+  ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
+UPDATE Version SET VersionId=1026;
+END-OF-DATA
+    then
+        echo "Update of Bacula MySQL tables 1025 to 1026 succeeded."
+        getVersion
+    else
+        echo "Update of Bacula MySQL tables 1025 to 1026 failed."
         exit 1
     fi
 fi

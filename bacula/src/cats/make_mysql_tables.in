@@ -66,6 +66,7 @@ CREATE FULLTEXT INDEX meta_emailsubjectbody ON MetaEmail
        (EmailSubject, EmailBodyPreview, EmailTo, EmailCc, EmailFrom);
 CREATE INDEX meta_emailowner ON MetaEmail (EmailTenant(255), EmailOwner(255));
 CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailid on MetaEmail (EmailId);
 CREATE INDEX meta_emailtags on MetaEmail (EmailTags(255));
 CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName(255));
 CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId(255));
@@ -619,7 +620,7 @@ CREATE TABLE Version (
    );
 
 -- Initialize Version
-INSERT INTO Version (VersionId) VALUES (1025);
+INSERT INTO Version (VersionId) VALUES (1026);
 
 END-OF-DATA
 then

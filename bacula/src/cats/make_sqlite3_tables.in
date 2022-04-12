@@ -42,6 +42,7 @@ CREATE TABLE MetaEmail
 
 CREATE INDEX meta_emailowner on MetaEmail (EmailTenant, EmailOwner);
 CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailid on MetaEmail (EmailId);
 CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
 CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
 -- CREATE INDEX meta_emailsender on MetaEmail (EmailSender);
@@ -617,7 +618,7 @@ INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
    ('W', 'Terminated normally with warnings',25);
 
 -- Initialize Version		 
-INSERT INTO Version (VersionId) VALUES (1025);
+INSERT INTO Version (VersionId) VALUES (1026);
 
 PRAGMA default_cache_size = 100000;
 PRAGMA synchronous = NORMAL;
