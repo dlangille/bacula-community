@@ -36,6 +36,7 @@ extern const char CATS_IMP_EXP *bvfs_select_delta_version_with_basejob_and_delta
 extern const char CATS_IMP_EXP *get_created_running_job;
 extern const char CATS_IMP_EXP *cleanup_created_job;
 extern const char CATS_IMP_EXP *cleanup_running_job;
+extern const char CATS_IMP_EXP *sync_jobhisto[];
 extern const char CATS_IMP_EXP *client_backups;
 extern const char CATS_IMP_EXP *cnt_File;
 extern const char CATS_IMP_EXP *create_delindex;

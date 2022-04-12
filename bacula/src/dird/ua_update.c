@@ -882,6 +882,11 @@ static bool update_stats(UAContext *ua)
    int nb = db_update_stats(ua->jcr, ua->db, since);
    ua->info_msg(_("Updating %i job(s).\n"), nb);
 
+   /* Can be removed in 2024. This is a workaround for a minor issue
+    * about the "update stats" command.
+    */
+   db_sql_query(ua->db, sync_jobhisto[db_get_type_index(ua->db)], NULL, NULL);
+
    return true;
 }
 

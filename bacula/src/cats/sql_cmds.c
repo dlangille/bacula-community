@@ -47,6 +47,21 @@ const char *cleanup_created_job =
 const char *cleanup_running_job = 
    "UPDATE Job SET JobStatus='f', EndTime=StartTime WHERE JobStatus = 'R'";
 
+const char *sync_jobhisto_def = "UPDATE JobHisto SET PurgedFiles=Job.PurgedFiles, HasCache=Job.HasCache,Reviewed=Job.Reviewed "
+    "FROM Job WHERE Job.JobId=JobHisto.JobId and Job.Job = JobHisto.Job "
+      "AND (Job.HasCache <> JobHisto.HasCache OR Job.PurgedFiles <> JobHisto.PurgedFiles OR Job.Reviewed <> JobHisto.Reviewed)";
+const char *sync_jobhisto[] =
+{
+   // MySQL
+   "UPDATE JobHisto JOIN Job USING (JobId) SET JobHisto.PurgedFiles=Job.PurgedFiles, JobHisto.HasCache=Job.HasCache, JobHisto.Reviewed=Job.Reviewed "
+   "WHERE Job.JobId=JobHisto.JobId and Job.Job = JobHisto.Job "
+   "AND (Job.HasCache <> JobHisto.HasCache OR Job.PurgedFiles <> JobHisto.PurgedFiles OR Job.Reviewed <> JobHisto.Reviewed)",
+   // PostgreSQL
+   sync_jobhisto_def,
+   // SQLite
+   sync_jobhisto_def
+};
+
 /* For sql_update.c db_update_stats */
 const char *fill_jobhisto =
         "INSERT INTO JobHisto (JobId, Job, Name, Type, Level,"
