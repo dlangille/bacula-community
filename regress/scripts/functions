@@ -639,7 +639,7 @@ EOF
       local nb=0
       cat  $tmp/json.$$ | $bin/bconsole -c $conf/bconsole.conf -u 1 2>&1 > /dev/null
       grep '{' $tmp/json.$$.out > $tmp/json.$$.list
-      while read line
+      while read -r line
       do
           cat <<EOF > $tmp/1.json
 $line
