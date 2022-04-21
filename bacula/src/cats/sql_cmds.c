@@ -47,6 +47,13 @@ const char *cleanup_created_job =
 const char *cleanup_running_job = 
    "UPDATE Job SET JobStatus='f', EndTime=StartTime WHERE JobStatus = 'R'";
 
+const char *sql_clear_malware_table_def = "TRUNCATE Malware%s";
+const char *sql_clear_malware_table[] = {
+   "DELETE * FROM Malware%s",   // Truncate on Mysql doesn't work with transaction
+   sql_clear_malware_table_def,
+   sql_clear_malware_table_def
+};
+
 const char *sync_jobhisto_def = "UPDATE JobHisto SET PurgedFiles=Job.PurgedFiles, HasCache=Job.HasCache,Reviewed=Job.Reviewed "
     "FROM Job WHERE Job.JobId=JobHisto.JobId and Job.Job = JobHisto.Job "
       "AND (Job.HasCache <> JobHisto.HasCache OR Job.PurgedFiles <> JobHisto.PurgedFiles OR Job.Reviewed <> JobHisto.Reviewed)";
