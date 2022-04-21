@@ -397,3 +397,6 @@ bool is_dedup_ref(DEV_RECORD *rec, bool lazy);
 void * dir_authplugin_getauthenticationData(JCR *jcr, const char *console, const char *param);
 bRC dir_authplugin_do_interaction(JCR *jcr, BSOCK *bsock, const char *pluginname, void *data, bool pluginall = false);
 bRC dir_authplugin_authenticate(JCR *jcr, BSOCK *bsock, const char *pluginname);
+
+/* malware.c */
+int check_malware(JCR *jcr, const char *jobids, POOLMEM **errmsg);

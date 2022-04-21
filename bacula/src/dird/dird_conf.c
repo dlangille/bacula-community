@@ -382,6 +382,7 @@ static RES_ITEM dir_items[] = {
    {"MaximumConcurrentJobs", store_pint32, ITEM(res_dir.MaxConcurrentJobs), 0, ITEM_DEFAULT, 20},
    {"MaximumReloadRequests", store_pint32, ITEM(res_dir.MaxReload), 0, ITEM_DEFAULT, 32},
    {"MaximumConsoleConnections", store_pint32, ITEM(res_dir.MaxConsoleConnect), 0, ITEM_DEFAULT, 20},
+   {"MalwareDatabaseCommand", store_str, ITEM(res_dir.get_malwaredb_command), 0, 0, 0},
    {"Password",    store_password, ITEM(res_dir.password), 0, ITEM_REQUIRED, 0},
    {"FdConnectTimeout", store_time,ITEM(res_dir.FDConnectTimeout), 0, ITEM_DEFAULT, 3 * 60},
    {"SdConnectTimeout", store_time,ITEM(res_dir.SDConnectTimeout), 0, ITEM_DEFAULT, 30 * 60},
@@ -585,6 +586,7 @@ RES_ITEM job_items[] = {
    {"Type",      store_jobtype, ITEM(res_job.JobType),   0, ITEM_REQUIRED, 0},
    {"Level",     store_level,   ITEM(res_job.JobLevel),    0, 0, 0},
    {"Messages",  store_res,     ITEM(res_job.messages),  R_MSGS, ITEM_REQUIRED, 0},
+   {"CheckMalware", store_bool, ITEM(res_job.CheckMalware), 0, 0, 0},
    {"Storage",   store_alist_res, ITEM(res_job.storage),  R_STORAGE, 0, 0},
    {"StorageGroupPolicy",   store_storage_mngr, ITEM(res_job.storage_policy),  0, 0, 0},
    {"Pool",      store_res,     ITEM(res_job.pool),      R_POOL, ITEM_REQUIRED, 0},
@@ -1595,6 +1597,9 @@ void free_resource(RES *rres, int type)
 
    switch (type) {
    case R_DIRECTOR:
+      if (res->res_dir.get_malwaredb_command) {
+         free(res->res_dir.get_malwaredb_command);
+      }
       if (res->res_dir.working_directory) {
          free(res->res_dir.working_directory);
       }

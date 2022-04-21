@@ -748,6 +748,17 @@ bool do_backup(JCR *jcr)
       /* Any error already printed */
    }
 
+   /* Check for Malware */
+   if (jcr->JobFiles > 0 && jcr->job->CheckMalware) {
+      Jmsg(jcr, M_INFO, 0, _("[DI0002] Checking file metadata for Malwares\n"));
+      edit_int64(jcr->JobId, ed1);
+      if (check_malware(jcr, ed1, buf.handle()) != 0) {
+         Jmsg(jcr, M_ERROR, 0, "%s", buf.c_str());
+      } else {
+         Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+      }
+   }
+
    if (!jcr->is_canceled() && stat == JS_Terminated) {
       backup_cleanup(jcr, stat);
       return true;

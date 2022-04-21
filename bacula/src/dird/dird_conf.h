@@ -130,6 +130,7 @@ public:
    bool tls_verify_peer;              /* TLS Verify Client Certificate */
    char *verid;                       /* Custom Id to print in version command */
    char *customerid;                  /* Custom CustomerID */
+   char *get_malwaredb_command;       /* Custom  Malware Command */
    /* Methods */
    char *name() const;
 };
@@ -519,6 +520,7 @@ public:
    bool CancelRunningDuplicates;      /* Cancel Running jobs */
    bool PurgeMigrateJob;              /* Purges source job on completion */
    bool DeleteConsolidatedJobs;       /* Delete or not consolidated Virtual Full jobs */
+   bool CheckMalware;                 /* Check for malware during the job */
 
    alist *tag;                        /* tags defined for this Job */
    alist *base;                       /* Base jobs */
