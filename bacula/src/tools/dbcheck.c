@@ -83,6 +83,7 @@ static void eliminate_restore_records();
 static void eliminate_verify_records();
 static void eliminate_orphaned_object_records();
 static void eliminate_orphaned_meta_records();
+static void eliminate_orphaned_fileevents_records();
 static void repair_bad_paths();
 static void do_interactive_mode();
 static bool yes_no(const char *prompt);
@@ -353,6 +354,7 @@ int main (int argc, char *argv[])
       eliminate_restore_records();
       eliminate_orphaned_meta_records();
       eliminate_orphaned_object_records();
+      eliminate_orphaned_fileevents_records();
    } else {
       do_interactive_mode();
    }
@@ -395,7 +397,7 @@ static void do_interactive_mode()
 "     7) Eliminate orphaned Path records\n"
 "     8) Eliminate orphaned FileSet records\n"
 "     9) Eliminate orphaned Client records\n"
-"    10) Eliminate orphaned Meta data records\n"
+"    10) Eliminate orphaned Meta/FileEvents data records\n"
 "    11) Eliminate orphaned Job records\n"
 "    12) Eliminate all Admin records\n"
 "    13) Eliminate all Restore records\n"
@@ -413,7 +415,7 @@ static void do_interactive_mode()
 "     7) Check for orphaned Path records\n"
 "     8) Check for orphaned FileSet records\n"
 "     9) Check for orphaned Client records\n"
-"    10) Check all orphaned Meta data records\n"
+"    10) Check all orphaned Meta/FileEvents data records\n"
 "    11) Check for orphaned Job records\n"
 "    12) Check for all Admin records\n"
 "    13) Check for all Restore records\n"
@@ -463,6 +465,7 @@ static void do_interactive_mode()
             break;
          case 10:
             eliminate_orphaned_meta_records();
+            eliminate_orphaned_fileevents_records();
             break;
          case 11:
             eliminate_orphaned_job_records();
@@ -485,6 +488,7 @@ static void do_interactive_mode()
             eliminate_orphaned_fileset_records();
             eliminate_orphaned_client_records();
             eliminate_orphaned_meta_records();
+            eliminate_orphaned_fileevents_records();
             eliminate_orphaned_job_records();
             eliminate_admin_records();
             eliminate_restore_records();
@@ -886,6 +890,28 @@ static void eliminate_orphaned_meta_records()
    if (fix && lctx2.count > 0) {
       printf_tstamp(_("Deleting %lld orphaned MetaEmail records.\n"), lctx1.value);
       q = "DELETE FROM MetaAttachment WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+      if (!db_sql_query(db, q, NULL, NULL)) {
+         printf_tstamp("%s\n", db_strerror(db));
+      }
+   }
+}
+
+static void eliminate_orphaned_fileevents_records()
+{
+   const char *q;
+   db_int64_ctx lctx1;
+   printf_tstamp(_("Checking for orphaned FileEvents entries.\n"));
+
+   q = "SELECT COUNT(1) FROM FileEvents WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
+   if (!db_sql_query(db, q, db_int64_handler, &lctx1)) {
+      printf_tstamp("%s\n", db_strerror(db));
+   }
+
+   printf_tstamp(_("Found %lld orphaned FileEvents records.\n"), lctx1.value);
+   
+   if (fix && lctx1.count > 0) {
+      printf_tstamp(_("Deleting %lld orphaned FileEvents records.\n"), lctx1.value);
+      q = "DELETE FROM FileEvents WHERE JobId NOT IN (SELECT DISTINCT JobId from Job)";
       if (!db_sql_query(db, q, NULL, NULL)) {
          printf_tstamp("%s\n", db_strerror(db));
       }
