@@ -25,7 +25,8 @@
  *     Kern Sibbald, July MMII
  */
 
-
+#ifndef BSR_H
+#define BSR_H
 
 /* FileIndex entry in restore bootstrap record */
 struct RBSR_FINDEX {
@@ -55,3 +56,19 @@ struct RBSR {
    /* If we extend an existing fi, keep the memory for the next insert */
    RBSR_FINDEX *m_fi;
 };
+
+
+class UAContext;
+/* Structure used to quickly scan the BSR file and find
+ * the right storage daemon to connect to
+ */
+struct bootstrap_info
+{
+   FILE *bs;
+   UAContext *ua;
+   char storage[MAX_NAME_LENGTH+1];
+};
+bool open_bootstrap_file(JCR *jcr, bootstrap_info &info);
+void close_bootstrap_file(bootstrap_info &info);
+
+#endif

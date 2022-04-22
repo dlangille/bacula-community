@@ -380,7 +380,7 @@ bool do_mac(JCR *jcr)
    BSOCK *sd, *wsd;
    JCR *wjcr = jcr->wjcr;    /* newly migrated job */
    bool ok = false;
-   STORE *store;
+   STORE *store, *bsr_store;
    char *store_address;
    uint32_t store_port;
    STORE *rstore = NULL;
@@ -457,6 +457,70 @@ bool do_mac(JCR *jcr)
     */
    jcr->setJobStatus(JS_WaitSD);
    wjcr->setJobStatus(JS_WaitSD);
+
+   if (jcr->store_mngr->get_rstore_list()->size() > 1) {
+      POOL_MEM src;
+      /* To help the user, we can check if the selected storage is compatible
+       * with what we have in the BSR
+       */
+      bootstrap_info info;
+      if (!open_bootstrap_file(jcr, info)) { // We get the first Storage=
+         goto bail_out;
+      }
+      close_bootstrap_file(info);
+
+      /* Keep the source of the information */
+      pm_strcpy(src, jcr->store_mngr->get_rsource());
+
+      /* If we have a Storage Group defined, we can look into it
+       * TODO: Like for Backup, we can also check for the different algorithms
+       * (least used, round robbin)
+       */
+      bsr_store = (STORE *)GetResWithName(R_STORAGE, info.storage);
+      if (bsr_store) {
+         bool found=false;
+         foreach_alist(store, jcr->store_mngr->get_rstore_list()) {
+            /* At least the Address and the Port should match */
+            if (strcmp(store->address, bsr_store->address) == 0 && store->SDport == bsr_store->SDport) {
+               /* The storage is ok, it will select it */
+               jcr->store_mngr->set_rstore(store, src.c_str());
+               found=true;
+               break;
+            }
+         }
+         if (!found) {
+            /* Maybe we can find a storage with the right name. Should not happen */
+            foreach_alist(store, jcr->store_mngr->get_rstore_list()) {
+               if (strcmp(store->hdr.name, info.storage) == 0) {
+                  jcr->store_mngr->set_rstore(store, src.c_str());
+                  found=true;
+                  break;
+               }
+            }
+         }
+         if (!found) {
+            /* Let's try with the MediaType */
+            foreach_alist(store, jcr->store_mngr->get_rstore_list()) {
+               if (strcmp(store->media_type, bsr_store->media_type) == 0) {
+                  /* The Media type is the same, it will select it */
+                  jcr->store_mngr->set_rstore(store, src.c_str());
+                  break;
+               }
+            }
+         }
+         /* TODO: It is possible to iterate on the global list of Storage
+          * resource and pick the original one, it would solve automatically
+          * any configuration issues.
+          */
+         if (!found) {
+            Jmsg(jcr, M_WARNING, 0, _("Could not find a compatible Storage to read volumes in the %s Job definition (%s/%s)\n"),
+                 jcr->job->name(), bsr_store->hdr.name, bsr_store->media_type);
+         }
+
+      } else {
+         Dmsg1(50, "Unable to find the Storage resource \"%s\" in the configuration\n", info.storage);
+      }
+   }
 
    /*
     * Start conversation with write Storage daemon

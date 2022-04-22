@@ -761,3 +761,64 @@ void scan_bsr(JCR *jcr)
    }
    return;
 }
+
+/**
+ * Open the bootstrap file and find the first Storage=
+ * Returns ok if able to open
+ * It fills the storage name (should be the first line)
+ * and the file descriptor to the bootstrap file,
+ * it should be used for next operations, and need to be closed
+ * at the end.
+ */
+bool open_bootstrap_file(JCR *jcr, bootstrap_info &info)
+{
+   FILE *bs;
+   UAContext *ua;
+   info.bs = NULL;
+   info.ua = NULL;
+
+   if (!jcr->RestoreBootstrap) {
+      return false;
+   }
+   bstrncpy(info.storage, jcr->store_mngr->get_rstore()->name(), MAX_NAME_LENGTH);
+
+   bs = bfopen(jcr->RestoreBootstrap, "rb");
+   if (!bs) {
+      berrno be;
+      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"),
+         jcr->RestoreBootstrap, be.bstrerror());
+      jcr->setJobStatus(JS_ErrorTerminated);
+      return false;
+   }
+
+   ua = new_ua_context(jcr);
+   while (bfgets(ua->cmd, bs)) {
+      parse_ua_args(ua);
+      if (ua->argc != 1) {
+         continue;
+      }
+      if (!strcasecmp(ua->argk[0], "Storage")) {
+         bstrncpy(info.storage, ua->argv[0], MAX_NAME_LENGTH);
+         break;
+      }
+   }
+   info.bs = bs;
+   info.ua = ua;
+   fseek(bs, 0, SEEK_SET);      /* return to the top of the file */
+   return true;
+}
+
+/*
+ * Clean the bootstrap_info struct
+ */
+void close_bootstrap_file(bootstrap_info &info)
+{
+   if (info.bs) {
+      fclose(info.bs);
+      info.bs = NULL;
+   }
+   if (info.ua) {
+      free_ua_context(info.ua);
+      info.ua = NULL;
+   }
+}

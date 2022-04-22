@@ -120,62 +120,6 @@ static void build_restore_command(JCR *jcr, POOL_MEM &ret)
    unbash_spaces(where.c_str());
 }
 
-struct bootstrap_info
-{
-   FILE *bs;
-   UAContext *ua;
-   char storage[MAX_NAME_LENGTH+1];
-};
-
-#define UA_CMD_SIZE 1000
-
-/**
- * Open the bootstrap file and find the first Storage=
- * Returns ok if able to open
- * It fills the storage name (should be the first line)
- * and the file descriptor to the bootstrap file,
- * it should be used for next operations, and need to be closed
- * at the end.
- */
-static bool open_bootstrap_file(JCR *jcr, bootstrap_info &info)
-{
-   FILE *bs;
-   UAContext *ua;
-   info.bs = NULL;
-   info.ua = NULL;
-
-   if (!jcr->RestoreBootstrap) {
-      return false;
-   }
-   bstrncpy(info.storage, jcr->store_mngr->get_rstore()->name(), MAX_NAME_LENGTH);
-
-   bs = bfopen(jcr->RestoreBootstrap, "rb");
-   if (!bs) {
-      berrno be;
-      Jmsg(jcr, M_FATAL, 0, _("Could not open bootstrap file %s: ERR=%s\n"),
-         jcr->RestoreBootstrap, be.bstrerror());
-      jcr->setJobStatus(JS_ErrorTerminated);
-      return false;
-   }
-
-   ua = new_ua_context(jcr);
-   ua->cmd = check_pool_memory_size(ua->cmd, UA_CMD_SIZE+1);
-   while (!fgets(ua->cmd, UA_CMD_SIZE, bs)) {
-      parse_ua_args(ua);
-      if (ua->argc != 1) {
-         continue;
-      }
-      if (!strcasecmp(ua->argk[0], "Storage")) {
-         bstrncpy(info.storage, ua->argv[0], MAX_NAME_LENGTH);
-         break;
-      }
-   }
-   info.bs = bs;
-   info.ua = ua;
-   fseek(bs, 0, SEEK_SET);      /* return to the top of the file */
-   return true;
-}
-
 /**
  * This function compare the given storage name with the
  * the current one. We compare the name and the address:port.
@@ -265,7 +209,7 @@ static bool send_bootstrap_file(JCR *jcr, BSOCK *sock,
    }
    sock->fsend(bootstrap);
    pos = ftello(bs);
-   while(fgets(ua->cmd, UA_CMD_SIZE, bs)) {
+   while(bfgets(ua->cmd, bs)) {
       if (check_for_new_storage(jcr, info)) {
          /* Otherwise, we need to contact another storage daemon.
           * Reset bs to the beginning of the current segment.
@@ -335,19 +279,6 @@ static bool select_rstore(JCR *jcr, bootstrap_info &info)
    Jmsg(jcr, M_FATAL, 0,
       _("Could not acquire read storage lock for \"%s\""), info.storage);
    return false;
-}
-
-/*
- * Clean the bootstrap_info struct
- */
-static void close_bootstrap_file(bootstrap_info &info)
-{
-   if (info.bs) {
-      fclose(info.bs);
-   }
-   if (info.ua) {
-      free_ua_context(info.ua);
-   }
 }
 
 /**
