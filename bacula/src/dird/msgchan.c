@@ -93,7 +93,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
                               int max_retry_time, int verbose)
 {
    BSOCK *sd = jcr->store_bsock;
-   STORE *store;
+   STORE *store = NULL ;
    utime_t heart_beat;
    STORE *wstore = jcr->store_mngr->get_wstore();
    POOL_MEM buf;
