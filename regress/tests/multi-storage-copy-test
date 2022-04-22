@@ -1,0 +1,181 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+# This script uses the virtual disk autochanger
+# We test the copy/migration with multiple
+# storage daemon and the storage group feature
+#
+TestName="multi-storage-copy-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-2disk-confs
+scripts/prepare-disk-changer
+
+# create a new bacula-sd.conf
+perl -ne '
+if (/SDPort = /) { $_ =~ s/(\d+)/1$1/;}
+if (/Name = .+?-sd/) { $_ =~ s/-sd/-sd2/;}
+if (/Media Type = (.+)/) { $_ =~ s/$1/X$1/;}
+if (/WorkingDirectory/) { $_ =~ s/"$/2"/; }
+print;
+' $conf/bacula-sd.conf > $conf/bacula-sd2.conf
+
+mkdir -p ${working}2
+
+sed 's/bacula-sd.conf/bacula-sd2.conf/' $scripts/bacula-ctl-sd \
+    > $tmp/bacula-ctl-sd
+chmod +x $tmp/bacula-ctl-sd
+
+disable_plugins
+
+echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+change_jobname $JobName
+start_test
+
+cat <<EOF >> $conf/bacula-dir.conf
+Job {
+  Name = copy
+  Type = Copy
+  Client = "$HOST-fd"
+  Fileset = "Full Set"
+  MaximumSpawnedJobs = 300
+  Messages = Standard
+  NextPool = "Special"
+  Pool = "Default"
+  SelectionType = "PoolUncopiedJobs"
+  Storage = "tape", "File"
+}
+EOF
+
+# Make sure that we don't have the same mediatype on the two SD
+# The first call will set xxx for everything, then we revert to the one we want
+$bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Media Type", "xxx", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Media Type", "tape", "Device", "Drive-0")'
+$bperl -e 'add_attribute("$conf/bacula-sd2.conf", "Media Type", "tape", "Device", "Drive-1")'
+$bperl -e 'add_attribute("$conf/bacula-sd2.conf", "LabelMedia", "yes", "Device")'
+
+#$bperl -e 'add_attribute("$conf/bacula-sd.conf", "Media Type", "Disk", "Device", "Virtual-1")'
+#$bperl -e 'add_attribute("$conf/bacula-sd.conf", "Media Type", "Disk", "Device", "Virtual-2")'
+#$bperl -e 'add_attribute("$conf/bacula-sd.conf", "Media Type", "FileMedia", "Device", "FileStorage")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "LabelMedia", "yes", "Device")'
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "LabelFormat", "Vol", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SDPort", $BASEPORT+10002, "Storage", "tape")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Storage", "tape,File", "Job")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Storage", "Virtual", "Pool", "Special")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "NextPool", "Special", "Pool", "Default")'
+
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+run job=$JobName storage=File yes
+wait
+messages
+quit
+END_OF_DATA
+
+$tmp/bacula-ctl-sd start >/dev/null 2>&1
+run_bacula
+
+echo "ficheriro1.txt" >${cwd}/build/po/ficheriro1.txt
+echo "ficheriro2.txt" >${cwd}/build/po/ficheriro2.txt
+
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log3.out
+@# Force Incremental on the second Volume
+run level=Incremental storage=tape job=$JobName yes
+wait
+messages
+@# 
+@# now do a restore
+@#
+@$out ${cwd}/tmp/log2.out
+restore where=${cwd}/tmp/bacula-restores select all done yes
+wait
+messages
+@$out ${cwd}/tmp/log4.out
+run job=copy jobid=1 yes
+wait
+messages
+run job=copy jobid=2 yes
+wait
+messages
+run job=copy jobid=1 storage=Virtual yes
+wait
+messages
+@$out ${cwd}/tmp/log7.out
+restore where=${cwd}/tmp/bacula-restores2 jobid=5,7 all done yes
+wait
+messages
+restore where=${cwd}/tmp/bacula-restores3 jobid=9,7 all done yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Storage", "File2,File3", "Job", "copy")'
+
+cat <<EOF > ${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log9.out
+reload
+run job=copy jobid=1 comment="Should fail because of the drives available" yes
+wait
+messages
+quit
+EOF
+
+run_bconsole
+
+check_for_zombie_jobs storage=File
+check_for_zombie_jobs storage=tape
+stop_bacula
+$tmp/bacula-ctl-sd stop  >/dev/null 2>&1
+
+check_two_logs
+
+$rscripts/diff.pl -s ${cwd}/tmp/bacula-restores -d ${cwd}/tmp/bacula-restores2
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Second restore in error"
+    rstat=1
+fi
+
+$rscripts/diff.pl -s ${cwd}/tmp/bacula-restores -d ${cwd}/tmp/bacula-restores3
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Third restore in error"
+    rstat=1
+fi
+
+grep "Fatal error" $tmp/log9.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: The copy job in $tmp/log9.out should be in error"
+    estat=1
+fi
+
+nb=`grep "Restore OK" $tmp/log7.out | wc -l`
+if [ "$nb" -ne 2 ]; then
+    print_debug "ERROR: Should find 2 restore job OK in $tmp/log7.out"
+    rstat=1
+fi
+
+nb=`grep "Copying OK" $tmp/log4.out | wc -l`
+if [ "$nb" -ne 3 ]; then
+    print_debug "ERROR: Should find 3 copy job OK in $tmp/log4.out"
+    rstat=1
+fi
+
+end_test
