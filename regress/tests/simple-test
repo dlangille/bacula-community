@@ -4,41 +4,41 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # Run a simple backup of the Bacula build directory
-# then restore it.  (on incremenat just a backup and restore)
+# then restore it.  (no incremenal just a backup and restore)
 #
+# XPARAM CUSTOM=<BUILD_YOUR_OWN_CUSTOM>
+# the size of data to handle, to make the test short or long
+
 TestName="simple-test"
 JobName=backup
 . scripts/functions
 
 scripts/cleanup
-scripts/copy-confs
+scripts/copy-test-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
 
-#
-# Zap out any schedule in default conf file so that
-#  it doesn't start during our test
-#
-outf="$tmp/sed_tmp"
-echo "s%  Schedule =%# Schedule =%g" >${outf}
-cp $scripts/bacula-dir.conf $tmp/1
-sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+if [ -n $CUSTOM ] ; then
+   dd if=/dev/urandom of=$tmp/random-data bs=1M count=10
+   echo "$tmp/random-data" >${cwd}/tmp/file-list
+fi
 
-change_jobname BackupClient1 $JobName
 start_test
 
 cat <<END_OF_DATA >$tmp/bconcmds
 @output /dev/null
 messages
 @$out $tmp/log1.out
-setdebug level=4 storage=File1
-label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
-run job=$JobName yes
+setdebug level=4 storage=File
+setdebug level=1 client
+label storage=File volume=TestVolume001
+run job=Simple yes
 wait
 messages
 @# 
 @# now do a restore
 @#
 @$out $tmp/log2.out  
-setdebug level=4 storage=File1
+setdebug level=4 storage=File
 restore where=$tmp/bacula-restores select all done
 yes
 wait
@@ -47,9 +47,8 @@ quit
 END_OF_DATA
 
 run_bacula
-check_for_zombie_jobs storage=File1
+check_for_zombie_jobs storage=File
 stop_bacula
-
 check_two_logs
-check_restore_diff
+[ -n $CUSTOM ] || check_restore_diff
 end_test
