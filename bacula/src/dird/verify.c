@@ -172,6 +172,22 @@ bool do_verify(JCR *jcr)
       }
       Jmsg(jcr, M_INFO, 0, _("Verifying against JobId=%d Job=%s\n"),
          jcr->previous_jr.JobId, jcr->previous_jr.Job);
+
+         /* Check for Malware */
+      if ( jcr->previous_jr.JobFiles > 0 &&
+          !jcr->previous_jr.PurgedFiles  &&
+           jcr->job->CheckMalware)
+      {
+         POOL_MEM buf;
+         Jmsg(jcr, M_INFO, 0, _("[DI0002] Checking file metadata for Malwares\n"));
+         edit_int64(jcr->previous_jr.JobId, ed1);
+         if (check_malware(jcr, ed1, buf.handle()) != 0) {
+            Jmsg(jcr, M_ERROR, 0, "%s", buf.c_str());
+
+         } else {
+            Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+         }
+      }
    }
 
    /*
