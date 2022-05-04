@@ -1,0 +1,4 @@
+# Copyright (C) 2000-2020 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+find $1 -type f -not -regex ".*\.\(lo\|la\|o\|a\|so\|png\|jpg\|svg\|bmp\|lai\|ui\|dll\|d\)" | xargs -I % bash -c 'if ! grep -Fq "Copyright" % ; then echo % ; fi'
