@@ -76,7 +76,8 @@ transfer::transfer(uint64_t    size,
    m_use_count(0),
    m_retry(0),
    m_cancel(false),
-   m_do_cache_truncate(false)
+   m_do_cache_truncate(false),
+   m_restore_bucket(NULL)
 {
    pthread_mutex_init(&m_stat_mutex, 0);
    pthread_mutex_init(&m_mutex, 0);
@@ -84,11 +85,14 @@ transfer::transfer(uint64_t    size,
 
    m_message = get_pool_memory(PM_MESSAGE);
    *m_message = 0;
+   m_restore_bucket = get_pool_memory(PM_MESSAGE);
+   *m_restore_bucket = 0;
 }
 
 /* destructor */
 transfer::~transfer()
 {
+   free_pool_memory(m_restore_bucket);
    free_pool_memory(m_message);
    pthread_cond_destroy(&m_done);
    pthread_mutex_destroy(&m_mutex);
@@ -517,6 +521,10 @@ void transfer::set_do_cache_truncate(bool do_cache_truncate)
    m_do_cache_truncate=do_cache_truncate;
 }
 
+void transfer::set_restore_bucket(POOLMEM *restore_bucket)
+{
+   pm_strcpy(m_restore_bucket, restore_bucket);
+}
 void transfer::inc_retry()
 {
    lock_guard lg(m_mutex);

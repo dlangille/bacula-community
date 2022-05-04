@@ -138,6 +138,9 @@ public:
 
    /* truncate cache once transfer is completed (upload)*/
    bool                 m_do_cache_truncate;
+
+   /* for Archive/Glacier restoration */
+   POOLMEM             *m_restore_bucket;
 /* methods :*/
    /* constructor
    * size         : the size in bytes of the transfer
@@ -187,6 +190,8 @@ public:
    void append_api_status(OutputWriter &ow);
 
    void set_do_cache_truncate(bool do_cache_truncate);
+
+   void set_restore_bucket(POOLMEM *restore_bucket);
 
    /* reset processed size */
    void reset_processed_size();
