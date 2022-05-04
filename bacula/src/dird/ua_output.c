@@ -324,8 +324,8 @@ bail_out:
  *  list joblog pattern=xxx jobid=<nn> 
  *  list joblog pattern=xxx jobid=<nn> 
  *  list joblog job=name
- *  list files [type=<deleted|all>] jobid=<nn> - list files saved for job nn
- *  list files [type=<deleted|all>] job=name
+ *  list files [type=<deleted|all|malware>] jobid=<nn> - list files saved for job nn
+ *  list files [type=<deleted|all|malware>] job=name
  *  list pools          - list pool records
  *  list jobtotals      - list totals for all jobs
  *  list media          - list media for given pool (deprecated)
@@ -346,7 +346,6 @@ bail_out:
  *             starttime=<time> endtime=<time>
  *             limit=<int> offset=<int>  order=<Asc|desc> alljobs
  *             emailid=<str>
- *
  *  Note: keyword "long" is before the first command on the command 
  *    line results in doing a llist (long listing).
  */
@@ -546,6 +545,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
       /* List FILES */
       } else if (strcasecmp(ua->argk[i], NT_("files")) == 0) {
          int deleted = 0;       /* see only backed up files */
+         char malware = 0;       /* List malware detected */
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("ujobid")) == 0 && ua->argv[j]) {
                bstrncpy(jr.Job, ua->argv[j], MAX_NAME_LENGTH);
@@ -561,13 +561,20 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                   deleted = 1;
                } else if (strcasecmp(ua->argv[j], NT_("all")) == 0) {
                   deleted = -1;
+               } else if (strcasecmp(ua->argv[j], NT_("malware")) == 0) {
+                  malware = 'M';
                }
                continue;        /* Type should be before the jobid... */
             } else {
                continue;
             }
             if (jobid > 0) {
-               db_list_files_for_job(ua->jcr, ua->db, jobid, deleted, prtit, ua);
+               if (malware) {
+                  db_list_fileevents_for_job(ua->jcr, ua->db, jobid, malware, prtit, ua, llist);
+
+               } else {
+                  db_list_files_for_job(ua->jcr, ua->db, jobid, deleted, prtit, ua);
+               }
             }
          }
 

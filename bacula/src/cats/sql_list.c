@@ -1115,6 +1115,77 @@ void BDB::bdb_list_files_for_job(JCR *jcr, JobId_t jobid, int deleted, DB_LIST_H
    bdb_unlock();
 }
 
+/* List all file records from a job
+ * "deleted" values are described just below
+ */
+void BDB::bdb_list_fileevents_for_job(JCR *jcr, JobId_t jobid, char etype, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+   char ed1[50];
+   POOL_MEM f, fields;
+   const char *concat="Path.Path||F.Filename";
+
+   bdb_lock();
+   /* Get optional filters for the SQL query */
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) |
+                                DB_ACL_BIT(DB_ACL_CLIENT) |
+                                DB_ACL_BIT(DB_ACL_FILESET), true);
+
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB) |
+                                                   DB_ACL_BIT(DB_ACL_CLIENT) |
+                                                   DB_ACL_BIT(DB_ACL_FILESET)) : "";
+
+   if (etype) {
+      Mmsg(f, " AND FileEvents.Type = '%c' ", etype);
+   }
+
+   /*
+    * MySQL is different with no || operator
+    */
+   if (bdb_get_type_index() == SQL_TYPE_MYSQL) {
+      concat = " CONCAT(Path.Path,F.Filename) ";
+   }
+
+   switch (type) {
+   case JSON_LIST:
+      Mmsg(fields, "JobId, %s AS Filename, Type, Severity, Description, Source", concat);
+      break;
+   case VERT_LIST:
+      Mmsg(fields, "JobId, SourceJobId, %s AS Filename, Type, Severity, Description, Source", concat);
+      break;
+   case HORZ_LIST:
+      Mmsg(fields, "JobId, %s AS Filename, Description, Source", concat);
+      break;
+   default:
+      goto bail_out;
+   }
+
+   Mmsg(cmd, "SELECT DISTINCT %s  "
+           "FROM (SELECT PathId, Filename, File.JobId, FileEvents.SourceJobId, FileEvents.Type, FileEvents.Description, FileEvents.Source, FileEvents.Severity FROM File "
+                   "JOIN FileEvents ON (File.JobId = FileEvents.JobId AND File.FileIndex = FileEvents.FileIndex) "
+                   "WHERE File.JobId=%s %s "
+                  "UNION ALL "
+                 "SELECT PathId, Filename, BaseFiles.JobId, FileEvents.SourceJobId, FileEvents.Type, FileEvents.Description, FileEvents.Source, FileEvents.Severity "
+                   "FROM BaseFiles JOIN File  ON (BaseFiles.FileId = File.FileId) "
+                    "JOIN FileEvents ON (File.JobId = FileEvents.JobId AND File.FileIndex = FileEvents.FileIndex) "
+                  "WHERE BaseFiles.JobId = %s %s "
+           ") AS F JOIN Path ON (Path.PathId=F.PathId) %s %s",
+        fields.c_str(),
+        edit_int64(jobid, ed1), f.c_str(), ed1, f.c_str(), join, where);
+
+   Dmsg1(DT_SQL|50, "q=%s\n", cmd);
+
+   if (!QueryDB(jcr, cmd)) {
+      goto bail_out;
+   }
+
+   // TODO: Display
+   list_result(jcr, this, "fileevents", sendit, ctx, type);
+
+bail_out:
+   sql_free_result();
+   bdb_unlock();
+}
+
 void BDB::bdb_list_base_files_for_job(JCR *jcr, JobId_t jobid, DB_LIST_HANDLER *sendit, void *ctx)
 {
    char ed1[50];
