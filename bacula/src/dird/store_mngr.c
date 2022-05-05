@@ -346,9 +346,9 @@ void QueryStore::apply_policy(bool write_store) {
    /* Query Storage daemon for needed information for each storage in the list */
    foreach_alist(store, list) {
       if (write_store) {
-         tmp_jcr->store_mngr->set_wstorage(store, "qeuerystore_applypolicy");
+         tmp_jcr->store_mngr->set_wstorage(store, "querystore_applypolicy");
       } else {
-         tmp_jcr->store_mngr->set_rstore(store, "qeuerystore_applypolicy");
+         tmp_jcr->store_mngr->set_rstore(store, "querystore_applypolicy");
       }
 
       if (!connect_to_storage_daemon(tmp_jcr, 1, 1, 0)) {
@@ -373,7 +373,7 @@ void QueryStore::apply_policy(bool write_store) {
       sd->close();
 
       if(!ret) {
-         Dmsg1(dbglvl, "Failed to query '\%s\' Storage\n", store->name());
+         Dmsg1(dbglvl, "Failed to query \"%s\" Storage\n", store->name());
          delete context; /* Free context since it was not added to the list */
 
          /* Continue in case some more processing is needed - we don't want to work on
