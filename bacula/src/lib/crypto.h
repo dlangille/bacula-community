@@ -108,6 +108,20 @@ typedef enum {
 #define CRYPTO_DIGEST_XXH3_64_SIZE   8 /*  64bits */
 #define CRYPTO_DIGEST_XXH3_128_SIZE 16 /* 128bits */
 
+typedef enum
+{
+   BLOCK_CIPHER_NONE        = 0,
+   BLOCK_CIPHER_NULL,
+   BLOCK_CIPHER_AES_128_XTS,
+   BLOCK_CIPHER_AES_256_XTS,
+   BLOCK_CIPHER_LAST
+} block_cipher_type;
+
+#define MAX_BLOCK_CIPHER_KEY_LEN      64 /* for BLOCK_CIPHER_AES_256_XTS */
+#define MAX_MASTERKEY_ID_LEN          20 /* this is the 40 hexa fingerprint */
+
+typedef struct block_cipher_context BLOCK_CIPHER_CONTEXT;
+
 /* Maximum Message Digest Size */
 #ifdef HAVE_OPENSSL
 

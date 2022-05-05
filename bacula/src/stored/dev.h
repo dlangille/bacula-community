@@ -381,6 +381,8 @@ public:
    devstatmetrics_t devstatmetrics;    /* these are a device metrics for every device */
    bstatcollect *devstatcollector;        /* a pointer to daemon's statcollector */
 
+   BLOCK_CIPHER_CONTEXT *crypto_device_ctx;
+
    /* Methods */
    btime_t get_timer_count(); /* return the last timer interval (ms) */
 

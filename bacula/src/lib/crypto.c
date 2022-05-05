@@ -1714,3 +1714,155 @@ const char *crypto_strerror(crypto_error_t error) {
       return _("Unknown error");
    }
 }
+
+struct block_cipher_context
+{
+   int type;
+   int key_length;
+   int iv_length;
+   EVP_CIPHER_CTX *ctx;
+   const EVP_CIPHER *cipher;
+   unsigned char *key;
+   unsigned char *iv;
+};
+
+/* A cheap openssl handler */
+static void reportOpenSSLErrors()
+{
+   char buf[256];
+   unsigned long e = ERR_peek_error();
+   Dmsg2(1, "Block cipher error: Openssl ERROR %lu %s\n", e, ERR_error_string(e, buf));
+}
+
+BLOCK_CIPHER_CONTEXT *block_cipher_context_new(block_cipher_type blk_type)
+{
+   BLOCK_CIPHER_CONTEXT *blk_ctx;
+
+   if (blk_type<=BLOCK_CIPHER_NONE || BLOCK_CIPHER_LAST<=blk_type) {
+      Dmsg1(1, "Block cipher error: invalid cipher %d\n", blk_type);
+      return NULL;
+   }
+
+   EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+   if (ctx == NULL) {
+      reportOpenSSLErrors();
+      return NULL;
+   }
+
+   blk_ctx = (BLOCK_CIPHER_CONTEXT *)malloc(sizeof(BLOCK_CIPHER_CONTEXT));
+   memset(blk_ctx, '\0', sizeof(BLOCK_CIPHER_CONTEXT));
+   blk_ctx->type = blk_type;
+   blk_ctx->ctx = ctx;
+   EVP_CIPHER_CTX_set_padding(blk_ctx->ctx, 1); // already the openssl default
+   switch (blk_type) {
+   case BLOCK_CIPHER_NULL:
+      blk_ctx->cipher = NULL;
+      blk_ctx->key_length = 16;
+      blk_ctx->iv_length = 16; // ATTN min size block_cipher_init_iv_header()
+      break;
+   case BLOCK_CIPHER_AES_128_XTS:
+      blk_ctx->cipher = EVP_aes_128_xts();
+      blk_ctx->key_length = EVP_CIPHER_key_length(blk_ctx->cipher);  // 32 bytes
+      blk_ctx->iv_length = EVP_CIPHER_iv_length(blk_ctx->cipher);    // 16 bytes
+      break;
+   case BLOCK_CIPHER_AES_256_XTS:
+      blk_ctx->cipher = EVP_aes_256_xts();
+      blk_ctx->key_length = EVP_CIPHER_key_length(blk_ctx->cipher); // 64 bytes
+      blk_ctx->iv_length = EVP_CIPHER_iv_length(blk_ctx->cipher);   // 16 bytes
+      break;
+   default:
+      ASSERT2(0, "unknown block cipher");
+   }
+   ASSERT(blk_ctx->iv_length >= 12); // (BlockNum, VolSessionId, VolSessionTime)
+   blk_ctx->key = (unsigned char*)malloc(blk_ctx->key_length);
+   blk_ctx->iv = (unsigned char*)malloc(blk_ctx->iv_length);
+   return blk_ctx;
+}
+
+void block_cipher_context_free(BLOCK_CIPHER_CONTEXT *blk_ctx)
+{
+   EVP_CIPHER_CTX_free(blk_ctx->ctx);
+   free(blk_ctx->key);
+   free(blk_ctx->iv);
+   free(blk_ctx);
+   return;
+}
+
+void block_cipher_init_key(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *key)
+{
+   memcpy(blk_ctx->key, key, blk_ctx->key_length);
+}
+
+void block_cipher_init_iv(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *iv)
+{
+   memcpy(blk_ctx->iv, iv, blk_ctx->iv_length);
+}
+
+void block_cipher_init_iv_header(BLOCK_CIPHER_CONTEXT *blk_ctx, uint32_t BlockNumber, uint32_t VolSessionId, uint32_t VolSessionTime)
+{
+   ser_declare;
+   ser_begin(blk_ctx->iv, 3*sizeof(uint32_t));
+   ser_uint32(BlockNumber);
+   ser_uint32(VolSessionId);
+   ser_uint32(VolSessionTime);
+   memset(blk_ctx->iv+3*sizeof(uint32_t), '\0', blk_ctx->iv_length-3*sizeof(uint32_t));
+}
+
+int block_cipher_encrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst)
+{
+   int ret;
+   if (blk_ctx->type == BLOCK_CIPHER_NULL) {
+      memcpy(dst, src, len);
+      return 0;
+   }
+   ret = EVP_EncryptInit_ex(blk_ctx->ctx, blk_ctx->cipher, NULL, blk_ctx->key, blk_ctx->iv);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   int outl1, outl2;
+   ret = EVP_EncryptUpdate(blk_ctx->ctx, (unsigned char *)dst, &outl1, (const unsigned char *)src, len);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   ret = EVP_EncryptFinal_ex(blk_ctx->ctx, (unsigned char *)dst + outl1, &outl2);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   ASSERTD(outl1+outl2==len, "unexpected encryption length");
+   return 0;
+}
+
+int block_cipher_decrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst)
+{
+   int ret;
+   if (blk_ctx->type == BLOCK_CIPHER_NULL) {
+      memcpy(dst, src, len);
+      return 0;
+   }
+   ret = EVP_DecryptInit_ex(blk_ctx->ctx, blk_ctx->cipher, NULL, blk_ctx->key, blk_ctx->iv);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   int outl1, outl2;
+   ret = EVP_DecryptUpdate(blk_ctx->ctx, (unsigned char *)dst, &outl1, (const unsigned char *)src, len);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   ret = EVP_DecryptFinal_ex(blk_ctx->ctx, (unsigned char *)dst + outl1, &outl2);
+   if (ret != 1) {
+      reportOpenSSLErrors();
+      return -1;
+   }
+   ASSERTD(outl1+outl2==len, "unexpected decryption length");
+   return 0;
+}
+
+int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx)
+{
+   return blk_ctx->key_length;
+}

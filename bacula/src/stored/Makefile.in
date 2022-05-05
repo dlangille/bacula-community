@@ -175,6 +175,9 @@ all: Makefile libbacsd.la drivers bacula-sd @STATIC_SD@ \
 	@echo "===== Make of stored is good ===="
 	@echo " "
 
+../lib/unittests.o: ../lib/unittests.c
+	(cd ../lib ; make unittests.o)
+
 bacula-sd: Makefile libbacsd.la $(SDOBJS) \
 	../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE) \
 	../lib/libbac$(DEFAULT_ARCHIVE_TYPE) \
@@ -277,7 +280,6 @@ btape.o: btape.c
 btape: Makefile  $(TAPEOBJS) libbacsd.la drivers ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../lib/libbaccfg$(DEFAULT_ARCHIVE_TYPE)
 	$(LIBTOOL_LINK) $(CXX) $(TTOOL_LDFLAGS) $(LDFLAGS) -L../lib -L../findlib -o $@ $(TAPEOBJS) \
 	  $(SD_LIBS) $(DLIB) -lm $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
-
 
 cloud_test.o: cloud_test.c
 	@echo "Compiling $<"

@@ -131,6 +131,11 @@ bnet_test: Makefile bnet_test.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../findlib/
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L../lib -L../findlib -o $@ bnet_test.o -lbacfind -lbac -lm \
 	  $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
+block_crypto_test: Makefile block_crypto_test.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../lib/unittests.o
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L../lib -o $@ block_crypto_test.o ../lib/unittests.o -lbac -lm \
+	  $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+
 tags_test: Makefile test_tags.o ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -L../lib -o $@ test_tags.o ../lib/unittests.o -lbac \
 	  $(DLIB) $(LIBS)

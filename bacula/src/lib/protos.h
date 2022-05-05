@@ -229,6 +229,15 @@ const char *       crypto_digest_name          (DIGEST *digest);
 crypto_digest_t    crypto_digest_stream_type   (int stream);
 const char *       crypto_strerror             (crypto_error_t error);
 
+BLOCK_CIPHER_CONTEXT *block_cipher_context_new(block_cipher_type blk_type);
+void block_cipher_context_free(BLOCK_CIPHER_CONTEXT *blk_ctx);
+void block_cipher_init_key(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *key);
+void block_cipher_init_iv(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *iv);
+void block_cipher_init_iv_header(BLOCK_CIPHER_CONTEXT *blk_ctx, uint32_t BlockNumber, uint32_t VolSessionId, uint32_t VolSessionTime);
+int block_cipher_encrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst);
+int block_cipher_decrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst);
+int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx);
+
 /* daemon.c */
 void     daemon_start            ();
 
