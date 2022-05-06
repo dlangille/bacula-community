@@ -521,7 +521,7 @@ void transfer::set_do_cache_truncate(bool do_cache_truncate)
    m_do_cache_truncate=do_cache_truncate;
 }
 
-void transfer::set_restore_bucket(POOLMEM *restore_bucket)
+void transfer::set_restore_bucket(const char *restore_bucket)
 {
    pm_strcpy(m_restore_bucket, restore_bucket);
 }

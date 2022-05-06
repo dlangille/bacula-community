@@ -191,7 +191,7 @@ public:
 
    void set_do_cache_truncate(bool do_cache_truncate);
 
-   void set_restore_bucket(POOLMEM *restore_bucket);
+   void set_restore_bucket(const char *restore_bucket);
 
    /* reset processed size */
    void reset_processed_size();
