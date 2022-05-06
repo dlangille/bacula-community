@@ -66,7 +66,7 @@ wait
 @# now do a restore
 @#
 @$out ${cwd}/tmp/log2.out
-setdebug level=500 storage=File
+setdebug level=500 storage=File trace=1
 restore where=${cwd}/tmp/bacula-restores select storage=DiskChanger
 unmark *
 mark *
