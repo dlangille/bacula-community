@@ -36,13 +36,16 @@ dd if=/dev/zero of=$tmp/disk1 seek=300000 count=1
 mkfs.ext2 -F $tmp/disk1 
 mkdir $tmp/device
 sudo mount -o loop $tmp/disk1 $tmp/device
+sudo chown $UID $tmp/device
 
 if [ $? -ne 0 ]; then
     print_debug "ERROR: Unable to mount the disk"
     exit 1
 fi
+trap "sudo umount -l $tmp/device" EXIT
 
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "Archive Device", "$tmp/device", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "VolumePollInterval", "2", "Device")'
 sed -i "s:$cwd/build:$cwd/tmp/data:" $conf/bacula-dir.conf
 
 change_jobname BackupClient1 $JobName
@@ -63,11 +66,13 @@ messages
 mount storage=File1 slot=0 drive=0
 wait
 @# ensure that jobid 1 will not be used of the restore
+list files jobid=1
+list files jobid=2
 delete jobid=1
 @# 
 @# now do a restore
 @#
-@$out $tmp/log2.out  
+@$out $tmp/log2.out
 restore where=$tmp/bacula-restores select all done yes
 @sleep 10
 @exec "mv $tmp/device/Vol-0002 $tmp"
@@ -79,6 +84,8 @@ mount storage=File1 slot=0 drive=0
 mount storage=File1 slot=0 drive=0
 wait
 messages
+@output $tmp/log3.out
+.jlist media pool=File
 quit
 END_OF_DATA
 
@@ -98,7 +105,24 @@ if [ $? -ne 0 ]; then
     rstat=1
 fi
 
-sudo umount $tmp/device 2> /dev/null
+grep '{' $tmp/log3.out | perl -MJSON -e '
+$l = <>;
+$j = JSON::decode_json($l) ;
+exit (scalar(@{$j->{data}}) == 2);'
+
+if [ $? != 1 ]; then
+    print_debug "ERROR: Incorrect data in $tmp/log3.out"
+    estat=1
+fi
+
+$rscripts/diff.pl -s $tmp/data -d $tmp/bacula-restores/$tmp/data
+if [ $? -ne 0 ] ; then
+    print_debug "ERROR: Incorrect restore data $tmp/bacula-restores/$tmp/data"
+    rstat=1
+fi
+
+sudo umount -l $tmp/device
+trap - EXIT
 rmdir $tmp/device
 
 end_test
