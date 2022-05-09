@@ -658,15 +658,16 @@ void DEVICE::term(DCR *dcr)
 /* Get freespace values */
 void DEVICE::get_freespace(uint64_t *freeval, uint64_t *totalval)
 {
-   get_os_device_freespace();
-   P(freespace_mutex);
-   if (is_freespace_ok()) {
-      *freeval = free_space;
-      *totalval = total_space;
-   } else {
-      *freeval = *totalval = 0;
+   if (get_os_device_freespace()) {
+      P(freespace_mutex);
+      if (is_freespace_ok()) {
+         *freeval = free_space;
+         *totalval = total_space;
+      } else {
+         *freeval = *totalval = 0;
+      }
+      V(freespace_mutex);
    }
-   V(freespace_mutex);
 }
 
 /* Set freespace values */
@@ -689,15 +690,6 @@ void DEVICE::set_freespace(uint64_t freeval, uint64_t totalval, int errnoval, bo
  */
 bool DEVICE::is_fs_nearly_full(uint64_t threshold)
 {
-   uint64_t freeval, totalval;
-   if (is_file()) {
-      get_freespace(&freeval, &totalval);
-      if (totalval > 0) {
-         if (freeval < threshold) {
-            return true;
-         }
-      }
-   }
    return false;
 }
 
@@ -846,19 +838,6 @@ void DEVICE::clear_read()
  */
 bool DEVICE::get_os_device_freespace()
 {
-   int64_t freespace, totalspace;
-
-   if (!is_file()) {
-      return true;
-   }
-   if (fs_get_free_space(dev_name, &freespace, &totalspace) == 0) {
-      set_freespace(freespace,  totalspace, 0, true);
-      Mmsg(errmsg, "");
-      return true;
-
-   } else {
-      set_freespace(0, 0, 0, false); /* No valid freespace */
-   }
    return false;
 }
 

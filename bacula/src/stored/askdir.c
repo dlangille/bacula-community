@@ -321,6 +321,8 @@ bool dir_find_next_appendable_volume(DCR *dcr)
           dcr->is_reserved(), dcr->VolumeName, nb_retry);
     Mmsg(jcr->errmsg, "Unknown error\n");
 
+    bool can_create = !dcr->dev->is_fs_nearly_full(dcr->dev->min_free_space);
+
     /*
      * Try the thirty oldest or most available volumes.  Note,
      *   the most available could already be mounted on another
@@ -332,7 +334,6 @@ bool dir_find_next_appendable_volume(DCR *dcr)
     lastVolume[0] = 0;
     for (int vol_index=1;  vol_index < nb_retry; vol_index++) {
        /* Have we still some space to create a new volume? */
-       bool can_create = dcr->dev->is_nospace()==false;
        bash_spaces(dcr->media_type);
        bash_spaces(dcr->pool_name);
        dir->fsend(Find_media, jcr->JobId, vol_index, dcr->pool_name, dcr->media_type,

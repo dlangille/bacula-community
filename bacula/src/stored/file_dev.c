@@ -340,7 +340,6 @@ bool DEVICE::truncate(DCR *dcr)
    return true;
 }
 
-
 /*
  * (Un)mount the device
  */
@@ -899,4 +898,30 @@ int file_dev::device_specific_init(JCR *jcr, DEVRES *device)
    // Called by child to get the CAP_LSEEK
    capabilities |= CAP_LSEEK;
    return 0;
+}
+
+bool file_dev::is_fs_nearly_full(uint64_t threshold)
+{
+   uint64_t freeval, totalval;
+   get_freespace(&freeval, &totalval);
+   if (totalval > 0) {
+      if (freeval < threshold) {
+         return true;
+      }
+   }
+   return false;
+}
+
+bool file_dev::get_os_device_freespace()
+{
+   int64_t freespace, totalspace;
+   if (fs_get_free_space(dev_name, &freespace, &totalspace) == 0) {
+      set_freespace(freespace,  totalspace, 0, true);
+      Mmsg(errmsg, "");
+      return true;
+
+   } else {
+      set_freespace(0, 0, 0, false); /* No valid freespace */
+   }
+   return false;
 }

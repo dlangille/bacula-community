@@ -458,7 +458,7 @@ public:
    };
    void get_freespace(uint64_t *freeval, uint64_t *totalval); /* in dev.c */
    void set_freespace(uint64_t freeval, uint64_t totalval, int errnoval, bool valid); /* in dev.c */
-   bool is_fs_nearly_full(uint64_t threshold);
+   virtual bool is_fs_nearly_full(uint64_t threshold);
    bool is_volume_to_unload() const { \
       return m_unload && strcmp(VolHdr.VolumeName, LoadedVolName) == 0; };
    void set_load() { m_load = true; };
@@ -510,7 +510,7 @@ public:
    void set_slot(int32_t slot);  /* in dev.c */
    void clear_slot();            /* in dev.c */
    bool update_freespace();              /* in dev.c */
-   bool get_os_device_freespace();       /* in dev.c */
+   virtual bool get_os_device_freespace();                      /* in dev.c */
    void notify_newvol_in_attached_dcrs(const char *VolumeName); /* in dev.c */
    void notify_newfile_in_attached_dcrs();/* in dev.c */
    void attach_dcr_to_dev(DCR *dcr);      /* in acquire.c */

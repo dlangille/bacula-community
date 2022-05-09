@@ -48,6 +48,8 @@ public:
    bool set_immutable(const char *vol_name);
    bool clear_immutable(const char *vol_name);
    bool check_volume_protection_time(const char *vol_name);
+   bool get_os_device_freespace();
+   bool is_fs_nearly_full(uint64_t threshold);
 };
 
 #endif /* __FILE_DEV_ */
