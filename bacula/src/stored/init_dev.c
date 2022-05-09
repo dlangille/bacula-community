@@ -319,10 +319,13 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
    } else {
       dev->max_part_size = device->max_part_size;
    }
+
+#ifndef DEVELOPER
    /* Sanity check */
    if (dev->vol_poll_interval && dev->vol_poll_interval < 60) {
       dev->vol_poll_interval = 60;
    }
+#endif
 
    if (!device->dev) {
       /* The first time we create a DEVICE from the DEVRES, we keep a pointer
