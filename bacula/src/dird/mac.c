@@ -831,15 +831,9 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
            new_jobid, old_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
 
-         /* Move RestoreObjects */
-         Mmsg(query, "UPDATE RestoreObject SET JobId=%s WHERE JobId=%s",
-           new_jobid, old_jobid);
-         db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
-
-         /* Move PluginObjects */
-         Mmsg(query, "UPDATE Object SET JobId=%s WHERE JobId=%s",
-           new_jobid, old_jobid);
-         db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
+         /* We do not need to move RestoreObject, Object or Metadata because
+          * they are recreated during the migration process
+          */
 
          if (jcr->job->PurgeMigrateJob) {
             /* Purge old Job record */
@@ -869,6 +863,10 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
               (char)JT_JOB_COPY, new_jobid);
          db_sql_query(wjcr->db, query.c_str(), NULL, NULL);
       }
+
+      /* We do not need to move RestoreObject, Object or Metadata because
+       * they are recreated during the copy process
+       */
 
       if (!db_get_job_record(jcr, jcr->db, &jcr->jr)) {
          Jmsg(jcr, M_WARNING, 0, _("Error getting Job record for Job report: ERR=%s"),
