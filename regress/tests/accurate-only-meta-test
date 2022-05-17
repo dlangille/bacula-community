@@ -28,6 +28,7 @@ FileSet {
       Verify = mc
       #Accurate = mpin5o
       Accurate = c5o
+      AclSupport = yes
     }
     File=<${cwd}/tmp/file-list
  }
@@ -37,8 +38,12 @@ END_OF_DATA
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "FS_META_TEST" , "Job", "backup")'
 
 echo "${cwd}/build" >${cwd}/tmp/file-list
+
+rm -f ${cwd}/build/po/testfile ${cwd}/build/po/testfile.hl
+
 # Add one more file
-echo "testfile" >> ${cwd}/build/testfile
+echo "testfile" >> ${cwd}/build/po/testfile
+ln ${cwd}/build/po/testfile ${cwd}/build/po/testfile.hl
 
 start_test
 
@@ -49,6 +54,7 @@ messages
 label volume=TestVolume001 storage=File pool=Default
 messages
 @$out ${cwd}/tmp/log1.out
+setdebug trace=1 level=0 client
 run job=$JobName yes
 wait
 messages
@@ -62,8 +68,8 @@ sleep 3
 files_count=`find ${cwd}/build -type f | wc -l`
 find ${cwd}/build -type f -exec touch {} + > /dev/null
 # Change some properties of testfile
-chmod 740 ${cwd}/build/testfile
-perm_after=`$bperl -e "get_perm('${cwd}/build/testfile')"`
+chmod 740 ${cwd}/build/po/testfile
+perm_after=`$bperl -e "get_perm('${cwd}/build/po/testfile')"`
 
 # Run backup for the second time, this time we expect that only metadata part for each file will be
 # backed up, so we expect the backup size to be much smaller than the first one.
@@ -73,6 +79,16 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 run job=$JobName yes
 wait
 messages
+@exec "touch $cwd/build/po/testfile"
+run job=$JobName yes
+wait
+messages
+list files jobid=3
+@exec "setfacl -m nobody:r-- $cwd/build/po/testfile"
+run job=$JobName yes
+wait
+messages
+list files jobid=3
 @$out ${cwd}/tmp/log3.out
 restore select all done yes
 wait
@@ -83,14 +99,21 @@ END_OF_DATA
 run_bconsole
 
 # Check if number of second backup files equals to files touched
-backup_files=`cat ${cwd}/tmp/log2.out | grep 'FD Files Written:' | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
+backup_files=`cat ${cwd}/tmp/log2.out | grep 'FD Files Written:' | head -1 | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
 if [ ${backup_files} -ne ${files_count} ]; then
    estat=1
    print_debug "Wrong number of files backed up: ${backup_files}, expected: ${files_count}"
 fi
 
+backup_files=`cat ${cwd}/tmp/log2.out | grep 'FD Files Written:' | tail -1 | tr -s ' ' | cut -d ':' -f 2 | sed s/,//`
+# We should find the hardlink and the file itself
+if [ ${backup_files} -ne 2 ]; then
+   estat=1
+   print_debug "Wrong number of files backed up in second backup: ${backup_files}, expected: 2"
+fi
+
 # Check if testfile's restored permission are correctly changed
-perm_restored=`$bperl -e "get_perm('${cwd}/tmp/bacula-restores/${cwd}/build/testfile')"`
+perm_restored=`$bperl -e "get_perm('${cwd}/tmp/bacula-restores/${cwd}/build/po/testfile')"`
 if [ ${perm_after} -ne ${perm_restored} ]; then
    estat=1
    print_debug "Wrong permissions restored: ${perm_restored}, expected: ${perm_after}"
@@ -109,8 +132,14 @@ if [ $? -ne 0 ]; then
     rstat=1
 fi
 
+$rscripts/diff.pl --acl -s $cwd/build/po/ -d $tmp/bacula-restores/$cwd/build/po/
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Found ACL difference after restore"
+    rstat=1
+fi
+
 # Cleanup
-rm ${cwd}/build/testfile
+rm -f ${cwd}/build/po/testfile ${cwd}/build/po/testfile.hl
 
 stop_bacula
 end_test
