@@ -29,6 +29,7 @@ FileSet {
       #Accurate = mpin5o
       Accurate = c5o
       AclSupport = yes
+      hardlinks = yes
     }
     File=<${cwd}/tmp/file-list
  }
