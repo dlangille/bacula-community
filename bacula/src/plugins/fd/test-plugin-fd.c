@@ -413,6 +413,16 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       return bRC_Error;
    }
    Dmsg1(0, "nb_obj = %d\n", p_ctx->nb_obj);
+   if (p_ctx->job_level != 'F') {
+      if (p_ctx->nb_obj++ == 1) {
+         return bRC_Stop;
+      }
+      sp->type = FT_REG;
+      sp->link = sp->fname = p_ctx->fname;
+      stat(p_ctx->reader, &sp->statp);
+      return bRC_OK;
+   }
+
    if (p_ctx->nb_obj == 0) {
       sp->fname = (char *)"takeme.h";
       bfuncs->DebugMessage(ctx, fi, li, dbglvl, "AcceptFile=%s = %d\n", 
