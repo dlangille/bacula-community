@@ -571,8 +571,8 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
     */
 
    Dmsg1(400, "UpdCat msg=%s\n", msg);
-   Dmsg5(400, "UpdCat VolSessId=%d VolSessT=%d FI=%d Strm=%d reclen=%d\n",
-      VolSessionId, VolSessionTime, FileIndex, Stream, reclen);
+   Dmsg5(400, "UpdCat VolSessId=%d VolSessT=%d FI=%d Strm=%s reclen=%d\n",
+      VolSessionId, VolSessionTime, FileIndex, stream_to_ascii(Stream), reclen);
 
    if (Stream == STREAM_UNIX_ATTRIBUTES ||
        Stream == STREAM_UNIX_ATTRIBUTES_EX ||

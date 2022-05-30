@@ -1087,3 +1087,43 @@ const char *regexp_value[] = {
    /* SQLite */
    regexp_value_default
 };
+
+/* Here we choose the last Object for a list of Job, we check if the object points to a place
+ * that still exists. We take the last version of them
+ */
+
+/* In the MySQL version, we cannot use DISTINCT ON(), so, when we have our MAX(JobTDate) (last record), we
+ * need to find back the other values by joining back to Object. Of course, if we have multiple objects
+ * with the same kind of attributes for the same job, it can cause a problem.
+ */
+const char *copy_object_default =
+   "INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, "
+       " ObjectSize, ObjectStatus, ObjectCount) "
+   // If we rename a VM for example, the Path and the Filename will stay, but not the Name or maybe the PluginName
+   "SELECT %lu, A.Path, A.Filename, Object.PluginName, A.ObjectCategory, A.ObjectType, Object.ObjectName, Object.ObjectSource, Object.ObjectUUID, Object.ObjectSize, Object.ObjectStatus, Object.ObjectCount "
+     "FROM (SELECT O.Path, O.Filename, O.ObjectCategory, O.ObjectType, MAX(J.JobTDate) AS JobTDate "
+             "FROM Object AS O JOIN Path USING (Path) JOIN Job AS J USING (JobId) WHERE J.JobId IN (%s) AND O.Path = Path.Path AND "
+             "EXISTS (SELECT 1 FROM File WHERE O.JobId = File.JobId AND Path.PathId = File.PathId AND (O.Filename = File.Filename OR O.Filename = '')) "
+            "GROUP BY O.Path, O.Filename, O.ObjectCategory, O.ObjectType) AS A "
+     "JOIN Job USING (JobTDate) JOIN Object ON (Job.JobId = Object.JobId AND Object.Path = A.Path AND Object.Filename = A.Filename AND A.ObjectCategory = Object.ObjectCategory AND A.ObjectType = Object.ObjectType) WHERE Job.JobId IN (%s)";
+
+const char *copy_object[] = {
+   /* MySQL */
+   copy_object_default,
+
+   /* PostgreSQL */
+   "INSERT INTO Object (JobId, Path, Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, "
+       " ObjectSize, ObjectStatus, ObjectCount) "
+   // If we rename a VM for example, the Path and the Filename will stay, but not the Name or maybe the PluginName
+   "SELECT DISTINCT ON (Object.Path, Object.Filename, ObjectCategory, ObjectType) "
+     " %lu, Object.Path, Object.Filename, PluginName, ObjectCategory, ObjectType, ObjectName, ObjectSource, ObjectUUID, "
+     " ObjectSize, ObjectStatus, ObjectCount "
+   "FROM Object JOIN Path USING (Path) JOIN Job USING (JobId) "
+  "WHERE Job.JobId IN (%s) AND Object.Path = Path.Path "
+   // In some plugins, the filename is empty but the associated record in the DB doesn't exist
+    "AND EXISTS (SELECT 1 FROM File WHERE Object.JobId = File.JobId AND Path.PathId = File.PathId AND (Object.Filename = File.Filename OR Object.Filename = '')) "
+   "ORDER BY Object.Path, Object.Filename, ObjectCategory, ObjectType, JobTDate DESC",
+
+   /* SQLite */
+   copy_object_default
+};

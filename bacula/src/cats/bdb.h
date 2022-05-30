@@ -54,6 +54,7 @@ typedef enum
 #define DBL_ALL_FILES    (1<<1)    /* Return all files including deleted ones */
 #define DBL_DELETED      (1<<2)    /* Return only deleted files */
 #define DBL_USE_MD5      (1<<3)    /* Include md5 */
+#define DBL_USE_OBJ      (1<<4)    /* Include RestoreObjects */
 
 /* Turn the num to a bit field */
 #define DB_ACL_BIT(x) (1<<x)

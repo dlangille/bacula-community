@@ -174,7 +174,7 @@ static int accurate_list_handler(void *ctx, int num_fields, char **row)
 
    /* sending with checksum */
    if (jcr->use_accurate_chksum
-       && num_fields == 7
+       && num_fields > 6
        && row[6][0] /* skip checksum = '0' */
        && row[6][1])
    {

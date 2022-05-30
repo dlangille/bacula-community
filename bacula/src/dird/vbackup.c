@@ -85,6 +85,23 @@ bool do_vbackup_init(JCR *jcr)
    return true;
 }
 
+/* TODO: Workaround waiting to get the FileIndex in the Object table. With this trick, a bscan will
+ * not re-create the objects in the catalog, So the object selection during the restore process
+ * is important.
+ */
+static bool copy_object_list(JCR *jcr, const char *jobids, uint32_t JobId)
+{
+   /* The batch session is not used anymore at this point */
+   db_lock(jcr->db_batch);
+   Mmsg(jcr->db_batch->cmd, copy_object[db_get_type_index(jcr->db_batch)], JobId, jobids, jobids);
+   if (!db_sql_query(jcr->db_batch, jcr->db_batch->cmd, NULL, NULL)) {
+      db_unlock(jcr->db_batch);
+      return false;
+   }
+   db_unlock(jcr->db_batch);
+   return true;
+}
+
 /*
  * Do a virtual backup, which consolidates all previous backups into
  *  a sort of synthetic Full.
@@ -366,6 +383,11 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       return false;
    }
 
+   if (!copy_object_list(jcr, jobids.list, jcr->JobId))
+   {
+      Jmsg(jcr, M_ERROR, 0, "Unable to copy objects ERR=%s\n", jcr->db_batch->errmsg);
+   }
+
    if (jcr->JobStatus != JS_Terminated) {
       return false;
    }
@@ -579,6 +601,7 @@ int insert_bootstrap_handler(void *ctx, int num_fields, char **row)
 
    JobId = str_to_int64(row[3]);
    FileIndex = str_to_int64(row[2]);
+   Dmsg2(10, "insert bootstrap(%ld, %d)\n", JobId, FileIndex);
    add_findex(bsr_list, JobId, FileIndex);
    return 0;
 }
@@ -605,7 +628,7 @@ static bool create_bootstrap_file(JCR *jcr, char *jobids)
     * however, if it's an incremental/differential, we should not restore
     * the files from the Full, so we keep the deleted records
     */
-   int opt = DBL_USE_DELTA;
+   int opt = DBL_USE_DELTA | DBL_USE_OBJ;
    if (jcr->jr.JobLevel != 'F') {
       opt |= DBL_ALL_FILES;
    }

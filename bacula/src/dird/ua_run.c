@@ -970,7 +970,7 @@ static int plugin_display_options(UAContext *ua, JCR *jcr, ConfigFile *ini)
 
 configure_again:
    ua->send_msg(_("Plugin Restore Options\n"));
-   ua->send_msg(_("Option               Current Value        Default Value\n"));
+   ua->send_msg(_("Option                         Current Value        Default Value\n"));
    for (nb=0; nb < MAX_INI_ITEMS && ini->items[nb].name ; nb++) {
 
       if (ini->items[nb].found) {
@@ -989,7 +989,7 @@ configure_again:
 
       Mmsg(tmp, "%s:", ini->items[nb].name);
 
-      Mmsg(prompt, "%-20s %-20s ",
+      Mmsg(prompt, "%-30s %-20s ",
            tmp.c_str(), ini->edit);
 
       if (ini->items[nb].default_value) {

@@ -308,7 +308,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       goto bail_out;
    }
    jcr->JobBytes += rec->data_len;   /* increment bytes this job */
-   Dmsg5(500, "wrote_record JobId=%d FI=%s SessId=%d Strm=%s len=%d\n",
+   Dmsg5(200, "wrote_record JobId=%d FI=%s SessId=%d Strm=%s len=%d\n",
       jcr->JobId,
       FI_to_ascii(buf1, rec->FileIndex), rec->VolSessionId,
       stream_to_ascii(buf2, rec->Stream, rec->FileIndex), rec->data_len);

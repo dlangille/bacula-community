@@ -1465,6 +1465,10 @@ static void strip_md5(char *q)
    while ((p = strstr(p, ", MD5"))) {
       memset(p, ' ', 5 * sizeof(char));
    }
+   p = q;
+   while ((p = strstr(p, ", '' AS MD5"))) {
+      memset(p, ' ', 11 * sizeof(char));
+   }
 }
 
 /**
@@ -1477,6 +1481,10 @@ static void strip_md5(char *q)
  * 3) Join the result to file table to get fileindex, jobid and lstat information
  *
  * TODO: See if we can do the SORT only if needed (as an argument)
+ *
+ * In addition, find all objects for the given jobs, and keep all versions.
+ * For Object, the FileIndex is not stored, so the code is prepared but not yet
+ * fonctionnal.  It is done via an "manual" procedure waiting for FileIndex
  */
 bool BDB::bdb_get_file_list(JCR *jcr, char *jobids, int opts,
                       DB_RESULT_HANDLER *result_handler, void *ctx)
@@ -1500,6 +1508,7 @@ bool BDB::bdb_get_file_list(JCR *jcr, char *jobids, int opts,
    }
    POOL_MEM buf(PM_MESSAGE);
    POOL_MEM buf2(PM_MESSAGE);
+   POOL_MEM buf3(PM_MESSAGE);
    if (opts & DBL_USE_DELTA) {
       Mmsg(buf2, select_recent_version_with_basejob_and_delta[bdb_get_type_index()],
            jobids, jobids, jobids, jobids);
@@ -1509,24 +1518,32 @@ bool BDB::bdb_get_file_list(JCR *jcr, char *jobids, int opts,
            jobids, jobids, jobids, jobids);
    }
 
+   /* During virtual full, we want to include Objects in the BSR */
+   if (opts & DBL_USE_OBJ) {
+      Mmsg(buf3,
+           "UNION (SELECT ObjectName AS Path, PluginName AS Filename, FileIndex, JobId, '' AS LStat, 0 AS DeltaSeq, '' AS MD5, JobTDate "
+           "FROM Job JOIN RestoreObject USING (JobId) "
+           "WHERE JobId IN (%s) ORDER BY JobTDate ASC, FileIndex ASC) ", jobids);
+   }
    /* bsr code is optimized for JobId sorted, with Delta, we need to get
     * them ordered by date. JobTDate and JobId can be mixed if using Copy
     * or Migration
     */
    Mmsg(buf,
-"SELECT Path.Path, T1.Filename, T1.FileIndex, T1.JobId, LStat, DeltaSeq, MD5 "
- "FROM ( %s ) AS T1 "
- "JOIN Path ON (Path.PathId = T1.PathId) %s "
-"ORDER BY T1.JobTDate, FileIndex ASC",/* Return sorted by JobTDate */
-                                      /* FileIndex for restore code */
-        buf2.c_str(), type);
+"SELECT Path, Filename, FileIndex, JobId, LStat, DeltaSeq, MD5, JobTDate "
+"FROM (("
+ "SELECT Path.Path, T1.Filename, T1.FileIndex, T1.JobId, LStat, DeltaSeq, MD5, JobTDate "
+  "FROM ( %s ) AS T1 "
+  "JOIN Path ON (Path.PathId = T1.PathId) %s "
+ ") %s ) AS U1 ORDER BY JobTDate, FileIndex ASC",/* Return sorted by JobTDate */
+                                               /* FileIndex for restore code */
+        buf2.c_str(), type, buf3.c_str());
 
    if (!(opts & DBL_USE_MD5)) {
       strip_md5(buf.c_str());
    }
 
-   Dmsg1(100, "q=%s\n", buf.c_str());
-
+   Dmsg1(50|DT_SQL, "q=%s\n", buf.c_str());
    return bdb_big_sql_query(buf.c_str(), result_handler, ctx);
 }
 
