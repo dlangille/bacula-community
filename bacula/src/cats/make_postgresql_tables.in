@@ -158,6 +158,7 @@ CREATE TABLE Object
    Path         text     not null,
    Filename     text     not null,
    PluginName   text     not null,
+   FileIndex    integer  not null default 0,
 
    ObjectCategory  text     not null,
    ObjectType      text     not null,

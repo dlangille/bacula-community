@@ -130,6 +130,7 @@ CREATE TABLE Object
    Path         BLOB NOT NULL,
    Filename     BLOB NOT NULL,
    PluginName   BLOB NOT NULL,
+   FileIndex    integer  not null default 0,
 
    ObjectCategory  TINYBLOB NOT NULL,
    ObjectType   TINYBLOB     NOT NULL,
