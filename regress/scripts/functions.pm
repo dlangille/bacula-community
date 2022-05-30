@@ -2429,6 +2429,7 @@ Device {
   Drive Index = $nb
   AlwaysOpen = yes;
   RemovableMedia = yes;
+  Label Media = yes
 }
 ";
     }
@@ -2452,6 +2453,7 @@ Device {
     add_attribute("$tmp/1", "Device", $name, "Storage");
     add_attribute("$tmp/1", "MaximumConcurrentJobs", $nb_drives+1, "Storage", $name);
     add_attribute("$tmp/1", "Media Type", "${name}Type", "Storage");
+    add_attribute("$tmp/1", "LabelFornat", "Vol", "Pool",);
     system("cat $tmp/1 >> $conf/bacula-dir.conf");
 }
 
