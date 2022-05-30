@@ -409,17 +409,60 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
 {
    struct plugin_ctx *p_ctx = (struct plugin_ctx *)ctx->pContext;
    static int obj_uuid = 1;
+   int jobid;
+   bfuncs->getBaculaValue(ctx, bVarJobId, &jobid);
    if (!p_ctx) {
       return bRC_Error;
    }
    Dmsg1(0, "nb_obj = %d\n", p_ctx->nb_obj);
    if (p_ctx->job_level != 'F') {
-      if (p_ctx->nb_obj++ == 1) {
+      switch(p_ctx->nb_obj++) {
+      case 0:
+         sp->restore_obj.object_name = (char *)"james.xml";
+         sp->restore_obj.object = (char *)"This is test data for the restore object incr.";
+         sp->restore_obj.object_len = strlen(sp->restore_obj.object)+1; 
+         sp->type = FT_RESTORE_FIRST;
+         break;
+      case 1:
+         // The file is needed to reference the plugin object
+         sp->type = FT_REG;
+         sp->link = sp->fname = (char *)NT_("/@testplugin/test.zero"); // Use the filename in argument
+         stat(p_ctx->reader, &sp->statp);
+         break;
+      case 2:
+         sp->plugin_obj.path = (char *)NT_("/@testplugin/test.zero");
+         sp->plugin_obj.plugin_name = (char *)NT_("Test Plugin");
+         sp->plugin_obj.object_category = (char *)NT_("Virtual Machine");
+         sp->plugin_obj.object_type = (char *)NT_("VMWare");
+         sp->plugin_obj.object_name = (char *)NT_("test vm");
+         sp->plugin_obj.object_source = (char *)NT_("test plugin source");
+         sp->plugin_obj.object_uuid = (char *)NT_("1234-abc-testplugin");
+         sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;
+         sp->plugin_obj.count = 1;
+         sp->plugin_obj.object_size = jobid;
+         sp->type = FT_PLUGIN_OBJECT;
+         bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "Generating Plugin Object size=%lu\n", sp->plugin_obj.object_size);
+         break;
+      case 3:
+         // New version of a file present in full job
+      {
+         time_t now = time(NULL);
+         p_ctx->nb_obj++;
+         sp->type = FT_REG;
+         sp->fname = (char *)"/@size_update_file@";
+         sp->statp.st_mode = 0640;
+         sp->statp.st_ctime = now;
+         sp->statp.st_mtime = now;
+         sp->statp.st_atime = now;
+         sp->statp.st_size = -1; /* Size is unknown at the beginning, should be updated in the next step */
+         sp->statp.st_blksize = 4096;
+         Dmsg0(0, "@size_update_file@ initial step\n");
+      }
+      break;
+
+      default:
          return bRC_Stop;
       }
-      sp->type = FT_REG;
-      sp->link = sp->fname = p_ctx->fname;
-      stat(p_ctx->reader, &sp->statp);
       return bRC_OK;
    }
 
@@ -681,7 +724,6 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_uuid = (char *)NT_("1234-abc-testplugin");
       sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;
       sp->plugin_obj.count = 2;
-
       sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
@@ -694,6 +736,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_name = (char *)NT_("test db");
       sp->plugin_obj.object_source = (char *)NT_("test plugin source");
       sp->plugin_obj.object_uuid = (char *)NT_("5678-abc-testplugin");
+      sp->plugin_obj.status = PLUG_OBJ_STATUS_ERROR;
       sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;
@@ -707,6 +750,7 @@ static bRC startBackupFile(bpContext *ctx, struct save_pkt *sp)
       sp->plugin_obj.object_name = (char *)NT_("everything");
       sp->plugin_obj.object_source = (char *)NT_("test plugin source");
       sp->plugin_obj.object_uuid = (char *)NT_("5678-abc-testplugin");
+      sp->plugin_obj.status = PLUG_OBJ_STATUS_TERMINATED;
       sp->plugin_obj.object_size = obj_uuid++;
       sp->type = FT_PLUGIN_OBJECT;
       p_ctx->nb_obj++;

@@ -26,13 +26,9 @@ rm -f $cwd/build/inc1 $cwd/build/inc2 $cwd/build/diff1
 change_jobname NightlySave $JobName
 
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'DeleteConsolidatedJobs', 'yes', 'Job', 'Vbackup')" 
-
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'BackupsToKeep', '3', 'Job', 'Vbackup')"
-
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'no', 'Job', 'Vbackup')"
-
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'NextPool', 'Full', 'Pool', 'Full')"
-
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'FileSet', 'PluginSet', 'Job', '$JobName')" 
 
 #$bperl -e "add_attribute('$conf/bacula-dir.conf', 'runafterjob', '/tmp/regress/bin/vbackup.pl  %i %l %p', 'Job', 'Vbackup')"
@@ -68,7 +64,9 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @$out ${cwd}/tmp/log1.out
 status client   
-@#setdebug level=100 storage=File
+setdebug level=100 storage=File trace=1
+setdebug level=100 client trace=1
+setdebug level=100 tags=sql dir trace=1
 label storage=File volume=FileVolume001 Pool=Default
 label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
 label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
@@ -105,10 +103,18 @@ messages
 @$out $tmp/count.out
 list jobs
 .bvfs_get_jobids client=$HOST-fd count
+@$out $tmp/log123-ro.out
+.jlist pluginrestoreconf objecttype=all jobid=1,2,3
+@$out $tmp/log123-obj.out
+.jlist object jobid=1,2,3
 @$out $tmp/log5.out
 run job=$JobName level=VirtualFull yes
 wait
 messages
+@$out $tmp/log7-ro.out
+.jlist pluginrestoreconf objecttype=all jobid=7
+@$out $tmp/log7-obj.out
+.jlist object jobid=7
 @$out $tmp/count0.out
 list jobs
 .bvfs_get_jobids client=$HOST-fd count
@@ -121,6 +127,8 @@ messages
 @$out $tmp/count1.out
 list jobs
 .bvfs_get_jobids client=$HOST-fd count
+@$out $tmp/count74-obj.out
+.jlist object jobid=7,4
 @$out $tmp/log5.out
 run job=$JobName level=VirtualFull yes
 wait
@@ -130,6 +138,8 @@ list jobs
 .bvfs_get_jobids client=$HOST-fd count
 @$out $tmp/count3.out
 .bvfs_get_jobids jobid=8
+@$out $tmp/count9-obj.out
+.jlist object jobid=9
 @# 
 @# now do a restore of the consolidated Full
 @#
@@ -178,6 +188,67 @@ fi
 grep "9,5,6,8" $tmp/count3.out > /dev/null
 if [ $? -ne 0 ]; then
     print_debug "ERROR: Incorrect restore sequence in $tmp/count3.out"
+    estat=1
+fi
+
+# TODO: Need to check object attributes as well
+cat $tmp/log123-ro.out $tmp/log7-ro.out | grep '{'  | perl -MJSON -e '
+  $l = <>; 
+  $j123 = JSON::decode_json($l) ; 
+  $l = <>; 
+  $j7 = JSON::decode_json($l) ; 
+  exit (scalar(@{$j123->{data}}) == scalar(@{$j7->{data}}));
+'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find same number of objects in $tmp/log123-ro.out and $tmp/log7-ro.out"
+    estat=1
+fi
+
+# Got 3 Objects from the Full and 1 from the Incrmemental
+cat $tmp/count74-obj.out | grep '{'  | perl -MJSON -e '
+  $l = <>; 
+  $j = JSON::decode_json($l) ; 
+  exit (scalar(@{$j->{data}}) == 4);
+'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 3 objects in $tmp/count74-obj.out"
+    estat=1
+fi
+
+# Got 3 Objects from the Full and 1 from the Incrmemental => One overwritten by VF
+cat $tmp/count9-obj.out | grep '{'  | perl -MJSON -e '
+  $l = <>; 
+  $j = JSON::decode_json($l) ;
+  ($d) =  grep { $_->{objectcategory} eq "Virtual Machine" } @{$j->{data}};
+  exit 2 unless ($d->{objectsize} == 4);
+  exit 3 unless (scalar(@{$j->{data}}) == 3);
+  exit 1;
+'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should 3 object from jobid 9 in $tmp/count9-obj.out"
+    estat=1
+fi
+
+cat $tmp/log123-obj.out $tmp/log7-obj.out  | grep '{'  | perl -MJSON -e '
+  $l = <>; 
+  $j123 = JSON::decode_json($l);
+  exit 1 unless (scalar(@{$j123->{data}}) == 5);     # Must find 5 Objects
+  exit 2 unless ($j123->{data}->[0]->{jobid} == 1);  # check the order
+  exit 3 unless ($j123->{data}->[1]->{jobid} == 1);  # check the order
+  exit 4 unless ($j123->{data}->[2]->{jobid} == 1);  # check the order
+  exit 5 unless ($j123->{data}->[3]->{jobid} == 2);  # check the order
+  exit 6 unless ($j123->{data}->[4]->{jobid} == 3);  # check the order
+  $l = <>;
+  $j7 = JSON::decode_json($l);
+  exit 7  unless (scalar(@{$j7->{data}}) == 3);     # Must find 3 Objects
+  exit 8  unless ($j7->{data}->[0]->{jobid} == 7);  # check the order
+  exit 9  unless ($j7->{data}->[1]->{jobid} == 7);  # check the order
+  exit 10 unless ($j7->{data}->[2]->{objectsize} == 3);  # Object in Job 1 and 2 are replaced
+  exit (0);
+' 
+ret=$?
+if [ $ret != 0 ]; then
+    print_debug "ERROR: Got $ret in $tmp/log123-obj.out and $tmp/log7-obj.out analysis"
     estat=1
 fi
 
