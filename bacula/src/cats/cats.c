@@ -295,7 +295,10 @@ void OBJECT_DBR::create_db_filter(JCR *jcr, POOLMEM **where)
          Mmsg(tmp, " Object.JobId=%lu", JobId);
          append_filter(where, tmp.c_str());
       }
-
+      if (is_a_number_list(JobIds)) {
+         Mmsg(tmp, " Object.JobId IN (%s) ", JobIds);
+         append_filter(where, tmp.c_str());
+      }
       if (Path[0] != 0) {
          db_escape_string(jcr, jcr->db, esc.c_str(), Path, strlen(Path));
          Mmsg(tmp, " Object.Path='%s'", esc.c_str());

@@ -747,13 +747,14 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
 
       /* List PLUGIN OBJECTS */
       } else if (strcasecmp(ua->argk[i], NT_("object")) == 0 ||
-                 strcasecmp(ua->argk[i], NT_("objects")) == 0) {
+                 strcasecmp(ua->argk[i], NT_("objects")) == 0)
+      {
          OBJECT_DBR obj_r;
 
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
-               if (is_a_number(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
-                  obj_r.JobId = str_to_uint64(ua->argv[j]);
+               if (is_a_number_list(ua->argv[j]) && acl_access_jobid_ok(ua, ua->argv[j])) {
+                  pm_strcpy(obj_r.JobIds, ua->argv[j]);
                 } else {
                   ua->error_msg(_("Invalid jobid argument\n"));
                   return 1;

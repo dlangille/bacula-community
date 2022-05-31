@@ -248,6 +248,7 @@ public:
       Path = get_pool_memory(PM_FNAME);
       Filename = get_pool_memory(PM_FNAME);
       PluginName = get_pool_memory(PM_FNAME);
+      JobIds = get_pool_memory(PM_FNAME);
       reset();
    };
 
@@ -255,6 +256,7 @@ public:
       free_pool_memory(Path);
       free_pool_memory(Filename);
       free_pool_memory(PluginName);
+      free_pool_memory(JobIds);
    };
 
    /* reset memory */
@@ -262,7 +264,7 @@ public:
       JobId = 0;
       ObjectId = 0;
       ObjectSize = 0;
-      *Path = *Filename = *PluginName = 0;
+      *JobIds = *Path = *Filename = *PluginName = 0;
       *ObjectCategory = *ObjectType = *ObjectName = *ObjectSource = *ObjectUUID = *ClientName = 0;
       limit = 0;
       order = 0;
@@ -280,11 +282,12 @@ public:
    POOLMEM *Path;
    POOLMEM *Filename;
    POOLMEM *PluginName;
-   char ObjectCategory[MAX_NAME_LENGTH];
-   char ObjectType[MAX_NAME_LENGTH];
-   char ObjectName[MAX_NAME_LENGTH];
-   char ObjectSource[MAX_NAME_LENGTH];
-   char ObjectUUID[MAX_NAME_LENGTH];
+   POOLMEM *JobIds;
+   char ObjectCategory[MAX_PLUGINOBJ_NAME_LENGTH];
+   char ObjectType[MAX_PLUGINOBJ_NAME_LENGTH];
+   char ObjectName[MAX_PLUGINOBJ_NAME_LENGTH];
+   char ObjectSource[MAX_PLUGINOBJ_NAME_LENGTH];
+   char ObjectUUID[MAX_PLUGINOBJ_NAME_LENGTH];
    uint64_t ObjectSize;
    int32_t ObjectStatus;
    uint32_t ObjectCount;
