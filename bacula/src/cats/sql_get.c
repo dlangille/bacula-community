@@ -1681,15 +1681,10 @@ bool BDB::bdb_get_accurate_jobids(JCR *jcr,
       goto bail_out;
    }
 
-   /* If we call the function with one jobid, we can take it
+   /* FIXME: When we come with a copy (or VF), the list can return
+    * a JobId list that doesn't include the one that was provided.
     * if the result is also one jobid. It is useful when
-    * we deal with multiple VF or copies having the same JobTDate.
-    * TODO: Adjust if we have a list and we don't have the id resquested
     */
-   if (is_a_number(jobids->list)) {
-      jobids->reset();
-      jobids->add(edit_uint64(from_jobid, esc));
-   }
 
    Dmsg1(1, "db_get_accurate_jobids=%s\n", jobids->list);
    ret = true;
