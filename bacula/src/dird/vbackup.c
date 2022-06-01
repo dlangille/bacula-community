@@ -383,9 +383,16 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       return false;
    }
 
+   /* Waiting to copy objects with the BSR like RestoreObjects, we use SQL */
    if (!copy_object_list(jcr, jobids.list, jcr->JobId))
    {
-      Jmsg(jcr, M_ERROR, 0, "Unable to copy objects ERR=%s\n", jcr->db_batch->errmsg);
+      Jmsg(jcr, M_ERROR, 0, _("Unable to copy objects ERR=%s\n"), jcr->db_batch->errmsg);
+   }
+
+   /* For some plugins, we need to maintain the PriorJob and PriorJobId for the new job */
+   if (!db_get_prior_job(jcr, jcr->db_batch, jobids.list, &jcr->jr)) {
+      Jmsg(jcr, M_ERROR, 0, _("Unable to find or set the PriorJob information to the new Job record ERR=%s\n"),
+                              jcr->db_batch->errmsg);
    }
 
    if (jcr->JobStatus != JS_Terminated) {

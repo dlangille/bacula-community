@@ -219,6 +219,7 @@ public:
 
    /* sql_get.c */
    char *bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append);
+   bool bdb_get_prior_job(JCR *jcr, const char *jobids, JOB_DBR *jr);
    bool bdb_get_file_record(JCR *jcr, JOB_DBR *jr, FILE_DBR *fdbr);
    bool bdb_get_snapshot_record(JCR *jcr, SNAPSHOT_DBR *snap);
    bool bdb_get_volume_jobids(JCR *jcr,

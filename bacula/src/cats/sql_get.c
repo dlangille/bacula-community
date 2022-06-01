@@ -1696,6 +1696,41 @@ bail_out:
    return ret;
 }
 
+static int db_prior_job_handler(void *ctx, int num_fields, char **row)
+{
+   JOB_DBR *jr = (JOB_DBR*) ctx;
+   jr->PriorJobId = 0;
+   *jr->PriorJob = 0;
+
+   if (num_fields == 2) {
+      jr->PriorJobId = str_to_uint64(row[0]);
+      bstrncpy(jr->PriorJob, row[1], sizeof(jr->PriorJob));
+   }
+   return 0;
+}
+
+/* Function to assign the PriorJob, PriorJobid to the current job after a VirtualFull */
+bool BDB::bdb_get_prior_job(JCR *jcr, const char *jobids, JOB_DBR *jr)
+{
+   bool ret=false;
+   bdb_lock();
+   Mmsg(cmd, "SELECT PriorJobId, PriorJob FROM Job WHERE JobId IN (%s) ORDER By JobTDate DESC LIMIT 1", jobids);
+   if(!bdb_sql_query(cmd, db_prior_job_handler, jr)) {
+      goto bail_out;
+   }
+   if (jr->PriorJobId == 0) {   // If we just copied a Full, we can use it directly
+       Mmsg(cmd, "SELECT JobId, Job FROM Job WHERE JobId IN (%s) ORDER BY JobTDate DESC LIMIT 1", jobids);
+       if(!bdb_sql_query(cmd, db_prior_job_handler, jr)) {
+          goto bail_out;
+       }  
+   }
+   Dmsg2(0, "PriorJobId=%lu PriorJob=%s\n", jr->PriorJobId, jr->PriorJob);
+   ret = true;
+bail_out:
+   bdb_unlock();
+   return ret;
+}
+
 bool BDB::bdb_get_base_file_list(JCR *jcr, bool use_md5,
                            DB_RESULT_HANDLER *result_handler, void *ctx)
 {
