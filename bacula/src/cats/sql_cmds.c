@@ -925,7 +925,17 @@ const char *match_query[] =
    /* SQLite */
    "LIKE"                       /* MATCH doesn't seems to work anymore... */
 }; 
- 
+
+const char *sql_like[] =
+{
+   /* MySQL */
+   "LIKE",
+   /* PostgreSQL */
+   "ILIKE",
+   /* SQLite */
+   "LIKE"
+};
+
 static const char *insert_counter_values_default =
    "INSERT INTO Counters (Counter, MinValue, "
    "MaxValue, CurrentValue, WrapCounter) "

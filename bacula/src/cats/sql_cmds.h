@@ -115,3 +115,4 @@ extern const char CATS_IMP_EXP *get_volume_size;
 extern const char CATS_IMP_EXP *escape_char_value[];
 extern const char CATS_IMP_EXP *regexp_value[];
 extern const char CATS_IMP_EXP *copy_object[];
+extern const char CATS_IMP_EXP *sql_like[];

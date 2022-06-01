@@ -111,7 +111,7 @@ bool BDB::bdb_search_job_records(JCR *jcr, JOB_DBR *jr,
    Mmsg(cmd,
         "SELECT Job "
         "FROM Job "
-        " %s WHERE lower(Job.Job) LIKE lower('%%%s%%') %s", join, esc, where_tmp);
+        " %s WHERE Job.Job %s '%%%s%%' %s", join, sql_like[bdb_get_type_index()], esc, where_tmp);
 
    if (jr->limit > 0) {
       char ed1[50];
@@ -140,7 +140,8 @@ bool BDB::bdb_search_client_records(JCR *jcr, CLIENT_DBR *rec, DB_RESULT_HANDLER
    where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT), 0);
 
    Mmsg(cmd, "SELECT Name "
-        "FROM Client WHERE lower(Name) LIKE lower('%%%s%%') %s",
+        "FROM Client WHERE Name %s '%%%s%%' %s",
+        sql_like[bdb_get_type_index()],
         esc, where_tmp);
 
    if (rec->limit > 0) {
@@ -443,8 +444,9 @@ bool BDB::bdb_search_media_records(JCR *jcr, MEDIA_DBR *mdbr,
       mdbr->limit = 50;
    }
 
-   Mmsg(cmd, "SELECT VolumeName FROM Media %s WHERE lower(Media.VolumeName) LIKE lower('%%%s%%') %s LIMIT %u",
+   Mmsg(cmd, "SELECT VolumeName FROM Media %s WHERE Media.VolumeName %s '%%%s%%' %s LIMIT %u",
         join,
+        sql_like[bdb_get_type_index()],
         esc,
         where,
         mdbr->limit);
@@ -811,7 +813,7 @@ void BDB::bdb_list_joblog_records(JCR *jcr, uint32_t JobId, const char *pattern,
       POOL_MEM esc;
       esc.check_size(strlen(pattern) * 2 + 1);
       bdb_escape_string(jcr, esc.c_str(), pattern, strlen(pattern));
-      Mmsg(tmp, "lower(Log.LogText) LIKE lower('%%%s%%') ", esc.c_str());
+      Mmsg(tmp, "Log.LogText %s '%%%s%%' ", sql_like[bdb_get_type_index()], esc.c_str());
       append_filter(where2.handle(), tmp.c_str());
    }
 
