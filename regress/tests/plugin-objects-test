@@ -69,15 +69,15 @@ if [ "$id_postgres_obj" = "" ]; then
 fi
 
 n_OK=`cat ${cwd}/tmp/log3.out | grep -i "status: T" | wc -l`
-if [ ${n_OK} -ne 2 ]; then
+if [ ${n_OK} -ne 4 ]; then
    estat=1
-   print_debug "ERROR: Wrong count of \'T\' status for objects in $tmp/log3.out, expected 2, got: ${n_OK}"
+   print_debug "ERROR: Wrong count of \'T\' status for objects in $tmp/log3.out, expected 4, got: ${n_OK}"
 fi
 
 n_UNSET=`cat ${cwd}/tmp/log3.out | grep -i "status: U" | wc -l`
-if [ ${n_UNSET} -ne 4 ]; then
+if [ ${n_UNSET} -ne 0 ]; then
    estat=1
-   print_debug "ERROR: Wrong count of \'U\' status for objects in $tmp/log3.out, expected 4, got: ${n_UNSET}"
+   print_debug "ERROR: Wrong count of \'U\' status for objects in $tmp/log3.out, expected 0, got: ${n_UNSET}"
 fi
 
 
