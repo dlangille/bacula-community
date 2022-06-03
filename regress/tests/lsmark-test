@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory
+# select some file to restore and see if lsmark show the right one
+
+TestName="lsmark-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=4 storage=File
+setdebug level=1 client
+label storage=File volume=TestVolume001
+run job=Simple yes
+wait
+messages
+@#
+@# now do a restore
+@#
+@$out $tmp/log2.out
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select
+cd "$cwd/build/src/plugins/fd/pluginlib"
+mark iso8601.h
+cd "$cwd/build/src/plugins/fd
+mark hello-fd.c
+cd "$cwd/build/src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend"
+mark pvcdata.py
+cd "$cwd/build/src/plugins/fd/kubernetes-backend/baculak8s/plugins"
+mark fs_plugin.py
+cd "$cwd/build/src/plugins/fd/kubernetes-backend/baculak8s/io/services"
+mark plugin_params_io.py
+cd "$cwd/build/src/plugins/fd/kubernetes-backend/baculak8s/io"
+mark log.py
+cd "$cwd/build/src/plugins/fd/kubernetes-backend/baculak8s/io/jobs"
+mark restore_io.py
+cd "$cwd/build
+lsmark
+.
+no
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File
+stop_bacula
+
+# select the lsmark output (there is 19 lines
+grep -A 19 "\$ lsmark" $tmp/log2.out > $tmp/lsmark.out
+# this is what is expected from lsmark
+cat > $tmp/lsmark.expected <<EOF
+$ lsmark
+src/
+  plugins/
+    fd/
+      *hello-fd.c
+      kubernetes-backend/
+        baculak8s/
+          io/
+            jobs/
+              *restore_io.py
+            *log.py
+            services/
+              *plugin_params_io.py
+          plugins/
+            *fs_plugin.py
+            k8sbackend/
+              *pvcdata.py
+      pluginlib/
+        *iso8601.h
+$ .
+EOF
+# compare
+diff $tmp/lsmark.expected $tmp/lsmark.out
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: found diff with expectec lsmark output"
+    estat=1
+fi
+
+end_test
