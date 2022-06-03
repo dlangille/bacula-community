@@ -644,8 +644,28 @@ static int dot_lsmarkcmd(UAContext *ua, TREE_CTX *tree)
    return 1;
 }
 
+/* This function walk the tree and mark any parent directory that have children
+ * that have been marked by lsmark.
+ * Then the tree can be walked again by rlsmark() to display the files that
+ * are marked and the directory they are in
+ */
+static bool tree_node_init_extract_sub(TREE_NODE *tnode)
+{
+   TREE_NODE *node;
+   bool ret = false;
+   foreach_child(node, tnode) {
+      bool ret1 = tree_node_init_extract_sub(node);
+      if ( ret1 || node->extract || node->extract_dir) {
+         tnode->extract_sub = true;
+         ret = true;
+      }
+   }
+   return ret;
+}
+
 /*
  * This recursive ls command that lists only the marked files
+ * tree_node_init_extract_sub() must be called before
  */
 static void rlsmark(UAContext *ua, TREE_NODE *tnode, int level)
 {
@@ -664,26 +684,27 @@ static void rlsmark(UAContext *ua, TREE_NODE *tnode, int level)
    }
    indent[j] = 0;
    foreach_child(node, tnode) {
-      if ((ua->argc == 1 || fnmatch(ua->argk[1], node->fname, 0) == 0) &&
-          (node->extract || node->extract_dir)) {
-         const char *tag;
-         if (node->extract) {
-            tag = "*";
-         } else if (node->extract_dir) {
-            tag = "+";
-         } else {
-            tag = "";
-         }
+      const char *tag;
+      if (node->extract) {
+         tag = "*";
+      } else if (node->extract_dir) {
+         tag = "+";
+      } else {
+         tag = "";
+      }
+      if (((ua->argc == 1 || fnmatch(ua->argk[1], node->fname, 0) == 0) &&
+          (node->extract || node->extract_dir)) || node->extract_sub) {
          ua->send_msg("%s%s%s%s\n", indent, tag, node->fname, tree_node_has_child(node)?"/":"");
-         if (tree_node_has_child(node)) {
-            rlsmark(ua, node, level+1);
-         }
+      }
+      if (node->extract_sub) {
+         rlsmark(ua, node, level+1);
       }
    }
 }
 
 static int lsmarkcmd(UAContext *ua, TREE_CTX *tree)
 {
+   tree_node_init_extract_sub(tree->node); /* identify dir that have marked sub-child */
    rlsmark(ua, tree->node, 0);
    return 1;
 }

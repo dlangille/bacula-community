@@ -72,6 +72,7 @@ struct s_tree_node {
    unsigned int inserted: 1;          /* set when node newly inserted */
    unsigned int loaded: 1;            /* set when the dir is in the tree */
    unsigned int can_access: 1;        /* Can access to this node */
+   unsigned int extract_sub: 1;       /* set when a sub child must be extracted, used in lsmark only */
    struct s_tree_node *parent;
    struct s_tree_node *next;          /* next hash of FileIndex */
    struct delta_list *delta_list;     /* delta parts for this node */
