@@ -641,7 +641,10 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
 bool file_dev::check_for_attr(const char *vol_name, int attr)
 {
    int tmp_fd, ioctl_ret;
-   long get_attr = 0, lattr = attr;
+   union {
+      int get_attr;
+      char garbadge[16]; // be sure that buggy ioctl will not overwrite usefull data
+   };
    bool ret = false;
    POOL_MEM fname(PM_FNAME);
 
@@ -665,7 +668,7 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
       Dmsg2(DT_VOLUME|50, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
       Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
    } else {
-      ret = get_attr & lattr;
+      ret = get_attr & attr;
       const char *msg_str = ret ? "set" : "not set";
       Dmsg3(DT_VOLUME|50, "Attribute: 0x%08x is %s for volume: %s\n",
             attr, msg_str, fname.c_str());
@@ -689,7 +692,14 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
 {
    bool ret = false;
    int tmp_fd, ioctl_ret;
-   long get_attr = 0, set_attr = 0, lattr =  attr;
+   union {
+      int get_attr;
+      char garbadge1[16]; // be sure that buggy ioctl will not overwrite usefull data
+   };
+   union {
+      int set_attr;
+      char garbadge2[16]; // be sure that buggy ioctl will not overwrite usefull data
+   };
    const char *msg_str = set ? "set" : "cleared";
    POOL_MEM fname(PM_FNAME);
 
@@ -724,11 +734,11 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
 
    if (set) {
       /* Add new attribute to the currently set ones */
-      set_attr = get_attr | lattr;
+      set_attr = get_attr | attr;
    } else {
       /* Inverse the desired attribute and later and it with the current state
        * so that we clear only desired flag and do not touch all the rest */
-      long rev_mask = ~lattr;
+      int rev_mask = ~attr;
       set_attr = get_attr & rev_mask;
    }
 
