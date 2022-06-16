@@ -481,7 +481,8 @@ int run_program(char *prog, int wait, POOLMEM *&results)
 }
 
 /*
- * Run an external program. Optionally wait a specified number
+ *   Duplicate of run_program_full_output, but handles errors.
+ *   Run an external program. Optionally wait a specified number
  *   of seconds. Program killed if wait exceeded (it is done by the
  *   watchdog, as fgets is a blocking function).
  *
@@ -489,6 +490,7 @@ int run_program(char *prog, int wait, POOLMEM *&results)
  *   to 1 (=>SUCCESS), so we check if the watchdog killed the program.
  *
  *   Return the full output from the program (not only the first line).
+ *   Also Return the stderr stream.
  *
  * Contrary to my normal calling conventions, this program
  *
@@ -496,23 +498,30 @@ int run_program(char *prog, int wait, POOLMEM *&results)
  *           non-zero on error == berrno status
  *
  */
-int run_program_full_output(char *prog, int wait, POOLMEM *&results, char *env[])
+int run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, POOLMEM *&errors, char *env[])
 {
    BPIPE *bpipe;
-   int stat1, stat2;
+   int stat1=0, stat2=0, stat3=0;
    char *mode;
-   POOLMEM* tmp;
-   char *buf;
+   POOLMEM* tmp, *tmp_err;
+   char *buf, *err;
    const int bufsize = 32000;
 
 
    Dsm_check(200);
 
    tmp = get_pool_memory(PM_MESSAGE);
+   tmp_err = get_pool_memory(PM_MESSAGE);
    buf = (char *)malloc(bufsize+1);
+   err = (char *)malloc(bufsize+1);
 
    results[0] = 0;
    mode = (char *)"r";
+   if (errors) {
+      errors[0] = 0;
+      mode = (char *)"re";
+   }
+
    bpipe = open_bpipe(prog, wait, mode, env);
    if (!bpipe) {
       stat1 = ENOENT;
@@ -545,6 +554,35 @@ int run_program_full_output(char *prog, int wait, POOLMEM *&results, char *env[]
          }
       }
    }
+
+   if (errors) {
+      tmp_err[0] = 0;
+      while (1) {
+         err[0] = 0;
+         fgets(err, bufsize, bpipe->efd);
+         err[bufsize] = 0;
+         pm_strcat(tmp_err, err);
+         if (feof(bpipe->efd)) {
+            stat2 = 0;
+            Dmsg1(100, "Run program fgets err stat=%d\n", stat2);
+            break;
+         } else {
+            stat2 = ferror(bpipe->efd);
+         }
+         if (stat2 < 0) {
+            berrno be;
+            Dmsg2(100, "Run program fgets stat=%d ERR=%s\n", stat2, be.bstrerror());
+            break;
+         } else if (stat2 != 0) {
+            Dmsg1(200, "Run program fgets stat=%d\n", stat2);
+            if (bpipe->timer_id && bpipe->timer_id->killed) {
+               Dmsg1(100, "Run program saw fgets killed=%d\n", bpipe->timer_id->killed);
+               break;
+            }
+         }
+      }
+   }
+
    /*
     * We always check whether the timer killed the program. We would see
     * an eof even when it does so we just have to trust the killed flag
@@ -556,16 +594,34 @@ int run_program_full_output(char *prog, int wait, POOLMEM *&results, char *env[]
       pm_strcpy(tmp, _("Program killed by Bacula (timeout)\n"));
       stat1 = ETIME;
    }
+
    pm_strcpy(results, tmp);
    Dmsg3(200, "resadr=0x%x reslen=%d res=%s\n", results, strlen(results), results);
-   stat2 = close_bpipe(bpipe);
-   stat1 = stat2 != 0 ? stat2 : stat1;
+
+   if (errors) {
+      Dmsg3(200, "erradr=0x%x errlen=%d err=%s\n", errors, strlen(errors), errors);
+      pm_strcpy(errors, tmp_err);
+   }
+
+   stat3 = close_bpipe(bpipe);
+   stat1 = stat3 != 0 ? stat3 : stat2 != 0 ? stat2 : stat1;
 
    Dmsg1(100, "Run program returning %d\n", stat1);
 bail_out:
    free_pool_memory(tmp);
+   free_pool_memory(tmp_err);
    free(buf);
+   free(err);
    return stat1;
+}
+
+/*
+ * Identical to run_program_full_output_error without error handling
+ */
+int run_program_full_output(char *prog, int wait, POOLMEM *&results, char *env[])
+{
+   char *errors = NULL;
+   return run_program_full_output_and_error(prog, wait, results, errors, env);
 }
 
 /*
