@@ -102,9 +102,9 @@ public:
    void select_data_stream(DCR *dcr, DEV_RECORD *rec);
    bool flush_block(DCR *dcr);
    bool do_pre_write_checks(DCR *dcr, DEV_RECORD *rec);
-
-
-
+   bool get_os_device_freespace();
+   bool is_fs_nearly_full(uint64_t threshold);
+   int rehydrate_record(DCR *dcr, DEV_RECORD *rec);
    /*
     * Locking and blocking calls
     */

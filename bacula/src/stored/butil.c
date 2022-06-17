@@ -197,6 +197,9 @@ static DCR *setup_to_access_device(JCR *jcr, char *dev_name,
       if (read_dedup_data) {
          Dmsg0(DT_DEDUP|215, "Initialize dedup interface\n");
          jcr->read_dcr->dev->setup_dedup_rehydration_interface(jcr->read_dcr);
+
+      } else {
+         dev->set_delay_adata(); /* Do not read aligned data */
       }
    } else {
       if (!first_open_device(dcr)) {

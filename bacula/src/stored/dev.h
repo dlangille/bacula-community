@@ -299,6 +299,7 @@ public:
    bool m_shstore_user_lock;          /* set if user set shared lock */
    bool m_shstore_register;           /* set if register key set */
    bool m_shstore_blocked;            /* Set if I am blocked */
+   bool m_delay_adata;                /* Set if we need to ask to read adata */
    bool adata;                        /* set if adata device */
    int label_type;                    /* Bacula/ANSI/IBM label types */
    uint32_t drive_index;              /* Autochanger drive index (base 0) */
@@ -464,6 +465,8 @@ public:
    void set_load() { m_load = true; };
    void set_wait() { m_wait = true; };
    void clear_wait() { m_wait = false; };
+   void set_delay_adata() { m_delay_adata = true;};
+   void clear_delay_adata() { m_delay_adata = false;};
    bool must_wait() const { return m_wait; };
    void inc_reserved() { m_num_reserved++; }
    void set_mounted(int val) { if (val) state |= ST_MOUNTED; \
@@ -527,8 +530,6 @@ public:
 
 
    /* Virtual functions that can be overridden */
-   virtual void set_file_size(uint64_t val) { file_size = val;};
-   virtual uint64_t update_file_size(uint64_t add) { file_size += add; return file_size; };
    virtual void setVolCatName(const char *name);
    virtual void setVolCatStatus(const char *status);
    virtual void free_dcr_blocks(DCR *dcr);        /* in block_util.c */
@@ -708,6 +709,7 @@ public:
    void open_tape_device(DCR *dcr, int omode);   /* in dev.c */
    void open_file_device(DCR *dcr, int omode);   /* in dev.c */
 
+   virtual int rehydrate_record(DCR *dcr, DEV_RECORD *rec) { return 1;};
    virtual bool setup_dedup_rehydration_interface(DCR *dcr) { return false; };
    virtual void free_dedup_rehydration_interface(DCR *dcr) { };
    virtual GetMsg *get_msg_queue(JCR *jcr, BSOCK *sock, int32_t bufsize)
@@ -811,6 +813,7 @@ public:
    int Copy;                          /* identical copy number */
    int Stripe;                        /* RAIT stripe */
    VOLUME_CAT_INFO VolCatInfo;        /* Catalog info for desired volume */
+   /* *** BEEF *** */
    uint32_t crc32(unsigned char *buf, int len, uint32_t expected_crc);
 
    /* *** SIR *** */

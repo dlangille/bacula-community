@@ -52,7 +52,8 @@ enum rec_state {
    st_cont_adata_rechdr,                  /* 6 Adata continuation rechdr */
    st_adata,                              /* 7 Write aligned data */
    st_cont_adata,                         /* 8 Write more aligned data */
-   st_adata_label                         /* 9 Writing adata vol label */
+   st_adata_label,                        /* 9 Writing adata vol label */
+   st_header_only                         /* 10 Read only the header (aligned) */
 };
 
 
