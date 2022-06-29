@@ -562,7 +562,7 @@ fi
 if [ "$DBVERSION" -eq 1024 ] ; then
     if mysql $* -f  <<END-OF-DATA
 USE ${db_name};
-ALTER TABLE Client ADD COLUMN Plugins TINYBLOB DEFAULT '';
+ALTER TABLE Client ADD COLUMN Plugins VARCHAR(255) DEFAULT '';
 
 -- --------------------------------------------------------------
 -- MetaData Index

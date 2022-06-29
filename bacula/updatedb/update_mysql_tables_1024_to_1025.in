@@ -25,7 +25,7 @@ fi
 
 if mysql $* -f  <<END-OF-DATA
 USE ${db_name};
-ALTER TABLE Client ADD COLUMN Plugins TINYBLOB DEFAULT '';
+ALTER TABLE Client ADD COLUMN Plugins VARCHAR(254) DEFAULT '';
 
 -- --------------------------------------------------------------
 -- MetaData Index
