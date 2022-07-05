@@ -173,7 +173,7 @@ int run_cmd(UAContext *ua, const char *cmd)
        *   allow him to modify them.
        */
       if (!display_job_parameters(ua, jcr, rc.job, rc.verify_list, rc.jid, rc.replace,
-           rc.client ? rc.client->hdr.name : jcr->job->client->hdr.name)) {
+           jcr->job->client->hdr.name)) {
          break; /* error get out of while loop */
       }
 
