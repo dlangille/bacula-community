@@ -1408,7 +1408,8 @@ bool get_or_create_fileset_record(JCR *jcr)
        */
       bin_to_base64(fsr.MD5, sizeof(fsr.MD5), (char *)digest, MD5HashSize, false);
       bstrncpy(jcr->fileset->MD5, fsr.MD5, sizeof(jcr->fileset->MD5));
-   } else {
+   } else if (jcr.getJobType() == JT_BACKUP) {
+      /* Empty fileset is ok for copy, admin, migration or restore */
       Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 digest not found.\n"));
    }
    if (!jcr->fileset->ignore_fs_changes ||
