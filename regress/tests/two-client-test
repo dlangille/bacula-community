@@ -39,6 +39,22 @@ messages
 @$out $tmp/log1.out
 setdebug level=4 storage=File1
 label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
+run job=$JobName
+mod
+5
+2
+mod
+5
+1
+no
+run job=$JobName client=2-fd
+mod
+5
+2
+mod
+5
+1
+no
 run job=$JobName client=1-fd yes
 wait
 messages
@@ -69,6 +85,40 @@ END_OF_DATA
 run_bacula
 check_for_zombie_jobs storage=File1
 stop_bacula
+
+grep ^Client: $tmp/log1.out > $tmp/1
+cat <<EOF > $tmp/2
+Client:   1-fd
+Client:   2-fd
+Client:   1-fd
+Client:   2-fd
+Client:   2-fd
+Client:   1-fd
+EOF
+
+if ! diff $tmp/1 $tmp/2
+then
+    print_debug "ERROR: Incorrect client detected in $tmp/log1.out"
+    estat=1
+fi
+
+grep -E  "^(Backup|Restore) Client:" tmp/log2.out > $tmp/3
+cat <<EOF > $tmp/4
+Backup Client:   1-fd
+Restore Client:  1-fd
+Backup Client:   1-fd
+Restore Client:  2-fd
+Backup Client:   1-fd
+Restore Client:  1-fd
+Backup Client:   1-fd
+Restore Client:  2-fd
+EOF
+
+if ! diff $tmp/3 $tmp/4
+then
+    print_debug "ERROR: Incorrect client detected in $tmp/log2.out"
+    estat=1
+fi
 
 check_two_logs
 #check_restore_diff
