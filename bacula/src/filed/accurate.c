@@ -659,8 +659,8 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
                stat = true;
 
             } else if (ret == -1) {
-               stat = false;
-               goto bail_out;
+               // unable to check the checksum, better to backup the file
+               stat = true;
 
             } else {
                /* Checksum hasn't changed, we can backup only meta */
@@ -675,9 +675,9 @@ bool accurate_check_file(JCR *jcr, FF_PKT *ff_pkt)
          ret = check_checksum_diff(jcr, ff_pkt, &elt);
          if (ret == 1) {
             stat = true;
+
          } else if (ret == -1){
-            stat = false;
-            goto bail_out;
+            stat = true;        // We cannot check the checksum, we need to backup the file
          }
       }
    }
