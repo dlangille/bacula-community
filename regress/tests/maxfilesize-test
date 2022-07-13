@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+# Run a job and play with Maximum File Size to create
+# JobMedia
+#
+TestName="maxfilesize-test"
+JobName=maxsize
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "$tmp/file" >${cwd}/tmp/file-list
+
+dd if=/dev/zero of=$tmp/file count=10000
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumFileSize", "1MB", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "LabelFormat", "Vol", "Pool")'
+sed 's/sparse=yes;//' $conf/bacula-dir.conf > $tmp/1
+cp -f $tmp/1 $conf/bacula-dir.conf
+
+change_jobname NightlySave $JobName
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+@#setdebug level=50 trace=1 tags=volume Storage=File1
+run job=$JobName level=Full Storage=File1 yes
+wait
+messages
+@$out $tmp/log1-json.out
+.jlist jobmedia
+list jobmedia
+@#
+@# now do a restore
+@#
+@$out $tmp/log2.out
+restore where=${cwd}/tmp/bacula-restores select storage=File1
+unmark *
+mark *
+done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+cat $tmp/log1-json.out | grep '{'  | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l) ; exit (scalar(@{$j->{data}}) > 1);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find more than 1 JobMedia in $tmp/log1-json.out"
+    estat=1
+fi
+
+check_two_logs
+end_test
