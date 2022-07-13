@@ -127,6 +127,7 @@ ADD_TEST(misc:bscan-restore-objects-test "@regressdir@/tests/bscan-restore-objec
 ADD_TEST(misc:bscan-plugin-objects-test "@regressdir@/tests/bscan-plugin-objects-test")
 ADD_TEST(misc:dbcheck-test "@regressdir@/tests/dbcheck-test")
 ADD_TEST(misc:totp-auth-plugin-test "@regressdir@/tests/totp-auth-plugin-test")
+ADD_TEST(disk:maxfilesize-test "@regressdir@/tests/maxfilesize-test")
 ADD_TEST(disk:two-client-test "@regressdir@/tests/two-client-test")
 
 ADD_TEST(disk:short-incremental-test "@regressdir@/tests/short-incremental-test")
