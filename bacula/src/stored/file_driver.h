@@ -47,7 +47,7 @@ public:
    int32_t protocol;
    int32_t uriStyle;
    btime_t wait_timeout;
-
+   uint32_t objects_default_tier;
 
 private:
    void make_cloud_filename(POOLMEM *&filename, const char *VolumeName, const char *file, uint32_t part);

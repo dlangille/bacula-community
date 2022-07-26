@@ -38,6 +38,7 @@ private:
    S3BucketContext s3ctx;       /* Main S3 bucket context */
    S3RestoreTier transfer_priority;
    uint32_t transfer_retention_days;
+   uint32_t objects_default_tier;
 public:
    cloud_dev *dev;              /* device that is calling us */
 

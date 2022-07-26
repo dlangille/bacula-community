@@ -356,6 +356,7 @@ bool file_driver::copy_cache_part_to_cloud(transfer *xfer)
    POOLMEM *cloud_fname = get_pool_memory(PM_FNAME);
    make_cloud_filename(cloud_fname, xfer->m_volume_name, "part", xfer->m_part);
    Dmsg2(dbglvl, "Call put_object: %s, %s\n", xfer->m_cache_fname, cloud_fname);
+   Dmsg1(dbglvl, "objects_default_tier: %d\n", objects_default_tier);
    bool rtn = put_object(xfer, xfer->m_cache_fname, cloud_fname, &upload_limit);
    free_pool_memory(cloud_fname);
    return rtn;
@@ -452,7 +453,7 @@ bool file_driver::init(CLOUD *cloud, POOLMEM *&err)
    uriStyle = cloud->uri_style;
    accessKeyId = cloud->access_key;
    secretAccessKey = cloud->secret_key;
-
+   objects_default_tier = cloud->objects_default_tier;
    return true;
 }
 

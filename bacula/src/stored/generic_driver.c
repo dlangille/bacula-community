@@ -162,6 +162,7 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       max_concurrent_downloads = cloud->max_concurrent_downloads;
       upload_limit.set_bwlimit(cloud->upload_limit);
       download_limit.set_bwlimit(cloud->download_limit);
+      objects_default_tier = cloud->objects_default_tier;
 
       driver_command = cloud->driver_command;
 

@@ -240,6 +240,7 @@ static RES_ITEM cloud_items[] = {
    {"DriverCommand",     store_strname, ITEM(res_cloud.driver_command), 0, 0, 0},
    {"TransferPriority",  store_transfer_priority, ITEM(res_cloud.transfer_priority), 0, ITEM_DEFAULT, 0},
    {"TransferRetention", store_time, ITEM(res_cloud.transfer_retention), 0, ITEM_DEFAULT, 5 * 3600 * 24},
+   {"ObjectsDefaultTier",  store_objects_default_tier, ITEM(res_cloud.objects_default_tier), 0, ITEM_DEFAULT, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -540,6 +541,25 @@ s_kw restore_prio_opts[] = {
 };
 
 /*
+ * Cloud Object tier level
+ *
+ *   Option       option code = token
+ */
+s_kw objects_default_tiers[] = {
+
+   {"S3Standard", S3_STANDARD},   
+   {"S3StandardIA", S3_STANDARD_IA},
+   {"S3IntelligentTiering", S3_INTELLIGENT_TIERING},
+   {"S3OneZoneIA", S3_ONE_ZONE_IA},
+   {"S3GlacierInstantRetrieval", S3_GLACIER_INSTANT_RETRIEVAL},
+   {"S3GlacierFlexibleRetrieval", S3_GLACIER_FLEXIBLE_RETRIEVAL},
+   {"S3GlacierDeepArchive", S3_GLACIER_DEEP_ARCHIVE},
+   {"S3Rrs", S3_RRS},
+   {NULL, 0}
+};
+
+
+/*
  * Store Cloud restoration priority 
  */
 void store_transfer_priority(LEX *lc, RES_ITEM *item, int index, int pass)
@@ -557,6 +577,29 @@ void store_transfer_priority(LEX *lc, RES_ITEM *item, int index, int pass)
    }
    if (!found) {
       scan_err1(lc, _("Expected a Cloud Restore Priority Style option keyword (High, Medium, Low), got: %s"), lc->str);
+   }
+   scan_to_eol(lc);
+   set_bit(index, res_all.hdr.item_present);
+}
+
+/*
+ * Store Cloud object default tier 
+ */
+void store_objects_default_tier(LEX *lc, RES_ITEM *item, int index, int pass)
+{
+   bool found = false;
+
+   lex_get_token(lc, T_NAME);
+   /* Store the label pass 2 so that type is defined */
+   for (int i=0; objects_default_tiers[i].name; i++) {
+      if (strcasecmp(lc->str, objects_default_tiers[i].name) == 0) {
+         *(uint32_t *)(item->value) = objects_default_tiers[i].token;
+         found = true;
+         break;
+      }
+   }
+   if (!found) {
+      scan_err1(lc, _("Expected a Cloud Objects default tier, got: %s"), lc->str);
    }
    scan_to_eol(lc);
    set_bit(index, res_all.hdr.item_present);

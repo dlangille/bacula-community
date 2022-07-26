@@ -324,6 +324,7 @@ void store_devtype(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_cloud_driver(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_maxblocksize(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_transfer_priority(LEX *lc, RES_ITEM *item, int index, int pass);
+void store_objects_default_tier(LEX *lc, RES_ITEM *item, int index, int pass);
 
 /* from sdcollect.c */
 bool update_permanent_stats(void *data);

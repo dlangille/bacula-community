@@ -874,6 +874,7 @@ bool s3_driver::init(CLOUD *cloud, POOLMEM *&err)
    s3ctx.accessKeyId = cloud->access_key;
    s3ctx.secretAccessKey = cloud->secret_key;
    s3ctx.authRegion = cloud->region;
+   objects_default_tier = cloud->objects_default_tier;
 
    if ((status = S3_initialize("s3", S3_INIT_ALL, s3ctx.hostName)) != S3StatusOK) {
       Mmsg1(err, "Failed to initialize S3 lib. ERR=%s\n", S3_get_status_name(status));

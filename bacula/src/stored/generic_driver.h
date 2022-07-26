@@ -47,6 +47,7 @@ protected:
    char *endpoint_suffix;
    uint32_t max_concurrent_uploads;
    uint32_t max_concurrent_downloads;
+   uint32_t objects_default_tier;
    /* 
       read_cb_type : returns the number of proceed bytes from char*. 
       char* is the data buffer. 

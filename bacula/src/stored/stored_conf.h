@@ -77,6 +77,17 @@ enum {
    CLOUD_RESTORE_PRIO_LOW
 };
 
+enum {
+   S3_STANDARD = 0,   
+   S3_STANDARD_IA,
+   S3_INTELLIGENT_TIERING,
+   S3_ONE_ZONE_IA,
+   S3_GLACIER_INSTANT_RETRIEVAL,
+   S3_GLACIER_FLEXIBLE_RETRIEVAL,
+   S3_GLACIER_DEEP_ARCHIVE,
+   S3_RRS
+};
+
 class CLOUD {
 public:
    RES   hdr;
@@ -102,6 +113,7 @@ public:
    char *driver_command;
    int32_t transfer_priority;
    utime_t transfer_retention;
+   uint32_t objects_default_tier;
 };
 
 /*
