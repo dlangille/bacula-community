@@ -114,6 +114,7 @@ generic_driver::generic_driver()
    debug_env = get_pool_memory(PM_NAME);
    working_path_env = get_pool_memory(PM_NAME);
    home_path_env = get_pool_memory(PM_NAME);
+   objects_default_tier_env = get_pool_memory(PM_NAME);
 }
 
 generic_driver::~generic_driver()
@@ -140,6 +141,7 @@ generic_driver::~generic_driver()
    free_pool_memory(debug_env);
    free_pool_memory(working_path_env);
    free_pool_memory(home_path_env);
+   free_pool_memory(objects_default_tier_env);
 }
 
 bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
@@ -264,13 +266,18 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
       pm_strcat(home_path_env, working_directory);
       envs[20] = home_path_env;
 
+     sprintf(b, "%d", objects_default_tier);
+      pm_strcpy(objects_default_tier_env, "CLOUD_OBJECTS_DEFAULT_TIER="); /* child default home location */
+      pm_strcat(objects_default_tier_env, b);
+      envs[21] = objects_default_tier_env;
+
       if (driver_command && strstr(driver_command, "was_cloud_driver") != NULL) {
          pm_strcpy(unset_lctime_env, "LC_TIME=");
-         envs[21] = unset_lctime_env;
+         envs[22] = unset_lctime_env;
       } else {
-         envs[21] = NULL;
+         envs[22] = NULL;
       }
-      envs[22] = NULL;
+      envs[23] = NULL;
 
       return true;
    }

@@ -148,7 +148,8 @@ private:
    POOLMEM *debug_env;
    POOLMEM *working_path_env;
    POOLMEM *home_path_env;
-   char *envs[23];
+   POOLMEM *objects_default_tier_env;
+   char *envs[24];
 };
 
 #endif /* GENERIC_CLOUD_DRIVER_H*/

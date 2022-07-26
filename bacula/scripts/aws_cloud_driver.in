@@ -156,7 +156,8 @@ def upload():
    try:
       logging.info("enter upload")
       proc = Popen(["aws", "s3", "cp",
-         "-", os.path.join(cloud_path, volume, part), "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+         "-", os.path.join(cloud_path, volume, part),
+         "--storage-class", objects_default_tier, "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("upload proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr (yuck!)
@@ -325,12 +326,24 @@ if __name__ == '__main__':
       t_prio = os.environ['CLOUD_TRANSFER_PRIORITY']
       transfer_priority = transfer_priority_switcher[t_prio]
       transfer_retention_days = os.environ['CLOUD_TRANSFER_RETENTION_DAYS']
+      objects_default_tier_switcher = {
+         "0":"STANDARD",
+         "1":"STANDARD_IA",
+         "2":"INTELLIGENT_TIERING",
+         "3":"ONEZONE_IA",
+         "4":"GLACIER_IR",
+         "5":"GLACIER",
+         "6":"DEEP_ARCHIVE",
+         "7":"REDUCED_REDUNDANCY"
+      }
+      t_tier_idx = os.environ['CLOUD_OBJECTS_DEFAULT_TIER']
+      objects_default_tier = objects_default_tier_switcher[t_tier_idx]
       
       os.environ['AWS_DEFAULT_REGION'] = region
       os.environ['AWS_ACCESS_KEY_ID'] = access_key
       os.environ['AWS_SECRET_ACCESS_KEY'] = secret_key
 
-      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}, transfer_prio {7}, tranfer_ret {8}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type, transfer_priority, transfer_retention_days))
+      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}, transfer_prio {7}, tranfer_ret {8}, default_tier {9}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type, transfer_priority, transfer_retention_days, objects_default_tier))
 
       switcher = {
          "vol_ls":vol_ls,
