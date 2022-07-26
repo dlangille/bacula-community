@@ -240,7 +240,7 @@ static RES_ITEM cloud_items[] = {
    {"DriverCommand",     store_strname, ITEM(res_cloud.driver_command), 0, 0, 0},
    {"TransferPriority",  store_transfer_priority, ITEM(res_cloud.transfer_priority), 0, ITEM_DEFAULT, 0},
    {"TransferRetention", store_time, ITEM(res_cloud.transfer_retention), 0, ITEM_DEFAULT, 5 * 3600 * 24},
-   {"ObjectsDefaultTier",  store_objects_default_tier, ITEM(res_cloud.objects_default_tier), 0, ITEM_DEFAULT, 0},
+   {"StorageClass",  store_objects_default_tier, ITEM(res_cloud.objects_default_tier), 0, ITEM_DEFAULT, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 

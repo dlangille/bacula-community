@@ -51,7 +51,7 @@ test_tier()
 
 echo "  == checking tier[$1]: $2 =="
 
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ObjectsDefaultTier", "'$2'", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "StorageClass", "'$2'", "Cloud")'
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
@@ -86,7 +86,7 @@ else
 fi
 }
 
-estat = 0
+estat=0
 
 for key in "${!tiers[@]}"; do test_tier $key ${tiers[$key]}; done
 
