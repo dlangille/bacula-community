@@ -1,0 +1,99 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Cloud test. We run backups and restore with the "truncate cache" command in-between
+#
+TestName="cloud-aws-storageclass-test"
+JobName=NightlySave
+. scripts/functions
+
+require_cloud
+
+#config is required for cloud cleanup
+scripts/copy-test-confs
+scripts/cleanup
+
+which aws > /dev/null
+if test $? -ne 0; then
+echo "aws cli must be installed. Abort"
+exit 1
+fi
+
+start_test
+
+# force aws driver
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "Driver", "amazon", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumPartSize", "10000000", "Device")'
+
+BucketName=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'BucketName')")
+AccessKey=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'AccessKey')")
+SecretKey=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'SecretKey')")
+Region=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'Region')")
+
+#export AWS_DEFAULT_REGION=$Region
+#export AWS_ACCESS_KEY_ID=$AccessKey
+#export AWS_SECRET_ACCESS_KEY=$SecretKey
+
+declare -A tiers
+tiers[0]=S3Standard 
+tiers[1]=S3StandardIA 
+tiers[2]=S3IntelligentTiering
+tiers[3]=S3OneZoneIA
+tiers[4]=S3GlacierInstantRetrieval
+tiers[5]=S3GlacierFlexibleRetrieval
+tiers[6]=S3GlacierDeepArchive
+tiers[7]=S3Rrs
+		   
+declare -A AwsS3apiStorageClass
+AwsS3apiStorageClass[0]=STANDARD 
+AwsS3apiStorageClass[1]=STANDARD_IA 
+AwsS3apiStorageClass[2]=INTELLIGENT_TIERING
+AwsS3apiStorageClass[3]=ONEZONE_IA
+AwsS3apiStorageClass[4]=GLACIER_IR
+AwsS3apiStorageClass[5]=GLACIER
+AwsS3apiStorageClass[6]=DEEP_ARCHIVE
+AwsS3apiStorageClass[7]=REDUCED_REDUNDANCY
+	   
+test_tier()
+{
+#$1 : tier_index
+#$2 : tier value
+
+echo "  == checking $2 in Vol$1 =="
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "StorageClass", "'$2'", "Cloud")'
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log$1.out
+setdebug tags=cloud level=50 trace=1 storage
+label storage=File volume=Vol$1
+END_OF_DATA
+
+# do label
+run_bacula
+
+sleep 2
+check_for_zombie_jobs storage=File 
+stop_bacula
+
+# retrieve the part tier with aws cli
+aws s3api get-object-attributes --bucket $BucketName --key Vol$1/part.1 --object-attributes StorageClass | grep ${AwsS3apiStorageClass[$1]}
+
+if test $? -ne 0; then
+    echo "Error: could not find correct storage class $2=${AwsS3apiStorageClass[$1]} in $BucketName/Vol$1/part.1"
+    estat=1
+else 
+    echo "$BucketName/Vol$1/part.1 storage class is $2=${AwsS3apiStorageClass[$1]} : OK."
+fi
+}
+
+estat=0
+
+for key in "${!tiers[@]}"; do test_tier $key ${tiers[$key]}; done
+
+end_test
