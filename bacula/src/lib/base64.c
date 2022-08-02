@@ -41,27 +41,51 @@ static uint8_t const base64_digits[64] =
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-static int base64_inited = 0;
-static uint8_t base64_map[256];
-
-
-/* Initialize the Base 64 conversion routines */
-void
-base64_init(void)
+static uint8_t base64_map[256] =
 {
-   int i;
-   memset(base64_map, 0, sizeof(base64_map));
-   for (i=0; i<64; i++)
-      base64_map[(uint8_t)base64_digits[i]] = i;
-   base64_inited = 1;
-}
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0x3e, 0xff, 0xff, 0xff, 0x3f,
+   0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b,
+   0x3c, 0x3d, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+   0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+   0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+   0x17, 0x18, 0x19, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20,
+   0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+   0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30,
+   0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+   0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+};
 
-/* Convert a value to base64 characters.
+/* Convert a signed number into base 64, using the base64 chars
+ * This is not related to MIME encoding.
+ *
  * The result is stored in where, which
- * must be at least 8 characters long.
+ * must be at least 13 characters long.
+ * The string ends with a '\0'
  *
  * Returns the number of characters
- * stored (not including the EOS).
+ * stored including the sign if any (not including the '\0').
  */
 int
 to_base64(int64_t value, char *where)
@@ -94,10 +118,10 @@ to_base64(int64_t value, char *where)
    return n;
 }
 
-/*
- * Convert the Base 64 characters in where to
- * a value. No checking is done on the validity
- * of the characters!!
+/* Convert a signed number encoded into base 64 (using the base64 chars)
+ * back into an integer
+ * This is not related to MIME encoding.
+ * No checking is done on the validity of the characters!!
  *
  * Returns the value.
  */
@@ -107,8 +131,6 @@ from_base64(int64_t *value, char *where)
    uint64_t val = 0;
    int i, neg;
 
-   if (!base64_inited)
-      base64_init();
    /* Check if it is negative */
    i = neg = 0;
    if (where[i] == '-') {
@@ -132,6 +154,8 @@ from_base64(int64_t *value, char *where)
  *
  * If compatible is true, the bin_to_base64 routine will be compatible
  * with what the rest of the world uses.
+ *
+ * This function don't does padding with '='
  *
  *  Returns: the number of characters stored not
  *           including the EOS
@@ -177,70 +201,47 @@ bin_to_base64(char *buf, int buflen, char *bin, int binlen, int compatible)
 }
 
 /*
- * Decode base64 data in bin of len bytes into
- * buf as binary characters.
+ * Decode base64 encoded data
  *
- * the base64_to_bin routine is compatible with what the rest of the world
- * uses.
- *
- * 'dest_size' must be big enough! Giving the right size here could fail as
- * we consider 'srclen' as an unpadded size, even if 'src' is padded
- * we suggest to use dest_size=srclen for easiness or at least
- * dest_size=((srclen + 3) / 4) * 3) for optimization lovers
- *
- *  Returns: the number of characters stored not
- *           including the EOS
+ * - ignore spaces in the input (space, tab, newline)
+ * - the input can be multi-line as often in e-mails
+ * - stop when a '\0', a '=' (padding) or srclen depending what is hit first
+ * - test for invalid char
+ * - return 0 when the output string is too short or invalid char are found in the input
+ * - dest_size don't need to be bigger, the exact length is ok
+ * - the output string is not ended with '\0', has it is supposed to be binary data
+ *  Returns: the number of characters stored in 'dest' or 0 if dest_size was too
+ *           small or invalid chars where found in the input
  */
-int base64_to_bin(char *dest, int dest_size, char *src, int srclen)
+int base64_to_bin(char *dest, int dest_size, const char *src, int srclen)
 {
-   int nprbytes;
-   uint8_t *bufout;
-   uint8_t *bufplain = (uint8_t*) dest;
-   const uint8_t *bufin;
-
-   if (!base64_inited)
-      base64_init();
-
-   if (dest_size < (((srclen + 3) / 4) * 3)) {
-      /* dest buffer too small */
-      *dest = 0;
-      return 0;
-   }
-
-   bufin = (const uint8_t *) src;
-   while ((*bufin != ' ') && (srclen != 0)) {
-      bufin++;
-      srclen--;
-   }
-
-   nprbytes = bufin - (const uint8_t *) src;
-   bufin = (const uint8_t *) src;
-   bufout = (uint8_t *) bufplain;
-
-   while (nprbytes > 4)
-   {
-      *(bufout++) = (base64_map[bufin[0]] << 2 | base64_map[bufin[1]] >> 4);
-      *(bufout++) = (base64_map[bufin[1]] << 4 | base64_map[bufin[2]] >> 2);
-      *(bufout++) = (base64_map[bufin[2]] << 6 | base64_map[bufin[3]]);
-      bufin += 4;
-      nprbytes -= 4;
-   }
-
+   uint8_t *bufout = (uint8_t*) dest;
+   const uint8_t *bufin0 = (const uint8_t *) src;
+   bool err = false;
    /* Bacula base64 strings are not always padded with = */
-   if (nprbytes > 1) {
-      *(bufout++) = (base64_map[bufin[0]] << 2 | base64_map[bufin[1]] >> 4);
+   while (1) {
+      while (*bufin0 != 0 && *bufin0 != '=' && isspace(*bufin0)) bufin0++;
+      if (*bufin0 == 0 || *bufin0 == '=' || (err=base64_map[*bufin0] == 0xff)) break;
+      const uint8_t *bufin1 = bufin0 + 1;
+      while (*bufin1 != 0 && *bufin1 != '=' && isspace(*bufin1)) bufin1++;
+      if (*bufin1 == 0 || *bufin1 == '=' || (err=base64_map[*bufin1] == 0xff)
+            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      *(bufout++) = (base64_map[*bufin0] << 2 | base64_map[*bufin1] >> 4);
+      const uint8_t *bufin2 = bufin1 + 1;
+      while (*bufin2 != 0 && *bufin2 != '=' && isspace(*bufin2)) bufin2++;
+      if (*bufin2 == 0 || *bufin2 == '=' || (err=base64_map[*bufin2] == 0xff)
+            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      *(bufout++) = (base64_map[*bufin1] << 4 | base64_map[*bufin2] >> 2);
+      const uint8_t *bufin3 = bufin2 + 1;
+      while (*bufin3 != 0 && *bufin3 != '=' && isspace(*bufin3)) bufin3++;
+      if (*bufin3 == 0 || *bufin3 == '=' || (err=base64_map[*bufin3] == 0xff)
+            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      *(bufout++) = (base64_map[*bufin2] << 6 | base64_map[*bufin3]);
+      bufin0 = bufin3 + 1;
    }
-   if (nprbytes > 2) {
-      *(bufout++) = (base64_map[bufin[1]] << 4 | base64_map[bufin[2]] >> 2);
-   }
-   if (nprbytes > 3) {
-      *(bufout++) = (base64_map[bufin[2]] << 6 | base64_map[bufin[3]]);
-   }
-   *bufout = 0;
-
-   return (bufout - (uint8_t *) dest);
+   /* *bufout = 0; // don't end binary with 0 */
+   return err?0:(bufout - (uint8_t *) dest);
 }
-
 #ifdef BIN_TEST
 int main(int argc, char *argv[])
 {
@@ -399,7 +400,6 @@ int main()
    bool check_cont;
    int64_t var;
 
-   base64_init();
 /*
    for (int a=0; a < 16; a++){
       fprintf(stderr, "%c", rnddata[a]);
@@ -423,7 +423,9 @@ int main()
    // const char * fillres6   = "YWJjZGVm";
 
    char * vdata1 = (char*)malloc(strlen(testdata1) + 10);
+   char * vdata2 = (char*)malloc(strlen(testdata1) + 10);
    char * vvect1 = (char*)malloc(strlen(testvect1) + 10);
+   char * vvect2 = (char*)malloc(strlen(testvect1) + 50);
 
    len = bin_to_base64(vvect1, strlen(testvect1) + 10, (char*)testdata1, strlen(testdata1), true);
    is(len, strlen(testvect1), "test bin_to_base64");
@@ -434,8 +436,103 @@ int main()
    vdata1[len] = 0;
    ok(strcmp(testdata1, vdata1) == 0, "test base64_to_bin content");
 
+   /* try the same "decoded" string but make it smaller and smaller */
+   bool notok = false;
+   memcpy(vdata2, testdata1, strlen(testdata1));
+   for (unsigned int i=strlen(testdata1); i>0; i--) {
+      vdata2[i] = '\0';
+      memset(vvect1, '\xFF', strlen(testvect1) + 10);
+      memset(vdata1, '\xFF', strlen(testdata1) + 10);
+      len = bin_to_base64(vvect1, strlen(testvect1) + 10, (char*)vdata2, i, true);
+      // printf("i=%d len=%d strlen(vvect1)=%d\n", i , len, strlen(vvect1));
+      // printf("data=%s\n", vdata2);
+      // printf("base64=%s\n", vvect1);
+
+      len = base64_to_bin(vdata1, strlen(testdata1) + 10, (char*)vvect1, strlen(vvect1));
+      // printf("i=%d len=%d\n", i , len);
+      vdata1[len] = 0;
+      bool o = (len == i && strcmp(vdata2, vdata1) == 0);
+      if (!o) {
+         char buf[256];
+         notok = true;
+         snprintf(buf, sizeof(buf), "test base64 encode decode mismatch for len = %d", i);
+         ok(o, buf);
+      }
+   }
+   ok(!notok, "test base64 encode decode for multiple lengths");
+
+   /* insert some spaces into the encoded string */
+   notok = false;
+   memcpy(vvect1, testvect1, strlen(testvect1) + 10);
+   int pos[]= { 0, 30, 30, 15, 13, 8, 6, 0 }; /* "30, 30" test two spaces in a row */
+   for (unsigned int i=0; i<sizeof(pos)/sizeof(*pos); i++) {
+      int p = pos[i];
+      if (i==0) {
+         // insert space after last char
+         p = strlen(vvect1);
+      }
+      // printf("%d %d -%s- len=%d\n", i, p, vvect1, strlen(vvect1));
+      memcpy(vvect1+p+1, vvect1+p, strlen(vvect1)-p+1);
+      vvect1[p]=' ';
+      // printf("%d %d +%s+ len=%d\n", i, p, vvect1, strlen(vvect1));
+      len = base64_to_bin(vdata1, strlen(testdata1) + 10, (char*)vvect1, strlen(vvect1));
+      vdata1[len] = 0;
+      // printf("i=%d len=%d vdata1=%s len=%d\n", i , len, vdata1, strlen(vdata1));
+      // printf("i=%d len=%d vdata1=%s len=%d\n", i , strlen(testdata1), testdata1, strlen(testdata1));
+      bool o = (len == strlen(testdata1) && strcmp(vdata1, testdata1) == 0);
+      if (!o) {
+         char buf[256];
+         notok = true;
+         snprintf(buf, sizeof(buf), "test base64 decode base64 with space mismatch for i=%d", i);
+         ok(o, buf);
+      }
+   }
+   ok(!notok, "test base64 decode base64 with multiple spaces");
+   free(vdata2);
    free(vdata1);
    free(vvect1);
+   free(vvect2);
+
+   /* test buffer too small */
+   len = base64_to_bin(buf, 1, testvect1, 10);
+   ok(len == 0, "test base64 buffer too small 1");
+   len = base64_to_bin(buf, 0, testvect1, 10);
+   ok(len == 0, "test base64 buffer too small 2");
+   /* test with varying padding */
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ==", 4);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ==");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ=", 3);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ=");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ", 2);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ==", 4);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ==");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ=", 3);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ=");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ", 2);
+   ok(len == 1 && buf[0] == 'a', "test base64 padding YQ");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ==", 3);
+   ok(len == 1 && buf[0] == 'a', "test base64 truncated padding YQ== 3");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ==", 2);
+   ok(len == 1 && buf[0] == 'a', "test base64 truncated padding YQ== 2");
+   /* test invalid char in the input */
+   len = base64_to_bin(buf, 1, "*YQ==", 5);
+   ok(len == 0, "test base64 invalid char 1");
+   len = base64_to_bin(buf, 1, "Y*Q==", 5);
+   ok(len == 0, "test base64 invalid char 2");
+   len = base64_to_bin(buf, 1, "YQ*==", 5);
+   ok(len == 0, "test base64 invalid char 3");
+   buf[0]='X';
+   len = base64_to_bin(buf, 1, "YQ=*=", 5);
+   ok(len == 1 && buf[0] == 'a', "test base64 invalid char after the padding");
 
    /* encode reference binary data to base64 */
    len = bin_to_base64(buf, 30, (char*)rnddata, 16, true);
@@ -473,6 +570,8 @@ int main()
    len = from_base64(&var, buf);
    ok(var == VARREF, "Checking from_base64 decoded data - encoded");
    ok(len == 6, "Checking from_base64 decoded length - encoded");
+
+
    return report();
 };
 #endif /* TEST_PROGRAM */
