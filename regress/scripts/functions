@@ -324,8 +324,8 @@ reset_test()
    ./test_starttime
    echo " "
    echo " "
-   echo " === Start $TestName ${variant_name} at `date +%R:%S` ==="
-   echo " === Start $TestName ${variant_name} at `date +%R:%S` ===" >> ${working}/log
+   echo " === Start $TestName ${variant_name} ${XPARAM_LABEL} at `date +%R:%S` ==="
+   echo " === Start $TestName ${variant_name} ${XPRAM_LABEL} at `date +%R:%S` ===" >> ${working}/log
    echo " "
    export TestName
    export zstat
@@ -675,11 +675,11 @@ EOF
          $bperl -e "check_openfile('/proc/$pid/fd')"
          if [ $? -ne 0 ]; then
             echo " "
-            echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! "
+            echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! "
             echo "     Files still open!!"
             echo " " >>test.out
             echo " " >>test.out
-            echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
+            echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! " >>test.out
             echo "     Files still open!!" >>test.out
             echo " "
             estat=1
@@ -690,11 +690,11 @@ EOF
       $bperl -e 'check_jobmedia()'
       if [ $? -ne 0 ]; then
          echo " "
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! "
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! "
          echo "     JobMedia is corrupted"
          echo " " >>test.out
          echo " " >>test.out
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     JobMedia is corrupted" >>test.out
          echo " "
          estat=1
@@ -704,11 +704,11 @@ EOF
       $bperl -e 'check_encryption("$tmp/log1.out")'
       if [ $? -ne 0 ]; then
          echo " "
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! "
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! "
          echo "     Encryption problem"
          echo " " >>test.out
          echo " " >>test.out
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     Encryption problem" >>test.out
          echo " "
          estat=1
@@ -718,11 +718,11 @@ EOF
       $bperl -e 'check_json_tools()'
       if [ $? -ne 0 ]; then
          echo " "
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! "
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! "
          echo "     JSON Data is incorrect"
          echo " " >>test.out
          echo " " >>test.out
-         echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
+         echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! " >>test.out
          echo "     JSON Data is incorrect" >>test.out
          echo " "
          estat=1
@@ -757,11 +757,11 @@ EOF
    ls ${working}/@* 2>/dev/null 1>/dev/null
    if test $? -eq 0 ; then
       echo " "
-      echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! "
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! "
       echo "     SCSI lock still set"
       echo " " >>test.out
       echo " " >>test.out
-      echo "  !!!!! $TestName ${variant_name} failed!!! `date +%R:%S` !!!!! " >>test.out
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! `date +%R:%S` !!!!! " >>test.out
       echo "     SCSI lock still set" >>test.out
       echo " "
       estat=1
@@ -1102,37 +1102,37 @@ end_test()
    t=`date +%R:%S`
    if [ "$ddestat" != 0 ] ; then
       echo " " | tee -a test.out
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! " | tee -a test.out
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! " | tee -a test.out
       echo "     Status: estat=$estat zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat dde=$ddestat" | tee -a test.out
       echo " "
       exit 1
    fi
    if [ $estat != 0 ] ; then
       echo " "
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! "
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! "
       echo "     Status: estat=$estat zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat"
       echo " " >>test.out
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! " >>test.out
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! " >>test.out
       echo "     Status: estat=$estat zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat" >>test.out
       echo " "
       exit 1
    fi
    if [ $zstat != 0 ] ; then
       echo " "
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! "
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! "
       echo "     Status: zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat"
       echo " " >>test.out
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! " >>test.out
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! " >>test.out
       echo "     Status: zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat" >>test.out
       echo " "
       exit 1
    fi
    if [ $dstat != 0 -o $bstat != 0 -o $rstat != 0 -o $vstat != 0 ] ; then
       echo " "
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! "
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! "
       echo "     Status: zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat"
       echo " " >>test.out
-      echo "  !!!!! $TestName ${variant_name} failed!!! $t $d !!!!! " >>test.out
+      echo "  !!!!! $TestName ${variant_name} ${XPARAM_LABEL} failed!!! $t $d !!!!! " >>test.out
       echo "     Status: zombie=$zstat backup=$bstat restore=$rstat diff=$dstat verify=$vstat" >>test.out
       if [ $bstat != 0 -o $rstat != 0 -o $vstat != 0 ] ; then
          echo "     !!! Bad termination status       !!! "
