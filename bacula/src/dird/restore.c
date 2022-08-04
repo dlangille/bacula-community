@@ -192,6 +192,16 @@ static bool check_for_new_storage(JCR *jcr, bootstrap_info &info)
    return false;
 }
 
+/* return true if the offset match the next offset where we need to split the BSR */
+static bool split_bsr(JCR *jcr, bootstrap_info &info, boffset_t off)
+{
+   if (info.next_split_off != NULL && *info.next_split_off == off) {
+      info.next_split_off = (boffset_t *)info.split_list->next(); // load next offset
+      return true;
+   }
+   return false;
+}
+
 /**
  * Send bootstrap file to Storage daemon section by section.
  */
@@ -209,8 +219,8 @@ static bool send_bootstrap_file(JCR *jcr, BSOCK *sock,
    }
    sock->fsend(bootstrap);
    pos = ftello(bs);
-   while(bfgets(ua->cmd, bs)) {
-      if (check_for_new_storage(jcr, info)) {
+   while (bfgets(ua->cmd, bs)) {
+      if (check_for_new_storage(jcr, info) || split_bsr(jcr, info, pos)) {
          /* Otherwise, we need to contact another storage daemon.
           * Reset bs to the beginning of the current segment.
           */
@@ -234,10 +244,12 @@ static bool select_rstore(JCR *jcr, bootstrap_info &info)
    STORE *store;
    int i;
 
+   /* Releases the store_bsock between calls to the SD. */
+   free_bsock(jcr->store_bsock);
 
    STORE *rstore = jcr->store_mngr->get_rstore();
    if (!strcmp(rstore->name(), info.storage)) {
-      return true;                 /* same SD nothing to change */
+      return true;                 /* same SD nothing to change in the storage mngr*/
    }
 
    if (!(store = (STORE *)GetResWithName(R_STORAGE,info.storage))) {
@@ -248,19 +260,13 @@ static bool select_rstore(JCR *jcr, bootstrap_info &info)
    }
 
    /*
-    * This releases the store_bsock between calls to the SD.
-    *  I think.
-    */
-   free_bsock(jcr->store_bsock);
-
-   /*
     * release current read storage and get a new one
     */
    jcr->store_mngr->dec_read_stores();
    jcr->store_mngr->set_rstore(store, _("Job resource"));
    jcr->setJobStatus(JS_WaitSD);
    /*
-    * Wait for up to 6 hours to increment read stoage counter
+    * Wait for up to 6 hours to increment read storage counter
     */
    for (i=0; i < MAX_TRIES; i++) {
       /* try to get read storage counter incremented */
@@ -302,11 +308,15 @@ bool restore_bootstrap(JCR *jcr)
    POOL_MEM restore_cmd(PM_MESSAGE);
    bool ret = false;
 
-
    /* Open the bootstrap file */
    if (!open_bootstrap_file(jcr, info)) {
       goto bail_out;
    }
+
+   if (split_bsr_loop(jcr, info)) { /* create the split list to break volume cycle */
+      Jmsg(jcr, M_INFO, 0, _("Found a volume cycle in the bootstrap, fixing automatically the reading process\n"));
+   }
+
    /* Read the bootstrap file */
    while (!feof(info.bs)) {
 
@@ -316,8 +326,8 @@ bool restore_bootstrap(JCR *jcr)
 
       /**
        * Open a message channel connection with the Storage
-       * daemon. This is to let him know that our client
-       * will be contacting him for a backup  session.
+       * daemon. This is to let him know that our client will be contacting
+       * him for a backup session. Or the opposite if sdcallsclient is enable
        *
        */
       Dmsg0(10, "Open connection with storage daemon\n");

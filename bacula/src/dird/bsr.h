@@ -67,6 +67,9 @@ struct bootstrap_info
    FILE *bs;
    UAContext *ua;
    char storage[MAX_NAME_LENGTH+1];
+   alist *split_list; /* when a BSR cannot be restored in once, this is a list */
+                      /* of offset where to split the BSR to send to the SD */
+   boffset_t *next_split_off; /* the next split position */
 };
 bool open_bootstrap_file(JCR *jcr, bootstrap_info &info);
 void close_bootstrap_file(bootstrap_info &info);

@@ -120,6 +120,7 @@ bool do_vbackup(JCR *jcr)
    sellist     sel;
    db_list_ctx jobids;
    UAContext *ua;
+   bootstrap_info info;
 
    Dmsg2(100, "rstorage=%p wstorage=%p\n", jcr->store_mngr->get_rstore_list(), jcr->store_mngr->get_wstore_list());
    Dmsg2(100, "Read store=%s, write store=%s\n",
@@ -305,6 +306,21 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
 
    if (!create_bootstrap_file(jcr, jobids.list)) {
       Jmsg(jcr, M_FATAL, 0, _("Could not get or create the FileSet record.\n"));
+      return false;
+   }
+
+   /* Open the bootstrap file */
+   if (!open_bootstrap_file(jcr, info)) {
+      return false;
+   }
+
+   if (split_bsr_loop(jcr, info)) { /* create the split list to break volume cycle */
+      Jmsg(jcr, M_FATAL, 0, _("Found a volume cycle in the bootstrap, Virtual Full is not possible on this Job\n"));
+   }
+
+   close_bootstrap_file(info);
+
+   if (jcr->is_canceled()) {
       return false;
    }
 

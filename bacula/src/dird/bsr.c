@@ -776,6 +776,8 @@ bool open_bootstrap_file(JCR *jcr, bootstrap_info &info)
    UAContext *ua;
    info.bs = NULL;
    info.ua = NULL;
+   info.split_list = NULL;
+   info.next_split_off = NULL;
 
    if (!jcr->RestoreBootstrap) {
       return false;
@@ -821,4 +823,101 @@ void close_bootstrap_file(bootstrap_info &info)
       free_ua_context(info.ua);
       info.ua = NULL;
    }
+   if (info.split_list) {
+      delete info.split_list;
+      info.split_list = NULL;
+      info.next_split_off = NULL; // no need to free anything
+   }
+}
+
+
+struct bsr_vol_list {
+   hlink link;
+   uint64_t address;
+   char volume[1];
+};
+
+/* Generate a list of split position in the BSR to break any cycle
+ * returns true if a cycle was detected
+ */
+bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
+{
+   UAContext *ua = info.ua;
+   FILE *bs = info.bs;
+   bsr_vol_list *p = NULL;
+   htable volumes(p, &p->link, 100);   // list of volume that have already been used
+
+   POOL_MEM storage(PM_NAME);
+   POOL_MEM volume(PM_NAME), last_volume(PM_NAME);
+
+   uint32_t VolSessionId, VolSessionTime;
+   uint32_t prevVolSessionId = 0, prevVolSessionTime = 0;
+
+   boffset_t start_section_offset; // the offset of the beginning of the section
+   boffset_t start_job_off; // the offset of the first section of the job
+
+   bool first = true;
+   bool after_eof = false;   // used to handle the after EOF inside the loop
+
+   if (info.split_list == NULL) {
+      info.split_list = New(alist(100, owned_by_alist));
+   }
+   while (true) {
+      boffset_t cur_off = ftello(bs); // off of the line
+      after_eof = (bfgets(ua->cmd, bs) == NULL);
+      if (!after_eof) {
+         parse_ua_args(ua);
+         if (ua->argc != 1) {
+            continue; // @ERIC we do the same in check_for_new_storage()
+         }
+      }
+      if (after_eof || strcasecmp(ua->argk[0], "Storage") == 0) {
+         if (first) {
+            first = false;
+         } else {
+            // This was the last part or we have reached the end of the file
+            if (strcmp(last_volume.c_str(), volume.c_str()) != 0) {
+               /* look if the volume has already been used before */
+               bsr_vol_list *item = (bsr_vol_list *)volumes.lookup(volume.c_str());
+               if (item == NULL) {
+                  /* this is the first time we use this volume */
+                  item = (bsr_vol_list *)volumes.hash_malloc(strlen(volume.c_str())+sizeof(bsr_vol_list));
+                  strcpy(item->volume, volume.c_str());
+                  item->address = 0; // unused
+                  volumes.insert(item->volume, item);
+
+               } else {
+                  /* this volume has already been used before */
+                  boffset_t *p = (boffset_t *)malloc(sizeof(boffset_t));
+                  *p = start_job_off;
+                  info.split_list->append(p);
+               }
+            }
+            last_volume.strcpy(volume.c_str());
+            if (prevVolSessionTime != VolSessionTime || prevVolSessionId != VolSessionId) {
+               /* This is a new job */
+               start_job_off = start_section_offset;
+               prevVolSessionId = VolSessionId;
+               prevVolSessionTime = VolSessionTime;
+            }
+            start_section_offset = cur_off;
+         }
+         if (after_eof) {
+            break;
+         }
+         storage.strcpy(ua->argv[0]);
+      }
+      if (strcasecmp(ua->argk[0], "Volume") == 0) {
+         volume.strcpy(ua->argv[0]);
+      }
+      if (strcasecmp(ua->argk[0], "VolSessionId") == 0) {
+         VolSessionId = str_to_uint64(ua->argv[0]);
+      }
+      if (strcasecmp(ua->argk[0], "VolSessionTime") == 0) {
+         VolSessionTime = str_to_uint64(ua->argv[0]);
+      }
+   }
+   fseeko(bs, 0, SEEK_SET);
+   info.next_split_off = (boffset_t *)info.split_list->first();
+   return info.next_split_off != NULL;
 }
