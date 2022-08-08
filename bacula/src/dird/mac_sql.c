@@ -376,9 +376,11 @@ int getJob_to_migrate(JCR *jcr)
          goto ok_out;
       }
 
-      Jmsg(jcr, M_INFO, 0, _("The following %u JobId%s chosen to be %s: %s\n"),
-         ids.count, (ids.count < 2) ? _(" was") : _("s were"),
-         jcr->get_ActionName(1), ids.list);
+      Mmsg(query,  _("The following %u JobId%s chosen to be %s: %%s\n"),
+           ids.count, (ids.count < 2) ? _(" was") : _("s were"),
+           jcr->get_ActionName(1));
+      /* Print the list, but make sure we don't have lines that are too long for Jmsg() */
+      jmsg_large_jobid_list(jcr, query.c_str(), ids.list);
 
       Dmsg2(dbglevel, "Before loop count=%d ids=%s\n", ids.count, ids.list);
       /*

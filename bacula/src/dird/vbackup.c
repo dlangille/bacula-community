@@ -91,7 +91,9 @@ bool do_vbackup_init(JCR *jcr)
  */
 static bool copy_object_list(JCR *jcr, const char *jobids, uint32_t JobId)
 {
-   /* The batch session is not used anymore at this point */
+   if (jcr->is_canceled()) {
+      return false;
+   }
    db_lock(jcr->db_batch);
    Mmsg(jcr->db_batch->cmd, copy_object[db_get_type_index(jcr->db_batch)], JobId, jobids, jobids);
    if (!db_sql_query(jcr->db_batch, jcr->db_batch->cmd, NULL, NULL)) {
@@ -196,8 +198,7 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
             return false;
          }
 
-         Jmsg(jcr, M_INFO, 0, _("Using user supplied JobIds=%s\n"),
-              jobids.list);
+         jmsg_large_jobid_list(jcr, _("Using user supplied JobIds=%s\n"), jobids.list);
 
          /* Check status */
          Mmsg(query,
@@ -278,7 +279,8 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
    /* Full by default, or might be Incr/Diff when jobid= is used */
    jcr->jr.JobLevel = level_computed;
 
-   Jmsg(jcr, M_INFO, 0, "Consolidating JobIds=%s\n", jobids.list);
+   /* Display the JobId selection and adjust the output for Jmsg */
+   jmsg_large_jobid_list(jcr, _("Consolidating JobIds=%s\n"), jobids.list);
 
    /*
     * Now we find the last job that ran and store it's info in
@@ -377,6 +379,13 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
    /* Note, the SD stores in jcr->JobFiles/ReadBytes/JobBytes/JobErrors */
    wait_for_storage_daemon_termination(jcr);
    jcr->setJobStatus(jcr->SDJobStatus);
+
+   /* At this point, the batch SQL link should be open */
+   if (!db_open_batch_connection(jcr, jcr->db)) {
+      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connection");
+      return false;
+   }
+
    if (!flush_file_records(jcr)) {     /* cached attribute + batch insert */
       Jmsg(jcr, M_ERROR, 0,
            _("Unable to flush file records!\n"));
@@ -402,7 +411,8 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       ua = new_ua_context(jcr);
       purge_jobs_from_catalog(ua, jobids.list);
       free_ua_context(ua);
-      Jmsg(jcr, M_INFO, 0, _("Deleted consolidated JobIds=%s\n"), jobids.list);
+
+      jmsg_large_jobid_list(jcr, _("Delete consolidated JobIds=%s\n"), jobids.list);
    }
 
    vbackup_cleanup(jcr, jcr->JobStatus);

@@ -1966,3 +1966,23 @@ bool flush_file_records(JCR *jcr)
 
    return db_write_batch_file_records(jcr);    /* used by bulk batch file insert */
 }
+
+/* Small helper to display very long jobid list
+ * The msg format should have a single %s
+ */
+void jmsg_large_jobid_list(JCR *jcr, const char *msg, const char *jobids)
+{
+   sellist sel;
+   char *p;
+
+   sel.set_expanded_limit(120);
+   sel.set_string(jobids, true);
+   p = sel.get_expanded_list();
+   Jmsg(jcr, M_INFO, 0, msg, p);
+
+   sel.free_expanded();
+   while ((p = sel.get_expanded_list()) && p[0]) {
+      Jmsg(jcr, M_INFO, 0, _("   %s\n"), p);
+      sel.free_expanded();
+   }
+}
