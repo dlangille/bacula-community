@@ -178,7 +178,7 @@ char *sellist::get_expanded_list()
    int32_t len;
    int64_t val;
    char    *p, *tmp;
-   char    ed1[50];
+   char    ed1[SIZE_EDIT_INT];
 
    if (!expanded) {
       p = expanded = (char *)malloc(expandedsize * sizeof(char));
@@ -207,6 +207,13 @@ char *sellist::get_expanded_list()
 
          strcpy(p, ed1);
          p += len;
+
+         /* When a limit is set, we check for the buffer size, and we return if
+          * we have enough bytes. The next call will get the rest of the data.
+          */
+         if (limit && ((p - expanded) > (limit-SIZE_EDIT_INT))) {
+            return expanded;
+         }
       }
    }
    return expanded;
@@ -241,6 +248,8 @@ static struct test tests[] = {
    {12, "a123", "", false, },
    {13, "1  3", "", false, },
    {0, "dummy", "dummy", false, },
+   {-2, "19,1,9,8,2,3,10,7,11,12,4,13,6,14,15,21,22,23,24,25,27,26,28,31,29,30,33,32,34,35,36,37,41,40,38,39,44,42,43,46,45,47,49,48,53,51,50,52,55,54,56,57,58,61,59,60,62,63,64,67,68,65,66,70,71,69,74,72,73,75,77,78,76,81,79,80,84,83,82,85,86,87,90,88,89,92,91,94,96,93,95,97,98,102,99,100,101,106,104,103,108,105,107,110,111,109,112,113,114,115,116,117,120,119,118,123,122,121,125,124,126,128,127,129,130,131,132,133", "", false, },
+   {-1, "1-1013", "", false, },
 };
 
 #define ntests ((int)(sizeof(tests)/sizeof(struct test)))
@@ -263,6 +272,24 @@ int main()
       }
    }
 
+   sl.set_expanded_limit(200);
+   sl.set_string(tests[ntests-1].sinp);
+   msg = sl.get_expanded_list();
+   while ((msg = sl.get_expanded_list()) && msg[0]) {
+      ok(strlen(msg) >= 4, "get_expanded_list(200) > 4");
+      ok(strlen(msg) < 200, "get_expanded_list(200) < 200");
+      log("%s\n", msg);
+      sl.free_expanded();
+   }
+
+   sl.set_expanded_limit(100);
+   sl.set_string(tests[ntests-2].sinp);
+   while ((msg = sl.get_expanded_list()) && msg[0]) {
+      ok(strlen(msg) >= 4, "get_expanded_list(100) > 4");
+      ok(strlen(msg) < 90, "get_expanded_list(100) < 90");
+      log("%s\n", msg);
+      sl.free_expanded();
+   }
    return report();
 }
 #endif   /* TEST_PROGRAM */

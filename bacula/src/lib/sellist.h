@@ -40,12 +40,14 @@ class sellist : public SMARTALLOC {
    char esave, hsave;
    bool all;
    int64_t beg, end;
-   int num_items;
+   int num_items, limit;
    char *str;
    char *expanded;
 public:
    sellist();
    ~sellist();
+   void set_expanded_limit(int l) { limit = l;};
+   void free_expanded() { if(expanded) { free(expanded); expanded = NULL;}};
    bool set_string(const char *string, bool scan);
    bool is_all() { return all; };
    int64_t first();
@@ -56,6 +58,7 @@ public:
    char *get_list() { return str; };
    /* get the list of all jobids */
    char *get_expanded_list();
+
    /* if errmsg == NULL, no error */
    const char *get_errmsg() { return errmsg; };
 };
@@ -70,6 +73,7 @@ inline sellist::sellist()
    str = NULL;
    e = NULL;
    errmsg = NULL;
+   limit = 0;
 }
 
 /*
