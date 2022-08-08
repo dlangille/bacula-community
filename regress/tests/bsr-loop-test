@@ -1,0 +1,143 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This is modified version of tests/bsr-skip-issue-test
+# but without the VF
+# Run a simple backup of the Bacula build directory and then 3
+# more incrementals in way of having this on the Volumes :
+# then restore it.
+# FileVolume001 : 1 2B
+# FileVolume002 : 2A
+# FileVolume003 : 3 6B
+# FileVolume004 : 4 5B
+# FileVolume005 : 5A
+# FileVolume006 : 6A
+#
+
+TestName="bsr-loop-test"
+JobName=Vbackup
+. scripts/functions
+
+
+scripts/cleanup
+scripts/copy-migration-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+#$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Accurate', 'yes', 'Job')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'no', 'Job')"
+#$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MaximumFileSize', '1MB', 'Device')"
+
+rm -f $cwd/build/inc[1-9]
+for num in 2 3 4 5 6 ; do
+   dd if=/dev/urandom bs=1M count=1 2>/dev/null | base64 > $tmp/inc${num} # char '=' don't work in bacula "@exec"
+done
+
+change_jobname NightlySave $JobName
+
+if /bin/true ; then
+   # make the network protocol easier to understand
+   $bperl -e 'add_attribute("$conf/bacula-fd.conf", "TlsPskEnable", "no", "FileDaemon")'
+   $bperl -e 'add_attribute("$conf/bacula-sd.conf", "TlsPskEnable", "no", "Storage")'
+   $bperl -e 'add_attribute("$conf/bacula-dir.conf", "TlsPskEnable", "no", "Storage")'
+   $bperl -e "add_attribute('$conf/bacula-sd.conf',  'CommCompression', 'no', 'Storage')"
+   $bperl -e "add_attribute('$conf/bacula-dir.conf', 'CommCompression', 'no', 'Director')"
+   $bperl -e "add_attribute('$conf/bacula-fd.conf',  'CommCompression', 'no', 'FileDaemon')"
+fi
+
+start_test
+
+# Write out bconsole commands
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+@#setdebug level=100 storage=File
+@# run job 1 FULL
+@exec "sh -c 'date > ${cwd}/build/date'"
+label storage=File volume=FileVolume001 Pool=Special
+run job=$JobName level=Full pool=Special yes
+wait
+messages
+@# run job 2
+@exec "cp $tmp/inc2 $cwd/build/inc2"
+update volume=FileVolume001 volstatus=Used
+label storage=File volume=FileVolume002 Pool=Special
+update volume=FileVolume002 maxvolbytes=1MB
+run job=$JobName level=Incremental pool=Special yes
+wait mount
+update volume=FileVolume001 volstatus=Append
+mount storage=File drive=0 slot=0
+wait
+messages
+@# run job 3
+@exec "cp $tmp/inc3 $cwd/build/inc3"
+update volume=FileVolume001 volstatus=Used
+label storage=File volume=FileVolume003 Pool=Special
+run job=$JobName level=Incremental pool=Special yes
+wait
+messages
+@# run job 4
+@exec "cp $tmp/inc4 $cwd/build/inc4"
+update volume=FileVolume003 volstatus=Used
+label storage=File volume=FileVolume004 Pool=Special
+run job=$JobName level=Incremental pool=Special yes
+wait
+messages
+@# run job 5
+@exec "cp $tmp/inc5 $cwd/build/inc5"
+update volume=FileVolume004 volstatus=Used
+label storage=File volume=FileVolume005 Pool=Special
+update volume=FileVolume005 maxvolbytes=1MB
+run job=$JobName level=Incremental pool=Special yes
+wait mount
+update volume=FileVolume004 volstatus=Append
+mount storage=File drive=0 slot=0
+wait
+messages
+@# run job 6
+@exec "cp $tmp/inc6 $cwd/build/inc6"
+update volume=FileVolume004 volstatus=Used
+label storage=File volume=FileVolume006 Pool=Special
+update volume=FileVolume006 maxvolbytes=1MB
+run job=$JobName level=Incremental pool=Special yes
+wait mount
+update volume=FileVolume003 volstatus=Append
+mount storage=File drive=0 slot=0
+wait
+messages
+list jobmedia
+list jobs
+@#setdebug client tags=network level=3000
+@$out $tmp/log2.out
+restore where=${cwd}/tmp/bacula-restores select all done yes
+wait
+messages
+@$out $tmp/log3.out 
+run job=$JobName level=VirtualFull yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+check_for_zombie_jobs storage=File
+stop_bacula
+
+grep "Backup Error" $tmp/log3.out > /dev/null
+if [ $? != 0 ]; then
+    print_debug "ERROR: Should find a problem with the last virtual full in $tmp/log3.out"
+    estat=1
+fi
+
+#
+# We only used one log so copy it to the second log
+#  so that any restore errors will be picked up
+#
+check_two_logs
+check_restore_diff
+
+end_test
