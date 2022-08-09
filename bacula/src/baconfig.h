@@ -238,6 +238,13 @@ void InitWinAPIWrapper();
  */
 #define DEFAULT_NETWORK_BUFFER_SIZE (64 * 1024)
 
+
+/*
+ * Size of a buffer when editing numbers via edit_uint64/edit_int
+ * Normally, it's around 20.
+ */
+#define SIZE_EDIT_INT 50
+
 /**
  * Tape label types -- stored in catalog
  */
