@@ -2066,6 +2066,7 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
          break;
        }
 #endif
+      *(void **)value = NULL;
        return bRC_Error;
    case bVarVssDllHandle:
 #ifdef HAVE_WIN32
