@@ -304,24 +304,29 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       return false;
    }
 
-   if (!create_bootstrap_file(jcr, jobids.list)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not get or create the FileSet record.\n"));
-      return false;
-   }
+   {
+      /* check if the BSR have volume cycle and return a FATAL error if so
+       * in the future we must modify VF to be able to handle such situation
+       */
+      if (!create_bootstrap_file(jcr, jobids.list)) {
+         Jmsg(jcr, M_FATAL, 0, _("Could not get or create the FileSet record.\n"));
+         return false;
+      }
 
-   /* Open the bootstrap file */
-   if (!open_bootstrap_file(jcr, info)) {
-      return false;
-   }
+      /* Open the bootstrap file */
+      if (!open_bootstrap_file(jcr, info)) {
+         return false;
+      }
 
-   if (split_bsr_loop(jcr, info)) { /* create the split list to break volume cycle */
-      Jmsg(jcr, M_FATAL, 0, _("Found a volume cycle in the bootstrap, Virtual Full is not possible on this Job\n"));
-   }
+      if (split_bsr_loop(jcr, info)) { /* create the split list to break volume cycle */
+         Jmsg(jcr, M_FATAL, 0, _("Found a volume cycle in the bootstrap, Virtual Full is not possible on this Job\n"));
+      }
 
-   close_bootstrap_file(info);
+      close_bootstrap_file(info);
 
-   if (jcr->is_canceled()) {
-      return false;
+      if (jcr->is_canceled()) {
+         return false;
+      }
    }
 
    /*

@@ -833,12 +833,29 @@ void close_bootstrap_file(bootstrap_info &info)
 
 struct bsr_vol_list {
    hlink link;
-   uint64_t address;
+   int job_num;  /* remember when the volume was used, this is not a JobId */
    char volume[1];
 };
 
 /* Generate a list of split position in the BSR to break any cycle
  * returns true if a cycle was detected
+ * When a volume appears in multiple sequence into a BSR, interleaved with other
+ * volumes this can be a problem because the SD mount each volume only once and
+ * reads the all content and this modify the order of the restore of the
+ * different parts.
+ * We need to split the BSR into parts that the SD will not be able to "optimize"
+ * with each volume appearing only in one sequence.
+ * The function detect when a volume is interleaved with other volume and
+ * split the BSR at the beginning of a job that reuse a volume.
+ *
+ * But We need to reset the list of volume between each split!
+ * When the BSR is split there is no need to remember for the volumes that
+ * are in the previous part. Read the BSR in one pass and resetting the list
+ * of volumes is difficult as we do the split in hindsight.
+ * Instead of modifying the list we remember when a volume has been
+ * seen for the last time (the job_num) and to know if a volume matter
+ * we compare it with the last_split_job_num that is the first job_num
+ * in the new list
  */
 bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
 {
@@ -858,6 +875,8 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
 
    bool first = true;
    bool after_eof = false;   // used to handle the after EOF inside the loop
+   int job_num = 1;            // internal job numbering from 1..N
+   int last_split_job_num = 1; // the jobs that are >= matter
 
    if (info.split_list == NULL) {
       info.split_list = New(alist(100, owned_by_alist));
@@ -880,22 +899,28 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
                /* look if the volume has already been used before */
                bsr_vol_list *item = (bsr_vol_list *)volumes.lookup(volume.c_str());
                if (item == NULL) {
-                  /* this is the first time we use this volume */
+                  /* this is the first time we see this volume */
                   item = (bsr_vol_list *)volumes.hash_malloc(strlen(volume.c_str())+sizeof(bsr_vol_list));
                   strcpy(item->volume, volume.c_str());
-                  item->address = 0; // unused
+                  item->job_num = job_num; /* remember when the volume was used */
                   volumes.insert(item->volume, item);
 
                } else {
-                  /* this volume has already been used before */
-                  boffset_t *p = (boffset_t *)malloc(sizeof(boffset_t));
-                  *p = start_job_off;
-                  info.split_list->append(p);
+                  /* we already know about this volume, but is it used in current part ? */
+                  if (item->job_num >= last_split_job_num) {
+                     /* the volume is used in this part, we need to split */
+                     boffset_t *p = (boffset_t *)malloc(sizeof(boffset_t));
+                     *p = start_job_off;
+                     info.split_list->append(p);
+                     last_split_job_num = job_num; /* ignore volumes too old */
+                  }
+                  item->job_num = job_num; /* remember when the volume was used */
                }
             }
             last_volume.strcpy(volume.c_str());
             if (prevVolSessionTime != VolSessionTime || prevVolSessionId != VolSessionId) {
                /* This is a new job */
+               job_num++;
                start_job_off = start_section_offset;
                prevVolSessionId = VolSessionId;
                prevVolSessionTime = VolSessionTime;
