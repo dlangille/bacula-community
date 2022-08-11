@@ -140,4 +140,15 @@ fi
 check_two_logs
 check_restore_diff
 
+connection=`grep "Connected to Storage at" $tmp/log2.out | wc -l`
+mount=`grep "Ready to read from volume" $tmp/log2.out | wc -l`
+if [ $connection -ne 3 ]; then
+    print_debug "ERROR: The BSR should be split into 3 parts, not $connection"
+    estat=1
+fi
+if [ $mount -ne 9 ]; then
+    print_debug "ERROR: The 6 volumes should be mounted 9 times, not $mount"
+    estat=1
+fi
+
 end_test
