@@ -158,6 +158,7 @@ struct JOB_DBR {
    double CompressRatio;
    DBId_t WriteStorageId;
    DBId_t LastReadStorageId;
+   int Encrypted;
 
    /* Note, FirstIndex, LastIndex, Start/End File and Block
     * are only used in the JobMedia record.

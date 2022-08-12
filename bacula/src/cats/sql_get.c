@@ -256,7 +256,8 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
 "Type,Level,ClientId,Job.Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,isVirtualFull,WriteStorageId,LastReadstorageId "
+"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
+"Reviewed,Client.Name AS Client, isVirtualFull,WriteStorageId,LastReadstorageId,StatusInfo,LastReadDevice,WriteDevice,Encrypted "
 "FROM Job WHERE Job='%s'", esc);
 
       } else if (jr->PriorJob[0]) {
@@ -264,7 +265,8 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
 "Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,isVirtualFull,WriteStorageId,LastReadstorageId "
+"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
+"Reviewed,Client.Name AS Client,isVirtualFull,WriteStorageId,LastReadstorageId,StatusInfo,LastReadDevice,WriteDevice,Encrypted "
 "FROM Job WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
       } else {
          Mmsg0(errmsg, _("No Job found\n"));
@@ -280,8 +282,8 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
 "Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
 // 18        19            20        21       22            23   24       25       26
 "SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,"
-//	   27          28           29              30        31              32     
-"isVirtualFull,WriteStorageId,LastReadStorageId,StatusInfo,LastReadDevice,WriteDevice "
+//	   27          28           29              30        31              32       33
+"isVirtualFull,WriteStorageId,LastReadStorageId,StatusInfo,LastReadDevice,WriteDevice,Encrypted "
 "FROM Job WHERE JobId=%s",
           edit_int64(jr->JobId, ed1));
    }
@@ -344,6 +346,7 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
    bstrncpy(jr->StatusInfo, NPRTB(row[30]), sizeof(jr->StatusInfo));
    bstrncpy(jr->LastReadDevice, NPRTB(row[31]), sizeof(jr->LastReadDevice));
    bstrncpy(jr->WriteDevice, NPRTB(row[32]), sizeof(jr->WriteDevice));
+   jr->Encrypted = str_to_int64(row[33]);
    sql_free_result();
 
    bdb_unlock();

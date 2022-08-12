@@ -1458,6 +1458,7 @@ void update_job_end_record(JCR *jcr)
    jcr->jr.VolSessionTime = jcr->VolSessionTime;
    jcr->jr.JobErrors = jcr->JobErrors + jcr->SDErrors;
    jcr->jr.HasBase = jcr->HasBase;
+   jcr->jr.Encrypted = jcr->Encrypt; /* Update when the SD can encrypt as well */
    bstrncpy(jcr->jr.StatusInfo, jcr->StatusInfo, sizeof(jcr->jr.StatusInfo));
 
    STORE *wstore = wjcr->store_mngr->get_wstore();

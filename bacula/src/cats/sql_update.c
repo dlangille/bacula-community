@@ -188,7 +188,8 @@ int BDB::bdb_update_job_end_record(JCR *jcr, JOB_DBR *jr)
 "ClientId=%u,JobBytes=%s,ReadBytes=%s,JobFiles=%u,JobErrors=%u,VolSessionId=%u,"
 "VolSessionTime=%u,PoolId=%u,FileSetId=%u,JobTDate=%s,"
 "RealEndTime='%s',PriorJobId=%s,HasBase=%u,PurgedFiles=%u,PriorJob='%s',"
-"Rate=%.1f,CompressRatio=%.1f,WriteStorageId=%s,LastReadStorageId=%s,StatusInfo='%s',LastReadDevice='%s',WriteDevice='%s' WHERE JobId=%s",
+"Rate=%.1f,CompressRatio=%.1f,WriteStorageId=%s,LastReadStorageId=%s,StatusInfo='%s',"
+"LastReadDevice='%s',WriteDevice='%s',Encrypted=%d WHERE JobId=%s",
       (char)(jr->JobStatus), dt, jr->ClientId, edit_uint64(jr->JobBytes, ed1),
       edit_uint64(jr->ReadBytes, ed4),
       jr->JobFiles, jr->JobErrors, jr->VolSessionId, jr->VolSessionTime,
@@ -196,6 +197,7 @@ int BDB::bdb_update_job_end_record(JCR *jcr, JOB_DBR *jr)
       rdt, PriorJobId, jr->HasBase, jr->PurgedFiles, jr->PriorJob,
       jr->Rate, jr->CompressRatio, edit_uint64(jr->WriteStorageId, ed5),
       edit_uint64(jr->LastReadStorageId, ed6), esc1, esc2, esc3,
+      jr->Encrypted,
       edit_int64(jr->JobId, ed3));
 
    stat = UpdateDB(jcr, cmd, false);
