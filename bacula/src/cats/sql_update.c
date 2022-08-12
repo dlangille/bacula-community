@@ -101,13 +101,14 @@ bool BDB::bdb_update_job_start_record(JCR *jcr, JOB_DBR *jr)
 
    bdb_lock();
    Mmsg(cmd, "UPDATE Job SET JobStatus='%c',Level='%c',StartTime='%s',"
-"ClientId=%s,JobTDate=%s,PoolId=%s,FileSetId=%s WHERE JobId=%s",
+"ClientId=%s,JobTDate=%s,PoolId=%s,FileSetId=%s,RealStartTime='%s' WHERE JobId=%s",
       (char)(jcr->JobStatus),
       (char)(jr->JobLevel), dt,
       edit_int64(jr->ClientId, ed1),
       edit_uint64(JobTDate, ed2),
       edit_int64(jr->PoolId, ed3),
       edit_int64(jr->FileSetId, ed4),
+      dt,
       edit_int64(jr->JobId, ed5));
 
    stat = UpdateDB(jcr, cmd, false);
