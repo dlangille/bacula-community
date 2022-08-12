@@ -1534,27 +1534,68 @@ bool BDB::bdb_get_file_list(JCR *jcr, char *jobids, int opts,
       Mmsg(buf2, select_recent_version_with_basejob[bdb_get_type_index()],
            jobids, jobids, jobids, jobids);
    }
-
    /* During virtual full, we want to include Objects in the BSR */
-   if (opts & DBL_USE_OBJ) {
-      Mmsg(buf3,
-           "UNION (SELECT ObjectName AS Path, PluginName AS Filename, FileIndex, JobId, '' AS LStat, 0 AS DeltaSeq, '' AS MD5, JobTDate "
-           "FROM Job JOIN RestoreObject USING (JobId) "
-           "WHERE JobId IN (%s) ORDER BY JobTDate ASC, FileIndex ASC) ", jobids);
+   if (bdb_get_type_index() == SQL_TYPE_SQLITE3) {
+      /* This is a SQLite version of the query that could replace the
+       * pgsql/mysql that is left untouched below.
+       * The problem is that sqlite don't like parenthesis to manage UNION like
+       * in (select * from table1) UNION (select * from table2)
+       * the parenthesis were required because of two "order by" like this:
+       * select * from (
+       *   (select * from tableXX)
+       *   UNION
+       *   (select * from tableYY order by WW))
+       * order by WW
+       * but the "before last order by" is not required because it is identical to
+       * the last one and then the parenthesis can be removed to get something like :
+       * select * from
+       *   (
+       *   select * from tableXX
+       *   UNION
+       *   select * from tableYY
+       *   )
+       * order by WW
+       */
+      if (opts & DBL_USE_OBJ) {
+         Mmsg(buf3,
+              "UNION SELECT ObjectName AS Path, PluginName AS Filename, FileIndex, JobId, '' AS LStat, 0 AS DeltaSeq, '' AS MD5, JobTDate "
+              "FROM Job JOIN RestoreObject USING (JobId) "
+              "WHERE JobId IN (%s) ", jobids);
+      }
+      /* bsr code is optimized for JobId sorted, with Delta, we need to get
+       * them ordered by date. JobTDate and JobId can be mixed if using Copy
+       * or Migration
+       */
+      Mmsg(buf,
+   "SELECT Path, Filename, FileIndex, JobId, LStat, DeltaSeq, MD5, JobTDate "
+   "FROM ("
+    "SELECT Path.Path, T1.Filename, T1.FileIndex, T1.JobId, LStat, DeltaSeq, MD5, JobTDate "
+     "FROM ( %s ) AS T1 "
+     "JOIN Path ON (Path.PathId = T1.PathId) %s "
+    " %s ) AS U1 ORDER BY JobTDate, FileIndex ASC",/* Return sorted by JobTDate */
+                                                  /* FileIndex for restore code */
+           buf2.c_str(), type, buf3.c_str());
+   } else {
+      if (opts & DBL_USE_OBJ) {
+         Mmsg(buf3,
+              "UNION (SELECT ObjectName AS Path, PluginName AS Filename, FileIndex, JobId, '' AS LStat, 0 AS DeltaSeq, '' AS MD5, JobTDate "
+              "FROM Job JOIN RestoreObject USING (JobId) "
+              "WHERE JobId IN (%s) ORDER BY JobTDate ASC, FileIndex ASC) ", jobids);
+      }
+      /* bsr code is optimized for JobId sorted, with Delta, we need to get
+       * them ordered by date. JobTDate and JobId can be mixed if using Copy
+       * or Migration
+       */
+      Mmsg(buf,
+   "SELECT Path, Filename, FileIndex, JobId, LStat, DeltaSeq, MD5, JobTDate "
+   "FROM (("
+    "SELECT Path.Path, T1.Filename, T1.FileIndex, T1.JobId, LStat, DeltaSeq, MD5, JobTDate "
+     "FROM ( %s ) AS T1 "
+     "JOIN Path ON (Path.PathId = T1.PathId) %s "
+    ") %s ) AS U1 ORDER BY JobTDate, FileIndex ASC",/* Return sorted by JobTDate */
+                                                  /* FileIndex for restore code */
+           buf2.c_str(), type, buf3.c_str());
    }
-   /* bsr code is optimized for JobId sorted, with Delta, we need to get
-    * them ordered by date. JobTDate and JobId can be mixed if using Copy
-    * or Migration
-    */
-   Mmsg(buf,
-"SELECT Path, Filename, FileIndex, JobId, LStat, DeltaSeq, MD5, JobTDate "
-"FROM (("
- "SELECT Path.Path, T1.Filename, T1.FileIndex, T1.JobId, LStat, DeltaSeq, MD5, JobTDate "
-  "FROM ( %s ) AS T1 "
-  "JOIN Path ON (Path.PathId = T1.PathId) %s "
- ") %s ) AS U1 ORDER BY JobTDate, FileIndex ASC",/* Return sorted by JobTDate */
-                                               /* FileIndex for restore code */
-        buf2.c_str(), type, buf3.c_str());
 
    if (!(opts & DBL_USE_MD5)) {
       strip_md5(buf.c_str());
