@@ -30,7 +30,38 @@ USE ${db_name};
 --  BLOBs are identical to TEXT except that BLOB is case
 --  sensitive in sorts, which is what we want, and TEXT
 --  is case insensitive.
---
+
+
+CREATE TABLE MalwareMD5
+(
+    MD5     char(22)       -- Same as in File
+);
+CREATE INDEX malwaremd5_idx on MalwareMD5 (MD5);
+
+CREATE TABLE MalwareSHA256
+(
+    MD5     char(65)       -- Same as in File
+);
+CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
+
+CREATE TABLE FileEvents 
+(
+   Id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
+   Time DATETIME DEFAULT NOW(),
+   SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
+   JobId         int,        -- JobId where the file was found. Used for pruning
+   FileIndex     int,        -- File reference
+   Type          char,       -- Event type (antivirus, malware scanning (M), lost file)
+   Description   blob,       -- Description of the event
+   Severity      int,        -- level of severity. (0 OK, 100 Important)
+   Source        blob,       -- Information about the source of the event
+   PRIMARY KEY(Id)
+);
+
+CREATE INDEX FileEvents_jobid_idx ON FileEvents (JobId, FileIndex);
+CREATE INDEX FileEvents_sourcejobid_idx ON FileEvents (SourceJobId);
+
+
 -- --------------------------------------------------------------
 -- MetaData Index
 
@@ -272,6 +303,7 @@ CREATE TABLE Job (
    StartTime DATETIME,
    EndTime DATETIME,
    RealEndTime DATETIME,
+   RealStartTime DATETIME,                           -- Time of the job for Virtual Full
    JobTDate BIGINT UNSIGNED DEFAULT 0,
    VolSessionId INTEGER UNSIGNED DEFAULT 0,
    VolSessionTime INTEGER UNSIGNED DEFAULT 0,
@@ -290,6 +322,14 @@ CREATE TABLE Job (
    Reviewed TINYINT DEFAULT 0,
    Comment BLOB,
    FileTable CHAR(20) DEFAULT 'File',
+   isVirtualFull     TINYINT    default 0,   -- Result of a VirtualFull?
+   CompressRatio     float      default 0,   -- Compression Ratio
+   Rate              float      default 0,   -- Job Rate B/s
+   LastReadStorageId integer    default 0,   -- Id of the last Storage used to Read
+   LastReadDevice    blob,                   -- Name of the last Read Device
+   WriteStorageId    integer    default 0,   -- Id of the Storage used to Write
+   WriteDevice       blob,                   -- Name of the Write Device
+   StatusInfo        blob,                   -- Info to determine the error status
    PRIMARY KEY(JobId),
    INDEX (Name(128))
    );
@@ -621,7 +661,7 @@ CREATE TABLE Version (
    );
 
 -- Initialize Version
-INSERT INTO Version (VersionId) VALUES (1026);
+INSERT INTO Version (VersionId) VALUES (1026;
 
 END-OF-DATA
 then
