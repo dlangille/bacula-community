@@ -1673,6 +1673,14 @@ Jmsg(JCR *jcr, int type, utime_t mtime, const char *fmt,...)
 
     dispatch_message(jcr, type, mtime, rbuf);
 
+    if (type == M_FATAL && jcr && jcr->StatusInfo[0] == 0) {
+       char d, t;
+       int code;
+       if (scan_string(rbuf+len, "[%c%c%d] ", &d, &t, &code) == 3) {
+          bsnprintf(jcr->StatusInfo, sizeof(jcr->StatusInfo), "[%c%c%04d]", d, t, code);
+       }
+    }
+
     if (type == M_ABORT){
        char *p = 0;
        printf("Bacula forced SEG FAULT to obtain traceback.\n");

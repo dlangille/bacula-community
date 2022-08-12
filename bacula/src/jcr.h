@@ -357,6 +357,7 @@ public:
    char   *job_user;                  /* Specific permission for a job */
    char   *job_group;                 /* Specific permission for a job */
    POOLMEM *StatusErrMsg;             /* Error message displayed in the job report */
+   char StatusInfo[MAX_NAME_LENGTH];  /* Additionnal information about the error status */
    uint32_t getErrors() { return JobErrors + SDErrors; }; /* Get error count */
 
    /* Daemon specific part of JCR */
