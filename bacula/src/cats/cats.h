@@ -125,6 +125,10 @@ struct JOB_DBR {
    char Name[MAX_NAME_LENGTH];        /* Job base name */
    char PriorJob[MAX_NAME_LENGTH];    /* PriorJob name if any */
    char Comment[MAX_NAME_LENGTH];     /* Comment */
+   char StatusInfo[MAX_NAME_LENGTH];  /* More information about the status */
+   char WriteDevice[MAX_NAME_LENGTH]; /* Device used to write */
+   char LastReadDevice[MAX_NAME_LENGTH]; /* Device used to read */
+
    int JobType;                       /* actually char(1) */
    int JobLevel;                      /* actually char(1) */
    int JobStatus;                     /* actually char(1) */
@@ -148,6 +152,11 @@ struct JOB_DBR {
    int HasBase;
    int Reviewed;                /* In list, values are 0 (unset), 1 and 2 */
    char Client[MAX_NAME_LENGTH]; /* Set in db_get_job_record() */
+   int isVirtualFull;
+   double Rate;
+   double CompressRatio;
+   DBId_t WriteStorageId;
+   DBId_t LastReadStorageId;
 
    /* Note, FirstIndex, LastIndex, Start/End File and Block
     * are only used in the JobMedia record.
@@ -168,7 +177,7 @@ struct JOB_DBR {
    int     limit;                     /* limit records to display */
    faddr_t rec_addr;
    int32_t FileIndex;                 /* added during Verify */
-
+   utime_t RunTime;
    char FromDate[MAX_TIME_LENGTH];    /* Used for filtering job records ('days' and 'hours' in list cmd) */
 
    int     CorrNbJob;                 /* used by dbd_get_job_statistics() */
