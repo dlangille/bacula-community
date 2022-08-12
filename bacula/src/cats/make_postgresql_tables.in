@@ -18,20 +18,20 @@ psql -f - -d ${db_name} $* <<END-OF-DATA
 BEGIN;
 CREATE TABLE MalwareMD5
 (
-    MD5     char(22)
+    MD5     char(22)    -- Same as File
 );
 CREATE INDEX malwaremd5_idx on MalwareMD5 (MD5);
 
 CREATE TABLE MalwareSHA256
 (
-    MD5     char(65)
+    MD5     char(65)    -- Same as File
 );
-CREATE INDEX malwaresha256_idx on Malwaresha256 (MD5);
+CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
 
 CREATE TABLE FileEvents 
 (
    Id   bigserial,
-   Time timestamp default NOW(), -- Time of the detection
+   Time timestamp without time zone default NOW(), -- Time of the detection
    SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
    JobId         int,        -- JobId where the file was found. Used for pruning
    FileIndex     int,        -- File reference
@@ -276,6 +276,7 @@ CREATE TABLE Job
     StartTime	      timestamp   without time zone,
     EndTime	      timestamp   without time zone,
     RealEndTime       timestamp   without time zone,
+    RealStartTime     timestamp   without time zone, -- Time of the job for Virtual Full
     JobTDate	      bigint	  default 0,
     VolSessionId      integer	  default 0,
     VolSessionTime    integer	  default 0,
@@ -294,6 +295,14 @@ CREATE TABLE Job
     Reviewed	      smallint	  default 0,
     Comment	      text,
     FileTable	      text	  default 'File',
+    isVirtualFull     smallint    default 0,   -- Result of a VirtualFull?
+    CompressRatio     float       default 0,   -- Compression Ratio
+    Rate              float       default 0,   -- Job Rate B/s
+    LastReadStorageId integer     default 0,   -- Id of the last Storage used to Read
+    LastReadDevice    text        default '',  -- Name of the last Read Device
+    WriteStorageId    integer     default 0,   -- Id of the Storage used to Write
+    WriteDevice       text        default '',  -- Name of the Write Device
+    StatusInfo        text        default '',  -- Info to determine the error status
     primary key (jobid)
 );
 
