@@ -149,10 +149,13 @@ int BDB::bdb_update_job_end_record(JCR *jcr, JOB_DBR *jr)
 {
    char dt[MAX_TIME_LENGTH];
    char rdt[MAX_TIME_LENGTH];
+   char esc1[MAX_ESCAPE_NAME_LENGTH];
+   char esc2[MAX_ESCAPE_UNAME_LENGTH];
+   char esc3[MAX_ESCAPE_UNAME_LENGTH];
    time_t ttime;
    struct tm tm;
    int stat;
-   char ed1[30], ed2[30], ed3[50], ed4[50];
+   char ed1[30], ed2[30], ed3[50], ed4[50], ed5[50], ed6[50];
    btime_t JobTDate;
    char PriorJobId[50];
 
@@ -176,16 +179,22 @@ int BDB::bdb_update_job_end_record(JCR *jcr, JOB_DBR *jr)
    JobTDate = ttime;
 
    bdb_lock();
+   bdb_escape_string(jcr, esc1, jr->StatusInfo, strlen(jr->StatusInfo));
+   bdb_escape_string(jcr, esc2, jr->LastReadDevice, strlen(jr->LastReadDevice));
+   bdb_escape_string(jcr, esc3, jr->WriteDevice, strlen(jr->WriteDevice));
    Mmsg(cmd,
       "UPDATE Job SET JobStatus='%c',EndTime='%s',"
 "ClientId=%u,JobBytes=%s,ReadBytes=%s,JobFiles=%u,JobErrors=%u,VolSessionId=%u,"
 "VolSessionTime=%u,PoolId=%u,FileSetId=%u,JobTDate=%s,"
-"RealEndTime='%s',PriorJobId=%s,HasBase=%u,PurgedFiles=%u,PriorJob='%s' WHERE JobId=%s",
+"RealEndTime='%s',PriorJobId=%s,HasBase=%u,PurgedFiles=%u,PriorJob='%s',"
+"Rate=%.1f,CompressRatio=%.1f,WriteStorageId=%s,LastReadStorageId=%s,StatusInfo='%s',LastReadDevice='%s',WriteDevice='%s' WHERE JobId=%s",
       (char)(jr->JobStatus), dt, jr->ClientId, edit_uint64(jr->JobBytes, ed1),
       edit_uint64(jr->ReadBytes, ed4),
       jr->JobFiles, jr->JobErrors, jr->VolSessionId, jr->VolSessionTime,
       jr->PoolId, jr->FileSetId, edit_uint64(JobTDate, ed2),
       rdt, PriorJobId, jr->HasBase, jr->PurgedFiles, jr->PriorJob,
+      jr->Rate, jr->CompressRatio, edit_uint64(jr->WriteStorageId, ed5),
+      edit_uint64(jr->LastReadStorageId, ed6), esc1, esc2, esc3,
       edit_int64(jr->JobId, ed3));
 
    stat = UpdateDB(jcr, cmd, false);

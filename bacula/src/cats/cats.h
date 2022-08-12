@@ -140,6 +140,7 @@ struct JOB_DBR {
    time_t StartTime;                  /* Job start time */
    time_t EndTime;                    /* Job termination time of orig job */
    time_t RealEndTime;                /* Job termination time of this job */
+   time_t RealStartTime;              /* Job start time of this job (even VirtualFull) */
    utime_t JobTDate;                  /* Backup time/date in seconds */
    uint32_t VolSessionId;
    uint32_t VolSessionTime;
@@ -172,6 +173,7 @@ struct JOB_DBR {
    char cStartTime[MAX_TIME_LENGTH];
    char cEndTime[MAX_TIME_LENGTH];
    char cRealEndTime[MAX_TIME_LENGTH];
+   char cRealStartTime[MAX_TIME_LENGTH];
    /* Extra stuff not in DB */
    int     order;                     /* 0 ASC, 1 DESC */
    int     limit;                     /* limit records to display */

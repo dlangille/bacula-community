@@ -256,18 +256,16 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
 "Type,Level,ClientId,Job.Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
-"Reviewed, Client.Name AS Client "
-"FROM Job JOIN Client USING (ClientId) WHERE Job='%s'", esc);
+"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,isVirtualFull,WriteStorageId,LastReadstorageId "
+"FROM Job WHERE Job='%s'", esc);
 
       } else if (jr->PriorJob[0]) {
          bdb_escape_string(jcr, esc, jr->PriorJob, strlen(jr->PriorJob));
          Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
-"Type,Level,ClientId,Job.Name AS Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
-"Reviewed, Client.Name AS Client "
-"FROM Job JOIN CLient USING (ClientId) WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
+"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,isVirtualFull,WriteStorageId,LastReadstorageId "
+"FROM Job WHERE PriorJob='%s' ORDER BY Type ASC LIMIT 1", esc);
       } else {
          Mmsg0(errmsg, _("No Job found\n"));
          bdb_unlock();
@@ -278,13 +276,13 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
       Mmsg(cmd, "SELECT VolSessionId,VolSessionTime,"
 // 2      3         4        5       6       7        8    9           
 "PoolId,StartTime,EndTime,JobFiles,JobBytes,JobTDate,Job,JobStatus,"
-// 10  11    12       13                 14          15       16      17
-"Type,Level,ClientId,Job.Name AS Name,PriorJobId,RealEndTime,JobId,FileSetId,"
-// 18       19         20       21          22      23           
-"SchedTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,"
-// 24          25
-"Reviewed, Client.Name AS Client "
-"FROM Job JOIN Client USING (ClientId) WHERE JobId=%s",
+// 10 11     12      13    14           15        16     17
+"Type,Level,ClientId,Name,PriorJobId,RealEndTime,JobId,FileSetId,"
+// 18        19            20        21       22            23   24       25       26
+"SchedTime,RealStartTime,ReadBytes,HasBase,PurgedFiles,PriorJob,Comment,Reviewed,Client.Name AS Client,"
+//	   27          28           29              30        31              32     
+"isVirtualFull,WriteStorageId,LastReadStorageId,StatusInfo,LastReadDevice,WriteDevice "
+"FROM Job WHERE JobId=%s",
           edit_int64(jr->JobId, ed1));
    }
 
@@ -327,17 +325,25 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
    }
    jr->FileSetId = str_to_int64(row[17]);
    bstrncpy(jr->cSchedTime, row[18]!=NULL?row[18]:"", sizeof(jr->cSchedTime));
-   jr->ReadBytes = str_to_int64(row[19]);
+   bstrncpy(jr->cRealStartTime, row[19]!=NULL?row[19]:"", sizeof(jr->cRealStartTime));
+   jr->ReadBytes = str_to_int64(row[20]);
    jr->StartTime = str_to_utime(jr->cStartTime);
    jr->SchedTime = str_to_utime(jr->cSchedTime);
    jr->EndTime = str_to_utime(jr->cEndTime);
    jr->RealEndTime = str_to_utime(jr->cRealEndTime);
-   jr->HasBase = str_to_int64(row[20]);
-   jr->PurgedFiles = str_to_int64(row[21]);
-   bstrncpy(jr->PriorJob, NPRTB(row[22]), sizeof(jr->PriorJob));
-   bstrncpy(jr->Comment, NPRTB(row[23]), sizeof(jr->Comment));
-   jr->Reviewed = str_to_int64(row[24]);
-   bstrncpy(jr->Client, NPRTB(row[25]), sizeof(jr->Client));
+   jr->RealStartTime = str_to_utime(jr->cRealStartTime);
+   jr->HasBase = str_to_int64(row[21]);
+   jr->PurgedFiles = str_to_int64(row[22]);
+   bstrncpy(jr->PriorJob, NPRTB(row[23]), sizeof(jr->PriorJob));
+   bstrncpy(jr->Comment, NPRTB(row[24]), sizeof(jr->Comment));
+   jr->Reviewed = str_to_int64(row[25]);
+   bstrncpy(jr->Client, NPRTB(row[26]), sizeof(jr->Client));
+   jr->isVirtualFull = str_to_int64(row[27]);
+   jr->WriteStorageId = str_to_int64(row[28]);
+   jr->LastReadStorageId = str_to_int64(row[29]);
+   bstrncpy(jr->StatusInfo, NPRTB(row[30]), sizeof(jr->StatusInfo));
+   bstrncpy(jr->LastReadDevice, NPRTB(row[31]), sizeof(jr->LastReadDevice));
+   bstrncpy(jr->WriteDevice, NPRTB(row[32]), sizeof(jr->WriteDevice));
    sql_free_result();
 
    bdb_unlock();

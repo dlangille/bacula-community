@@ -78,11 +78,11 @@ bool BDB::bdb_create_job_record(JCR *jcr, JOB_DBR *jr)
    /* Must create it */
    Mmsg(cmd,
 "INSERT INTO Job (Job,Name,Type,Level,JobStatus,StartTime,SchedTime,JobTDate,"
-                 "ClientId,Comment) "
-"VALUES ('%s','%s','%c','%c','%c','%s','%s',%s,%s,'%s')",
+                 "ClientId,Comment,isVirtualFull) "
+"VALUES ('%s','%s','%c','%c','%c','%s','%s',%s,%s,'%s',%d)",
            esc_job, esc_name, (char)(jr->JobType), (char)(jr->JobLevel),
           (char)(jr->JobStatus), dt2, dt, edit_uint64(JobTDate, ed1),
-           edit_int64(jr->ClientId, ed2), buf.c_str());
+          edit_int64(jr->ClientId, ed2), buf.c_str(), jr->isVirtualFull);
 
    if ((jr->JobId = sql_insert_autokey_record(cmd, NT_("Job"))) == 0) {
       Mmsg2(&errmsg, _("Create DB Job record %s failed. ERR=%s\n"),

@@ -905,6 +905,10 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
    } else if (jr->Reviewed > 0) {
       Mmsg(tmp, " Job.Reviewed = %d ", jr->Reviewed);
       append_filter(&where, tmp);
+
+   } else if (jr->isVirtualFull > 0) {
+      Mmsg(tmp, " Job.isVirtualFull = %d ", jr->isVirtualFull);
+      append_filter(&where, tmp);
    }
 
    if (type == INCOMPLETE_JOBS && jr->JobStatus == JS_FatalError) {
@@ -942,6 +946,11 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       append_filter(&where, tmp);
    }
 
+   if (jr->isVirtualFull > 0) {
+      Mmsg(tmp, " Job.isVirtualFull=%s ", edit_int64(jr->isVirtualFull, ed1));
+      append_filter(&where, tmp);
+   }
+
    where_tmp = get_acls(DB_ACL_BIT(DB_ACL_CLIENT)  |
                         DB_ACL_BIT(DB_ACL_JOB)     |
                         DB_ACL_BIT(DB_ACL_FILESET),
@@ -959,12 +968,14 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       Mmsg(cmd,
            "SELECT JobId,Job,Job.Name,PurgedFiles,Type,Level,"
            "Job.ClientId,Client.Name as ClientName,JobStatus,Status.JobStatusLong,SchedTime,"
-           "StartTime,EndTime,RealEndTime,JobTDate,"
+           "StartTime,EndTime,RealEndTime,RealStartTime,JobTDate,"
            "VolSessionId,VolSessionTime,JobFiles,JobBytes,ReadBytes,JobErrors,"
-           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,"
-           "Job.FileSetId,FileSet.FileSet,Job.HasCache,Comment,Reviewed "
+           "JobMissingFiles,Job.PoolId,Pool.Name as PoolName,PriorJobId,PriorJob,"
+           "Job.FileSetId,FileSet.FileSet,Job.HasCache,Comment,Reviewed,isVirtualFull,Rate,CompressRatio,StatusInfo, "
+           "SW.Name AS WriteStorage, WriteDevice, SR.Name AS LastReadStorage, LastReadDevice "
            "FROM Job JOIN Client USING (ClientId) LEFT JOIN Pool USING (PoolId) "
-           "LEFT JOIN FileSet USING (FileSetId) LEFT JOIN Status USING (JobStatus) %s "
+           "LEFT JOIN FileSet USING (FileSetId) LEFT JOIN Status USING (JobStatus) "
+           "LEFT JOIN Storage AS SW ON (SW.StorageId = Job.WriteStorageId) LEFT JOIN Storage AS SR ON (SR.StorageId = Job.LastReadStorageId) %s "
            "ORDER BY StartTime %s %s", where, order, limit);
       break;
    case HORZ_LIST:
