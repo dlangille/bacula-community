@@ -259,6 +259,7 @@ CREATE TABLE Job (
    WriteStorageId    integer     default 0,   -- Id of the Storage used to Write
    WriteDevice       text        default '',  -- Name of the Write Device
    StatusInfo        text        default '',  -- Info to determine the error status
+   Encrypted         int         default 0,   -- 0 no, 1 fd side, 2 sd side, 3 both
    PRIMARY KEY(JobId) 
    );
 CREATE INDEX inx6 ON Job (Name);
