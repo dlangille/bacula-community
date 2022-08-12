@@ -471,7 +471,6 @@ void verify_cleanup(JCR *jcr, int TermCode)
    char term_code[100], fd_term_msg[100], sd_term_msg[100];
    const char *term_msg;
    int msg_type;
-   utime_t RunTime;
    const char *Name;
 
 // Dmsg1(100, "Enter verify_cleanup() TermCod=%d\n", TermCode);
@@ -536,10 +535,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
    }
    bstrftimes_na(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes_na(edt, sizeof(edt), jcr->jr.EndTime);
-   RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
-   if (jcr->jr.StartTime == 0 || RunTime <= 0) {
-      RunTime = 1;
-   }
+
    if (jcr->verify_job) {
       Name = jcr->verify_job->hdr.name;
    } else {
@@ -584,7 +580,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
            Name,
            sdt,
            edt,
-           edit_utime(RunTime, elapsed, sizeof(elapsed)),
+           edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
            accurate,
            edit_uint64_with_commas(jcr->ExpectedFiles, ec1),
            edit_uint64_with_commas(jcr->JobFiles, ec2),
@@ -621,7 +617,7 @@ void verify_cleanup(JCR *jcr, int TermCode)
            Name,
            sdt,
            edt,
-           edit_utime(RunTime, elapsed, sizeof(elapsed)),
+           edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
            edit_uint64_with_commas(jcr->JobFiles, ec1),
            jcr->JobErrors,
            fd_term_msg,

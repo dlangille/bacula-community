@@ -131,7 +131,7 @@ bool setup_job(JCR *jcr)
                               jcr->catalog->disable_batch_insert);
 
    if (!jcr->db || !db_open_database(jcr, jcr->db)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not open database \"%s\".\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not open database \"%s\".\n"),
                  jcr->catalog->db_name);
       if (jcr->db) {
          Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
@@ -170,7 +170,7 @@ bool setup_job(JCR *jcr)
    }
 
    if (!db_create_job_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
       goto bail_out;
    }
    jcr->JobId = jcr->jr.JobId;
@@ -297,7 +297,7 @@ static bool setup_resume_job(JCR *jcr, JOB_DBR *jr)
                               jcr->catalog->mult_db_connections,
                               jcr->catalog->disable_batch_insert);
    if (!jcr->db || !db_open_database(jcr, jcr->db)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not open database \"%s\".\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not open database \"%s\".\n"),
                  jcr->catalog->db_name);
       if (jcr->db) {
          Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
@@ -444,7 +444,7 @@ static void *job_thread(void *arg)
    }
 
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
    }
 
    /* Run any script BeforeJob on dird */
@@ -463,7 +463,7 @@ static void *job_thread(void *arg)
    jcr->start_time = time(NULL);
    jcr->jr.StartTime = jcr->start_time;
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
    }
    generate_plugin_event(jcr, bDirEventJobRun);
 
@@ -1372,7 +1372,7 @@ bool get_or_create_client_record(JCR *jcr)
    }
    pm_strcpy(jcr->client_name, jcr->client->hdr.name);
    if (!db_create_client_record(jcr, jcr->db, &cr)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not create Client record. ERR=%s\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not create Client record. ERR=%s\n"),
          db_strerror(jcr->db));
       return false;
    }
@@ -1436,6 +1436,7 @@ void init_jcr_job_record(JCR *jcr)
    jcr->jr.JobLevel = jcr->getJobLevel();
    jcr->jr.JobStatus = jcr->JobStatus;
    jcr->jr.JobId = jcr->JobId;
+   jcr->jr.isVirtualFull = jcr->is_JobLevel(L_VIRTUAL_FULL);
    bstrncpy(jcr->jr.Name, jcr->job->name(), sizeof(jcr->jr.Name));
    bstrncpy(jcr->jr.Job, jcr->Job, sizeof(jcr->jr.Job));
 }
@@ -1445,6 +1446,7 @@ void init_jcr_job_record(JCR *jcr)
  */
 void update_job_end_record(JCR *jcr)
 {
+   JCR *wjcr = jcr->wjcr ? jcr->wjcr : jcr;
    jcr->jr.EndTime = time(NULL);
    jcr->end_time = jcr->jr.EndTime;
    jcr->jr.JobId = jcr->JobId;
@@ -1456,6 +1458,29 @@ void update_job_end_record(JCR *jcr)
    jcr->jr.VolSessionTime = jcr->VolSessionTime;
    jcr->jr.JobErrors = jcr->JobErrors + jcr->SDErrors;
    jcr->jr.HasBase = jcr->HasBase;
+   bstrncpy(jcr->jr.StatusInfo, jcr->StatusInfo, sizeof(jcr->jr.StatusInfo));
+
+   STORE *wstore = wjcr->store_mngr->get_wstore();
+   jcr->jr.WriteStorageId = wstore? wstore->StorageId : 0;
+   bstrncpy(jcr->jr.WriteDevice, NPRTB(wjcr->write_dev), sizeof(jcr->jr.WriteDevice));
+
+   STORE *rstore = jcr->store_mngr->get_rstore();
+   jcr->jr.LastReadStorageId = rstore? rstore->StorageId : 0;
+   bstrncpy(jcr->jr.LastReadDevice, NPRTB(jcr->read_dev), sizeof(jcr->jr.LastReadDevice));
+
+   jcr->jr.RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
+   if (jcr->jr.StartTime == 0 || jcr->jr.RunTime <= 0) {
+      jcr->jr.RunTime = 1;
+   }
+
+   jcr->jr.Rate = ((double)jcr->jr.JobBytes) / (1000.0 * (double)jcr->jr.RunTime);
+   if (jcr->ReadBytes > 0) {
+      jcr->jr.CompressRatio = (double)100 - 100.0 * ((double)jcr->SDJobBytes / (double)jcr->ReadBytes);
+      if (jcr->jr.CompressRatio < 0.5) {
+         jcr->jr.CompressRatio = 0;
+      }
+   }
+
    if (!db_update_job_end_record(jcr, jcr->db, &jcr->jr)) {
       Jmsg(jcr, M_WARNING, 0, _("Error updating job record. %s"),
          db_strerror(jcr->db));
@@ -1733,24 +1758,31 @@ void set_jcr_defaults(JCR *jcr, JOB *job)
    }
    if (!jcr->next_vol_list) {
       jcr->next_vol_list = get_pool_memory(PM_FNAME);
+      *jcr->next_vol_list = 0;
    }
    if (!jcr->fname) {
       jcr->fname = get_pool_memory(PM_FNAME);
+      *jcr->fname = 0;
    }
    if (!jcr->pool_source) {
       jcr->pool_source = get_pool_memory(PM_MESSAGE);
+      *jcr->pool_source = 0;
    }
    if (!jcr->next_pool_source) {
       jcr->next_pool_source = get_pool_memory(PM_MESSAGE);
+      *jcr->next_pool_source = 0;
    }
    if (!jcr->catalog_source) {
       jcr->catalog_source = get_pool_memory(PM_MESSAGE);
+      *jcr->catalog_source = 0;
    }
    if (!jcr->write_dev) {
       jcr->write_dev = get_pool_memory(PM_MESSAGE);
+      *jcr->write_dev = 0;
    }
    if (!jcr->read_dev) {
       jcr->read_dev = get_pool_memory(PM_MESSAGE);
+      *jcr->read_dev = 0;
    }
 
    jcr->JobPriority = job->Priority;
@@ -1959,7 +1991,7 @@ bool flush_file_records(JCR *jcr)
    if (jcr->cached_attribute) {
       Dmsg0(400, "Flush last cached attribute.\n");
       if (!db_create_attributes_record(jcr, jcr->db, jcr->ar)) {
-         Jmsg1(jcr, M_FATAL, 0, _("Attribute create error. %s"), jcr->db->bdb_strerror());
+         Jmsg1(jcr, M_FATAL, 0, _("[DE0008] Attribute create error. %s"), jcr->db->bdb_strerror());
       }
       jcr->cached_attribute = false;
    }

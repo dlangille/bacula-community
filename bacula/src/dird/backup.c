@@ -94,7 +94,7 @@ bool do_backup_init(JCR *jcr)
    jcr->jr.PoolId = get_or_create_pool_record(jcr, jcr->pool->name());
    if (jcr->jr.PoolId == 0) {
       Dmsg1(100, "JobId=%d no PoolId\n", (int)jcr->JobId);
-      Jmsg(jcr, M_FATAL, 0, _("Could not get or create a Pool record.\n"));
+      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not get or create a Pool record.\n"));
       return false;
    }
 
@@ -316,19 +316,19 @@ bool send_accurate_current_files(JCR *jcr)
    jcr->file_bsock->fsend("accurate files=%s\n", nb.list);
 
    if (!db_open_batch_connection(jcr, jcr->db)) {
-      Jmsg0(jcr, M_FATAL, 0, "Can't get batch sql connection");
+      Jmsg0(jcr, M_FATAL, 0, "[DE0008] Can't get batch sql connection");
       return false;  /* Fail */
    }
 
    if (jcr->HasBase) {
       jcr->nb_base_files = str_to_int64(nb.list);
       if (!db_create_base_file_list(jcr, jcr->db, jobids.list)) {
-         Jmsg1(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       if (!db_get_base_file_list(jcr, jcr->db, jcr->use_accurate_chksum,
                             accurate_list_handler, (void *)jcr)) {
-         Jmsg1(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
 
@@ -337,7 +337,7 @@ bool send_accurate_current_files(JCR *jcr)
       if (!db_get_file_list(jcr, jcr->db_batch,
                        jobids.list, opts,
                        accurate_list_handler, (void *)jcr)) {
-         Jmsg1(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db_batch));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db_batch));
          return false;
       }
    }
@@ -481,7 +481,7 @@ bool do_backup(JCR *jcr)
    jcr->setJobStatus(JS_Running);
    Dmsg2(100, "JobId=%d JobLevel=%c\n", jcr->jr.JobId, jcr->jr.JobLevel);
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
       return false;
    }
 
@@ -493,17 +493,17 @@ bool do_backup(JCR *jcr)
          Jmsg(jcr, M_INFO, 0, _("Found %ld files from prior incomplete Job.\n"),
             (int32_t)job.value);
       } else {
-         Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       Mmsg(buf, "SELECT max(LastIndex) FROM JobMedia WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &last)) {
-         Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       Mmsg(buf, "SELECT max(FirstIndex) FROM JobMedia WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &first)) {
-         Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       /* We skip the last FileIndex (MAX) and the one after (MAX+1), can be
@@ -514,13 +514,13 @@ bool do_backup(JCR *jcr)
       Dmsg1(100, "==== FI=%ld\n", jcr->JobFiles);
       Mmsg(buf, "SELECT VolSessionId FROM Job WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-         Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       jcr->VolSessionId = job.value;
       Mmsg(buf, "SELECT VolSessionTime FROM Job WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-         Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
          return false;
       }
       jcr->VolSessionTime = job.value;
@@ -720,7 +720,7 @@ bool do_backup(JCR *jcr)
    jcr->start_time = time(NULL);
    jcr->jr.StartTime = jcr->start_time;
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
    }
 
    /*
@@ -905,7 +905,7 @@ void incomplete_cleanup(JCR *jcr)
    /* Get the last valid FileIndex */
    Mmsg(buf, "SELECT max(FileIndex) FROM File WHERE JobId=%s", ed1);
    if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
       return;
    }
 
@@ -914,7 +914,7 @@ void incomplete_cleanup(JCR *jcr)
         "AND (FirstIndex > %lld OR LastIndex > %lld)",
         ed1, job.value, job.value);
    if (!db_sql_query(jcr->db, buf.c_str(), db_string_list_handler, &pids)) {
-      Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
       return;
    }
    /* Nothing to fix */
@@ -965,7 +965,7 @@ void incomplete_cleanup(JCR *jcr)
 bail_out:
    if (!ok) {
       db_sql_query(jcr->db, "ROLLBACK", NULL, NULL);
-      Jmsg(jcr, M_FATAL, 0, _("Unable to cleanup JobMedia records\n"));
+      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Unable to cleanup JobMedia records\n"));
    }
    db_end_transaction(jcr, jcr->db);
    db_unlock(jcr->db);
@@ -979,17 +979,16 @@ void backup_cleanup(JCR *jcr, int TermCode)
    char sdt[50], edt[50], schedt[50], edl[50];
    char ec1[30], ec2[30], ec3[30], ec4[30], ec5[30];
    char ec6[30], ec7[30], ec8[30], ec9[30], ec10[30], elapsed[50];
-   char data_compress[200], comm_compress[200];
+   char comm_compress[200], data_compress[200];
    char fd_term_msg[100], sd_term_msg[100];
    POOL_MEM term_msg;
    int msg_type = M_INFO;
    MEDIA_DBR mr;
    CLIENT_DBR cr;
-   double kbps, compression, ratio;
-   utime_t RunTime;
    POOL_MEM base_info;
    POOL_MEM vol_info;
    STORE *wstore = jcr->store_mngr->get_wstore();
+   *comm_compress = *data_compress = 0;
 
    remove_dummy_jobmedia_records(jcr);
 
@@ -1084,11 +1083,6 @@ void backup_cleanup(JCR *jcr, int TermCode)
    bstrftimes_na(schedt, sizeof(schedt), jcr->jr.SchedTime);
    bstrftimes_na(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes_na(edt, sizeof(edt), jcr->jr.EndTime);
-   RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
-   if (jcr->jr.StartTime == 0 || RunTime <= 0) {
-      RunTime = 1;
-   }
-   kbps = ((double)jcr->jr.JobBytes) / (1000.0 * (double)RunTime);
    if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName)) {
       /*
        * Note, if the job has erred, most likely it did not write any
@@ -1101,31 +1095,28 @@ void backup_cleanup(JCR *jcr, int TermCode)
       }
       jcr->VolumeName[0] = 0;         /* none */
    }
-
    if (jcr->ReadBytes == 0) {
       bstrncpy(data_compress, "None", sizeof(data_compress));
    } else {
-      compression = (double)100 - 100.0 * ((double)jcr->SDJobBytes / (double)jcr->ReadBytes);
-      if (compression < 0.5) {
+      if (jcr->jr.CompressRatio < 0.5) {
          bstrncpy(data_compress, "None", sizeof(data_compress));
       } else {
+         double ratio = 1.0;
          if (jcr->SDJobBytes > 0) {
             ratio = (double)jcr->ReadBytes / (double)jcr->SDJobBytes;
-         } else {
-            ratio = 1.0;
          }
          bsnprintf(data_compress, sizeof(data_compress), "%.1f%% %.1f:1",
-            compression, ratio);
+                   jcr->jr.CompressRatio, ratio);
       }
    }
    if (jcr->CommBytes == 0 || jcr->CommCompressedBytes == 0) {
       bstrncpy(comm_compress, "None", sizeof(comm_compress));
    } else {
-      compression = (double)100 - 100.0 * ((double)jcr->CommCompressedBytes / (double)jcr->CommBytes);
+      double compression = (double)100 - 100.0 * ((double)jcr->CommCompressedBytes / (double)jcr->CommBytes);
       if (compression < 0.5) {
          bstrncpy(comm_compress, "None", sizeof(comm_compress));
       } else {
-         ratio = (double)jcr->CommBytes / (double)jcr->CommCompressedBytes;
+         double ratio = (double)jcr->CommBytes / (double)jcr->CommCompressedBytes;
          bsnprintf(comm_compress, sizeof(comm_compress), "%.1f%% %.1f:1",
             compression, ratio);
       }
@@ -1204,7 +1195,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
         schedt,
         sdt,
         edt,
-        edit_utime(RunTime, elapsed, sizeof(elapsed)),
+        edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
         jcr->JobPriority,
         edit_uint64_with_commas(jcr->jr.JobFiles, ec1),
         edit_uint64_with_commas(jcr->SDJobFiles, ec2),
@@ -1212,7 +1203,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
         edit_uint64_with_suffix(jcr->jr.JobBytes, ec4),
         edit_uint64_with_commas(jcr->SDJobBytes, ec5),
         edit_uint64_with_suffix(jcr->SDJobBytes, ec6),
-        kbps,
+        jcr->jr.Rate,
         data_compress,
         comm_compress,
         base_info.c_str(),

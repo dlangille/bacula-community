@@ -442,15 +442,13 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
 void vbackup_cleanup(JCR *jcr, int TermCode)
 {
    char sdt[50], edt[50], schedt[50];
-   char ec1[30], ec3[30], ec4[30], compress[50];
+   char ec1[30], ec3[30], ec4[30];
    char ec7[30], ec8[30], elapsed[50];
    char term_code[100], sd_term_msg[100];
    const char *term_msg;
    int msg_type = M_INFO;
    MEDIA_DBR mr;
    CLIENT_DBR cr;
-   double kbps, compression;
-   utime_t RunTime;
    POOL_MEM query(PM_MESSAGE);
    STORE *wstore = jcr->store_mngr->get_wstore();
 
@@ -530,11 +528,6 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
    bstrftimes(schedt, sizeof(schedt), jcr->jr.SchedTime);
    bstrftimes(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes(edt, sizeof(edt), jcr->jr.EndTime);
-   RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
-   if (RunTime <= 0) {
-      RunTime = 1;
-   }
-   kbps = ((double)jcr->jr.JobBytes) / (1000.0 * (double)RunTime);
    if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName)) {
       /*
        * Note, if the job has erred, most likely it did not write any
@@ -548,16 +541,6 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
       jcr->VolumeName[0] = 0;         /* none */
    }
 
-   if (jcr->ReadBytes == 0) {
-      bstrncpy(compress, "None", sizeof(compress));
-   } else {
-      compression = (double)100 - 100.0 * ((double)jcr->JobBytes / (double)jcr->ReadBytes);
-      if (compression < 0.5) {
-         bstrncpy(compress, "None", sizeof(compress));
-      } else {
-         bsnprintf(compress, sizeof(compress), "%.1f %%", compression);
-      }
-   }
    jobstatus_to_ascii(jcr->SDJobStatus, sd_term_msg, sizeof(sd_term_msg));
 
    Jmsg(jcr, msg_type, 0, _("%s %s %s (%s):\n"
@@ -597,12 +580,12 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
         schedt,
         sdt,
         edt,
-        edit_utime(RunTime, elapsed, sizeof(elapsed)),
+        edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
         jcr->JobPriority,
         edit_uint64_with_commas(jcr->jr.JobFiles, ec1),
         edit_uint64_with_commas(jcr->jr.JobBytes, ec3),
         edit_uint64_with_suffix(jcr->jr.JobBytes, ec4),
-        kbps,
+        jcr->jr.Rate,
         jcr->VolumeName,
         jcr->VolSessionId,
         jcr->VolSessionTime,

@@ -594,8 +594,6 @@ void restore_cleanup(JCR *jcr, int TermCode)
    char term_code[100], fd_term_msg[100], sd_term_msg[100];
    const char *term_msg;
    int msg_type = M_INFO;
-   double kbps;
-   utime_t RunTime;
 
    Dmsg0(20, "In restore_cleanup\n");
 
@@ -671,15 +669,6 @@ void restore_cleanup(JCR *jcr, int TermCode)
    bstrftimes_na(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes_na(edt, sizeof(edt), jcr->jr.EndTime);
 
-   RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
-   if (jcr->jr.StartTime == 0 || RunTime <= 0) {
-      RunTime = 1;
-   }
-   kbps = (double)jcr->jr.JobBytes / (1000.0 * (double)RunTime);
-   if (kbps < 0.05) {
-      kbps = 0;
-   }
-
    get_restore_params(jcr, where, &creplace, NULL);
 
    for (int i=0; ReplaceOptions[i].name; i++) {
@@ -718,11 +707,11 @@ void restore_cleanup(JCR *jcr, int TermCode)
         replace,
         sdt,
         edt,
-        edit_utime(RunTime, elapsed, sizeof(elapsed)),
+        edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
         edit_uint64_with_commas((uint64_t)jcr->ExpectedFiles, ec1),
         edit_uint64_with_commas((uint64_t)jcr->jr.JobFiles, ec2),
         edit_uint64_with_commas(jcr->jr.JobBytes, ec3), edit_uint64_with_suffix(jcr->jr.JobBytes, ec4),
-        (float)kbps,
+        jcr->jr.Rate,
         jcr->JobErrors,
         fd_term_msg,
         sd_term_msg,

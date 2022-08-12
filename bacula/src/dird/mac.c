@@ -759,8 +759,6 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
    POOL_MEM term_msg;
    int msg_type = M_INFO;
    MEDIA_DBR mr;
-   double kbps;
-   utime_t RunTime;
    bool goterrors=false;
    JCR *wjcr = jcr->wjcr;
    POOL_MEM query(PM_MESSAGE);
@@ -963,11 +961,6 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
    Mmsg(term_code, term_msg.c_str(), jcr->get_OperationName(), jcr->get_ActionName(0));
    bstrftimes_na(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes_na(edt, sizeof(edt), jcr->jr.EndTime);
-   RunTime = jcr->jr.EndTime - jcr->jr.StartTime;
-   if (jcr->jr.StartTime == 0 || RunTime <= 0) {
-      RunTime = 1;
-   }
-   kbps = (double)jcr->SDJobBytes / (1000.0 * (double)RunTime);
 
    jobstatus_to_ascii(jcr->SDJobStatus, sd_term_msg, sizeof(sd_term_msg));
 
@@ -1036,12 +1029,12 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
         jcr->catalog_source,
         sdt,
         edt,
-        edit_utime(RunTime, elapsed, sizeof(elapsed)),
+        edit_utime(jcr->jr.RunTime, elapsed, sizeof(elapsed)),
         jcr->JobPriority,
         edit_uint64_with_commas(jcr->SDJobFiles, ec1),
         edit_uint64_with_commas(jcr->SDJobBytes, ec2),
         edit_uint64_with_suffix(jcr->SDJobBytes, ec3),
-        (float)kbps,
+        jcr->jr.Rate,
         wjcr ? wjcr->VolumeName : "",
         jcr->VolSessionId,
         jcr->VolSessionTime,
