@@ -54,15 +54,10 @@ def vol_ls():
          # possible to ls unexisting path. In this case, return code will be 1.
          return 0
       return proc.returncode
-   except OSError as o:
-      logging.error("vol_ls OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("vol_ls ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("vol_ls Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def ls():
@@ -93,15 +88,10 @@ def ls():
          # possible to ls unexisting path. In this case, return code will be 1.
          return 0
       return proc.returncode
-   except OSError as o:
-      logging.exception("ls OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("ls ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("ls Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def download():
@@ -115,15 +105,10 @@ def download():
          restore()
          return RETRY_DOWNLOAD
       return proc.returncode
-   except OSError as o:
-      logging.exception("download OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\n".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("download ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\n".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("download Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\n".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def delete():
@@ -141,15 +126,10 @@ def delete():
          logging.info("delete got ouput {0}".format(output))
          sys.stdout.write(output)
       return proc.returncode
-   except OSError as o:
-      logging.exception("delete OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("delete ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("delete Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def upload():
@@ -185,15 +165,10 @@ def upload():
          logging.info("ls outputing {0}".format(output))
          sys.stdout.write(output)
       return proc.returncode
-   except OSError as o:
-      logging.exception("upload OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("upload ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("upload Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def move():
@@ -214,21 +189,10 @@ def move():
             return 0
          logging.error("move got error {0}".format(err))
          sys.stderr.write(err)
-      return ret
-   except NameError as c:
-      logging.exception("move NameError exception")
-      if (err.find("CommandException: No URLs matched")):
-         logging.debug("move cant find source {0}. OK.".format(part))
-         return 0
-   except OSError as o:
-      logging.exception("move OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("move ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("move Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def restore():
@@ -247,15 +211,10 @@ def restore():
          logging.info("restore got ouput {0}".format(output))
          sys.stdout.write(output)
       return proc.returncode
-   except OSError as o:
-      logging.exception("restore OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("restore ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("restore Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 def wait_on_restore():
@@ -275,15 +234,10 @@ def wait_on_restore():
          if "Restore" in j and j["Restore"] and j["Restore"]=='ongoing-request="true"':
             logging.info("Ongoing restore detected")
             return 0
-   except OSError as o:
-      logging.exception("wait_on_restore OSError exception")
-      sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
-   except ValueError as v:
-      logging.exception("wait_on_restore ValueError exception")
-      sys.stderr.write("{2} Wrong Value({0}): {1}\0".format(v.errno, v.strerror, stack()[0][3]))
-   except:
-      logging.exception("wait_on_restore Generic exception")
-      sys.stderr.write("{1} Generic exception: {0}\0".format(sys.exc_info()[0], stack()[0][3]))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
    return 1
 
 
@@ -366,15 +320,11 @@ if __name__ == '__main__':
       else:
          sys.stderr.write('unsupported function {0}\n'.format(sys.argv[1]))
          ret = 3
-
-   except KeyError as k:
-      logging.exception("main KeyError exception")
-      sys.stderr.write("{0} Unknown key: {1}\n".format(sys.argv[0], k))
+   except Exception as e:
+      exc = traceback.format_exception_only(type(e), e)[0]
+      sys.stderr.write(exc)
+      logging.error(traceback.format_exc())
       ret = 4
-   except:
-      logging.exception("main Generic exception")
-      sys.stderr.write("{0} Generic exception: {1}\n".format(sys.argv[0], sys.exc_info()[0]))
-      ret = 5
 
    #only once outside of the try-catch statement
    sys.exit(ret)
