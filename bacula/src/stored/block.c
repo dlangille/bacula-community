@@ -235,9 +235,9 @@ bool DCR::write_block_to_dev()
          dev->clrerror(-1);
       }
       stat = dev->write(block->buf, (size_t)wlen);
-      Dmsg4(100, "%s write() BlockAddr=%lld wlen=%d Vol=%s wlen=%d\n",
-         block->adata?"Adata":"Ameta", block->BlockAddr, wlen,
-         dev->VolHdr.VolumeName);
+      Dmsg4(100, "%s write() BlockAddr=%lld wlen=%d Vol=%s\n",
+            block->adata?"Adata":"Ameta",
+            block->BlockAddr, wlen, dev->VolHdr.VolumeName);
    } while (stat == -1 && (errno == EBUSY || errno == EIO) && retry++ < 3);
 
    /* ***FIXME*** remove 2 lines debug */
@@ -392,7 +392,7 @@ bool DCR::write_block_to_dev()
    }
 
    dev->file_addr += wlen;            /* update file address */
-   dev->file_size += wlen;
+   dev->update_file_size(wlen);
    dev->usage += wlen;                /* update usage counter */
    if (dev->part > 0) {
       dev->part_size += wlen;
@@ -629,7 +629,7 @@ reread:
          if (forge_on) {
             /* Skip the current byte to find a valid block */
             dev->file_addr += 1;
-            dev->file_size += 1;
+            dev->update_file_size(1);
             /* Can be canceled at this point... */
             if (jcr->is_canceled()) {
                jcr->forceJobStatus(status);
@@ -724,7 +724,7 @@ reread:
       dcr->VolMediaId = dev->VolCatInfo.VolMediaId;
    }
    dev->file_addr += block->read_len;
-   dev->file_size += block->read_len;
+   dev->update_file_size(block->read_len);
    dev->usage     += block->read_len;      /* update usage counter */
 
    /*
@@ -751,7 +751,7 @@ reread:
          edit_int64(pos, ed1), block->block_len,
             block->read_len);
       dev->file_addr = pos;
-      dev->file_size = pos;
+      dev->set_file_size(pos);
    }
    Dmsg3(150, "Exit read_block read_len=%d block_len=%d binbuf=%d\n",
       block->read_len, block->block_len, block->binbuf);

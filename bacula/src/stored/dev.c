@@ -179,7 +179,7 @@ void DEVICE::set_ateof()
 {
    set_eof();
    file_addr = 0;
-   file_size = 0;
+   set_file_size(0);
    block_num = 0;
 }
 
@@ -356,7 +356,7 @@ bool DEVICE::close(DCR *dcr)
               ST_NOSPACE|ST_MOUNTED|ST_MEDIA|ST_SHORT);
    label_type = B_BACULA_LABEL;
    file = block_num = 0;
-   file_size = 0;
+   set_file_size(0);
    file_addr = 0;
    EndFile = EndBlock = 0;
    openmode = 0;
@@ -941,7 +941,7 @@ bool DEVICE::weof(DCR */*dcr*/, int num)
       return false;
    }
 
-   file_size = 0;
+   set_file_size(0);
    return true;
 }
 
@@ -968,7 +968,7 @@ bool DEVICE::eod(DCR *dcr)
    }
    clear_eof();         /* remove EOF flag */
    block_num = file = 0;
-   file_size = 0;
+   set_file_size(0);
    file_addr = 0;
    Leave(100);
    return ok;
@@ -1056,7 +1056,6 @@ char *DEVICE::print_addr(char *buf, int32_t buf_len, boffset_t addr)
 bool DEVICE::do_size_checks(DCR *dcr, DEV_BLOCK *block)
 {
    JCR *jcr = dcr->jcr;
-
    if (is_pool_size_reached(dcr, true)) {
       if (!dir_get_pool_info(dcr, &VolCatInfo)) {
          Dmsg0(50, "Error updating volume info.\n");
@@ -1081,7 +1080,7 @@ bool DEVICE::do_size_checks(DCR *dcr, DEV_BLOCK *block)
     */
    if ((max_file_size > 0) &&
        (file_size+block->binbuf) >= max_file_size) {
-      file_size = 0;             /* reset file size */
+      set_file_size(0);             /* reset file size */
 
       if (!weof(dcr, 1)) {            /* write eof */
          Dmsg0(50, "WEOF error in max file size.\n");
