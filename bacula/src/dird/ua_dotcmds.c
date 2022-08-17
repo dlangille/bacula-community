@@ -2615,7 +2615,7 @@ static bool levelscmd(UAContext *ua, const char *cmd)
 static bool volstatuscmd(UAContext *ua, const char *cmd)
 {
    ua->send_msg("Append\n");
-   ua->send_msg("Archived\n");
+   ua->send_msg("Archive\n");
    ua->send_msg("Disabled\n");
    ua->send_msg("Full\n");
    ua->send_msg("Used\n");
