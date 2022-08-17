@@ -16,6 +16,8 @@ JobName=maxsize
 scripts/cleanup
 scripts/copy-test-confs
 echo "$tmp/file" >${cwd}/tmp/file-list
+echo "$tmp/file" >>${cwd}/tmp/file-list
+echo "$cwd/build/po" >>${cwd}/tmp/file-list
 
 dd if=/dev/zero of=$tmp/file count=10000
 
