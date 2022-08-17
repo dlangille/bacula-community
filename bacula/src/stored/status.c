@@ -26,6 +26,9 @@
 
 #include "bacula.h"
 #include "stored.h"
+
+#define USE_LIST_TERMINATED_JOBS
+#define USE_LIST_RESOURCE_LIMITS
 #include "lib/status.h"
 #include "sd_plugins.h"
 

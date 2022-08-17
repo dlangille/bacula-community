@@ -167,6 +167,9 @@ BPIPE *open_bpipe(char *prog, int wait, const char *mode, char *envp[])
     * to determine the FD list to close.
     */
 #if !defined(HAVE_FCNTL_F_CLOSEM) && !defined(HAVE_CLOSEFROM)
+   struct rlimit rl;
+   int64_t rlimitResult=0;
+
    if (getrlimit(RLIMIT_NOFILE, &rl) == -1) {
       rlimitResult = sysconf(_SC_OPEN_MAX);
    } else {

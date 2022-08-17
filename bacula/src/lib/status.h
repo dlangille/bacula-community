@@ -57,6 +57,7 @@ static void sendit(const char *msg, int len, STATUS_PKT *sp)
 }
 
 /* common to SD/FD */
+#ifdef USE_LIST_TERMINATED_JOBS
 static void list_terminated_jobs(STATUS_PKT *sp)
 {
    OutputWriter ow(sp->api_opts);
@@ -196,8 +197,10 @@ static void list_terminated_jobs(STATUS_PKT *sp)
       sendit(p, strlen(p), sp);
    }
 }
+#endif /* USE_LIST_TERMINATED_JOBS */
 
 /* common to SD/FD/DIR */
+#ifdef USE_LIST_RESOURCE_LIMITS
 static void list_resource_limits(STATUS_PKT *sp, int64_t l_nofile, int64_t l_memlock)
 {
 #ifdef HAVE_GETRLIMIT
@@ -263,6 +266,7 @@ static void list_resource_limits(STATUS_PKT *sp, int64_t l_nofile, int64_t l_mem
    }
 #endif
 }
+#endif /* USE_LIST_RESOURCE_LIMITS */
 
 #if defined(HAVE_WIN32)
 int bacstat = 0;

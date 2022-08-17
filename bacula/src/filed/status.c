@@ -25,6 +25,9 @@
 
 #include "bacula.h"
 #include "filed.h"
+
+#define USE_LIST_TERMINATED_JOBS
+#define USE_LIST_RESOURCE_LIMITS
 #include "lib/status.h"
 
 extern bool GetWindowsVersionString(char *buf, int maxsiz);

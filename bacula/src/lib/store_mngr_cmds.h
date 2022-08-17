@@ -26,7 +26,10 @@
 static const char store_query[] = "store_mngr query\n";
 static const char store_query_freespace[] = "store_mngr freespace device=%s\n";
 static char OK_store_query[] = "3000 OK query store\n";
-static char store_query_unsupp_policy[] = "3200 unsupported policy\n";
 static char OK_store_size[]   = "3000 OK size=%llu\n";
+
+#ifdef STORAGE_DAEMON
+static char store_query_unsupp_policy[] = "3200 unsupported policy\n";
+#endif
 
 #endif // STORE_MNGR_CMDS_H
