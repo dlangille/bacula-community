@@ -537,6 +537,8 @@ public:
 
 
    /* Virtual functions that can be overridden */
+   virtual void set_file_size(uint64_t val) { file_size = val;};
+   virtual uint64_t update_file_size(uint64_t add) { file_size += add; return file_size; };
    virtual void setVolCatName(const char *name);
    virtual void setVolCatStatus(const char *status);
    virtual void free_dcr_blocks(DCR *dcr);        /* in block_util.c */
