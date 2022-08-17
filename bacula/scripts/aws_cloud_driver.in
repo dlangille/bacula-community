@@ -27,7 +27,7 @@ import sys, os, json, time
 from subprocess import Popen, PIPE, call
 from multiprocessing import Pool, cpu_count
 from inspect import stack
-import logging
+import logging, traceback
 
 
 # RETRY DOWNLOAD
@@ -55,7 +55,7 @@ def vol_ls():
          return 0
       return proc.returncode
    except OSError as o:
-      logging.exception("vol_ls OSError exception")
+      logging.error("vol_ls OSError exception")
       sys.stderr.write("{2} OSError({0}): {1}\0".format(o.errno, o.strerror, stack()[0][3]))
    except ValueError as v:
       logging.exception("vol_ls ValueError exception")
@@ -293,6 +293,8 @@ if __name__ == '__main__':
 
    if ('CLOUD_DEBUG' in os.environ) and os.environ['CLOUD_DEBUG']:
       logging.basicConfig(filename='@working_dir@/aws_cloud_driver.log', level=logging.DEBUG, filemode='a', format='%(asctime)-15s-%(process)d- %(levelname)s -%(message)s')
+   else:
+      logging.basicConfig(level=logging.CRITICAL)
 
    try:
       if len(sys.argv) < 3:
