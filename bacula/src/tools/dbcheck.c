@@ -352,7 +352,7 @@ int main (int argc, char *argv[])
       eliminate_admin_records();
       eliminate_restore_records();
       eliminate_orphaned_meta_records();
-//      eliminate_orphaned_object_records();
+      eliminate_orphaned_object_records();
    } else {
       do_interactive_mode();
    }
