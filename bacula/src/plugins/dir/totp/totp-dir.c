@@ -744,12 +744,13 @@ static bRC getAuthorizationData(bpContext *ctx, const char *console, const char 
 static void usage(int ret)
 {
       fprintf(stderr, _(
-"Usage: btotp [-k /path/to/keydir] [-d100] [-c] [-u] [-q] -n name\n"
+"Usage: btotp [-k /path/to/keydir] [-d100] [-c] [-r] [-u] [-q] -n name\n"
 "       -d int            Set debug level\n"
 "       -c                Create a key if needed\n"
 "       -n name           Name of the console (or via BTOTP_NAME env)\n"
 "       -u                Display otpauth URL\n"
 "       -q                Display qrcode\n"
+"       -r                Remove key on disk\n"
 "       -k dir            Path to the keydir\n\n"));
       exit(ret);
 }
@@ -764,15 +765,18 @@ int main(int argc, char **argv)
    totp_api totp;
    
    int ch;
-   bool docreate=false, displayQR=false, displayURL=false;
+   bool docreate=false, displayQR=false, displayURL=false,remove=false;
    char *name = NULL;
    my_name_is(argc, argv, "btotp");
    init_msg(NULL, NULL);
 
    OSDependentInit();
 
-   while ((ch = getopt(argc, argv, "d:ck:n:?qu")) != -1) {
+   while ((ch = getopt(argc, argv, "rd:ck:n:?qu")) != -1) {
       switch (ch) {
+      case 'r':
+         remove=true;
+         break;
       case 'n':
          name=optarg;
          break;
@@ -830,6 +834,20 @@ int main(int argc, char **argv)
    }
    if (docreate) {
       printf("%s\n", totp.keyname);
+      return 0;
+   }
+   if (remove) {
+      POOL_MEM tmp;
+      if (!totp.compute_keyfile(name, tmp.handle())) {
+         Pmsg0(0, _("Unable to find the key file\n"));
+         usage(2);
+      }
+      if (unlink(tmp.c_str()) < 0) {
+         berrno be;
+         Pmsg3(0, _("Unable to remove disk key %s for %s file. ERR=%s\n"), tmp.c_str(), name, be.bstrerror());
+         usage(2);
+      }
+      printf("Disk storage %s for key %s has been deleted\n", tmp.c_str(), name);
       return 0;
    }
    if (displayURL || displayQR) {
