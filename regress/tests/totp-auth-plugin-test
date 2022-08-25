@@ -280,5 +280,17 @@ EOF
 
 run_bconsole
 
+$bin/btotp -r cons1 -q > $tmp/log7.out
+if [ $? != 0 ]; then
+    print_debug "ERROR: Unable to delete a key $tmp/log7.out"
+    estat=1
+fi
+
+$bin/btotp -n cons1 -q > $tmp/log8.out
+if [ $? == 0  ]; then
+    print_debug "ERROR: Should not be able to display the QR code after deletion in $tmp/log8.out"
+    estat=1
+fi
+
 stop_bacula
 end_test
