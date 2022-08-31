@@ -82,7 +82,7 @@ static pthread_mutex_t fides_mutex = PTHREAD_MUTEX_INITIALIZER;
 static MSGS *daemon_msgs;              /* global messages */
 static void (*message_callback)(int type, char *msg) = NULL;
 #define MAX_TRACE_PATH  200
-static FILE *trace_fd = NULL;
+static int trace_fd = -1;
 static char trace_path[MAX_TRACE_PATH] = {0};
 
 #if defined(HAVE_WIN32)
@@ -211,8 +211,8 @@ void set_debug_flags(char *options)
 
       case 'c':
          /* truncate the trace file */
-         if (trace && trace_fd) {
-            ftruncate(fileno(trace_fd), 0);
+         if (trace && trace_fd != -1) {
+            ftruncate(trace_fd, 0);
          }
          break;
 
@@ -787,9 +787,9 @@ void term_msg()
       free(exename);
       exename = NULL;
    }
-   if (trace_fd) {
-      fclose(trace_fd);
-      trace_fd = NULL;
+   if (trace_fd != -1) {
+      close(trace_fd);
+      trace_fd = -1;
       trace = false;
    }
    working_directory = NULL;
@@ -1115,10 +1115,17 @@ const char *get_basename(const char *pathname)
 /* open trace file in working directory if not already open */
 static inline void open_trace_file()
 {
-   if (!trace_fd) {
+   if (trace_fd == -1) {
       bsnprintf(trace_path, sizeof(trace_path), "%s/%s.trace", working_directory ? working_directory : ".", my_name);
-      trace_fd = bfopen(trace_path, "a+b");
+      trace_fd = open(trace_path, O_RDWR | O_CREAT | O_APPEND, 0600);
    }
+}
+
+static void close_trace_file()
+{
+   int ltrace_fd = trace_fd;
+   trace_fd = -1;
+   close(ltrace_fd);
 }
 
 /* If the working directory or my_name has changed then close the trace file.
@@ -1129,21 +1136,13 @@ static inline void open_trace_file()
  */
 void update_trace_file_location(bool safe)
 {
-   if (trace_fd) {
+   if (trace_fd != -1) {
       char fn[MAX_TRACE_PATH];
       bsnprintf(fn, sizeof(fn), "%s/%s.trace", working_directory ? working_directory : ".", my_name);
       if (strcmp(trace_path, fn) != 0) {
          /* the trace file must be reopen at its new location */
-         if (safe) {
-            /* cheap safety, TODO use mutex instead */
-            FILE *ltrace_fd = trace_fd;
-            trace_fd = NULL;
-            bmicrosleep(0, 100000);         /* yield to prevent seg faults */
-            fclose(ltrace_fd);
-         } else {
-            fclose(trace_fd);
-            trace_fd = NULL;
-         }
+         close_trace_file();
+         /* will be reopen by next output */
       }
    }
 }
@@ -1159,9 +1158,8 @@ static void pt_out(char *buf)
      */
     if (trace) {
        open_trace_file();
-       if (trace_fd) {
-          fputs(buf, trace_fd);
-          fflush(trace_fd);
+       if (trace_fd != -1) {
+          write(trace_fd, buf, strlen(buf));
           return;
        } else {
           /* Some problem, turn off tracing */
@@ -1249,11 +1247,8 @@ void set_trace(int trace_flag)
    } else {
       trace = false;
    }
-   if (!trace && trace_fd) {
-      FILE *ltrace_fd = trace_fd;
-      trace_fd = NULL;
-      bmicrosleep(0, 100000);         /* yield to prevent seg faults */
-      fclose(ltrace_fd);
+   if (!trace && trace_fd != -1) {
+      close_trace_file();
    }
 }
 
@@ -1265,7 +1260,7 @@ void set_trace(int trace_flag)
  * In your tools be careful to no call any function that here in messages.c
  * that modify "trace" or close() or re-open() trace_fd
  */
-void set_trace_for_tools(FILE *new_trace_fd)
+void set_trace_for_tools(int new_trace_fd)
 {
    // don't call fclose(trace_fd) here
    trace = true;
@@ -1449,9 +1444,8 @@ t_msg(const char *file, int line, int64_t level, const char *fmt,...)
        va_start(arg_ptr, fmt);
        bvsnprintf(buf+len, sizeof(buf)-len, (char *)fmt, arg_ptr);
        va_end(arg_ptr);
-       if (trace_fd != NULL) {
-           fputs(buf, trace_fd);
-           fflush(trace_fd);
+       if (trace_fd != -1) {
+          write(trace_fd, buf, strlen(buf));
        }
    }
 }

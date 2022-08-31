@@ -197,7 +197,7 @@ bool get_trace(void);
 void set_debug_flags(char *options);
 const char *get_basename(const char *pathname);
 bool is_message_type_set(JCR *jcr, int type);
-void set_trace_for_tools(FILE *new_trace_fd); // called by Bacula's tools only
+void set_trace_for_tools(int new_trace_fd); // called by Bacula's tools only
 void update_trace_file_location(bool safe);
 char *build_connecting_info_log(const char *daemon, const char *name, const char *addr, int port, bool tls, POOLMEM *&buf);
 
