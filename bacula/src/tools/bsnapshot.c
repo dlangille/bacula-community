@@ -36,11 +36,9 @@
 #include <sys/sysmacros.h>
 #endif
 
-#define Dmsg(level,  ...) do { \
-   if (level <= debug_level) { \
-      fprintf(debug, "%s:%d ", __FILE__ , __LINE__);    \
-      fprintf(debug, __VA_ARGS__ );                          \
-   }  \
+/* HERE I HAVE TO convert the fprintf into something in message.c */
+#define Dmsg(level, ...) do { \
+   d_msg(__FILE__ , __LINE__, level, __VA_ARGS__); \
  } while (0)
 
 #define Pmsg(level,  ...) do { \
@@ -76,7 +74,7 @@
 
 #define BSNAPSHOT_CONF SYSCONFDIR "/bsnapshot.conf"
 
-static FILE *debug = NULL;
+static int debug_fd = -1; /* file descriptor for the debugging */
 
 static void usage(const char *msg=NULL)
 {
@@ -167,18 +165,18 @@ void strip_quotes(char *str)
 static void set_trace_file(const char *path)
 {
    char dt[MAX_TIME_LENGTH];
-   if (debug && debug != stderr) {
-      fclose(debug);
+   if (debug_fd != -1) {
+      close(debug_fd);
    }
-   debug = fopen(path, "a");
-   if (!debug) {
-      debug = stderr;
-   } else {
+   debug_fd = open(path, O_RDWR | O_CREAT | O_APPEND, 0600);
+   if (debug_fd != -1) {
       Dmsg(10, "Starting bsnapshot %s\n",  
            bstrftime(dt, MAX_TIME_LENGTH, time(NULL)));
+      // redirect Dmsg() emitted by Bacula's libraries code
+      set_trace_for_tools(debug_fd);
+   } else {
+      perror(path); /* report the error to stderr */
    }
-   // redirect Dmsg() emitted by Bacula's libraries code
-   set_trace_for_tools(debug);
 }
 
 /* Small function to avoid double // in path name */
