@@ -10,6 +10,13 @@ TestName="snapshot-lvm-test"
 JobName=Incremental
 . scripts/functions
 
+SNAP1=1
+SNAP3=3
+if [ x$WHICHDB != x"--with-sqlite3" ]; then
+   # the numbering is different when using sqlite
+   SNAP3=2
+fi
+
 ${rscripts}/cleanup
 ${rscripts}/copy-test-confs
 
@@ -113,12 +120,12 @@ list files jobid=1
 @$out ${tmp}/list1.snap_listclient
 snapshot listclient
 @$out ${tmp}/list1.snap_update
-snapshot update client snapshotid=1 comment="test1"
-snapshot update client snapshotid=1 retention=3
+snapshot update client snapshotid=$SNAP1 comment="test1"
+snapshot update client snapshotid=$SNAP1 retention=3
 @$out ${tmp}/list1.snap_list2
-.jlist snapshot snapshotid=1
+.jlist snapshot snapshotid=$SNAP1
 @$out ${tmp}/list1.snap_list22
-.jlist snapshot snapshotid=3
+.jlist snapshot snapshotid=$SNAP3
 @$out ${tmp}/list1.snap_prune
 @sleep 4
 snapshot prune client yes
