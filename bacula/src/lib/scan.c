@@ -833,7 +833,7 @@ int main(int argc, char *argv[])
       Pmsg0(0, "Test scan_string basic tests\n");
       {
          char buf[100];
-         int a, b, c, cnt;
+         int a, b, c, d, cnt;
          uint32_t val32;
          uint64_t val64;
          int32_t sval32;
@@ -1012,6 +1012,10 @@ int main(int argc, char *argv[])
          ok(cnt==1 && *buf == 0, "[string=] => [string=%256s]");
          Dmsg2(0, "cnt=%d buf=%s\n", cnt, buf);
 
+         a = b = c = d = -99;
+         cnt=scan_string("1.2.3.4", "%u.%u.%u.%u", &a, &b, &c, &d);
+         is(cnt, 4, "[1.2.3.4] => [%u, %u, %u, %u]");
+         ok(a == 1 && b == 2 && c == 3 && d == 4, "checking values");
       }
    }
 
