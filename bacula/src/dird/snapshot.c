@@ -274,7 +274,8 @@ static void storeit(void *ctx, const char *msg)
 {
    char ed1[51];
    alist *lst = (alist *)ctx;
-   if (sscanf(msg, "snapshotid=%50s", ed1) == 1) {
+   if (   sscanf(msg, "snapshotid=%50s", ed1) == 1
+       || sscanf(msg, "SnapshotId=%50s", ed1) == 1) {
       lst->append((void *)(intptr_t) str_to_int64(ed1));
    }
 }

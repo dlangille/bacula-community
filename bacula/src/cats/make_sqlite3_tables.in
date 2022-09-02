@@ -28,7 +28,7 @@ CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
 
 CREATE TABLE FileEvents 
 (
-   Id   bigserial,
+   Id	  INTEGER PRIMARY KEY AUTOINCREMENT,
    Time  DATETIME DEFAULT current_timestamp, -- Time of the detection
    SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
    JobId         int,        -- JobId where the file was found. Used for pruning
@@ -576,7 +576,7 @@ CREATE INDEX pathvisibility_jobid
 
 
 CREATE TABLE Snapshot (
-  SnapshotId	  serial,
+  SnapshotId	  INTEGER PRIMARY KEY AUTOINCREMENT,
   Name		  text NOT NULL,
   JobId 	  integer default 0,
   FileSetId	  integer default 0,
@@ -587,8 +587,7 @@ CREATE TABLE Snapshot (
   Device	  text not null,
   Type		  text not null,
   Retention	  int default 0,
-  Comment	  text,
-  primary key (SnapshotId)
+  Comment	  text
 );
 
 CREATE UNIQUE INDEX snapshot_idx ON Snapshot (Device, Volume, Name);
