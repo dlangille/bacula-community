@@ -49,6 +49,11 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolFirstWritten=%lld VolType=%u VolParts=%d VolCloudParts=%d"
    " LastPartBytes=%lld Enabled=%d Recycle=%d\n";
 
+static char FileEvent_add[] = "%c %d %127s %127s 0";
+/* Full format when coming from the Verify Job */
+static char FileEvent_fd_add[] = "CatReq JobId=%ld FileEvent %lu %lu %lu %c %d %127s %127s 0";
+static char FileEvent_fd_add1[] = "CatReq JobId=%ld FileEvent %lu";
+
 static char Create_jobmedia[] = "CatReq JobId=%ld CreateJobMedia\n";
 
 static char Create_filemedia[] = "CatReq JobId=%ld CreateFileMedia\n";
@@ -119,6 +124,55 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
    unbash_spaces(mr->VolumeName);
    Dmsg2(100, "Vol Info for %s: %s", jcr->Job, sd->msg);
    return stat;
+}
+
+static bool catreq_fileevent(JCR *jcr, DBId_t FileIndex, const char *p)
+{
+   FILEEVENT_DBR event;
+   bool ok=false;
+   uint32_t t1, t2, t3, t4;
+   event.FileIndex = FileIndex;
+
+   /* If the string is going through the attribute flow, we don't have the CatReq header */
+   if (scan_string(p, FileEvent_add, &event.Type, &event.Severity, event.Source, event.Description) == 4)
+   {
+      event.JobId = jcr->JobId; // Might need to look for previous jobid for example
+      event.FileIndex = FileIndex;
+      ok = true;
+
+   /* We get the VolSessionTime, VolSessionId and FileIndex in the protocol, but we keep it for later */
+   } else if (scan_string(p, FileEvent_fd_add, &t1, &t2, &t3, &t4,
+                          &event.Type, &event.Severity, event.Source, event.Description) == 8)
+   {
+      event.JobId = jcr->previous_jr.JobId;
+      ok = true;
+   }
+   if (ok) {
+      event.SourceJobId = jcr->JobId;
+      unbash_spaces(event.Source);
+      unbash_spaces(event.Description);
+      if (!db_create_fileevent_record(jcr, jcr->db, &event)) {
+         Jmsg(jcr, M_WARNING, 0, _("Catalog error creating FileEvent record. %s"),
+              db_strerror(jcr->db));
+      }
+      return true;
+
+   }  else {
+      Dmsg1(50, "Error while decoding FileEvent %s\n", p);
+   }
+   return false;
+}
+
+/* Can be Snapshot or FileEvent requests from the FD */
+void fd_catreq(JCR *jcr, BSOCK *bs)
+{
+   DBId_t FileIndex=0, xjobid;
+   if (scan_string(bs->msg, FileEvent_fd_add1, &xjobid, &FileIndex) == 2) {
+      catreq_fileevent(jcr, FileIndex, bs->msg);
+
+   } else {
+      snapshot_catreq(jcr, bs);
+   }
 }
 
 void catalog_request(JCR *jcr, BSOCK *bs)
@@ -697,6 +751,8 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
       if (!db_create_restore_object_record(jcr, jcr->db, &ro)) {
          Jmsg1(jcr, M_FATAL, 0, _("Restore object create error. %s"), db_strerror(jcr->db));
       }
+   } else if (Stream == STREAM_FILEEVENT) {
+      catreq_fileevent(jcr, FileIndex, p);
 
    } else if (crypto_digest_stream_type(Stream) != CRYPTO_DIGEST_NONE) {
       fname = p;

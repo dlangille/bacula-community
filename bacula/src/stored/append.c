@@ -440,7 +440,8 @@ fi_checked:
 /* Send attributes and digest to Director for Catalog */
 bool send_attrs_to_dir(JCR *jcr, DEV_RECORD *rec)
 {
-   if (rec->maskedStream == STREAM_UNIX_ATTRIBUTES    ||
+   if (rec->maskedStream == STREAM_FILEEVENT ||
+       rec->maskedStream == STREAM_UNIX_ATTRIBUTES    ||
        rec->maskedStream == STREAM_UNIX_ATTRIBUTES_EX ||
        rec->maskedStream == STREAM_RESTORE_OBJECT     ||
        rec->maskedStream == STREAM_PLUGIN_OBJECT ||
@@ -452,7 +453,7 @@ bool send_attrs_to_dir(JCR *jcr, DEV_RECORD *rec)
          if (are_attributes_spooled(jcr)) {
             dir->set_spooling();
          }
-         Dmsg1(850, "Send attributes to dir. FI=%d\n", rec->FileIndex);
+         Dmsg2(850, "Send attributes to dir. FI=%d Stream=%s\n", rec->FileIndex, stream_to_ascii(rec->Stream));
          if (!dir_update_file_attributes(jcr->dcr, rec)) {
             Jmsg(jcr, M_FATAL, 0, _("Error updating file attributes. ERR=%s\n"),
                dir->bstrerror());

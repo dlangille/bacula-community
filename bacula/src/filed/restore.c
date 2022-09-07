@@ -1059,6 +1059,7 @@ void do_restore(JCR *jcr)
          plugin_name_stream(jcr, bmsg->rbuf);
          break;
 
+      case STREAM_FILEEVENT:
       case STREAM_RESTORE_OBJECT:
          break;                    /* these are sent by Director */
 

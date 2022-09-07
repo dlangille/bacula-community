@@ -517,6 +517,7 @@ public:
    VSSClient *pVSSClient;             /* VSS handler */
    alist *plugin_verify;              /* Registered plugins that need a copy of the data in verify job */
    alist *plugin_options_list;        /* list of the options to use in a job */
+   alist *fileevents;                  /* list of the current file events to record and send to the DIR */
 #endif /* FILE_DAEMON */
 
 

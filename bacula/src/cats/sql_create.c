@@ -1460,4 +1460,21 @@ bool BDB::bdb_create_tag_record(JCR *jcr, TAG_DBR *tag)
    return ret;
 }
 
+bool BDB::bdb_create_fileevent_record(JCR *jcr, FILEEVENT_DBR *event)
+{
+   char esc1[MAX_ESCAPE_NAME_LENGTH];
+   char esc2[MAX_ESCAPE_NAME_LENGTH];
+   bool ret=false;
+
+   bdb_lock();
+   bdb_escape_string(jcr, esc1, event->Description, strlen(event->Description));
+   bdb_escape_string(jcr, esc2, event->Source, strlen(event->Source));
+   Mmsg(cmd, "INSERT INTO FileEvents (SourceJobId, JobId, FileIndex, Type, Description, Severity, Source) "
+        " VALUES (%lu, %lu, %ld, '%c', '%s', %d, '%s')",
+        event->SourceJobId, event->JobId, event->FileIndex, event->Type, esc1, event->Severity, esc2);
+   ret = bdb_sql_query(cmd, NULL, (void *)NULL);
+   bdb_unlock();
+   return ret;
+}
+
 #endif /* HAVE_SQLITE3 || HAVE_MYSQL || HAVE_POSTGRESQL */

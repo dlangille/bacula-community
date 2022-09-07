@@ -337,6 +337,7 @@ bail_out:
  *  list objects [type=objecttype job_id=id clientname=n,status=S] - list plugin objects
  *  list pluginrestoreconf jobid=x,y,z [id=k]
  *  list filemedia jobid=x fileindex=z
+ *  list fileevents jobid=x fileindex=z
  *  list metadata type=[email|attachment] tenant=xxx owner=xxx jobid=<x,w,z> client=<cli>
  *             from=<str>
  *             to=<str> cc=<str> tags=<str> 
@@ -621,6 +622,27 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          }
          if (jobid) {
             db_list_filemedia_records(ua->jcr, ua->db, jobid, findex, prtit, ua, llist);
+         }
+         return 1;
+
+      } else if (strcasecmp(ua->argk[i], NT_("fileevents")) == 0) {
+         FILEEVENT_DBR event;
+         for (j=i+1; j<ua->argc; j++) {
+            if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
+               event.JobId = str_to_int64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("fileindex")) == 0 && ua->argv[j]) {
+               event.FileIndex = str_to_int64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("severity")) == 0 && ua->argv[j]) {
+               event.Severity = str_to_int64(ua->argv[j]);
+
+            } else if (strcasecmp(ua->argk[j], NT_("Type")) == 0 && ua->argv[j]) {
+               event.Type = ua->argv[j][0];
+            }
+         }
+         if (event.JobId) {
+            db_list_fileevents_records(ua->jcr, ua->db, &event, prtit, ua, llist);
          }
          return 1;
 

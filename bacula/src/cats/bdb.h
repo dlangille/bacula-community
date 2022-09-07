@@ -216,6 +216,7 @@ public:
    bool bdb_create_snapshot_record(JCR *jcr, SNAPSHOT_DBR *snap);
    int bdb_create_file_record(JCR *jcr, ATTR_DBR *ar);
    bool bdb_create_batch_file_attributes_record(JCR *jcr, ATTR_DBR *ar);
+   bool bdb_create_fileevent_record(JCR *jcr, FILEEVENT_DBR *event);
 
    /* sql_get.c */
    char *bdb_get_jobids(const char *jobids, POOLMEM **ret, bool append);
@@ -277,6 +278,7 @@ public:
    void bdb_list_fileevents_for_job(JCR *jcr, uint32_t jobid, char etype, DB_LIST_HANDLER sendit, void *ctx, e_list_type type);
    void bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_jobmedia_records(JCR *jcr, JobId_t JobId, char *volume, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
+   void bdb_list_fileevents_records(JCR *jcr, FILEEVENT_DBR *event, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_filemedia_records(JCR *jcr, JobId_t JobId, uint32_t FileIndex, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    void bdb_list_joblog_records(JCR *jcr, JobId_t JobId, const char *pattern, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type);
    int  bdb_list_sql_query(JCR *jcr, const char *title, const char *query, DB_LIST_HANDLER *sendit, void *ctx, int verbose, e_list_type type);

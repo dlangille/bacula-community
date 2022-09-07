@@ -308,6 +308,41 @@ bail_out:
    return stat;
 }
 
+
+/*
+ * Send the fileevent_pkt to the SD for the record
+ *  Returns: true if OK
+ *           false if error
+ */
+bool fileevent_save(JCR *jcr, fileevent_pkt *fevent)
+{
+   bool stat = false;
+   BSOCK *sd = jcr->store_bsock;
+
+   Dmsg1(50, "Sending STREAM_FILEEVENT %d\n", jcr->JobFiles);
+   stat = sd->fsend("%ld %d 0", jcr->JobFiles, STREAM_FILEEVENT);
+   if (!stat) {
+      goto bail_out;
+   }
+
+   bash_spaces(fevent->Description);
+   bash_spaces(fevent->Source);
+   stat = sd->fsend("%c %d %s %s 0", fevent->Type, fevent->Severity, fevent->Source, fevent->Description);
+   if (!stat) {
+      goto bail_out;
+   }
+   sd->signal(BNET_EOD); /* indicate end of attributes data */
+
+bail_out:
+   if (!stat) {
+      if (!jcr->is_canceled() && !jcr->is_incomplete()) {
+         Jmsg1(jcr, M_FATAL, 0, _("Network send error to SD. ERR=%s\n"),
+               sd->bstrerror());
+      }
+   }
+   return stat;
+}
+
 /**
  * Called here by find() for each file included.
  *   This is a callback. The original is find_files() above.
@@ -642,6 +677,17 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
 
    if (!crypto_terminate_digests(bctx)) {
       goto bail_out;
+   }
+
+   /*
+    * Handle FileEvent that might have been generated during the backup
+    * of the file.
+    */
+   struct fileevent_pkt *fevent;
+   foreach_alist(fevent, jcr->fileevents) {
+      if (!fileevent_save(jcr, fevent)) {
+         break;
+      }
    }
 
 good_rtn:

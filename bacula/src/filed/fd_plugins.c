@@ -77,6 +77,7 @@ static bRC baculaAcceptFile(bpContext *ctx, struct save_pkt *sp);
 static bRC baculaAccurateAttribs(bpContext *ctx, accurate_attribs_pkt *att);
 static void plugin_register_verify_data(bpContext *ctx);
 static bRC baculaAddPlugin(bpContext *ctx, const char *file);
+static bRC baculaAddFileEvent(bpContext *ctx, struct fileevent_pkt *event);
 
 /*
  * These will be plugged into the global pointer structure for
@@ -117,7 +118,8 @@ static bFuncs bfuncs = {
    baculaCheckChanges,
    baculaAcceptFile,
    baculaAccurateAttribs,
-   baculaAddPlugin
+   baculaAddPlugin,
+   baculaAddFileEvent
 };
 
 /*
@@ -2308,6 +2310,30 @@ static bRC baculaAddInclude(bpContext *ctx, const char *file)
    set_incexe(jcr, old);
 
    Dmsg1(100, "Add include file=%s\n", file);
+   Dsm_check(999);
+   return bRC_OK;
+}
+
+/**
+ * Let the plugin create FileEvent to report problems on files
+ */
+static bRC baculaAddFileEvent(bpContext *ctx, struct fileevent_pkt *event)
+{
+   JCR *jcr;
+   bacula_ctx *bctx;
+   struct fileevent_pkt *e;
+   Dsm_check(999);
+   if (!is_ctx_good(ctx, jcr, bctx)) {
+      return bRC_Error;
+   }
+   // Sanity check
+   if (!event) {
+      return bRC_Error;
+   }
+   e = (struct fileevent_pkt*) malloc(sizeof(struct fileevent_pkt));
+   memcpy(e, event, sizeof(struct fileevent_pkt));
+   jcr->fileevents->append(e);
+   
    Dsm_check(999);
    return bRC_OK;
 }

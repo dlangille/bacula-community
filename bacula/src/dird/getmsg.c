@@ -57,7 +57,6 @@ static char Device_update[]   = "DevUpd JobId=%127s "
    "DevWriteBytes=%d\n";
 #endif
 
-
 static char OK_msg[] = "1000 OK\n";
 
 
@@ -268,9 +267,9 @@ int bget_dirmsg(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role)
          catalog_request(jcr, bs);
          continue;
       }
-      /* Only the Snapshot commands are authorized for the FD */
+      /* Only the Snapshot and FileEvent commands are authorized for the FD */
       if (role==BSOCK_TYPE_FD && bs->msg[0] == 'C') {
-         snapshot_catreq(jcr, bs);
+         fd_catreq(jcr, bs);
          continue;
       }
       if (role==BSOCK_TYPE_SD && bs->msg[0] == 'U') {        /* SD sending attributes */

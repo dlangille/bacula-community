@@ -164,7 +164,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            bdb_disable_batch_insert(disable)
 #define db_create_snapshot_record(jcr, mdb, sr) \
            mdb->bdb_create_snapshot_record(jcr, sr)
-
+#define db_create_fileevent_record(jcr, mdb, ev) \
+           mdb->bdb_create_fileevent_record(jcr, ev)
 
 /* sql_delete.c */
 #define db_delete_pool_record(jcr, mdb, pool_dbr) \
@@ -296,6 +297,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_list_jobmedia_records(jcr, JobId, volume, sendit, ctx, type)
 #define db_list_filemedia_records(jcr, mdb, JobId, FI, sendit, ctx, type) \
            mdb->bdb_list_filemedia_records(jcr, JobId, FI, sendit, ctx, type)
+#define db_list_fileevents_records(jcr, mdb, event, sendit, ctx, type) \
+           mdb->bdb_list_fileevents_records(jcr, event, sendit, ctx, type)
 #define db_list_joblog_records(jcr, mdb, JobId, pattern, sendit, ctx, type) \
    mdb->bdb_list_joblog_records(jcr, JobId, pattern, sendit, ctx, type)
 #define db_list_sql_query(jcr, mdb, title, query, sendit, ctx, verbose, type) \

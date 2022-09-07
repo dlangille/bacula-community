@@ -942,6 +942,16 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
          p_ctx->fd = NULL;
       }
       io->status = 0;
+      {
+         struct fileevent_pkt event;
+         bstrncpy(event.Description, "A good description", sizeof(event.Description));
+         bstrncpy(event.Source, "A very good source", sizeof(event.Source));
+         event.Type = 'c';
+         event.Severity = 100;
+         bfuncs->AddFileEvent(ctx, &event);
+         bfuncs->JobMessage(ctx, fi, li, M_INFO, 0, "Adding FileEvent\n");
+      }
+
       break;
 
    case IO_SEEK:

@@ -161,7 +161,8 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
          return "contADATA-BLOCK-HEADER";
       case STREAM_ADATA_RECORD_HEADER:
          return "contADATA-RECORD-HEADER";
-
+      case STREAM_FILEEVENT:
+         return _("FileEvent");
       default:
          sprintf(buf, "%d", -stream);
          return buf;
@@ -239,6 +240,8 @@ const char *stream_to_ascii(char *buf, int stream, int fi)
       return "ADATA-BLOCK-HEADER";
    case STREAM_ADATA_RECORD_HEADER:
       return "ADATA-RECORD-HEADER";
+   case STREAM_FILEEVENT:
+      return _("FileEvent");
    default:
       sprintf(buf, "%d", stream);
       return buf;

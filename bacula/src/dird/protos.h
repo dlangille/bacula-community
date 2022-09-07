@@ -80,6 +80,7 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info);
 
 
 /* catreq.c */
+extern void fd_catreq(JCR *jcr, BSOCK *bs);
 extern void catalog_request(JCR *jcr, BSOCK *bs);
 extern void catalog_update(JCR *jcr, BSOCK *bs);
 extern bool despool_attributes_from_file(JCR *jcr, const char *file);

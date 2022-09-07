@@ -433,6 +433,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
    DEV_BLOCK *block = dcr->block;
    POOL_MEM sql_buffer;
    db_int64_ctx jmr_count;
+   FILEEVENT_DBR fevent;
 
    char digest[BASE64_SIZE(CRYPTO_DIGEST_MAX_SIZE)];
 
@@ -969,6 +970,29 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       if (verbose > 1) {
          Pmsg0(000, _("Got Prog Data Stream record.\n"));
       }
+      break;
+
+   case STREAM_FILEEVENT:
+      if (verbose > 1) {
+         Pmsg0(000, _("Got FileEvent Stream record.\n"));
+      }
+      if (!fevent.unpack(rec->Stream, rec->data, rec->data_len)) {
+         Emsg0(M_ERROR, 0, _("Unable to decode FileEvent.\n"));
+         break;
+      }
+      mjcr = get_jcr_by_session(rec->VolSessionId, rec->VolSessionTime);
+      if (!mjcr) {
+         Pmsg2(000, _("Could not find SessId=%d SessTime=%d for File record.\n"),
+               rec->VolSessionId, rec->VolSessionTime);
+         break;
+      }
+      fevent.SourceJobId = fevent.JobId = mjcr->JobId;
+      fevent.FileIndex = mjcr->JobFiles;
+      if (!db_create_fileevent_record(mjcr, mjcr->db, &fevent)) {
+         Jmsg2(mjcr, M_ERROR, 0, _("Failed to insert FileEvent record for file: %d. err: %s\n"),
+               fevent.FileIndex, db_strerror(db));
+      }
+      mjcr->dec_use_count(); /* Decrease reference counter increased by get_jcr_by_session call */
       break;
 
    case  STREAM_UNIX_ACCESS_ACL:          /* Deprecated Standard ACL attributes on UNIX */

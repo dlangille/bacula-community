@@ -90,6 +90,7 @@
 #define STREAM_PLUGIN_NAME                 26    /* Plugin "file" string */
 #define STREAM_PLUGIN_DATA                 27    /* Plugin specific data */
 #define STREAM_RESTORE_OBJECT              28    /* Plugin restore object */
+
 /*
  * Non-gzip compressed streams. Those streams can handle arbitrary
  *  compression algorithm data as an additional header is stored
@@ -105,6 +106,7 @@
 #define STREAM_PLUGIN_META_BLOB                35    /* Plugin metadata (blob) for file being backed up */
 #define STREAM_PLUGIN_META_CATALOG             36    /* Plugin metadata (to be stored in catalog) for file being backed up */
 #define STREAM_UNIX_ATTRIBUTE_UPDATE           37    /* File's updated metadata */
+#define STREAM_FILEEVENT                       38    /* FileEvent associated with the current object */
 
 #define STREAM_ADATA_BLOCK_HEADER             200    /* Adata block header */
 #define STREAM_ADATA_RECORD_HEADER            201    /* Adata record header */

@@ -248,6 +248,31 @@ bool v_ctx::close_previous_stream()
    return rtn;
 }
 
+static bool fileevent_dir_save(JCR *jcr, fileevent_pkt *fevent)
+{
+   bool stat = false;
+   BSOCK *dir = jcr->dir_bsock;
+
+   bash_spaces(fevent->Description);
+   bash_spaces(fevent->Source);
+   /* We keep some space for SessionTime and SessionId */
+   stat = dir->fsend("CatReq JobId=%lu FileEvent %lu 0 0 %c %d %s %s 0",
+                     jcr->JobId, fevent->FileIndex, fevent->Type, fevent->Severity,
+                     fevent->Source, fevent->Description);
+   if (!stat) {
+      goto bail_out;
+   }
+
+bail_out:
+   if (!stat) {
+      if (!jcr->is_canceled() && !jcr->is_incomplete()) {
+         Jmsg1(jcr, M_FATAL, 0, _("Network send error to DIR. ERR=%s\n"),
+               dir->bstrerror());
+      }
+   }
+   return stat;
+}
+
 /*
  * Verify attributes or data of the requested files on the Volume
  *
@@ -446,6 +471,9 @@ void do_verify_volume(JCR *jcr)
          jcr->unlock();
          break;
 
+      case STREAM_FILEEVENT:
+         break;                 // information only
+
       case STREAM_PLUGIN_META_BLOB:
       case STREAM_PLUGIN_META_CATALOG:
          //TODO Add some metadata verification when it is possible
@@ -619,6 +647,17 @@ void do_verify_volume(JCR *jcr)
    if (!accurate_finish(jcr)) {
       goto bail_out;
    }
+   /*
+    * Handle FileEvent that might have been generated during the verification
+    * of the file.
+    */
+   struct fileevent_pkt *fevent;
+   foreach_alist(fevent, jcr->fileevents) {
+      if (!fileevent_dir_save(jcr, fevent)) {
+         break;
+      }
+   }
+
    jcr->setJobStatus(JS_Terminated);
    goto ok_out;
 

@@ -729,6 +729,9 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       // TODO landonf: Investigate crypto support in the storage daemon
       break;
 
+   case STREAM_FILEEVENT:       // Nothing to do in particular
+      break;
+
    case STREAM_PROGRAM_NAMES:
    case STREAM_PROGRAM_DATA:
       if (!prog_name_msg) {

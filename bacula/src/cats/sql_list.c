@@ -645,6 +645,53 @@ void BDB::bdb_list_filemedia_records(JCR *jcr, uint32_t JobId, uint32_t FileInde
    bdb_unlock();
 }
 
+/* List FileEvents records for a given job/file */
+void BDB::bdb_list_fileevents_records(JCR *jcr, FILEEVENT_DBR *rec,
+                                      DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
+{
+   POOL_MEM tmp, filter;
+   char ed1[50];
+
+   Mmsg(filter, "FileEvents.JobId=%s ", edit_int64(rec->JobId, ed1));
+
+   if (rec->FileIndex > 0) {
+      Mmsg(tmp, "AND FileEvents.FileIndex=%s ", edit_int64(rec->FileIndex, ed1));
+      pm_strcat(filter, tmp.c_str());
+   }
+
+   if (B_ISALPHA(rec->Type)) {
+      Mmsg(tmp, "AND FileEvents.Type='%c' ", rec->Type);
+      pm_strcat(filter, tmp.c_str());
+   }
+
+   if (rec->Severity > 0) {
+      Mmsg(tmp, "AND FileEvents.Severity >= %d ", rec->Severity);
+      pm_strcat(filter, tmp.c_str());
+   }
+   
+   bdb_lock();
+   const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB) | DB_ACL_BIT(DB_ACL_CLIENT), false);
+   const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_CLIENT)) : "";
+
+   if (type == VERT_LIST || type == JSON_LIST) {
+      Mmsg(cmd, "SELECT JobId,FileIndex,Path,Filename,Source,Severity,Type,Description "
+           "FROM FileEvents JOIN File USING (Jobid, FileIndex) JOIN Path USING (PathId) %s WHERE "
+           "%s %s ORDER BY JobId, FileIndex ASC", join, filter.c_str(), where);
+   } else {
+      Mmsg(cmd, "SELECT JobId,Path,Filename,Severity,Type,Description "
+           "FROM FileEvents JOIN File USING (Jobid, FileIndex) JOIN Path USING (PathId) %s WHERE "
+           "%s %s ORDER BY JobId, FileIndex ASC", join, filter.c_str(), where);
+   }
+   if (!QueryDB(jcr, cmd)) {
+      bdb_unlock();
+      return;
+   }
+
+   list_result(jcr, this, "fileevents", sendit, ctx, type);
+
+   sql_free_result();
+   bdb_unlock();
+}
 
 void BDB::bdb_list_copies_records(JCR *jcr, uint32_t limit, char *JobIds,
                             DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)

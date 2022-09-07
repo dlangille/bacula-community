@@ -554,7 +554,7 @@ typedef struct s_baculaFuncs {
    bRC (*AcceptFile)(bpContext *ctx, struct save_pkt *sp); /* Need fname and statp */
    bRC (*getAccurateAttribs)(bpContext *ctx, accurate_attribs_pkt *att);
    bRC (*AddPlugin)(bpContext *ctx, const char *file);
-
+   bRC (*AddFileEvent)(bpContext *ctx, struct fileevent_pkt *ev);
 } bFuncs;
 
 
@@ -573,7 +573,7 @@ typedef enum {
 
 #define FD_PLUGIN_MAGIC  "*FDPluginData*"
 
-#define FD_PLUGIN_INTERFACE_VERSION  ( 22 )
+#define FD_PLUGIN_INTERFACE_VERSION  ( 23 + BEEF )
 
 typedef struct s_pluginInfo {
    uint32_t size;
@@ -627,6 +627,16 @@ typedef struct s_pluginFuncs {
 
 #define plug_func(plugin) ((pFuncs *)(plugin->pfuncs))
 #define plug_info(plugin) ((pInfo *)(plugin->pinfo))
+
+#define FILEEVENT_TYPE_ANTIVIRUS 'a'
+
+struct fileevent_pkt {
+   int32_t FileIndex;
+   char    Type;
+   int     Severity;
+   char    Description[MAX_NAME_LENGTH];
+   char    Source[MAX_NAME_LENGTH];
+};
 
 #ifdef __cplusplus
 }

@@ -264,6 +264,7 @@ JCR *new_fd_jcr()
    jcr->ff = init_find_files();
    jcr->start_time = time(NULL);
    jcr->RunScripts = New(alist(10, not_owned_by_alist));
+   jcr->fileevents = New(alist(5, owned_by_alist));
    jcr->last_fname = get_pool_memory(PM_FNAME);
    jcr->last_fname[0] = 0;
    jcr->client_name = get_memory(strlen(my_name) + 1);
@@ -3576,6 +3577,7 @@ void filed_free_jcr(JCR *jcr)
    bdelete_and_null(jcr->plugin_options_list);
    free_plugins(jcr);                 /* release instantiated plugins */
 
+   delete jcr->fileevents;
    free_runscripts(jcr->RunScripts);
    delete jcr->RunScripts;
    free_path_list(jcr);

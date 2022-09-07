@@ -218,6 +218,8 @@ const char *stream_to_ascii(int stream)
          return _("Plugin Metadata Blob");
       case STREAM_PLUGIN_META_CATALOG:
          return _("Plugin Metadata Catalog");
+      case STREAM_FILEEVENT:
+         return _("FileEvent");
       default:
          sprintf(buf, "%d", stream);
          return (const char *)buf;
