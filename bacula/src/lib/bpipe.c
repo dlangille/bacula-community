@@ -56,6 +56,7 @@ int num_execvp_errors = (int)(sizeof(execvp_errors)/sizeof(int));
 #define MODE_WRITE 2
 #define MODE_SHELL 4
 #define MODE_STDERR 8
+#define MODE_NOSTDERR 16
 
 #if !defined(HAVE_WIN32)
 static void build_argc_argv(char *cmd, int *bargc, char *bargv[], int max_arg);
@@ -102,6 +103,7 @@ BPIPE *open_bpipe(char *prog, int wait, const char *mode, char *envp[])
    if (strchr(mode,'w')) mode_map|=MODE_WRITE;
    if (strchr(mode,'s')) mode_map|=MODE_SHELL;
    if (strchr(mode,'e')) mode_map|=MODE_STDERR;
+   if (strchr(mode,'E')) mode_map|=MODE_NOSTDERR;
 
    /* Build arguments for running program. */
    tprog = get_pool_memory(PM_FNAME);
@@ -209,7 +211,16 @@ BPIPE *open_bpipe(char *prog, int wait, const char *mode, char *envp[])
          if (mode_map & MODE_STDERR) {  /*   and handle stderr */
             close(errp[0]); 
             dup2(errp[1], 2);
+
+         } else if (mode_map & MODE_NOSTDERR) {
+            /* We open STDERR and map it to /dev/null directly */
+            int fd = open("/dev/null", O_WRONLY);
+            if (fd != 2) {
+               dup2(fd, 2);
+               close(fd);
+            }
          } else {
+            /* by default STDERR and STDOUT are merged */
             dup2(readp[1], 2);
          }
       }

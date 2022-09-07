@@ -242,11 +242,10 @@ LEX *lex_open_file(LEX *lf, const char *filename, LEX_ERROR_HANDLER *scan_error)
    char *fname = bstrdup(filename);
 
    if (fname[0] == '|') {
-      if ((bpipe = open_bpipe(fname+1, 0, "reb")) == NULL) {
+      if ((bpipe = open_bpipe(fname+1, 0, "rEb")) == NULL) {
          free(fname);
          return NULL;
       }
-      close_epipe(bpipe);       /* discard stderr messages */
       fd = bpipe->rfd;
    } else if ((fd = fopen(fname, "rb")) == NULL) {
       free(fname);

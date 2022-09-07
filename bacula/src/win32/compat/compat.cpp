@@ -2724,6 +2724,7 @@ CloseHandleIfValid(HANDLE handle)
 #define MODE_WRITE 2
 #define MODE_SHELL 4
 #define MODE_STDERR 8
+#define MODE_NOSTDERR 16
 
 BPIPE *
 open_bpipe(char *prog, int wait, const char *mode, char *envp[])
@@ -2750,6 +2751,7 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
     if (strchr(mode,'w')) mode_map|=MODE_WRITE;
     if (strchr(mode,'s')) mode_map|=MODE_SHELL;
     if (strchr(mode,'e')) mode_map|=MODE_STDERR;
+    if (strchr(mode,'E')) mode_map|=MODE_NOSTDERR;
 
     // Set the bInheritHandle flag so pipe handles are inherited.
     saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -2788,7 +2790,6 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
         }
         // Create noninheritable read handle and close the inheritable read
         // handle.
-
         fSuccess = DuplicateHandle(GetCurrentProcess(), hChildStderrRd,
                                    GetCurrentProcess(), &hChildStderrRdDup , 0,
                                    FALSE,
@@ -2825,12 +2826,20 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
         CloseHandle(hChildStdinWr);
         hChildStdinWr = INVALID_HANDLE_VALUE;
     }
+    if (mode_map & MODE_NOSTDERR) {
+       hChildStderrWr = CreateFileW(L"NUL", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+       if (hChildStderrWr == INVALID_HANDLE_VALUE) {
+          ErrorExit("CreateFile failed");
+          goto cleanup;
+       }
+    }
     // spawn program with redirected handles as appropriate
     bpipe->worker_pid = (pid_t)
         CreateChildProcess(prog,             // commandline
                            hChildStdinRd,    // stdin HANDLE
                            hChildStdoutWr,   // stdout HANDLE
-                           (mode_map & MODE_STDERR) ? hChildStderrWr:hChildStdoutWr,   // stderr HANDLE
+                           (mode_map & MODE_STDERR || mode_map & MODE_NOSTDERR)
+                               ? hChildStderrWr:hChildStdoutWr,   // stderr HANDLE
                            envp); // envp  environment variables are added to the current process env var set.
 
     if ((HANDLE) bpipe->worker_pid == INVALID_HANDLE_VALUE) {
@@ -2850,6 +2859,9 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
         if (rfd >= 0) {
            bpipe->rfd = _fdopen(rfd, "rb");
         }
+    }
+    if (mode_map & MODE_NOSTDERR) {
+        CloseHandle(hChildStderrWr); // No need to keep it open
     }
     if (mode_map & MODE_STDERR) {
         CloseHandle(hChildStderrWr); // close our write side so when
