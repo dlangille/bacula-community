@@ -25,14 +25,16 @@
 /* These macro are defined in src/baconfig.h */
 #if __cplusplus >= 201103L
 # define bdelete_and_null_auto(a) do{if(a){auto b__ = a; (a)=NULL; delete b__;}} while(0)
+# define TEST_AUTO { ok(1, "auto available"); }
 #else
-# define bdelete_and_null_auto(a) do{ok(1, "auto not available");}while(0)
+# define TEST_AUTO { ok(1, "auto not available"); }
 #endif
 
 # ifdef HAVE_TYPEOF
-#  define bdelete_and_null_typeof(a) do{if(a){typeof(a) b__ = a; (a)=NULL; delete b__;}} while(0)
+# define bdelete_and_null_typeof(a) do{if(a){typeof(a) b__ = a; (a)=NULL; delete b__;}} while(0)
+# define TEST_TYPEOF { ok(1, "typeof available"); }
 # else
-# define bdelete_and_null_typeof(a) do{ok(1, "typeof not available");}while(0)
+# define TEST_TYPEOF { ok(1, "typeof not available"); }
 #endif
 
 class obj
@@ -46,6 +48,8 @@ int main()
 {
    Unittests alist_test("test-cpp");
    log("Test C++ Features ...");
+   TEST_AUTO;
+   TEST_TYPEOF;
    obj *a = new obj();
    obj *b = new obj();
    char *c = (char *)malloc(10);

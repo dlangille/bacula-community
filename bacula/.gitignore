@@ -570,6 +570,7 @@ src/tools/ing_test
 src/tools/bregex
 src/tools/bwild
 src/tools/testls
+src/tools/test-cpp
 src/tools/1
 src/tools/Makefile
 src/tools/dbcheck
