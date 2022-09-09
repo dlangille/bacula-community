@@ -34,24 +34,6 @@ label volume=TestVolume001 storage=File1 pool=File slot=1 drive=0
 show job=$JobName
 show jobs
 run job=$JobName yes
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-@sleep 1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-@sleep 1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
-status storage=File1
 wait
 messages
 @# 
