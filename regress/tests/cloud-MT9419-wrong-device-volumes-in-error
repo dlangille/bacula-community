@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Cloud transfer test. Exercice the retry-waiting mecanism introduced to support S3 GLACIER restoration
+# Will work with all drivers but is mostly design to be run with file_driver.
+#
+TestName="cloud-MT9419-test"
+JobName=NightlySave
+. scripts/functions
+
+require_cloud
+
+#config is required for cloud cleanup
+scripts/copy-test-confs
+scripts/cleanup
+
+FORCE_FILE_SET=${FORCE_FILE_SET:-"${cwd}/build"}
+echo "$FORCE_FILE_SET" >${cwd}/tmp/file-list
+
+start_test
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "LabelFormat", "Vol", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumVolumeBytes", "40000000", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "VolumeRetention", "1s", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumUploadBandwidth", "4MB/s", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumDownloadBandwidth", "4MB/s", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumDownloadBandwidth", "4MB/s", "Cloud")'
+
+AccessKey=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'AccessKey')")
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "AccessKey", '"${CLOUD_NAME}_WRONG"',, "Cloud")'
+
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log1.out
+run job=$JobName level=Full yes
+wait
+messages
+@$out ${cwd}/tmp/log1_list.out
+list media
+END_OF_DATA
+
+echo "Running job 1"
+run_bacula
+ls -l tmp/Vol*
+
+# exactly the same but log2
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=$JobName level=Full yes
+wait
+messages
+@$out ${cwd}/tmp/log2_list.out
+list media
+END_OF_DATA
+
+echo "Running job 2"
+run_bconsole
+ls -l tmp/Vol*
+
+
+sleep 2
+unset FORCE_CLOUD
+stop_bacula
+
+grep 'Marking Volume "Vol0001" in Error in Catalog.' $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0001 not set in error"
+    estat=1
+fi
+
+grep 'Marking Volume "Vol0002" in Error in Catalog.' $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0002 not set in error"
+    estat=2
+fi
+
+grep 'Marking Volume "Vol0003" in Error in Catalog.' $tmp/log2.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0003 not set in error"
+    estat=3
+fi
+
+grep 'Vol0001    | Error' $tmp/log2_list.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0001 not listed in error"
+    estat=4
+fi
+
+grep 'Vol0002    | Error' $tmp/log2_list.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0002 not listed in error"
+    estat=5
+fi
+
+grep 'Vol0003    | Error' $tmp/log2_list.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Vol0003 not listed in error"
+    estat=6
+fi
+
+end_test

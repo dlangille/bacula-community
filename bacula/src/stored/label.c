@@ -534,6 +534,9 @@ bail_out:
  *
  *  Returns: true if OK
  *           false if unable to write it
+ *  N.B. 2022: Function is called in a loop and should avoid FATAL errors as much as possible.
+ *             In order to fix MT9419 (corner case with cloud device), I moved the !truncate(dcr) error handling
+ *             from FATAL to ERROR so the truncated volumes can be effectively set in Error state.
  */
 bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
 {
@@ -572,7 +575,7 @@ bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
       if (recycle) {
          Dmsg1(150, "Doing recycle. Vol=%s\n", dcr->VolumeName);
          if (!truncate(dcr)) {
-            Jmsg3(jcr, M_FATAL, 0, _("Truncate error on %s device %s: ERR=%s\n"),
+            Jmsg3(jcr, M_ERROR, 0, _("Truncate error on %s device %s: ERR=%s\n"),
                   print_type(), print_name(), print_errmsg());
             Leave(100);
             return false;
