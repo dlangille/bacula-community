@@ -31,7 +31,7 @@
 
 /* Imported subroutines */
 static const int read_dbglvl = 200|DT_VOLUME;
-static const int dbgep = 200|DT_VOLUME;         /* debug execution path */
+static const int dbgep = 400|DT_VOLUME;         /* debug execution path */
 
 /*
  * Read the header record
@@ -86,7 +86,6 @@ static bool read_header(DCR *dcr, DEV_BLOCK *block, DEV_RECORD *rec)
       if (dcr->dev->have_adata_header(dcr, rec, FileIndex, Stream, VolSessionId)) {
          return true;
       }
-
       block->bufp += rhl;
       block->binbuf -= rhl;
       rec->remlen -= rhl;
@@ -238,6 +237,13 @@ bool read_record_from_block(DCR *dcr,  DEV_RECORD *rec)
 
    Dmsg0(dbgep, "=== rpath 1 Enter read_record_from block\n");
 
+   /* We return from a previous call with aligned volume, we did not read
+    * the data on disk, let's read the next ameta record.
+    */
+   if (rec->rstate == st_header_only) {
+      rec->remainder = 0;
+      rec->rstate = st_header;
+   }
    /* Update the Record number only if we have a new record */
    if (rec->remainder == 0) {
       rec->RecNum = dcr->block->RecNum;
@@ -247,7 +253,7 @@ bool read_record_from_block(DCR *dcr,  DEV_RECORD *rec)
 
    /* We read the next record */
    dcr->block->RecNum++;
-
+   
    for ( ;; ) {
       switch (rec->rstate) {
       case st_none:
@@ -265,8 +271,10 @@ bool read_record_from_block(DCR *dcr,  DEV_RECORD *rec)
          continue;
 
       case st_header_only:
+         /* We come from the st_cont_adata_rechdr state and we may read
+          * or not the data associated
+          */
          Dmsg0(dbgep, "=== rpath 37 st_header_only\n");
-         rec->rstate = st_header;
          goto get_out;
 
       case st_data:
