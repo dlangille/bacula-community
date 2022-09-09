@@ -56,9 +56,42 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 llist pluginrestoreconf jobid=2
 @$out $tmp/conf
 llist pluginrestoreconf jobid=2 id=4
+@$out $tmp/events.all
+.jlist fileevents jobid=2
+@$out $tmp/events.1
+.jlist fileevents jobid=2 fileindex=4
+@$out $tmp/events.2
+.jlist fileevents jobid=2 type=d
+@$out $tmp/events.3
+.jlist fileevents jobid=2 severity=101
+quit
 END_OF_DATA
 
 run_bconsole
+
+grep "{" $tmp/events.all | perl -MJSON -e '$j = JSON::decode_json(<>); exit (scalar(@{$j->{data}}) == 11)'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find valid json output in $tmp/events.all"
+    estat=1
+fi
+
+grep "{" $tmp/events.1 | perl -MJSON -e '$j = JSON::decode_json(<>); exit (scalar(@{$j->{data}}) == 1)'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find valid json output in $tmp/events.1"
+    estat=1
+fi
+
+grep "{" $tmp/events.2 | perl -MJSON -e '$j = JSON::decode_json(<>); exit (scalar(@{$j->{data}}) == 0)'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find valid json output in $tmp/events.2"
+    estat=1
+fi
+
+grep "{" $tmp/events.3 | perl -MJSON -e '$j = JSON::decode_json(<>); exit (scalar(@{$j->{data}}) == 0)'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find valid json output in $tmp/events.3"
+    estat=1
+fi
 
 grep string1 $tmp/conf
 
@@ -269,6 +302,9 @@ perl -ne '
  }
 ' working/*.trace
 
-estat=$?
+r=$?
+if [ $r != 0 ]; then
+    estat=$r
+fi
 
 end_test
