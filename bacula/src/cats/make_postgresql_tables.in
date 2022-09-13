@@ -418,6 +418,8 @@ CREATE TABLE media
     scratchpoolid     integer	  default 0,
     recyclepoolid     integer	  default 0,
     comment	      text,
+    protect           smallint    default 0,
+    useprotect        smallint    default 0,
     primary key (mediaid)
 );
 

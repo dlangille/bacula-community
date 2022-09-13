@@ -186,7 +186,7 @@ bool has_quota_reached(JCR *jcr, MEDIA_DBR *mr);
 bool has_quota_reached(JCR *jcr);
 void set_storageid_in_mr(STORE *store, MEDIA_DBR *mr);
 int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
-                                bool create, bool purge, POOL_MEM &errmsg);
+                                bool create, bool purge, int use_worm, POOL_MEM &errmsg);
 bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr);
 void check_if_volume_valid_or_recyclable(JCR *jcr, MEDIA_DBR *mr, const char **reason);
 bool get_scratch_volume(JCR *jcr, bool InChanger, MEDIA_DBR *mr,

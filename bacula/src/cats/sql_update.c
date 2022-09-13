@@ -99,9 +99,18 @@ bool BDB::bdb_update_job_start_record(JCR *jcr, JOB_DBR *jr)
    strftime(dt, sizeof(dt), "%Y-%m-%d %H:%M:%S", &tm);
    JobTDate = (btime_t)stime;
 
+   if (!is_name_valid(jr->WriteDevice, NULL)) {
+      *jr->WriteDevice = 0;     // Not valid, not used
+   }
+   if (!is_name_valid(jr->LastReadDevice, NULL)) {
+      *jr->LastReadDevice = 0;     // Not valid, not used
+   }
+   
    bdb_lock();
    Mmsg(cmd, "UPDATE Job SET JobStatus='%c',Level='%c',StartTime='%s',"
-"ClientId=%s,JobTDate=%s,PoolId=%s,FileSetId=%s,RealStartTime='%s' WHERE JobId=%s",
+        "ClientId=%s,JobTDate=%s,PoolId=%s,FileSetId=%s,RealStartTime='%s',"
+        "isVirtualFull=%d,LastReadStorageId=%d,LastReadDevice='%s',"
+        "WriteStorageId=%d,WriteDevice='%s',StatusInfo='%s',Encrypted=%d WHERE JobId=%s",
       (char)(jcr->JobStatus),
       (char)(jr->JobLevel), dt,
       edit_int64(jr->ClientId, ed1),
@@ -109,6 +118,13 @@ bool BDB::bdb_update_job_start_record(JCR *jcr, JOB_DBR *jr)
       edit_int64(jr->PoolId, ed3),
       edit_int64(jr->FileSetId, ed4),
       dt,
+      jr->isVirtualFull,
+      jr->LastReadStorageId,
+      jr->LastReadDevice,
+      jr->WriteStorageId,
+      jr->WriteDevice,
+      jr->StatusInfo,
+      jr->Encrypted,
       edit_int64(jr->JobId, ed5));
 
    stat = UpdateDB(jcr, cmd, false);
@@ -392,7 +408,7 @@ int BDB::bdb_update_media_record(JCR *jcr, MEDIA_DBR *mr)
         "LabelType=%d,StorageId=%s,PoolId=%s,VolRetention=%s,VolUseDuration=%s,"
         "MaxVolJobs=%d,MaxVolFiles=%d,Enabled=%d,LocationId=%s,"
         "ScratchPoolId=%s,RecyclePoolId=%s,RecycleCount=%d,Recycle=%d,"
-        "ActionOnPurge=%d,CacheRetention=%s,EndBlock=%u"
+        "ActionOnPurge=%d,CacheRetention=%s,EndBlock=%u,Protect=%d,UseProtect=%d"
         " WHERE VolumeName='%s'",
         mr->VolJobs, mr->VolFiles, mr->VolBlocks,
         edit_uint64(mr->VolBytes, ed1),
@@ -419,7 +435,7 @@ int BDB::bdb_update_media_record(JCR *jcr, MEDIA_DBR *mr)
         edit_uint64(mr->RecyclePoolId, ed15),
         mr->RecycleCount,mr->Recycle, mr->ActionOnPurge,
         edit_uint64(mr->CacheRetention, ed16),
-        mr->EndBlock,
+        mr->EndBlock,mr->Protect,mr->UseProtect,
         esc_name);
 
    Dmsg1(dbglevel1, "%s\n", cmd);

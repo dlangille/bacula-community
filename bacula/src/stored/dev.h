@@ -233,6 +233,8 @@ struct VOLUME_CAT_INFO {
    utime_t  VolFirstWritten;          /* Time of first write */
    utime_t  VolLastWritten;           /* Time of last write */
    bool     InChanger;                /* Set if vol in current magazine */
+   bool     Protect;                  /* Set if the vol is Readonly, worm or immutable */
+   bool     UseProtect;               /* Set if the device can set the volume Readonly, worm or immutable */
    bool     is_valid;                 /* set if this data is valid */
    bool     VolEnabled;               /* set if volume enabled */
    bool     VolRecycle;               /* set if volume can be recycled */
@@ -612,6 +614,7 @@ public:
    virtual int set_writable() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
    virtual int set_readonly() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
    virtual int set_atime(btime_t val) { pm_strcpy(errmsg, _("Not implemented")); return -1;};
+   virtual int use_protect() { return 0; };
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};
    virtual const char *print_full_type() { return print_type();};

@@ -97,9 +97,10 @@ static void set_volume_to_exclude_list(JCR *jcr, int index, MEDIA_DBR *mr)
  *   jcr->pool
  *   MEDIA_DBR mr with PoolId set
  *   create -- whether or not to create a new volume
+ *   use_protect -- whether or not the device will mark the volume as protected (0 no, -1 don't know, 1 yes)
  */
 int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
-                                bool create, bool prune, POOL_MEM &errmsg)
+                                bool create, bool prune, int use_protect, POOL_MEM &errmsg)
 {
    int retry = 0;
    bool ok;
@@ -107,9 +108,9 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
    STORE *store = jcr->store_mngr->get_wstore();
 
    bstrncpy(mr->MediaType, store->media_type, sizeof(mr->MediaType));
-   Dmsg6(dbglvl, "find_next_vol_for_append: JobId=%u PoolId=%d, MediaType=%s index=%d create=%d prune=%d\n",
+   Dmsg7(dbglvl, "find_next_vol_for_append: JobId=%u PoolId=%d, MediaType=%s index=%d create=%d prune=%d protect=%d\n",
          (uint32_t)jcr->JobId, (int)mr->PoolId, mr->MediaType, index,
-         create, prune);
+         create, prune, use_protect);
    /*
     * If we are using an Autochanger, restrict Volume
     *   search to the Autochanger on the first pass
@@ -228,6 +229,10 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
       }
       Dmsg2(dbglvl, "VolJobs=%d FirstWritten=%d\n", mr->VolJobs, mr->FirstWritten);
       if (ok) {
+         /* If the current device uses the Protect feature, we need to keep track of it */
+         if (use_protect == 1) {
+            mr->UseProtect = 1;
+         }
          /* If we can use the volume, check if it is expired */
          if (has_volume_expired(jcr, mr)) {
             if (retry++ < 200) {            /* sanity check */
@@ -324,7 +329,7 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
          expired = true;
       }
    }
-   /* Here, if the volume is WORM, we cannot change the status if a storage
+   /* Here, if the volume is Protect, we cannot change the status if a storage
     * is not connected
     */
    if (expired) {
@@ -337,6 +342,12 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
       }
    }
    Dmsg2(dbglvl, "Vol=%s expired=%d\n", mr->VolumeName, expired);
+   /* Special case, we have marked the volume as Expired, and the Storage
+    * Daemon wants to mark it as Protect
+    */
+   if (expired && mr->UseProtect) {
+      return false;
+   }
    return expired;
 }
 

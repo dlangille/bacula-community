@@ -29,7 +29,7 @@
 static const int dbglvl = 200;
 
 /* Requests sent to the Director */
-static char Find_media[]   = "CatReq JobId=%ld FindMedia=%d pool_name=%s media_type=%s vol_type=%d create=%d\n";
+static char Find_media[]   = "CatReq JobId=%ld FindMedia=%d pool_name=%s media_type=%s vol_type=%d create=%d use_protect=%d\n";
 static char Get_Vol_Info[] = "CatReq JobId=%ld GetVolInfo VolName=%s write=%d\n";
 static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolJobs=%u VolFiles=%u VolBlocks=%u VolBytes=%s VolABytes=%s"
@@ -37,7 +37,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolErrors=%u VolWrites=%u MaxVolBytes=%s EndTime=%s VolStatus=%s"
    " Slot=%d relabel=%d InChanger=%d VolReadTime=%s VolWriteTime=%s"
    " VolFirstWritten=%s VolType=%u VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d Recycle=%d\n";
+   " LastPartBytes=%lld Enabled=%d Recycle=%d Protect=%d UseProtect=%d\n";
 static char Create_jobmedia[] = "CatReq JobId=%ld CreateJobMedia\n";
 static char FileAttributes[] = "UpdCat JobId=%ld FileAttributes ";
 
@@ -50,7 +50,8 @@ static char OK_media[] = "1000 OK VolName=%127s VolJobs=%u VolFiles=%lu"
    " Slot=%ld MaxVolJobs=%lu MaxVolFiles=%lu InChanger=%ld"
    " VolReadTime=%lld VolWriteTime=%lld EndFile=%lu EndBlock=%lu"
    " VolType=%lu LabelType=%ld MediaId=%lld ScratchPoolId=%lld"
-   " VolParts=%d VolCloudParts=%d LastPartBytes=%lld Enabled=%d MaxPoolBytes=%lld PoolBytes=%lld Recycle=%d\n";
+   " VolParts=%d VolCloudParts=%d LastPartBytes=%lld Enabled=%d MaxPoolBytes=%lld PoolBytes=%lld Recycle=%d"
+   " Protect=%d UseProtect=%d\n";
 
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
@@ -199,7 +200,7 @@ static bool do_get_volume_info(DCR *dcr)
     BSOCK *dir = jcr->dir_bsock;
     VOLUME_CAT_INFO vol;
     int n;
-    int32_t Enabled, Recycle;
+    int32_t Enabled, Recycle, Protect, UseProtect;
     int32_t InChanger;
 
     dcr->setVolCatInfo(false);
@@ -221,9 +222,9 @@ static bool do_get_volume_info(DCR *dcr)
                &vol.EndFile, &vol.EndBlock, &vol.VolCatType,
                &vol.LabelType, &vol.VolMediaId, &vol.VolScratchPoolId,
                &vol.VolCatParts, &vol.VolCatCloudParts,
-               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes, &vol.PoolBytes, &Recycle);
+               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes, &vol.PoolBytes, &Recycle, &Protect, &UseProtect);
     Dmsg2(dbglvl, "<dird n=%d %s", n, dir->msg);
-    if (n != 33) {
+    if (n != 35) {
        Dmsg1(dbglvl, "get_volume_info failed: ERR=%s", dir->msg);
        /*
         * Note, we can get an error here either because there is
@@ -237,6 +238,8 @@ static bool do_get_volume_info(DCR *dcr)
     vol.InChanger = InChanger;        /* bool in structure */
     vol.VolEnabled = Enabled;         /* bool in structure */
     vol.VolRecycle = Recycle;         /* bool in structure */
+    vol.Protect = Protect;            /* bool in structure */
+    vol.UseProtect = UseProtect;      /* bool in structure */
     vol.is_valid = true;
     vol.VolCatBytes = vol.VolCatAmetaBytes + vol.VolCatAdataBytes;
     unbash_spaces(vol.VolCatName);
@@ -337,7 +340,7 @@ bool dir_find_next_appendable_volume(DCR *dcr)
        bash_spaces(dcr->media_type);
        bash_spaces(dcr->pool_name);
        dir->fsend(Find_media, jcr->JobId, vol_index, dcr->pool_name, dcr->media_type,
-                  dcr->dev->dev_type, can_create);
+                  dcr->dev->dev_type, can_create, dcr->dev->use_protect());
        unbash_spaces(dcr->media_type);
        unbash_spaces(dcr->pool_name);
        Dmsg1(dbglvl, ">dird %s", dir->msg);
@@ -347,6 +350,13 @@ bool dir_find_next_appendable_volume(DCR *dcr)
              Mmsg(jcr->errmsg, "Director returned same volume name=%s twice.\n",
                 lastVolume);
              Dmsg1(dbglvl, "Got same vol = %s\n", lastVolume);
+             break;
+          }
+          /* Here, the Director *asks* us to mark the volume in ReadOnly */
+          if (dcr->dev->use_protect() &&
+              (strcmp(dcr->VolCatInfo.VolCatStatus, "Used") == 0 || strcmp(dcr->VolCatInfo.VolCatStatus, "Full") == 0))
+          {
+             Dmsg1(dbglvl, "Need to mark %s in read-only/immutable\n", dcr->VolumeName);
              break;
           }
           /* If VolCatAdataBytes, we have ALIGNED_DEV */
@@ -476,6 +486,7 @@ bool dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
    if (dev->is_worm() && vol.VolRecycle) {
       Jmsg(jcr, M_INFO, 0, _("WORM cassette detected: setting Recycle=No on Volume=\"%s\"\n"), vol.VolCatName);
       vol.VolRecycle = false;
+      vol.Protect = true;
    }
    pm_strcpy(VolumeName, vol.VolCatName);
    bash_spaces(VolumeName);
@@ -513,7 +524,10 @@ bool dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
          vol.VolCatCloudParts,
          vol.VolLastPartBytes,
          Enabled,
-         Recycle);
+         Recycle,
+         vol.Protect,
+         dev->use_protect()
+         );
        Dmsg1(100, ">dird %s", dir->msg);
       /*
        * We sent info directly from dev to the Director.

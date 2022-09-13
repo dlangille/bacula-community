@@ -752,7 +752,7 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
          set_storageid_in_mr(jcr->store_mngr->get_wstore(), &mr);
          Dmsg0(250, "call find_next_volume_for_append\n");
          /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
-         ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, errmsg);
+         ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, errmsg);
       }
       if (!ok) {
          bstrncpy(mr.VolumeName, "*unknown*", sizeof(mr.VolumeName));

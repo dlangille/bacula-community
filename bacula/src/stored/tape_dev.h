@@ -66,6 +66,7 @@ public:
       alert_list_which which, alert_cb alert_callback);
    int delete_alerts();
    bool check_lintape_eod();
+   int use_worm() { return device->worm_command && device->control_name; };
    alist *alert_list;
 };
 

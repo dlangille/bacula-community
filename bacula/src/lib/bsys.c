@@ -1955,6 +1955,35 @@ void b_uname(POOLMEM *&un)
    }
 }
 
+/* Set atime/mtime for a given file
+ * Must be called on open file
+ */
+int set_own_time(int fd, const char *path, btime_t atime, btime_t mtime)
+{
+#ifdef HAVE_FUTIMES
+   struct timeval times[2];
+   times[0].tv_sec = atime;
+   times[0].tv_usec = 0;
+   times[1].tv_sec = mtime;
+   times[1].tv_usec = 0;
+
+   if (fd > 0) {
+      if (futimes(fd, times) == 0) {
+         return 0;
+      }
+   }
+#endif
+   struct utimbuf ut;
+   ut.actime = atime;
+   ut.modtime = mtime;
+
+   if (utime(path, &ut) == 0) {
+      return 0;
+   }
+   return -1;
+}
+
+
 /* Get path/fname from argument, use realpath to get the full name if
  * available
  */
@@ -2028,33 +2057,6 @@ void get_path_and_fname(const char *name, char **path, char **fname)
       free(cpath);
       free(cargv0);
    }
-
-/* Set atime/mtime for a given file
- * Must be called on open file
- */
-int set_own_time(int fd, const char *path, btime_t atime, btime_t mtime)
-{
-#ifdef HAVE_FUTIMES
-   struct timeval times[2];
-   times[0].tv_sec = atime;
-   times[0].tv_usec = 0;
-   times[1].tv_sec = mtime;
-   times[1].tv_usec = 0;
-
-   if (fd > 0) {
-      if (futimes(fd, times) == 0) {
-         return 0;
-      }
-   }
-#endif
-   struct utimbuf ut;
-   ut.actime = atime;
-   ut.modtime = mtime;
-
-   if (utime(path, &ut) == 0) {
-      return 0;
-   }
-   return -1;
 }
 
 #ifdef TEST_PROGRAM

@@ -70,6 +70,7 @@ bool do_vbackup_init(JCR *jcr)
    Dmsg2(dbglevel, "Read pool=%s (From %s)\n", jcr->rpool->name(), jcr->rpool_source);
 
    jcr->start_time = time(NULL);
+   jcr->jr.isVirtualFull = 1;
    jcr->jr.StartTime = jcr->start_time;
    jcr->jr.JobLevel = L_FULL;      /* we want this to appear as a Full backup */
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {

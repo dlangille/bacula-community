@@ -38,7 +38,7 @@
  */
 
 /* Requests from the Storage daemon */
-static char Find_media[] = "CatReq JobId=%ld FindMedia=%d pool_name=%127s media_type=%127s vol_type=%d create=%d\n";
+static char Find_media[] = "CatReq JobId=%ld FindMedia=%d pool_name=%127s media_type=%127s vol_type=%d create=%d use_protect=%d\n";
 static char Get_Vol_Info[] = "CatReq JobId=%ld GetVolInfo VolName=%127s write=%d\n";
 
 static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
@@ -47,7 +47,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolErrors=%u VolWrites=%lld MaxVolBytes=%lld EndTime=%lld VolStatus=%10s"
    " Slot=%d relabel=%d InChanger=%d VolReadTime=%llu VolWriteTime=%llu"
    " VolFirstWritten=%lld VolType=%u VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d Recycle=%d\n";
+   " LastPartBytes=%lld Enabled=%d Recycle=%d Protect=%d UseProtect=%d\n";
 
 static char FileEvent_add[] = "%c %d %127s %127s 0";
 /* Full format when coming from the Verify Job */
@@ -67,7 +67,7 @@ static char OK_media[] = "1000 OK VolName=%s VolJobs=%u VolFiles=%u"
    " MaxVolJobs=%u MaxVolFiles=%u InChanger=%d VolReadTime=%s"
    " VolWriteTime=%s EndFile=%u EndBlock=%u VolType=%u LabelType=%d"
    " MediaId=%s ScratchPoolId=%s VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d\n";
+   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d Protect=%d UseProtect=%d\n";
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
 
@@ -120,7 +120,7 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
       mr->Enabled,
       edit_uint64(pr.MaxPoolBytes, ed11),
       edit_uint64(pr.PoolBytes, ed12),
-      mr->Recycle);
+      mr->Recycle, mr->Protect, mr->UseProtect);
    unbash_spaces(mr->VolumeName);
    Dmsg2(100, "Vol Info for %s: %s", jcr->Job, sd->msg);
    return stat;
@@ -187,8 +187,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
    utime_t VolFirstWritten;
    utime_t VolLastWritten;
    int n;
-   int can_create=0;
-   int Enabled, Recycle;
+   int can_create=0, use_protect=0;
+   int Enabled, Recycle, Protect, UseProtect;
    JobId_t JobId = 0;
    STORE *wstore = jcr->store_mngr->get_wstore();
 
@@ -212,8 +212,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
    /*
     * Find next appendable medium for SD
     */
-   n = sscanf(bs->msg, Find_media, &JobId, &index, &pool_name, &mr.MediaType, &mr.VolType, &can_create);
-   if (n == 6) {
+   n = sscanf(bs->msg, Find_media, &JobId, &index, &pool_name, &mr.MediaType, &mr.VolType, &can_create, &use_protect);
+   if (n == 7) {
       POOL_MEM errmsg;
       POOL_DBR pr;
       bstrncpy(pr.Name, pool_name, sizeof(pr.Name));
@@ -225,7 +225,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
          mr.ScratchPoolId = pr.ScratchPoolId;
          ok = find_next_volume_for_append(jcr, &mr, index,
                                           can_create?fnv_create_vol : fnv_no_create_vol,
-                                          fnv_prune, errmsg);
+                                          fnv_prune, use_protect, errmsg);
          Dmsg3(050, "find_media ok=%d idx=%d vol=%s\n", ok, index, mr.VolumeName);
       } else {
          /* Report problem finding pool */
@@ -316,8 +316,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       &VolLastWritten, &sdmr.VolStatus, &sdmr.Slot, &label, &sdmr.InChanger,
       &sdmr.VolReadTime, &sdmr.VolWriteTime, &VolFirstWritten,
       &sdmr.VolType, &sdmr.VolParts, &sdmr.VolCloudParts,
-      &sdmr.LastPartBytes, &Enabled, &Recycle);
-    if (n == 27) {
+      &sdmr.LastPartBytes, &Enabled, &Recycle, &Protect, &UseProtect);
+    if (n == 29) {
       db_lock(jcr->db);
       Dmsg3(400, "Update media %s oldStat=%s newStat=%s\n", sdmr.VolumeName,
          mr.VolStatus, sdmr.VolStatus);
@@ -403,6 +403,8 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       mr.LastPartBytes = sdmr.LastPartBytes;
       mr.Enabled       = Enabled;  /* byte assignment */
       mr.Recycle       = Recycle;  /* byte assignment */
+      mr.Protect          = Protect;    /* byte assignment */
+      mr.UseProtect       = UseProtect;  /* byte assignment */
       bstrncpy(mr.VolStatus, sdmr.VolStatus, sizeof(mr.VolStatus));
       mr.VolReadTime  = sdmr.VolReadTime;
       mr.VolWriteTime = sdmr.VolWriteTime;

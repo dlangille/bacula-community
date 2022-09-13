@@ -51,7 +51,7 @@ static char use_device[] = "use device=%s\n";
 
 /* Response from Storage daemon */
 static char OKjob[]      = "3000 OK Job SDid=%d SDtime=%d Authorization=%100s\n";
-static char OK_device[]  = "3000 OK use device device=%s\n";
+static char OK_device[]  = "3000 OK use device device=%127s protect=%d encrypt=%d\n";
 
 /* Storage Daemon requests */
 static char Job_start[]  = "3010 Job %127s start\n";
@@ -286,6 +286,7 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
     */
    /* Do read side of storage daemon */
    if (ok && rstore) {
+      int protect=0, encrypt=0;
       /* For the moment, only migrate, copy and vbackup have rpool */
       if (jcr->is_JobType(JT_MIGRATE) || jcr->is_JobType(JT_COPY) ||
            (jcr->is_JobType(JT_BACKUP) && jcr->is_JobLevel(L_VIRTUAL_FULL))) {
@@ -323,18 +324,21 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
       sd->signal(BNET_EOD);              /* end of Storages */
       if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
-         ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
+         ok = sscanf(sd->msg, OK_device, device_name.c_str(), &protect, &encrypt) == 3;
       } else {
          ok = false;
       }
       if (ok) {
          Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to read.\n"), device_name.c_str());
          pm_strcpy(jcr->read_dev, device_name.c_str());
+         jcr->SD_set_worm = protect;
+         jcr->jr.Encrypted = encrypt;
       }
    }
 
    /* Do write side of storage daemon */
    if (ok && wstore) {
+      int protect=0, encrypt=0;
       pm_strcpy(pool_type, jcr->pool->pool_type);
       pm_strcpy(pool_name, jcr->pool->name());
       bash_spaces(pool_type);
@@ -362,13 +366,15 @@ bool start_storage_daemon_job(JCR *jcr, alist *rstore, alist *wstore, bool wait,
       sd->signal(BNET_EOD);              /* end of Storages */
       if (bget_dirmsg(jcr, sd, BSOCK_TYPE_SD) > 0) {
          Dmsg1(100, "<stored: %s", sd->msg);
-         ok = sscanf(sd->msg, OK_device, device_name.c_str()) == 1;
+         ok = sscanf(sd->msg, OK_device, device_name.c_str(), &protect, &encrypt) == 3;
       } else {
          ok = false;
       }
       if (ok) {
          Jmsg(jcr, M_INFO, 0, _("Using Device \"%s\" to write.\n"), device_name.c_str());
          pm_strcpy(jcr->write_dev, device_name.c_str());
+         jcr->SD_set_worm = protect;
+         jcr->jr.Encrypted = encrypt;
       }
    }
    if (!ok) {

@@ -706,8 +706,8 @@ CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant(255),Attac
 CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId(255));
 
 ALTER TABLE Media
-    MODIFY COLUMN Worm TINYINT DEFAULT 0,
-    MODIFY COLUMN UseWorm TINYINT DEFAULT 0;
+    MODIFY COLUMN Protect TINYINT DEFAULT 0,
+    MODIFY COLUMN UseProtect TINYINT DEFAULT 0;
 
 ALTER TABLE Object
     ADD COLUMN FileIndex integer not null default 0,
@@ -729,8 +729,8 @@ ALTER TABLE Job
     ADD COLUMN Encrypted         int        default 0;
 
 ALTER TABLE Media
-    ADD COLUMN Worm     smallint default 0,
-    ADD COLUMN UseWorm  smallint default 0;
+    ADD COLUMN Protect     smallint default 0,
+    ADD COLUMN UseProtect  smallint default 0;
 
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');

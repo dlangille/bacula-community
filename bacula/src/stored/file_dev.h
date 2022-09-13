@@ -54,6 +54,7 @@ public:
    int set_writable();
    int set_readonly();
    int set_atime(btime_t val);
+   int use_protect();
 };
 
 #endif /* __FILE_DEV_ */

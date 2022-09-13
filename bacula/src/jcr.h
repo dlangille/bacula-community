@@ -368,6 +368,7 @@ public:
 
 #ifdef DIRECTOR_DAEMON
    /* Director Daemon specific data part of JCR */
+   bool SD_set_worm;                  /* Initiate the procedure to set the WORM attribute */
    bool SD_msg_chan_started;          /* True if the msg thread is started */
    pthread_t SD_msg_chan;             /* Message channel thread id */
    pthread_cond_t term_wait;          /* Wait for job termination */

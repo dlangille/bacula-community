@@ -719,6 +719,8 @@ bool do_backup(JCR *jcr)
     */
    jcr->start_time = time(NULL);
    jcr->jr.StartTime = jcr->start_time;
+   bstrncpy(jcr->jr.WriteDevice, jcr->write_dev, sizeof(jcr->jr.WriteDevice));
+
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
       Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
    }

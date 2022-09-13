@@ -37,6 +37,13 @@ static const int dbglvl = 100;
 /* Imported functions */
 const char *mode_to_str(int mode);
 
+int file_dev::use_protect()
+{
+   if (device->set_vol_immutable || device->set_vol_read_only) {
+      return 1;
+   }
+   return 0;
+}
 
 /* default primitives are designed for file */
 int DEVICE::d_open(const char *pathname, int flags)

@@ -51,7 +51,7 @@ static char use_storage[]  = "use storage=%127s media_type=%127s "
 static char use_device[]  = "use device=%127s\n";
 
 /* Responses sent to Director daemon */
-static char OK_device[] = "3000 OK use device device=%s\n";
+static char OK_device[] = "3000 OK use device device=%s protect=%d encrypt=%d\n";
 static char NO_device[] = "3924 Device \"%s\" not in SD Device"
      " resources or no matching Media Type or is disabled.\n";
 static char BAD_use[]   = "3913 Bad use command: %s\n";
@@ -863,9 +863,13 @@ static int reserve_device(RCTX &rctx)
    if (rctx.notify_dir) {
       POOL_MEM dev_name;
       BSOCK *dir = rctx.jcr->dir_bsock;
+      int protect = 0;
+      if (rctx.device->set_vol_immutable || rctx.device->set_vol_read_only) {
+         protect = 1;
+      }
       pm_strcpy(dev_name, rctx.device->hdr.name);
       bash_spaces(dev_name);
-      ok = dir->fsend(OK_device, dev_name.c_str());  /* Return real device name */
+      ok = dir->fsend(OK_device, dev_name.c_str(), protect, 0);  /* Return real device name */
       Dmsg1(dbglvl, ">dird: %s", dir->msg);
       if (!ok) {
          dcr->unreserve_device(false);

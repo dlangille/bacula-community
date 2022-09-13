@@ -401,6 +401,7 @@ public:
    DBId_t StorageId;
    char Name[MAX_NAME_LENGTH];        /* Device name */
    int AutoChanger;                   /* Set if autochanger */
+   int UseProtect;                    /* Set if the Storage Daemon can handle Protect */
 
    /* Not in database */
    bool created;                      /* set if created by db_create ... */
@@ -457,6 +458,8 @@ public:
    uint32_t MaxVolJobs;               /* Max Jobs on Volume */
    uint32_t MaxVolFiles;              /* Max files on Volume */
    int32_t  Recycle;                  /* recycle yes/no */
+   int32_t  Protect;                  /* Protect yes/no */
+   int32_t  UseProtect;               /* Use Protect feature yes/no */
    int32_t  Slot;                     /* slot in changer */
    int32_t  Enabled;                  /* 0=disabled, 1=enabled, 2=archived */
    int32_t  InChanger;                /* Volume currently in changer */
