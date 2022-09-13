@@ -115,17 +115,30 @@ public:
    char     *hostname;
    int      port;
    antivirus(bpContext *bpc): cmd_parser(), ctx(bpc), bs(NULL), fname(NULL), hostname(NULL), port(3310) {
-   }
+   };
 
    virtual ~antivirus() {
       free_and_null_pool_memory(fname);
-   }
+   };
 
    /* Wait to be called to allocate memory */
    void init_mem() {
       fname = get_pool_memory(PM_FNAME);
-   }
+   };
+   void report_virus(const char *fname, const char *msg);
 };
+
+void antivirus::report_virus(const char *name, const char *msg)
+{
+   fileevent_pkt event;
+   Jmsg(ctx, M_ERROR, "%s Virus detected \"%s\"\n", name, msg);
+   bfuncs->getBaculaValue(ctx, bVarFileIndex, &event.FileIndex);
+   event.Severity = 100;
+   event.Type = FILEEVENT_TYPE_ANTIVIRUS;
+   bstrncpy(event.Source, "Clamav", sizeof(event.Source));
+   bstrncpy(event.Description, msg, sizeof(event.Description));
+   bfuncs->AddFileEvent(ctx, &event);
+}
 
 /*
  * loadPlugin() and unloadPlugin() are entry points that are
@@ -241,7 +254,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       } else {
          self->port = 3310;
       }
-      Dmsg0(0, "Register event bEventVerifyStream\n");
+      Dmsg0(50, "Register event bEventVerifyStream\n");
       break;
    case bEventVssPrepareSnapshot:
       break;
@@ -252,7 +265,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
 //    Dmsg(ctx, dbglvl, "JobEnd\n");
       break;
    case bEventLevel:
-      Dmsg0(0, "Register event bEventVerifyStream\n");
+      Dmsg0(50, "Register event bEventVerifyStream\n");
       break;
    case bEventSince:
 //    Dmsg(ctx, dbglvl, "since=%d\n", (int)value);
@@ -407,7 +420,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
              if (strstr(self->bs->msg, "OK")) {
                 Dmsg(ctx, dbglvl, "%s %s\n", self->fname, self->bs->msg);
              } else {
-                Jmsg(ctx, M_ERROR, "%s Virus detected %s\n", self->fname, self->bs->msg);
+                self->report_virus(self->fname, self->bs->msg);
              }
          }
          self->bs->close();
