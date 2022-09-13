@@ -87,6 +87,8 @@ run job=VerifyData jobid=3 storage=File1
 yes
 wait
 messages
+@$out ${cwd}/tmp/log5.out
+list fileevents jobid=3
 quit
 END_OF_DATA
 
@@ -101,6 +103,12 @@ fi
 nb=`grep "Eicar-Signature FOUND" $tmp/log4.out | wc -l`
 if [ $nb != 1 ]; then
     print_debug "ERROR: Should find Eicar virus in $tmp/log4.out"
+    estat=2
+fi
+
+nb=`grep "Eicar-Signature FOUND" $tmp/log5.out | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should find Eicar virus in $tmp/log5.out"
     estat=2
 fi
 
