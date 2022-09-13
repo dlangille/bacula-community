@@ -26,12 +26,10 @@
 class file_dev : public DEVICE {
 private:
    void get_volume_fpath(const char *vol_name, POOLMEM **buf);
-   bool modify_fattr(const char *vol_name, int attr, bool set);
+   bool modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **error);
    bool check_for_attr(const char *vol_name, int attr);
-   bool set_fattr(const char *vol_name, int attr);
-   bool clear_fattr(const char *vol_name, int attr);
-   bool check_for_immutable(const char *vol_name);
-   bool check_for_read_only(const char *vol_name);
+   bool set_fattr(const char *vol_name, int attr, POOLMEM **error);
+   bool clear_fattr(const char *vol_name, int attr, POOLMEM **error);
    bool append_open_needed(const char *vol_name);
    bool is_attribute_supported(int attr);
 
@@ -44,16 +42,18 @@ public:
    bool open_device(DCR *dcr, int omode);
    const char *print_type();
    virtual int device_specific_init(JCR *jcr, DEVRES *device);
-   bool set_append_only(const char *vol_name);
-   bool clear_append_only(const char *vol_name);
-   bool set_immutable(const char *vol_name);
-   bool clear_immutable(const char *vol_name);
+   bool set_append_only(const char *vol_name, POOLMEM **error);
+   bool clear_append_only(const char *vol_name, POOLMEM **error);
+   bool set_immutable(const char *vol_name, POOLMEM **error);
+   bool clear_immutable(const char *vol_name, POOLMEM **error);
    bool check_volume_protection_time(const char *vol_name);
+   bool check_for_immutable(const char *vol_name);
+   bool check_for_read_only(int fd, const char *vol_name);
    bool get_os_device_freespace();
    bool is_fs_nearly_full(uint64_t threshold);
-   int set_writable();
-   int set_readonly();
-   int set_atime(btime_t val);
+   int set_writable(int fd, const char *vol_name);
+   int set_readonly(int fd, const char *vol_name);
+   int set_atime(int fd, const char *vol_name, btime_t val);
    int use_protect();
 };
 

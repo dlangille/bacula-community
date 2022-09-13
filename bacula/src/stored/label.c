@@ -658,6 +658,7 @@ bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
    VolCatInfo.VolCatCloudParts = 0;
    VolCatInfo.VolLastPartBytes = 0;
    VolCatInfo.VolCatType = 0; /* Will be set by dir_update_volume_info() */
+   VolCatInfo.UseProtect = use_protect();
    if (recycle) {
       VolCatInfo.VolCatMounts++;
       VolCatInfo.VolCatRecycles++;
@@ -676,9 +677,15 @@ bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
       Leave(100);
       return false;
    }
+   events_send_msg(dcr->jcr, "SJ0004", EVENTS_TYPE_VOLUME, me->hdr.name,
+                   (intptr_t)dcr->jcr,
+                   "Wrote label on %s volume=\"%s\"",
+                   recycle?"recycled":"prelabeled",
+                   dcr->VolumeName);
    if (recycle) {
       Jmsg(jcr, M_INFO, 0, _("Recycled volume \"%s\" on %s device %s, all previous data lost.\n"),
          dcr->VolumeName, print_type(), print_name());
+
    } else {
       Jmsg(jcr, M_INFO, 0, _("Wrote label to prelabeled Volume \"%s\" on %s device %s\n"),
          dcr->VolumeName, print_type(), print_name());

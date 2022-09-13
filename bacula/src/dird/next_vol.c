@@ -316,7 +316,6 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
          }
       }
    }
-
    /* Check if the Pool quota is respected */
    if (!expired && use_max_pool_bytes(jcr)) {
       POOL_DBR pr;

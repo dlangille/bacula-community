@@ -208,14 +208,13 @@ bool file_dev::open_device(DCR *dcr, int omode)
                   getVolCatName());
          } else {
             /* Flag can be cleared, volume can probably be reused */
-            if (clear_immutable(getVolCatName())) {
+            if (clear_immutable(getVolCatName(), &errmsg)) {
                /* It should be now possible to open the device with desired mode */
                if ((m_fd = ::open(archive_name.c_str(), mode|O_CLOEXEC|append, 0640)) < 0) {
                   berrno be;
                   dev_errno = errno;
-                  Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
-                        archive_name.c_str(), mode_to_str(omode), be.bstrerror());
-                  Dmsg1(40, "open failed: %s", errmsg);
+                  MmsgD3(40, errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
+                         archive_name.c_str(), mode_to_str(omode), be.bstrerror());
                }
             }
          }
@@ -223,9 +222,8 @@ bool file_dev::open_device(DCR *dcr, int omode)
          /* Volume is not immutable, that should succeed */
          berrno be;
          dev_errno = errno;
-         Mmsg3(errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
+         MmsgD3(40, errmsg, _("Could not open(%s,%s,0640): ERR=%s\n"),
                archive_name.c_str(), mode_to_str(omode), be.bstrerror());
-         Dmsg1(40, "open failed: %s", errmsg);
       }
    }
 
@@ -254,45 +252,50 @@ bool file_dev::open_device(DCR *dcr, int omode)
    return m_fd >= 0;
 }
 
-int file_dev::set_writable()
+int file_dev::set_writable(int fd, const char *vol_name)
 {
    POOL_MEM fname;
-   get_volume_fpath(getVolCatName(), fname.handle());
-   int ret = bchmod(m_fd, fname.c_str(), 0600);
+   get_volume_fpath(vol_name, fname.handle());
+   /* Need write access only for the storage daemon user We can extend to the
+    * group, but in many case, it's a system group, so all users with tape/disk
+    * group can have access
+    */
+   int ret = bchmod(fd, fname.c_str(), 0600);
    if (ret < 0) {
       berrno be;
-      Mmsg(errmsg, _("Unable to change permission to 0600. ERR=%s\n"), be.bstrerror());
+      Dmsg1(DT_VOLUME|50, _("Unable to change permission to 0600. ERR=%s\n"), be.bstrerror());
    }
    return ret;
 }
 
-int file_dev::set_readonly()
+int file_dev::set_readonly(int fd, const char *vol_name)
 {
    POOL_MEM fname;
-   get_volume_fpath(getVolCatName(), fname.handle());
-   int ret = bchmod(m_fd, fname.c_str(), 0400);
+   get_volume_fpath(vol_name, fname.handle());
+   /* Mark the file -r-------- */
+   int ret = bchmod(fd, fname.c_str(), 0400);
    if (ret < 0) {
       berrno be;
-      Mmsg(errmsg, _("Unable to change permission to 0400. ERR=%s\n"), be.bstrerror());
+      Dmsg1(DT_VOLUME|50, _("Unable to change permission to 0400. ERR=%s\n"), be.bstrerror());
    }
    return ret;
 }
 
-int file_dev::set_atime(btime_t val)
+int file_dev::set_atime(int fd, const char *vol_name, btime_t val)
 {
    struct stat sp;
    int ret;
    POOL_MEM fname;
-   get_volume_fpath(getVolCatName(), fname.handle());
-   if (bstat(m_fd, fname.c_str(), &sp) < 0) {
+   get_volume_fpath(vol_name, fname.handle());
+   if (bstat(fd, fname.c_str(), &sp) < 0) {
       berrno be;
-      Mmsg(errmsg, _("Unable to stat %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
+      Dmsg2(DT_VOLUME|50, _("Unable to stat %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
       return -1;
    }
-   ret = set_own_time(m_fd, fname.c_str(), val, sp.st_mtime);
+   ret = set_own_time(fd, fname.c_str(), val, sp.st_mtime);
    if (ret < 0) {
       berrno be;
-      Mmsg(errmsg, _("Unable to set atime/mtime to %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
+      Dmsg2(DT_VOLUME|50, _("Unable to set atime/mtime to %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
    }
    return ret;
 }
@@ -321,7 +324,7 @@ bool DEVICE::truncate(DCR *dcr)
 
    /* Need to clear the APPEND flag before truncating */
    if (dev->device->set_vol_append_only) {
-      if (!clear_append_only(dcr->VolumeName)) {
+      if (!clear_append_only(dcr->VolumeName, &errmsg)) {
          Mmsg2(errmsg, _("Unable to clear append_only flag for volume %s on device %s.\n"),
                dcr->VolumeName, print_name());
          return false;
@@ -329,9 +332,10 @@ bool DEVICE::truncate(DCR *dcr)
    }
 
    if (dev->device->set_vol_read_only) {
-      if (set_writable() < 0) {
+      if (set_writable(dev->m_fd, dcr->VolumeName) < 0) {
+         berrno be;
          Mmsg3(errmsg, _("Unable to set write permission for volume %s on device %s. %s\n"),
-               dcr->VolumeName, print_name(), dev->errmsg);
+               dcr->VolumeName, print_name(), be.bstrerror());
          return false;
       }
    }
@@ -625,7 +629,7 @@ void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
       pm_strcat(fname, ADATA_EXTENSION);
    }
 
-   Dmsg1(DT_VOLUME|50, "Full volume path built: %s\n", *fname);
+   Dmsg1(DT_VOLUME|250, "Full volume path built: %s\n", *fname);
 }
 
 /* Check if volume can be reused or not yet.
@@ -684,10 +688,11 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
    } else {                     // ReadOnly, we check both and we take the biggest one
       expiration_time = MAX(sp.st_atime, sp.st_mtime + device->min_volume_protection_time);
    }
-   char dt[50], dt2[50];
-   bstrftime(dt, sizeof(dt), expiration_time);
-   bstrftime(dt2, sizeof(dt2), now);
    if (expiration_time > now) {
+      char dt[50], dt2[50];
+      bstrftime(dt, sizeof(dt), expiration_time);
+      bstrftime(dt2, sizeof(dt2), now);
+
       Mmsg1(errmsg, _("Immutable/ReadOnly flag cannot be cleared for volume: %s, "
                       "because Minimum Volume Protection Time hasn't expired yet.\n"),
             vol_name);
@@ -713,7 +718,7 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
    POOL_MEM fname(PM_FNAME);
 
    if (!is_attribute_supported(attr)) {
-      Mmsg2(errmsg, "File attribute 0x%0x is not supported for volume %s\n", attr, vol_name);
+      errno = ENOSYS;
       return ret;
    }
 
@@ -722,7 +727,6 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
    if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
       berrno be;
       Dmsg2(DT_VOLUME|50, "Failed to open %s, ERR=%s\n", fname.c_str(), be.bstrerror());
-      Mmsg2(errmsg, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
       return ret;
    }
 
@@ -730,7 +734,6 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
    if (ioctl_ret < 0) {
       berrno be;
       Dmsg2(DT_VOLUME|50, "Failed to get attributes for %s, ERR=%s\n", fname.c_str(), be.bstrerror());
-      Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
    } else {
       ret = get_attr & attr;
       const char *msg_str = ret ? "set" : "not set";
@@ -752,7 +755,7 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
 #endif // HAVE_FS_IOC_GETFLAGS
 
 #ifdef HAVE_FS_IOC_SETFLAGS
-bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
+bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **error)
 {
    bool ret = false;
    int tmp_fd, ioctl_ret;
@@ -768,14 +771,13 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
    POOL_MEM fname(PM_FNAME);
 
    if (!got_caps_needed) {
-      Dmsg1(DT_VOLUME|50, "Early return from modify_fattr for volume %s, do not have caps needed\n",
-            vol_name);
-      return true; /* We cannot set needed attributes, no work here */
+      MmsgD1(DT_VOLUME|50, error, "Early return from modify_fattr for volume %s, do not have caps needed\n",
+             vol_name);
+      return false; /* We cannot set needed attributes, no work here */
    }
 
    if (!is_attribute_supported(attr)) {
-      Dmsg2(DT_VOLUME|50, "File attribute 0x%0x is not supported for volume %s\n", attr, vol_name);
-      Mmsg2(errmsg, "File attribute 0x%0x is not supported for volume %s\n", attr, vol_name);
+      MmsgD2(DT_VOLUME|50, error, "File attribute 0x%0x is not supported for volume %s\n", attr, vol_name);
       return ret;
    }
 
@@ -783,25 +785,35 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
 
    if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
       berrno be;
-      Dmsg2(DT_VOLUME|50, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
-      Mmsg2(errmsg, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
+      MmsgD2(DT_VOLUME|50, error, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
       return false;
    }
 
    ioctl_ret = d_ioctl(tmp_fd, FS_IOC_GETFLAGS, (char *)&get_attr);
    if (ioctl_ret < 0) {
       berrno be;
-      Dmsg2(DT_VOLUME|50, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
-      Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+      MmsgD2(DT_VOLUME|50, error, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+      goto bail_out;
+   }
+
+   /* The flag might be already present, so, no need to set or clear it */
+   if (set && (get_attr & attr)) {
+      ret = true;
+      goto bail_out;
+   }
+   if (!set && (get_attr & attr) == 0) {
+      ret = true;
       goto bail_out;
    }
 
    if (set) {
       /* Add new attribute to the currently set ones */
       set_attr = get_attr | attr;
+
    } else {
       /* Inverse the desired attribute and later and it with the current state
-       * so that we clear only desired flag and do not touch all the rest */
+       * so that we clear only desired flag and do not touch all the rest
+       */
       int rev_mask = ~attr;
       set_attr = get_attr & rev_mask;
    }
@@ -810,11 +822,9 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
    if (ioctl_ret < 0) {
       berrno be;
       if (set) {
-         Dmsg3(DT_VOLUME|50, "Failed to set 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
-         Mmsg3(errmsg, "Failed to set 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+         MmsgD3(DT_VOLUME|50, error, "Failed to set 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
       } else {
-         Dmsg3(DT_VOLUME|50, "Failed to clear 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
-         Mmsg3(errmsg, "Failed to clear 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+         MmsgD3(DT_VOLUME|50, error, "Failed to clear 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
       }
       goto bail_out;
    }
@@ -831,22 +841,22 @@ bail_out:
    return ret;
 }
 #else
-bool file_dev::modify_fattr(const char *vol_name, int attr, bool set)
+bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **error)
 {
-   Dmsg3(DT_VOLUME|50, "Returning from mocked modify_fattr() for volume: %s, attr: 0x%08x, set: %d\n",
+   MmsgD3(DT_VOLUME|50, error, "Returning from mocked modify_fattr() for volume: %s, attr: 0x%08x, set: %d\n",
          vol_name, attr, set);
-   return true;
+   return false;
 }
 #endif // HAVE_FS_IOC_SETFLAGS
 
-bool file_dev::set_fattr(const char *vol_name, int attr)
+bool file_dev::set_fattr(const char *vol_name, int attr, POOLMEM **error)
 {
-   return modify_fattr(vol_name, attr, true);
+   return modify_fattr(vol_name, attr, true, error);
 }
 
-bool file_dev::clear_fattr(const char *vol_name, int attr)
+bool file_dev::clear_fattr(const char *vol_name, int attr, POOLMEM **error)
 {
-   return modify_fattr(vol_name, attr, false);
+   return modify_fattr(vol_name, attr, false, error);
 }
 
 #ifdef HAVE_APPEND_FL
@@ -855,14 +865,14 @@ bool file_dev::append_open_needed(const char *vol_name)
    return check_for_attr(vol_name, FS_APPEND_FL);
 }
 
-bool file_dev::set_append_only(const char *vol_name)
+bool file_dev::set_append_only(const char *vol_name, POOLMEM **error)
 {
-   return set_fattr(vol_name, FS_APPEND_FL);
+   return set_fattr(vol_name, FS_APPEND_FL, error);
 }
 
-bool file_dev::clear_append_only(const char *vol_name)
+bool file_dev::clear_append_only(const char *vol_name, POOLMEM **error)
 {
-   return clear_fattr(vol_name, FS_APPEND_FL);
+   return clear_fattr(vol_name, FS_APPEND_FL, error);
 }
 #else
 bool file_dev::append_open_needed(const char *vol_name)
@@ -870,28 +880,28 @@ bool file_dev::append_open_needed(const char *vol_name)
    Dmsg1(DT_VOLUME|50, "Returning from mocked append_open_needed() for volume: %s\n", vol_name);
    return false;
 }
-bool file_dev::set_append_only(const char *vol_name)
+bool file_dev::set_append_only(const char *vol_name, POOLMEM **error)
 {
-   Dmsg1(DT_VOLUME|50, "Returning from mocked set_append_only() for volume: %s\n", vol_name);
-   return true;
+   MmsgD1(DT_VOLUME|50, error, "Returning from mocked set_append_only() for volume: %s\n", vol_name);
+   return false;
 }
 
-bool file_dev::clear_append_only(const char *vol_name)
+bool file_dev::clear_append_only(const char *vol_name, POOLMEM **error)
 {
-   Dmsg1(DT_VOLUME|50, "Returning from mocked clear_append_only() for volume: %s\n", vol_name);
-   return true;
+   MmsgD1(DT_VOLUME|50, error, "Returning from mocked clear_append_only() for volume: %s\n", vol_name);
+   return false;
 }
 #endif // HAVE_APPEND_FL
 
 #ifdef HAVE_IMMUTABLE_FL
-bool file_dev::set_immutable(const char *vol_name)
+bool file_dev::set_immutable(const char *vol_name, POOLMEM **error)
 {
-   return set_fattr(vol_name, FS_IMMUTABLE_FL);
+   return set_fattr(vol_name, FS_IMMUTABLE_FL, error);
 }
 
-bool file_dev::clear_immutable(const char *vol_name)
+bool file_dev::clear_immutable(const char *vol_name, POOLMEM **error)
 {
-   return clear_fattr(vol_name, FS_IMMUTABLE_FL);
+   return clear_fattr(vol_name, FS_IMMUTABLE_FL, error);
 }
 
 bool file_dev::check_for_immutable(const char* vol_name)
@@ -899,16 +909,16 @@ bool file_dev::check_for_immutable(const char* vol_name)
    return check_for_attr(vol_name, FS_IMMUTABLE_FL);
 }
 #else
-bool file_dev::set_immutable(const char *vol_name)
+bool file_dev::set_immutable(const char *vol_name, POOLMEM **error)
 {
-   Dmsg1(DT_VOLUME|50, "Returning from mocked set_immutable() for volume: %s\n", vol_name);
-   return true;
+   MmsgD1(DT_VOLUME|50, error, "Returning from mocked set_immutable() for volume: %s\n", vol_name);
+   return false;
 }
 
-bool file_dev::clear_immutable(const char *vol_name)
+bool file_dev::clear_immutable(const char *vol_name, POOLMEM **error)
 {
-   Dmsg1(DT_VOLUME|50, "Returning from mocked clear_immutable() for volume: %s\n", vol_name);
-   return true;
+   MmsgD1(DT_VOLUME|50, error, "Returning from mocked clear_immutable() for volume: %s\n", vol_name);
+   return false;
 }
 
 bool file_dev::check_for_immutable(const char* vol_name)
@@ -918,7 +928,7 @@ bool file_dev::check_for_immutable(const char* vol_name)
 }
 #endif // HAVE_IMMUTABLE_FL
 
-bool file_dev::check_for_read_only(const char *vol)
+bool file_dev::check_for_read_only(int fd, const char *vol)
 {   
    if (!device->set_vol_read_only) {
       return false;              // Feature not used
@@ -928,7 +938,7 @@ bool file_dev::check_for_read_only(const char *vol)
    POOL_MEM fname;
    get_volume_fpath(vol, fname.handle());
 
-   if (stat(fname.c_str(), &sp) < 0) {
+   if (bstat(fd, fname.c_str(), &sp) < 0) {
       return false;              // Not found, no problem?
    }
 

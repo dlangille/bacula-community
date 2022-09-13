@@ -33,6 +33,7 @@ static int update_volume(UAContext *ua);
 static bool update_pool(UAContext *ua);
 static bool update_job(UAContext *ua);
 static bool update_stats(UAContext *ua);
+static int update_volumeprotect_cmd(UAContext *ua);
 
 /*
  * Update a Pool Record in the database.
@@ -48,6 +49,8 @@ static bool update_stats(UAContext *ua);
  *         updates long term statistics
  *    update jobid [starttime=...]
  *         updates job record
+  *    update volumeprotect [pool=... volume=... storage=...]
+ *         send protect command to the storage daemon
  */
 int update_cmd(UAContext *ua, const char *cmd)
 {
@@ -61,6 +64,7 @@ int update_cmd(UAContext *ua, const char *cmd)
       NT_("stats"),  /* 6 */
       NT_("snap"),   /* 7 */
       NT_("snapshot"),/* 8 */
+      NT_("volumeprotect"), /* 9 */
       NULL};
 
    if (!open_client_db(ua)) {
@@ -89,6 +93,8 @@ int update_cmd(UAContext *ua, const char *cmd)
    case 8:
       update_snapshot(ua);
       return 1;
+   case 9:
+      return update_volumeprotect_cmd(ua);
    default:
       break;
    }
@@ -99,6 +105,7 @@ int update_cmd(UAContext *ua, const char *cmd)
    add_prompt(ua, _("Slots from autochanger"));
    add_prompt(ua, _("Long term statistics"));
    add_prompt(ua, _("Snapshot parameters"));
+   add_prompt(ua, _("Volume protection attributes on Storage Daemon"));
    switch (do_prompt(ua, _("item"), _("Choose catalog item to update"), NULL, 0)) {
    case 0:
       update_volume(ua);
@@ -115,6 +122,8 @@ int update_cmd(UAContext *ua, const char *cmd)
    case 4:
       update_snapshot(ua);
       break;
+   case 5:
+      return update_volumeprotect_cmd(ua);
    default:
       break;
    }
@@ -734,7 +743,7 @@ static int update_volume(UAContext *ua)
          break;
 
       case 7:                         /* Slot */
-         ua->info_msg(_("Current Slot is: %d\n"), mr.Slot);
+         ua->info_msg(_("Current Slot is: %ld\n"), mr.Slot);
          if (!get_pint(ua, _("Enter new Slot: "))) {
             return 0;
          }
@@ -742,7 +751,7 @@ static int update_volume(UAContext *ua)
          break;
 
       case 8:                         /* InChanger */
-         ua->info_msg(_("Current InChanger flag is: %d\n"), mr.InChanger);
+         ua->info_msg(_("Current InChanger flag is: %ld\n"), mr.InChanger);
          bsnprintf(buf, sizeof(buf), _("Set InChanger flag for Volume \"%s\": yes/no: "),
             mr.VolumeName);
          if (!get_yesno(ua, buf)) {
@@ -757,7 +766,7 @@ static int update_volume(UAContext *ua)
          if (!db_update_media_record(ua->jcr, ua->db, &mr)) {
             ua->error_msg(_("Error updating media record Slot: ERR=%s"), db_strerror(ua->db));
          } else {
-            ua->info_msg(_("New InChanger flag is: %d\n"), mr.InChanger);
+            ua->info_msg(_("New InChanger flag is: %ld\n"), mr.InChanger);
          }
          break;
 
@@ -817,7 +826,7 @@ static int update_volume(UAContext *ua)
          return 1;
 
       case 14:
-         ua->info_msg(_("Current Enabled is: %d\n"), mr.Enabled);
+         ua->info_msg(_("Current Enabled is: %ld\n"), mr.Enabled);
          if (!get_cmd(ua, _("Enter new Enabled: "))) {
             return 0;
          }
@@ -1098,4 +1107,180 @@ static bool update_job(UAContext *ua)
       return false;
    }
    return true;
+}
+
+
+
+struct media_protect {
+   DBId_t id;
+   char volname[MAX_NAME_LENGTH];
+   char storage[MAX_NAME_LENGTH];
+   char mediatype[MAX_NAME_LENGTH];
+};
+
+/* 
+ * Called here to retrieve an string list from the database 
+ */ 
+static int media_protect_list_handler(void *ctx, int num_fields, char **row) 
+{ 
+   alist *val = (alist *)ctx; 
+ 
+   if (row[0] && row[1] && row[2] && row[3]) {
+      struct media_protect *a = (struct media_protect *)malloc(sizeof(struct media_protect));
+      a->id = str_to_uint64(row[0]);
+      bstrncpy(a->mediatype, row[1], sizeof(a->mediatype));
+      bstrncpy(a->volname, row[2], sizeof(a->volname));
+      bstrncpy(a->storage, row[3], sizeof(a->storage));
+      val->append(a); 
+   }
+ 
+   return 0; 
+} 
+
+/*
+ * Protect a volume. If the command is executed from RunScript Admin
+ * the return code of the commnand is used to update the status.
+ */
+static int update_volumeprotect_cmd(UAContext *ua)
+{
+   USTORE ustore;
+   BSOCK *sd = NULL;
+   JCR *jcr = ua->jcr;
+   char dev_name[MAX_NAME_LENGTH];
+   char prev_sd[MAX_NAME_LENGTH];
+   char *selected_dev_name = NULL;
+   struct media_protect *elt;
+   int drive, i, ret=1;
+   alist list(20, owned_by_alist);
+   POOL_MEM tmp, filter;
+
+   *prev_sd = *dev_name = 0;
+
+   for (i = 0; i < ua->argc ; i++) {
+      if (strcasecmp(ua->argk[i], "device") == 0) {
+         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+            ua->error_msg(_("Invalid device name. %s"), tmp.c_str());
+            return 0;
+         }
+         bstrncpy(dev_name, ua->argv[i], sizeof(dev_name));
+
+      } else if (strcasecmp(ua->argk[i], "storage") == 0) {
+         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+            ua->error_msg(_("Invalid storage name. %s"), tmp.c_str());
+            return 0;
+         }
+         Mmsg(tmp, " AND Storage.Name = '%s' ", ua->argv[i]);
+         pm_strcat(filter, tmp);
+
+      } else if (strcasecmp(ua->argk[i], "pool") == 0) {
+         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+            ua->error_msg(_("Invalid pool name. %s"), tmp.c_str());
+            return 0;
+         }
+         Mmsg(tmp, " AND Pool.Name = '%s' ", ua->argv[i]);
+         pm_strcat(filter, tmp);
+
+      } else if (strcasecmp(ua->argk[i], "volume") == 0) {
+         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+            ua->error_msg(_("Invalid volume name. %s"), tmp.c_str());
+            return 0;
+         }
+         Mmsg(tmp, " AND Media.VolumeName = '%s' ", ua->argv[i]);
+         pm_strcat(filter, tmp);
+      }
+   }
+
+   if (!open_client_db(ua)) {
+      return 0;
+   }
+
+   Mmsg(tmp, "SELECT Media.MediaId, Media.MediaType, Media.VolumeName, Storage.Name "
+               "FROM Media JOIN Storage USING (StorageId) JOIN Pool USING (PoolId) "
+              "WHERE UseProtect=1 AND Protect=0 AND VolStatus IN ('Used', 'Full') %s "
+           "ORDER BY Storage.Name", filter.c_str());
+
+   db_sql_query(ua->db, tmp.c_str(),
+                media_protect_list_handler, &list);
+
+   if (list.size() > 0) {
+      ua->send_msg(_("Found %d volumes with status Used/Full that must be protected\n"), list.size());
+
+   } else {
+      ua->send_msg(_("No volume found to protect\n"));
+      return 1;
+   }
+   
+   foreach_alist(elt, &list) {
+      if (strcmp(prev_sd, elt->storage) != 0) {
+         ustore.store = (STORE*) GetResWithName(R_STORAGE, elt->storage);
+         pm_strcpy(ustore.store_source, "Catalog source");
+
+         if (!ustore.store) {
+            continue;
+         }
+         bstrncpy(prev_sd, elt->storage, sizeof(prev_sd));
+         jcr->store_mngr->set_wstorage(ustore.store, ustore.store_source);
+         drive = 0; //get_storage_drive(ua, ustore.store);
+
+         if (*dev_name) {
+            selected_dev_name = dev_name;
+
+         } else {
+            selected_dev_name = ustore.store->dev_name();
+         }
+
+         if (sd) {
+            sd->signal(BNET_TERMINATE);
+            free_bsock(ua->jcr->store_bsock);
+            sd = NULL;
+         }
+
+         if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
+            ua->error_msg(_("Failed to connect to Storage daemon.\n"));
+            ret = 0;
+            continue;
+         }
+         sd = jcr->store_bsock;
+         bstrncpy(prev_sd, ustore.store->hdr.name, sizeof(prev_sd));
+
+         build_connecting_info_log(_("Storage"), ustore.store->name(),
+                                   get_storage_address(NULL, ustore.store), ustore.store->SDport,
+                                   sd->tls ? true : false, tmp.addr());
+
+         ua->send_msg("%s", tmp.c_str());
+      }
+      bash_spaces(elt->mediatype);
+      bash_spaces(selected_dev_name);
+      bash_spaces(elt->volname);
+
+      sd->fsend("volumeprotect mediatype=%s device=%s volume=%s drive=%d\n",
+                elt->mediatype, selected_dev_name, elt->volname, drive);
+
+      unbash_spaces(elt->mediatype);
+      unbash_spaces(selected_dev_name);
+      unbash_spaces(elt->volname);
+
+      if (bget_dirmsg(jcr, sd, BSOCK_TYPE_UNKN) > 0 && (strncmp(sd->msg, "3000", 4) == 0)) {
+         /* Keep track of this important event */
+         ua->send_events("DC0013", EVENTS_TYPE_COMMAND, "volumeprotect storage=%s dev=%s volume=%s",
+                         elt->storage, selected_dev_name, elt->volname);
+         ua->send_msg("%s", sd->msg);
+         Mmsg(tmp, "UPDATE Media SET Protect=1 WHERE MediaId=%d", elt->id);
+         db_lock(ua->db);
+         if (!db_sql_query(ua->db, tmp.c_str(), NULL, NULL)) {
+            ua->error_msg("Unable to update volume record. %s\n", ua->db->errmsg);
+            ret = 0;
+         }
+         db_unlock(ua->db);
+      } else {
+         ua->error_msg("%s", sd->msg);
+         ret = 0;
+      }
+   }
+
+   if (sd) {
+      sd->signal(BNET_TERMINATE);
+      free_bsock(ua->jcr->store_bsock);
+   }
+   return ret;
 }

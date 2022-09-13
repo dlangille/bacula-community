@@ -1979,7 +1979,7 @@ bool run_console_command(JCR *jcr, const char *cmd)
    if (ua->argc > 0 && ua->argk[0][0] == '.') {
       ok = do_a_dot_command(ua);
    } else {
-     ok = do_a_command(ua);
+      ok = do_a_command(ua);
    }
    close_db(ua);
    free_ua_context(ua);

@@ -342,7 +342,7 @@ public:
    uint64_t min_free_space;           /* Minimum free disk space */
    int free_space_errno;              /* indicates errno getting freespace */
    bool truncating;                   /* if set, we are currently truncating */
-
+   
    utime_t  vol_poll_interval;        /* interval between polling Vol mount */
    DEVRES *device;                    /* pointer to Device Resource */
    VOLRES *vol;                       /* Pointer to Volume reservation item */
@@ -571,11 +571,11 @@ public:
    virtual bool rewind(DCR *dcr);
    virtual bool truncate(DCR *dcr);
    virtual int  truncate_cache(DCR *dcr, const char *VolName, int64_t *size, POOLMEM *&msg) { return 0; };
-   virtual bool get_cloud_volumes_list(DCR* dcr, alist *volumes, POOLMEM *&err) { pm_strcpy(err, "Not implemented"); return false;};
-   virtual bool get_cloud_volume_parts_list(DCR *dcr, const char *VolumeName, ilist *parts, POOLMEM *&err) { pm_strcpy(err, "Not implemented"); return false; };
-   virtual uint32_t get_cloud_upload_transfer_status(POOL_MEM &msg, bool verbose) { pm_strcpy(msg, "Not implemented"); return 0; };
+   virtual bool get_cloud_volumes_list(DCR* dcr, alist *volumes, POOLMEM *&err) { pm_strcpy(err, _("Not implemented")); return false;};
+   virtual bool get_cloud_volume_parts_list(DCR *dcr, const char *VolumeName, ilist *parts, POOLMEM *&err) { pm_strcpy(err, _("Not implemented")); return false; };
+   virtual uint32_t get_cloud_upload_transfer_status(POOL_MEM &msg, bool verbose) { pm_strcpy(msg, _("Not implemented")); return 0; };
    virtual void get_api_cloud_upload_transfer_status(OutputWriter &, bool) {};
-   virtual uint32_t get_cloud_download_transfer_status(POOL_MEM &msg, bool verbose) { pm_strcpy(msg, "Not implemented"); return 0; };
+   virtual uint32_t get_cloud_download_transfer_status(POOL_MEM &msg, bool verbose) { pm_strcpy(msg, _("Not implemented")); return 0; };
    virtual void get_api_cloud_download_transfer_status(OutputWriter &, bool) {};
    virtual bool upload_cache(DCR *dcr, const char *VolName, uint32_t truncate, POOLMEM *&err) {return true; };
    virtual bool open_device(DCR *dcr, int omode) = 0;
@@ -606,16 +606,16 @@ public:
    virtual void set_ateof();                    /* in dev.c */
    /* Methods below are responsible for managing
     * the append and immutable flags on device-specific volumes */
-   virtual bool set_append_only(const char *vol_name) { return true; };
-   virtual bool clear_append_only(const char *vol_name) { return true; };
-   virtual bool set_immutable(const char *vol_name) { return true; };
-   virtual bool clear_immutable(const char *vol_name) { return true; };
+   virtual bool set_append_only(const char *vol_name, POOLMEM **error) { pm_strcpy(error, _("Not Implemented")); return false; };
+   virtual bool clear_append_only(const char *vol_name, POOLMEM **error) { pm_strcpy(error, _("Not Implemented")); return false; };
+   virtual bool set_immutable(const char *vol_name, POOLMEM **error) { pm_strcpy(error, _("Not Implemented")); return false; };
+   virtual bool clear_immutable(const char *vol_name, POOLMEM **error) { pm_strcpy(error, _("Not Implemented")); return false; };
    virtual bool check_volume_protection_time(const char *vol_name) { return true; };
    virtual bool check_for_immutable(const char *vol_name) { return false; };
-   virtual bool check_for_read_only(const char *vol_name) { return false; };
-   virtual int set_writable() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
-   virtual int set_readonly() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
-   virtual int set_atime(btime_t val) { pm_strcpy(errmsg, _("Not implemented")); return -1;};
+   virtual bool check_for_read_only(int fd, const char *vol_name) { return false; };
+   virtual int set_writable(int fd, const char *vol_name) { errno=ENOSYS; return -1;};
+   virtual int set_readonly(int fd, const char *vol_name) { errno=ENOSYS; return -1;};
+   virtual int set_atime(int fd, const char *vol_name, btime_t val) { errno=ENOSYS; return -1;};
    virtual int use_protect() { return 0; };
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};

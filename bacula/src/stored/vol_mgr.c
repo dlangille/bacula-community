@@ -845,7 +845,7 @@ bool DCR::can_i_write_volume()
    }
 
    if (dev->device->set_vol_read_only       &&
-       dev->check_for_read_only(VolumeName) &&
+       dev->check_for_read_only(-1, VolumeName) &&
        dev->check_volume_protection_time(VolumeName) == false) {
       MmsgD1(dbglvl, jcr->errmsg, _("Skipping Volume %s, "
                                     "because Volume's Protection Period has not expired yet\n"),

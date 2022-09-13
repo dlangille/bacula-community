@@ -166,7 +166,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("memory"),     memory_cmd,    _("Print current memory usage"), NT_(""),    true},
  { NT_("mount"),      mount_cmd,     _("Mount storage"),
    NT_("storage=<storage-name> slot=<num> drive=<num> [ device=<device-name> ] [ jobid=<id> | job=<job-name> ]"), false},
-
+ 
  { NT_("prune"),      prunecmd,      _("Prune expired records from catalog"),
    NT_("files | jobs | snapshot  [client=<client-name>] | client=<client-name> | \n"
        "\t[expired] [all | allpools | allfrompool] [pool=<pool>] [mediatype=<type>] volume=<volume-name> [yes]"),
@@ -242,6 +242,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\n\t maxvolbytes=<size> maxvolfiles=<nb> maxvoljobs=<nb>"
        "\n\t enabled=<yes/no> recyclepool=<pool> actiononpurge=<action>"
        "\n\t allfrompool=<pool> fromallpools frompool"
+       "\n\t volumeprotect [pool=<pool> | volume=<vol> | storage=<sd> | device=<dev>]"
        "\njobid=<id> [client=<client> | starttime=<universal-time-specification> | priority=<int> |"
        "\n\t pool=<pool> | comment=<str> | reviewed=<int>"),true},
  { NT_("use"),        use_cmd,       _("Use catalog xxx"), NT_("catalog=<catalog>"),     false},

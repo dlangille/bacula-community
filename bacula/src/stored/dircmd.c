@@ -86,11 +86,12 @@ static bool bootstrap_cmd(JCR *jcr);
 static bool cloud_list_cmd(JCR *jcr);
 static bool cloud_prunecache_cmd(JCR *jcr);
 static bool changer_cmd(JCR *sjcr);
+static bool volumeprotect_cmd(JCR *jcr);
 static bool do_label(JCR *jcr, int relabel);
 static DCR *find_device(JCR *jcr, POOL_MEM &dev_name,
-                        POOLMEM *media_type, int drive);
+                        char *media_type, int drive);
 static DCR *find_any_device(JCR *jcr, POOL_MEM &dev_name,
-                        POOLMEM *media_type, int drive);
+                            char *media_type, int drive);
 static void read_volume_label(JCR *jcr, DCR *dcr, DEVICE *dev, int Slot);
 static void label_volume_if_ok(DCR *dcr, char *oldname,
                                char *newname, char *poolname,
@@ -139,6 +140,7 @@ static struct dir_cmds cmds[] = {
    {"storage",     storage_cmd,     0},     /* get SD addr from Dir */
    {"truncate",    truncate_cache_cmd, 0},
    {"upload",      upload_cmd,      0},
+   {"volumeprotect",     volumeprotect_cmd, 0},
    {"prunecache",  cloud_prunecache_cmd, 0},
    {"cloudlist",   cloud_list_cmd,  0},     /* List volumes/parts in the cloud */
    {"unmount",     unmount_cmd,     0},
@@ -1109,9 +1111,9 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
       } else {
          type = 0;
       }
-      dir->fsend("3000 OK label. VolBytes=%lld VolABytes=%lld VolType=%d Volume=\"%s\" Device=%s\n",
+      dir->fsend("3000 OK label. VolBytes=%lld VolABytes=%lld VolType=%d UseProtect=%d Volume=\"%s\" Device=%s\n",
                  volCatBytes, dev->VolCatInfo.VolCatAdataBytes,
-                 type, newname, dev->print_name());
+                 type, dev->use_protect(), newname, dev->print_name());
       break;
    case VOL_TYPE_ERROR:
       dir->fsend(_("3917 Failed to label Volume: ERR=%s\n"), dcr->jcr->errmsg);
@@ -1191,7 +1193,7 @@ static bool read_label(DCR *dcr)
  *  returns it.
  */
 static DCR *find_device(JCR *jcr, POOL_MEM &devname,
-                        POOLMEM *media_type, int drive)
+                        char *media_type, int drive)
 {
    DEVRES *device;
    AUTOCHANGER *changer;
@@ -1269,7 +1271,7 @@ static DCR *find_device(JCR *jcr, POOL_MEM &devname,
  *   argument, but this is easier for the moment.
  */
 static DCR *find_any_device(JCR *jcr, POOL_MEM &devname,
-                        POOLMEM *media_type, int drive)
+                            char *media_type, int drive)
 {
    DEVRES *device;
    AUTOCHANGER *changer;
@@ -1334,6 +1336,72 @@ static DCR *find_any_device(JCR *jcr, POOL_MEM &devname,
    return dcr;
 }
 
+/*
+ * Protect command from Director
+ */
+static bool volumeprotect_cmd(JCR *jcr)
+{
+   BSOCK *dir = jcr->dir_bsock;
+   char mediatype[MAX_NAME_LENGTH];
+   char volume[MAX_NAME_LENGTH];
+   POOL_MEM device, tmp;
+   int32_t drive;
+   bool ok;
+
+   ok = sscanf(dir->msg, "volumeprotect mediatype=%127s device=%127s volume=%127s drive=%d",
+               mediatype, device.c_str(), volume, &drive) == 4;
+   if (ok) {
+      unbash_spaces(mediatype);
+      unbash_spaces(device.c_str());
+      unbash_spaces(volume);
+      DCR *dcr = find_any_device(jcr, device, mediatype, drive);
+      if (dcr) {
+         DEVICE *dev = dcr->dev;
+         /* Everything can be  done without a lock because we don't touch anything
+          * inside the device structure
+          */
+         if (dev->device->set_vol_immutable) {
+            /* Set volume as immutable */
+            if (!dev->set_immutable(volume, tmp.handle())) {
+               /* We may proceed with that but warn the user */
+               dir->fsend(_("3900 Unable to set immutable flag %s\n"), tmp.c_str());
+
+            } else {
+               dir->fsend(_("3000 Mark volume \"%s\" as immutable\n"), volume);
+               events_send_msg(jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)jcr,
+                               "Mark volume \"%s\" as immutable", volume);
+            }
+
+         } else if (dev->device->set_vol_read_only) {
+            /* Set volume as immutable/read only */
+            pm_strcpy(tmp, "");
+            if (dev->set_atime(-1, volume, time(NULL) + dev->device->min_volume_protection_time) < 0) {
+               berrno be;
+               Mmsg(tmp, _(" Failed to set the volume %s on device %s in atime retention, ERR=%s.\n"),
+                    volume, dev->print_name(), be.bstrerror());
+            }
+            if (dev->set_readonly(-1, volume) < 0) {
+               berrno be;
+               /* We may proceed with that but warn the user */
+               dir->fsend(_("3900 Failed to set the volume %s on device %s in read-only, ERR=%s.%s\n"),
+                          volume, dev->print_name(), be.bstrerror(), tmp.c_str());
+            } else {
+               dir->fsend(_("3000 Marking volume \"%s\" as read-only.\n"), volume);
+               events_send_msg(jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)jcr,
+                               "Mark volume \"%s\" as read-only", volume);
+            }
+         } else {
+            dir->fsend(_("3900 Device %s not configured for ReadOnly or Immutable\n"), dev->device->hdr.name);
+         }
+         free_dcr(dcr);
+      } else {
+         dir->fsend(_("3901 Unable to find a device to perform the volumeprotect command\n"));
+      }
+   } else {
+      dir->fsend(_("3907 Error scanning \"volumeprotect\" command\n"));
+   }
+   return true;
+}
 
 /*
  * Mount command from Director

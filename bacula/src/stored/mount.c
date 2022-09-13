@@ -297,7 +297,7 @@ read_volume:
 
       /* Set the append flag on the volume */
       if (dev->device->set_vol_append_only) {
-         if (!dev->set_append_only(getVolCatName())) {
+         if (!dev->set_append_only(getVolCatName(), &dev->errmsg)) {
             Jmsg(jcr, M_WARNING, 0, _("Unable to set the APPEND flag on the volume: %s, err: %s\n"),
                   getVolCatName(), dev->bstrerror());
             goto mount_next_vol;
