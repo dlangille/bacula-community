@@ -2567,7 +2567,7 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
                   ua->send_msg(_("Plugin Options specified twice.\n"));
                   return false;
                }
-               rc.plugin_options = bstrdup(ua->argv[i]);
+               rc.plugin_options = ua->argv[i];
                if (!acl_access_ok(ua, PluginOptions_ACL, rc.plugin_options)) {
                   ua->send_msg(_("No authorization for \"PluginOptions\" specification.\n"));
                   return false;
@@ -2717,7 +2717,6 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
       return false;
    }
 
-
    if (!get_client(ua, rc)) {
       return false;
    }
@@ -2737,7 +2736,7 @@ static bool scan_run_command_line_arguments(UAContext *ua, run_ctx &rc)
    }
 
    if (rc.job->JobType == JT_VERIFY && !rc.plugin_options && rc.job->PluginOptions) {
-      rc.plugin_options = bstrdup(rc.job->PluginOptions);
+      rc.plugin_options = rc.job->PluginOptions;
    }
 
    if (rc.previous_job_name) {
