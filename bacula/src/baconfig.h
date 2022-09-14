@@ -593,9 +593,9 @@ void t_msg(const char *file, int line, int64_t level, const char *fmt,...);
 /* Helper macro e.g. for comparison of file patch with allowed directory
  * On Linux/Unix OSes, paths are case sensitive while on Windows it is not the case */
 #ifdef HAVE_WIN32
-#define b_path_match strstr
-#else
 #define b_path_match strcasestr
+#else
+#define b_path_match strstr
 #endif // HAVE_WIN32
 
 /* Use bstrncpy instead of strncpy because it ensures last char is a 0 */
