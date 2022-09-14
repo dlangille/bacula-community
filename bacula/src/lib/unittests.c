@@ -150,7 +150,7 @@ bool _nok(const char *file, int l, const char *op, int value, const char *label)
 bool _is(const char *file, int l, const char *op, const char *str, const char *str2, const char *label)
 {
    nb++;
-   bool value = (strcmp(str, str2) == 0);
+   bool value = (strcmp(NPRTB(str), NPRTB(str2)) == 0);
    if (!value) {
       err++;
       if (err < 1000) {
