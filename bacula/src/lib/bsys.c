@@ -1879,6 +1879,29 @@ int get_home_directories(const char *grpname, alist *dirs)
    return (dirs->size() > 0) ? 0 : -1;
 }
 
+/* Implementation of strcasestr() for non-gnu platforms */
+char *bstrcasestr(const char *haystack, const char *needle)
+{
+  int needle_len;               /* Length of needle.  */
+  int haystack_len;             /* Known minimum length of haystack.  */
+
+  if (!needle || needle[0] == '\0') {
+     return (char *)haystack;
+  }
+  needle_len = strlen (needle);
+  haystack_len = strlen (haystack);
+
+  const char *p = haystack;
+  while (p && *p && haystack_len >= needle_len) {
+     if (strncasecmp(needle, p, needle_len) == 0) {
+        return (char *)p;
+     }
+     p++;
+     haystack_len--;
+  }
+  return NULL;
+}
+
 #ifdef TEST_PROGRAM
 
 #include "unittests.h"
@@ -2136,6 +2159,17 @@ int main(int argc, char **argv)
       i++;
    }
 
+   // Test bstrcasestr()
+   {
+      const char *p1 = "This is a test";
+      ok(bstrcasestr(p1, "toto") == NULL, "Test with non existing string");
+      ok(bstrcasestr(p1, NULL) == p1, "Test with NULL string");
+      ok(bstrcasestr(p1, "") == p1, "Test with empty string");
+      is(bstrcasestr(p1, "TEST"), "test", "Test with upper string at the end");
+      is(bstrcasestr(p1, "this"), p1, "Test with lower string at the start");
+      ok(bstrcasestr(p1, "xxxxxxxxxxxxxxxxxxxxxxxxx") == NULL, "Test with non existing string");
+      is(bstrcasestr(p1, " iS"), " is a test", "Test with a middle string");
+   }
    return report();
 }
 #endif

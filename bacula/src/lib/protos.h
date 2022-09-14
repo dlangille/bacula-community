@@ -74,6 +74,7 @@ const char *get_timezone();
 int get_user_home_directory(const char *user, POOLMEM *&home);
 int get_home_directories(const char *grpname, alist *dirs);
 char *ucfirst(char *dest, const char *src, int len);
+char *bstrcasestr(char *haystack, char *needle);
 typedef enum {
    WAIT_READ  = 1,
    WAIT_WRITE = 2
