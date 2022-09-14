@@ -593,7 +593,7 @@ void t_msg(const char *file, int line, int64_t level, const char *fmt,...);
 /* Helper macro e.g. for comparison of file patch with allowed directory
  * On Linux/Unix OSes, paths are case sensitive while on Windows it is not the case */
 #ifdef HAVE_WIN32
-#define b_path_match strcasestr
+#define b_path_match bstrcasestr
 #else
 #define b_path_match strstr
 #endif // HAVE_WIN32
