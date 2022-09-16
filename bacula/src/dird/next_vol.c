@@ -324,7 +324,9 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
          expired = true;
       }
    }
-
+   /* Here, if the volume is WORM, we cannot change the status if a storage
+    * is not connected
+    */
    if (expired) {
       /* Need to update media */
       Dmsg1(dbglvl, "Vol=%s has expired update media record\n", mr->VolumeName);

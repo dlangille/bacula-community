@@ -42,6 +42,7 @@ enum {
    R_CONSOLE,
    R_JOBDEFS,
    R_COLLECTOR,
+   R_TENANT,
    R_DEVICE,       /* This is the real last device class */
 
    R_AUTOCHANGER,  /* Alias for R_STORAGE after R_LAST */
@@ -84,6 +85,7 @@ class RUN;
 class DEVICE;
 class RUNSCRIPT;
 class CAT;
+class TENANT;
 
 /*
  *   Director Resource
@@ -719,12 +721,32 @@ public:
 
 inline char *POOL::name() const { return hdr.name; }
 
+/*
+ *    Tenant Resource
+ */
+class TENANT {
+public:
+   RES   hdr;
+   int32_t MaxClients;         /* Maximum clients allowed */
+   uint64_t MaxVolBytes;       /* Maximum bytes allowed */
+   uint64_t WarnVolBytes;      /* Print warnings after X bytes */
+   int32_t MaxJobs;            /* Maximum job resources allowed */
+   int32_t MaxStorages;        /* Maximum Storage resources allowed */
+   int32_t Isolated;           /* Subtenants can have visibility among them */
+   int32_t Enabled;            /* Enabled or not */
+   /* Methods */
+   char *name() const;
+};
+
+inline char *TENANT::name() const { return hdr.name; }
+
 
 /* Define the Union of all the above
  * resource structure definitions.
  */
 union URES {
    DIRRES     res_dir;
+   TENANT     res_tenant;
    CONRES     res_con;
    CLIENT     res_client;
    STORE      res_store;
@@ -774,6 +796,7 @@ public:
    void copyall(RUN *src);
    void clearall();
 };
+
 
 #define GetPoolResWithName(x) ((POOL *)GetResWithName(R_POOL, (x)))
 #define GetStoreResWithName(x) ((STORE *)GetResWithName(R_STORAGE, (x)))

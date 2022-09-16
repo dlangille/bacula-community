@@ -414,6 +414,23 @@ static RES_ITEM dir_items[] = {
  *
  *   name          handler     value                 code flags    default_value
  */
+static RES_ITEM tenant_items[] = {
+   {"Name",        store_name,     ITEM(res_tenant.hdr.name), 0, ITEM_REQUIRED, 0},
+   {"Description", store_str,      ITEM(res_tenant.hdr.desc), 0, 0, 0},
+   {"MaximumVolumeBytes", store_size64, ITEM(res_tenant.MaxVolBytes), 0, 0, 0},
+   {"MaximumClients", store_int32, ITEM(res_tenant.MaxClients), 0, 0, 0},
+   {"WarningVolumeBytes", store_size64, ITEM(res_tenant.WarnVolBytes), 0, 0, 0},
+   {"MaximumJobs", store_int32, ITEM(res_tenant.MaxJobs), 0, 0, 0},
+   {"MaximumStorages", store_int32, ITEM(res_tenant.MaxStorages), 0, 0, 0},
+   {"Isolated", store_bool, ITEM(res_tenant.Isolated), 0, 0, 0},
+   {"Enabled",     store_bool, ITEM(res_tenant.Enabled), 0, ITEM_DEFAULT, true},
+   {NULL, NULL, {0}, 0, 0, 0}
+};
+/*
+ *    Console Resource
+ *
+ *   name          handler     value                 code flags    default_value
+ */
 static RES_ITEM con_items[] = {
    {"Name",        store_name,     ITEM(res_con.hdr.name), 0, ITEM_REQUIRED, 0},
    {"Description", store_str,      ITEM(res_con.hdr.desc), 0, 0, 0},
@@ -802,6 +819,7 @@ RES_TABLE resources[] = {
    {"Console",       con_items,        R_CONSOLE},
    {"JobDefs",       job_items,        R_JOBDEFS},
    {"Statistics",    collector_items,  R_COLLECTOR},
+   {"Tenant",        tenant_items,     R_TENANT},
    {"Device",        NULL,             R_DEVICE},  /* info obtained from SD */
    {"Autochanger",   store_items,      R_AUTOCHANGER},  /* alias for R_STORAGE */
    {NULL,            NULL,             0}
@@ -953,6 +971,11 @@ void dump_resource(int type, RES *ares, void sendit(void *sock, const char *fmt,
       recurse = false;
    }
    switch (type) {
+   case R_TENANT:
+      sendit(sock, _("Tenant: name=%s MaxJobs=%d MaxClients=%d MaxVolBytes=%lld Enabled=%d\n"),
+             ares->name, res->res_tenant.MaxJobs, res->res_tenant.MaxClients,
+             res->res_tenant.MaxVolBytes, res->res_tenant.Enabled);
+      break;
    case R_DIRECTOR:
       sendit(sock, _("Director: name=%s MaxJobs=%d FDtimeout=%s SDtimeout=%s AutoPrune=%d\n"),
          ares->name, res->res_dir.MaxConcurrentJobs,
@@ -1658,6 +1681,7 @@ void free_resource(RES *rres, int type)
          free(res->res_dir.customerid);
       }
       break;
+   case R_TENANT:
    case R_DEVICE:
    case R_COUNTER:
        break;
@@ -1937,6 +1961,9 @@ int get_resource_size(int type)
     * The following code is only executed during pass 1
     */
    switch (type) {
+   case R_TENANT:
+      size = sizeof(TENANT);
+      break;
    case R_DIRECTOR:
       size = sizeof(DIRRES);
       break;
@@ -2042,6 +2069,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
       case R_MSGS:
       case R_FILESET:
       case R_DEVICE:
+      case R_TENANT:
          break;
 
       /*
@@ -2084,7 +2112,7 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
          type = R_STORAGE;         /* force Storage type */
          if ((res = (URES *)GetResWithName(type, res_all.res_store.hdr.name)) == NULL) {
             Mmsg(config->m_errmsg, _("Cannot find Storage resource %s\n"),
-                 res_all.res_dir.hdr.name);
+                 res_all.res_store.hdr.name);
             return false;
          }
          /* we must explicitly copy the device alist pointer */
@@ -2103,9 +2131,9 @@ bool save_resource(CONFIG *config, int type, RES_ITEM *items, int pass)
          break;
       case R_JOB:
       case R_JOBDEFS:
-         if ((res = (URES *)GetResWithName(type, res_all.res_dir.hdr.name)) == NULL) {
+         if ((res = (URES *)GetResWithName(type, res_all.res_job.hdr.name)) == NULL) {
             Mmsg(config->m_errmsg, _("Cannot find Job resource %s\n"),
-                 res_all.res_dir.hdr.name);
+                 res_all.res_job.hdr.name);
             return false;
          }
          res->res_job.messages   = res_all.res_job.messages;
