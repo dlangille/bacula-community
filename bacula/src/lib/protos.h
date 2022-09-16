@@ -135,7 +135,7 @@ int       safer_unlink(const char *pathname, const char *regex);
 int fs_get_free_space(const char *path, int64_t *freeval, int64_t *totalval);
 void      mark_heap();
 int64_t   heap_used();
-
+void      b_uname(POOLMEM *&un);
 /* bnet.c */
 bool       bnet_tls_server       (TLS_CONTEXT *ctx, BSOCK *bsock,
                                   alist *verify_list, const char *psk_shard_key);

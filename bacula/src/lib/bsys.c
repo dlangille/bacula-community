@@ -32,6 +32,12 @@
 #include <regex.h>
 #endif
 
+#ifdef HAVE_WIN32
+#include "sysinfoapi.h"
+#else
+#include <sys/utsname.h>
+#endif
+
 static pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t timer = PTHREAD_COND_INITIALIZER;
 
@@ -1900,6 +1906,27 @@ char *bstrcasestr(const char *haystack, const char *needle)
      haystack_len--;
   }
   return NULL;
+}
+
+void b_uname(POOLMEM *&un)
+{
+   if (un) {
+#if defined HAVE_WIN32
+      POOLMEM *tmp = get_pool_memory(PM_MESSAGE);
+      POOLMEM *msg = get_pool_memory(PM_MESSAGE);
+      pm_strcpy(tmp, "ver");
+      run_program_full_output(tmp, 0, msg, NULL);
+      pm_strcpy(un, &strip_trailing_newline(msg)[1]);
+      free_pool_memory(msg);
+      free_pool_memory(tmp);
+#elif defined HAVE_LINUX_OS
+      utsname uname_struct;
+      if (uname(&uname_struct) == 0)
+      {
+         Mmsg(un, "%s %s %s %s %s", uname_struct.sysname, uname_struct.nodename, uname_struct.release, uname_struct.version, uname_struct.machine);
+      }
+#endif
+   }
 }
 
 #ifdef TEST_PROGRAM
