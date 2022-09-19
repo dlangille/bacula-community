@@ -22,6 +22,7 @@ ADD_TEST(unittests:scan-unittests "@regressdir@/tests/scan-unittests")
 ADD_TEST(unittests:base32-unittests "@regressdir@/tests/base32-unittests")
 ADD_TEST(unittests:base64-unittests "@regressdir@/tests/base64-unittests")
 ADD_TEST(unittests:bpipe-unittests "@regressdir@/tests/bpipe-unittests")
+ADD_TEST(unittests:crypto-unittests "@regressdir@/tests/bpipe-unittests")
 ADD_TEST(unittests:breaddir-unittests "@regressdir@/tests/breaddir-unittests")
 # Code not yet compatible with bsprintf
 # ADD_TEST(unittests:bsnprintf-unittests "@regressdir@/tests/bsnprintf-unittests")

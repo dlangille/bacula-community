@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2018 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# This is a lib/crypto.c unit test
+#
+TestName="crypto_test"
+. scripts/functions
+cp scripts/cryptokeypair.pem $tmp
+
+make -C $src/src/tools install-unittests
+
+if [ $? = 0 ] ; then
+   $bin/$TestName
+fi
+
+exit $?

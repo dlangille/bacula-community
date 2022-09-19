@@ -46,7 +46,7 @@ TOOLS = $(@DIR_TOOLS@)
 INSNODIRTOOLS = bsmtp
 INSDIRTOOLS = bsmtp dbcheck bwild bregex
 INSTOOLS = $(INS@DIR_TOOLS@) @TOOLS_INSTALL@
-INSTTESTS = breaddir_test bpipe_test tags_test xattr_append_test
+INSTTESTS = breaddir_test bpipe_test tags_test xattr_append_test crypto_test
 
 .SUFFIXES:	.c .o
 .PHONY:
@@ -95,6 +95,9 @@ xattr_append_test: xattr_append_test.o ../lib/unittests.o
 bpipe_test: bpipe_test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bpipe_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
+
+crypto_test: crypto_test.o ../lib/unittests.o
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ crypto_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
 bsparse: bsparse.c
 	$(CXX) -Wall -o $@ bsparse.c
