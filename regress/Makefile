@@ -24,6 +24,7 @@ setup: bacula sed
 #  is in weird-files, so we load and run it only on Linux machines.
 #
 bacula: all
+	@test -e tmp && chmod -R u+rwx tmp || true
 	@rm -rf bin build weird-files tmp
 	@rm -f w.tar.gz w.tar
 	@cp weird-files.tar.gz w.tar.gz
