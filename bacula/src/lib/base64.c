@@ -200,6 +200,19 @@ bin_to_base64(char *buf, int buflen, char *bin, int binlen, int compatible)
    return j;
 }
 
+int bin_to_base64_pad(char *buf, int buflen, char *bin, int binlen)
+{
+   int l = bin_to_base64(buf, buflen, bin, binlen, true);
+   int n = 4 - l%4; /* add one or two '=' for padding */
+   for (int i = 0; n < 3 && i < n; i++) {
+      if (l < buflen) {
+         buf[l++] = '=';
+         buf[l] = '\0';
+      }
+   }
+   return l;
+}
+
 /*
  * Decode base64 encoded data
  *

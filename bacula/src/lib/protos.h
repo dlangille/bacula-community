@@ -45,6 +45,7 @@ int       to_base64              (int64_t value, char *where);
 int       from_base64            (int64_t *value, char *where);
 int       bin_to_base64          (char *buf, int buflen, char *bin, int binlen,
                                   int compatible);
+int       bin_to_base64_pad      (char *buf, int buflen, char *bin, int binlen);
 int       base64_to_bin(char *dest, int destlen, const char *src, int srclen);
 
 /* bjson.c */
