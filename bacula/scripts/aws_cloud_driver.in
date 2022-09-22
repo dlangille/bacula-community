@@ -31,7 +31,7 @@ import logging, traceback
 
 
 # RETRY DOWNLOAD
-RETRY_DOWNLOAD = 0xED
+RETRY_DOWNLOAD = 0x0D
 
 def vol_ls():
    try:
@@ -228,12 +228,18 @@ def wait_on_restore():
       if err:
          logging.error("wait_on_restore got error {0}".format(err))
          sys.stderr.write(err)
+         return 1
       if output:
          logging.info("wait_on_restore got ouput {0}".format(output))
          j = json.loads(output)
-         if "Restore" in j and j["Restore"] and j["Restore"]=='ongoing-request="true"':
-            logging.info("Ongoing restore detected")
-            return 0
+         if "Restore" in j and j["Restore"]:
+            if j["Restore"]=='ongoing-request="true"':
+               logging.info("Ongoing restore detected")
+               sys.stdout.write("WOR-INPROGRESS")
+            elif j["Restore"]=='ongoing-request="false"':
+               logging.info("NO Ongoing restore detected")
+               sys.stdout.write("WOR-DONE")
+      return 0
    except Exception as e:
       exc = traceback.format_exception_only(type(e), e)[0]
       sys.stderr.write(exc)
