@@ -97,7 +97,9 @@ if test $? -ne 0; then
     estat=2
 fi
 
-grep "JobId=2 Vol1/part.2 waiting..." ${working}/*-sd.trace 2>&1 >/dev/null
+# ANY waiting state is accepted (waiting for a specific part might be mask by another part wait)
+# so a minimum of 1 wait is expected
+grep "JobId=2 Vol1/part.* waiting..." ${working}/*-sd.trace 2>&1 >/dev/null
 if test $? -ne 0; then
     echo "Error: No waiting done for transfer"
     estat=2
