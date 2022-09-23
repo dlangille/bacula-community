@@ -155,10 +155,12 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
 {
    int status;
    int rbytes = 0;
+   int ebytes = nbytes;
    struct timeval _timeout;
 
    _timeout.tv_sec = m_timeout > 0 ? m_timeout : PTCOMM_DEFAULT_TIMEOUT;
    _timeout.tv_usec = 0;
+
 
    while (nbytes > 0)
    {
@@ -227,6 +229,8 @@ bool PTCOMM::recvbackend_data(bpContext *ctx, char *buf, int32_t nbytes)
          rbytes += status;
       }
    }
+
+   DMSG2(ctx, DDEBUG, "Data read. Expected=%d. Read=%d\n", ebytes, rbytes);
 
    return true;
 }
@@ -526,8 +530,8 @@ int32_t PTCOMM::handle_payload(bpContext *ctx, char *buf, int32_t nbytes)
       f_eod = f_error = f_fatal = true;
       return -1;
    }
-   char bindata[17];
-   DMSG1(ctx, DDEBUG, "RECV> %s\n", asciidump(buf, nbytes, bindata, 17));
+   char bindata[32];
+   DMSG1(ctx, DDEBUG, "RECV> %s\n", asciidump(buf, nbytes, bindata, 32));
 
    return nbytes;
 }
