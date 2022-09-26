@@ -325,7 +325,7 @@ Job {
   Messages = Standard
   Pool = Default
   # This creates an ASCII copy of the catalog
-  RunBeforeJob = "@sbindir@/make_catalog_backup -u regress"
+  RunBeforeJob = "@sbindir@/make_catalog_backup regress"
   # This deletes the copy of the catalog
   RunAfterJob  = "@sbindir@/delete_catalog_backup"
   Write Bootstrap = "@working_dir@/BackupCatalog.bsr"
@@ -817,7 +817,7 @@ FileSet {
     Options {
       signature=MD5
     }
-    File = /home/kern/bacula/regress/bin/working/bacula.sql
+    File = @working_dir@/regress.sql
   }
 }
 
