@@ -668,7 +668,7 @@ static void update_attribute(JCR *jcr, char *msg, int32_t msglen)
          db_lock(jcr->db);
          if (!db_sql_query(jcr->db, val.c_str(), NULL, NULL)) {
             // TODO: Make sure the SQL query is correct, else the transaction will fail
-            Jmsg(jcr, M_FATAL, 0, _("Unable to insert Plugin metadata for FileIndex %lld. ERR=%s\n"), (int64_t)FileIndex, jcr->db->errmsg);
+            Jmsg(jcr, M_ERROR, 0, _("Unable to insert Plugin metadata for FileIndex %lld. ERR=%s\n"), (int64_t)FileIndex, jcr->db->errmsg);
             Dmsg1(50, "Unable to parse Plugin metadata err=%s\n", val.c_str());
          }
          db_unlock(jcr->db);
