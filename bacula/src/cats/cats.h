@@ -642,7 +642,7 @@ public:
 
 
 /* Used to search in MetaEmail and MetaAttachment table */
-#define MAX_SEARCH_LENGTH 256
+#define MAX_SEARCH_LENGTH 512
 #define MAX_SEARCH_LENGTH_ESCAPED (MAX_SEARCH_LENGTH * 2 + 1)
 
 class META_DBR: public SMARTALLOC
