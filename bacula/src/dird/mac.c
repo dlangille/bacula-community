@@ -529,6 +529,11 @@ bool do_mac(JCR *jcr)
    }
    wsd = wjcr->store_bsock;
 
+   /* Send progress information for the Storage Daemon Job, will fill
+    * information from "status dir"
+    */
+   wsd->fsend("sendprogress\n");
+
    /*
     * Start conversation with read Storage daemon
     */
@@ -538,6 +543,12 @@ bool do_mac(JCR *jcr)
       goto bail_out;
    }
    sd = jcr->store_bsock;
+
+   /* Send progress information for the Storage Daemon Job, will fill
+    * information from "status dir"
+    */
+   sd->fsend("sendprogress\n");
+
    if (jcr->client) {
       jcr->sd_calls_client = jcr->client->sd_calls_client;
    }

@@ -130,7 +130,7 @@ void run_job(JCR *jcr)
     * Otherwise we do the commands that the client sends
     *   which are for normal backup or restore jobs.
     */
-   Dmsg3(050, "==== JobType=%c run_job=%d sd_client=%d\n", jcr->getJobType(), jcr->JobId, jcr->sd_client);
+   Dmsg3(50, "==== JobType=%c run_job=%d sd_client=%d\n", jcr->getJobType(), jcr->JobId, jcr->sd_client);
    if (jcr->is_JobType(JT_BACKUP) && jcr->sd_client) {
       jcr->session_opened = true;
       Dmsg0(050, "Do: receive for 3000 OK data then append\n");

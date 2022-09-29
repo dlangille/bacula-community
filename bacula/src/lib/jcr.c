@@ -406,6 +406,7 @@ JCR *new_jcr(int size, JCR_free_HANDLER *daemon_free_jcr)
    jcr->setJobLevel(L_NONE);
    jcr->setJobStatus(JS_Created);        /* ready to run */
    jcr->job_task = JOB_TASK_ZERO;
+   jcr->stat_interval = -1;
 #ifndef HAVE_WIN32
    struct sigaction sigtimer;
    sigtimer.sa_flags = 0;
@@ -899,6 +900,32 @@ static int get_status_priority(int JobStatus)
       break;
    }
    return priority;
+}
+
+#define Job_Progress "Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n"
+/*
+ * Send Current progress status
+ */
+bool JCR::sendProgressStatus()
+{
+   if (stat_interval < 0) {     /* Disabled */
+      return true;
+   }
+   if (dir_bsock) {
+      time_t now = time(NULL);
+      if (stat_interval == 0) {
+         stat_interval = 30;  /* Default 30 seconds */
+      }
+      if (last_stat_time == 0) {
+         last_stat_time = now;
+
+      } else if (now >= last_stat_time + stat_interval) {
+         dir_bsock->fsend("Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n",
+                          JobId, JobFiles, JobBytes, LastRate);
+         last_stat_time = now;
+      }
+   }
+   return true;
 }
 
 /*

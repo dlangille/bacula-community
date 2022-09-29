@@ -242,6 +242,9 @@ fi_checked:
             rec.FileIndex, rec.VolSessionId,
             stream_to_ascii(buf1, rec.Stream,rec.FileIndex),
             rec.data_len);
+
+         jcr->sendProgressStatus();
+
          /*
           * Check for any last minute Storage daemon preparation
           *   of the files being backed up proir to doing so.  E.g.

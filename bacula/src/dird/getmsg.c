@@ -294,7 +294,7 @@ int bget_dirmsg(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role)
          continue;
       }
       /* Get Progress: files, bytes, bytes/sec */
-      if (role==BSOCK_TYPE_FD && bs->msg[0] == 'P') {       /* Progress report */
+      if (bs->msg[0] == 'P') {       /* Progress report */
          uint32_t files, bps;
          uint64_t bytes;
          if ((sscanf(bs->msg, "Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n",

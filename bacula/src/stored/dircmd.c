@@ -97,6 +97,7 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
                                int Slot, int relabel);
 static bool try_autoload_device(JCR *jcr, DCR *dcr, int slot, const char *VolName);
 static void send_dir_busy_message(BSOCK *dir, DEVICE *dev);
+static bool sd_sendprogress_cmd(JCR *jcr);
 bool user_shstore_lock(DCR *dcr);
 void user_shstore_unlock(DCR *dcr);
 bool dedup_cmd(JCR *jcr); /* BEEF */
@@ -148,6 +149,7 @@ static struct dir_cmds cmds[] = {
    {"run",         run_cmd,         0},
    {"statistics",  collect_cmd,     0},
    {"store_mngr",  query_store,     0},
+   {"sendprogress",  sd_sendprogress_cmd, 0},
 // {"query",       query_cmd,       0},
    {NULL,        NULL}                      /* list terminator */
 };
@@ -2053,6 +2055,14 @@ static void send_dir_busy_message(BSOCK *dir, DEVICE *dev)
           dev->print_name(), dev->num_writers, dev->num_reserved());
    }
 }
+
+/* Send progress information to the director if needed (for copy/migration in general) */
+static bool sd_sendprogress_cmd(JCR *jcr)
+{
+   jcr->stat_interval = 60;
+   return true;
+}
+
 
 #if COMMUNITY
 

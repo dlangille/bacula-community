@@ -371,15 +371,7 @@ int save_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
    bctx.jcr = jcr;
 
 
-   time_t now = time(NULL);
-   if (jcr->last_stat_time == 0) {
-      jcr->last_stat_time = now;
-      jcr->stat_interval = 30;  /* Default 30 seconds */
-   } else if (now >= jcr->last_stat_time + jcr->stat_interval) {
-      jcr->dir_bsock->fsend("Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n",
-         jcr->JobId, jcr->JobFiles, jcr->JobBytes, jcr->LastRate);
-      jcr->last_stat_time = now;
-   }
+   jcr->sendProgressStatus();
 
    if (jcr->is_canceled() || jcr->is_incomplete()) {
       Dmsg0(100, "Job canceled by user or marked incomplete.\n");

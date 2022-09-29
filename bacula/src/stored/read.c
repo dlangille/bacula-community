@@ -381,5 +381,6 @@ static bool mac_record_cb(DCR *dcr, DEV_RECORD *rec)
       FI_to_ascii(buf1, rec->FileIndex), rec->VolSessionId,
       stream_to_ascii(buf2, rec->Stream, rec->FileIndex), rec->data_len);
 
+   jcr->sendProgressStatus();
    return ok;
 }

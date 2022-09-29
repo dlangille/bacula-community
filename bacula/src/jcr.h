@@ -358,7 +358,10 @@ public:
    char   *job_group;                 /* Specific permission for a job */
    POOLMEM *StatusErrMsg;             /* Error message displayed in the job report */
    char StatusInfo[MAX_NAME_LENGTH];  /* Additionnal information about the error status */
+   time_t last_stat_time;             /* Last time stats sent to Dir */
+   time_t stat_interval;              /* Stats send interval default 30s, set to -1 to disable */
    uint32_t getErrors() { return JobErrors + SDErrors; }; /* Get error count */
+   bool sendProgressStatus();         /* Send the progress status to the dir (SD/FD) */
 
    /* Daemon specific part of JCR */
    /* This should be empty in the library */
@@ -466,8 +469,6 @@ public:
    BXATTR *bxattr;                    /* Extended Attributes for backup/restore */
    int32_t last_type;                 /* type of last file saved/verified */
    int incremental;                   /* set if incremental for SINCE */
-   time_t last_stat_time;             /* Last time stats sent to Dir */
-   time_t stat_interval;              /* Stats send interval */
    utime_t mtime;                     /* begin time for SINCE */
    int listing;                       /* job listing in estimate */
    long Ticket;                       /* Ticket */

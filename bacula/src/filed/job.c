@@ -259,6 +259,7 @@ JCR *new_fd_jcr()
    /* TODO remove the ifdef as soon as the feature has been well tested */
    jcr->set_killable(true);
 #endif /*DEVELOPER*/
+   jcr->stat_interval = 0;      /* Always send progress status */
    jcr->sd_calls_client_bsock = NULL;
    jcr->sd_calls_client = false;
    jcr->ff = init_find_files();

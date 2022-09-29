@@ -465,15 +465,7 @@ void do_restore(JCR *jcr)
 
    Dsm_check(200);
    while ((bget_ret = fdmsg->bget_msg(&bmsg)) >= 0 && !job_canceled(jcr)) {
-      time_t now = time(NULL);
-      if (jcr->last_stat_time == 0) {
-         jcr->last_stat_time = now;
-         jcr->stat_interval = 30;  /* Default 30 seconds */
-      } else if (now >= jcr->last_stat_time + jcr->stat_interval) {
-         jcr->dir_bsock->fsend("Progress JobId=%ld files=%ld bytes=%lld bps=%ld\n",
-            jcr->JobId, jcr->JobFiles, jcr->JobBytes, jcr->LastRate);
-         jcr->last_stat_time = now;
-      }
+      jcr->sendProgressStatus();
 
       /* Remember previous stream type */
       rctx.prev_stream = rctx.stream;

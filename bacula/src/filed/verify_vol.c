@@ -350,6 +350,8 @@ void do_verify_volume(JCR *jcr)
     * Get a record from the Storage daemon
     */
    while ((bget_ret = fdmsg->bget_msg(&bmsg)) >= 0 && !job_canceled(jcr)) {
+      jcr->sendProgressStatus();
+
       /* Remember previous stream type */
       vctx.prev_stream = vctx.stream;
 
