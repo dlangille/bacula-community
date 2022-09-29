@@ -180,34 +180,13 @@ static const char *S3Errors[] = {
 
 #define S3ErrorsSize (sizeof(S3Errors)/sizeof(char *))
 
-static void load_glacier_driver(const char* plugin_directory);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-cloud_driver *BaculaCloudDriver()
-{
-   return New(s3_driver);
-}
-
 typedef cloud_glacier *(*newGlacierDriver_t)(void);
-
-/* Needed for bcloud utility (backdoor glacier driver pre-loading) */
-void BaculaInitGlacier(const char* plugin_directory)
-{
-   load_glacier_driver(plugin_directory);
-}
-
-#ifdef __cplusplus
-}
-#endif
 
 struct glacier_driver_item {
    const char *name;
    void *handle;
    newGlacierDriver_t newDriver;
-   cloud_glacier *ptr;
+   cloud_glacier *ptr; /*static instance used for bcloud only. Driver uses its own instance.*/
    bool builtin;
    bool loaded;
 };
@@ -218,7 +197,7 @@ struct glacier_driver_item {
 
 glacier_driver_item glacier_item = {0};
 
-static void load_glacier_driver(const char* plugin_directory)
+static cloud_glacier *load_glacier_driver(const char* plugin_directory)
 {
    if (!glacier_item.newDriver) {
       POOL_MEM fname(PM_FNAME);
@@ -230,12 +209,12 @@ static void load_glacier_driver(const char* plugin_directory)
          glacier_item.newDriver = (newGlacierDriver_t)dlsym(glacier_item.handle, "BaculaCloudGlacier");
          if (!glacier_item.newDriver) {
             dlclose(glacier_item.handle);
-            glacier_item.ptr = NULL;
-            return;
+            return NULL;
          }
-         glacier_item.ptr = glacier_item.newDriver();
+         return glacier_item.newDriver();
       }
    }
+   return NULL;
 }
 
 static void unload_drivers()
@@ -244,6 +223,25 @@ static void unload_drivers()
       dlclose(glacier_item.handle);
    }
 }
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+cloud_driver *BaculaCloudDriver()
+{
+   return New(s3_driver);
+}
+
+/* Needed for bcloud utility (backdoor glacier driver pre-loading) */
+void BaculaInitGlacier(const char* plugin_directory)
+{
+   glacier_item.ptr = load_glacier_driver(plugin_directory);
+}
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Our Bacula context for s3_xxx callbacks
@@ -383,6 +381,18 @@ bool xfer_cancel_cb(void *arg)
       return xfer->is_canceled();
    }
    return false;
+};
+
+s3_driver::s3_driver() : m_glacier_driver(NULL)
+{
+   s3ctx = {0};
+};
+
+s3_driver::~s3_driver()
+{
+   if (m_glacier_driver) {
+      delete m_glacier_driver;
+   }
 };
 
 static int putObjectCallback(int buf_len, char *buf, void *callbackCtx)
@@ -831,8 +841,8 @@ int s3_driver::copy_cloud_part_to_cache(transfer *xfer)
 
 bool s3_driver::restore_cloud_object(transfer *xfer, const char *cloud_fname)
 {
-   if (glacier_item.ptr) {
-      return glacier_item.ptr->restore_cloud_object(xfer,cloud_fname);
+   if (m_glacier_driver) {
+      return m_glacier_driver->restore_cloud_object(xfer,cloud_fname);
    }
    return false;
 }
@@ -842,8 +852,8 @@ bool s3_driver::is_waiting_on_server(transfer *xfer)
    Enter(dbglvl);
    POOL_MEM cloud_fname(PM_FNAME);
    make_cloud_filename(cloud_fname.addr(), xfer->m_volume_name, xfer->m_part);
-   if (glacier_item.ptr) {
-      return glacier_item.ptr->is_waiting_on_server(xfer, cloud_fname.addr());
+   if (m_glacier_driver) {
+      return m_glacier_driver->is_waiting_on_server(xfer, cloud_fname.addr());
    }
    return false;
 }
@@ -874,7 +884,6 @@ bool s3_driver::init(CLOUD *cloud, POOLMEM *&err)
    s3ctx.accessKeyId = cloud->access_key;
    s3ctx.secretAccessKey = cloud->secret_key;
    s3ctx.authRegion = cloud->region;
-   objects_default_tier = cloud->objects_default_tier;
 
    if ((status = S3_initialize("s3", S3_INIT_ALL, s3ctx.hostName)) != S3StatusOK) {
       Mmsg1(err, "Failed to initialize S3 lib. ERR=%s\n", S3_get_status_name(status));
@@ -884,9 +893,14 @@ bool s3_driver::init(CLOUD *cloud, POOLMEM *&err)
 #if BEEF
    /*load glacier */
    if (me) {
-      load_glacier_driver(me->plugin_directory);
-      if (glacier_item.ptr) {
-         if (!glacier_item.ptr->init(cloud, err)) {
+      if (m_glacier_driver) {
+         delete m_glacier_driver;
+         m_glacier_driver = NULL;
+      }
+
+      m_glacier_driver = load_glacier_driver(me->plugin_directory);
+      if (m_glacier_driver) {
+         if (!m_glacier_driver->init(cloud, err)) {
             return false;
          }
       }

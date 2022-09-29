@@ -33,19 +33,18 @@
 #include <libs3.h>
 #include "cloud_driver.h"   /* get base class definitions */
 
+class cloud_glacier;
+
 class s3_driver: public cloud_driver {
+
 private:
    S3BucketContext s3ctx;       /* Main S3 bucket context */
-   S3RestoreTier transfer_priority;
-   uint32_t transfer_retention_days;
-   uint32_t objects_default_tier;
-public:
-   cloud_dev *dev;              /* device that is calling us */
+   cloud_glacier *m_glacier_driver;
 
-   s3_driver() {
-   };
-   ~s3_driver() {
-   };
+public:
+
+   s3_driver();
+   ~s3_driver();
 
    void make_cloud_filename(POOLMEM *&filename, const char *VolumeName, uint32_t part);
    bool init(CLOUD *cloud, POOLMEM *&err);
