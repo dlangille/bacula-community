@@ -650,21 +650,89 @@ END-OF-DATA
     fi
 fi
 
-
 if [ "$DBVERSION" -eq 1025 ] ; then
-    if mysql $* -f  <<END-OF-DATA
+    if mysql $* -f <<END-OF-DATA
 USE ${db_name};
-CREATE INDEX meta_emailid on MetaEmail (EmailId);
+CREATE INDEX meta_emailid on MetaEmail (EmailId(255));
+
+CREATE TABLE MalwareMD5
+(
+    MD5     char(22)       -- Same as in File
+);
+CREATE INDEX malwaremd5_idx on MalwareMD5 (MD5);
+
+CREATE TABLE MalwareSHA256
+(
+    MD5     char(65)       -- Same as in File
+);
+CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
+
+CREATE TABLE FileEvents 
+(
+   Id   BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
+   Time DATETIME DEFAULT NOW(),
+   SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
+   JobId         int,        -- JobId where the file was found. Used for pruning
+   FileIndex     int,        -- File reference
+   Type          char,       -- Event type (antivirus, malware scanning (M), lost file)
+   Description   blob,       -- Description of the event
+   Severity      int,        -- level of severity. (0 OK, 100 Important)
+   Source        blob,       -- Information about the source of the event
+   PRIMARY KEY(Id)
+);
+
+CREATE INDEX FileEvents_jobid_idx ON FileEvents (JobId, FileIndex);
+CREATE INDEX FileEvents_sourcejobid_idx ON FileEvents (SourceJobId);
+
+ALTER TABLE MetaEmail
+    MODIFY COLUMN EmailTenant TEXT,
+    MODIFY COLUMN EmailOwner TEXT,
+    MODIFY COLUMN EmailId TEXT,
+    MODIFY COLUMN EmailFrom TEXT,
+    MODIFY COLUMN EmailInternetMessageId TEXT,
+    MODIFY COLUMN EmailConversationId TEXT,
+    MODIFY COLUMN Plugin TEXT;
+
+DROP INDEX meta_attachmentowner ON MetaAttachment;
+DROP INDEX meta_attachmentemailid ON MetaAttachment;
+
+ALTER TABLE MetaAttachment
+    MODIFY COLUMN AttachmentTenant TEXT,
+    MODIFY COLUMN AttachmentOwner  TEXT,
+    MODIFY COLUMN AttachmentEmailId TEXT,
+    MODIFY COLUMN Plugin           TEXT;
+
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant(255),AttachmentOwner(255));
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId(255));
+
+ALTER TABLE Object
+    ADD COLUMN FileIndex integer not null default 0;
+
+ALTER TABLE Job
+    ADD COLUMN RealStartTime DATETIME,
+    ADD COLUMN isVirtualFull     TINYINT    default 0,
+    ADD COLUMN CompressRatio     float      default 0,
+    ADD COLUMN Rate              float      default 0,
+    ADD COLUMN LastReadStorageId Integer    default 0,
+    ADD COLUMN LastReadDevice    blob,
+    ADD COLUMN WriteStorageId    integer    default 0,
+    ADD COLUMN WriteDevice       blob,
+    ADD COLUMN Encrypted         int        default 0;
+
+ALTER TABLE Media
+    ADD COLUMN Worm     smallint default 0,
+    ADD COLUMN UseWorm  smallint default 0;
+
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
 UPDATE Version SET VersionId=1026;
 END-OF-DATA
     then
-        echo "Update of Bacula MySQL tables 1025 to 1026 succeeded."
-        getVersion
+	echo "Update of Bacula MySQL tables from 1025 to 1026 succeeded."
+	getVersion
     else
-        echo "Update of Bacula MySQL tables 1025 to 1026 failed."
-        exit 1
+	echo "Update of Bacula MySQL tables from 1025 to 1026 failed."
+	exit 1
     fi
 fi
 

@@ -68,27 +68,27 @@ CREATE INDEX FileEvents_sourcejobid_idx ON FileEvents (SourceJobId);
 CREATE TABLE MetaEmail
 (
     EmailPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
-    EmailTenant     		VARCHAR(255),
-    EmailOwner       		VARCHAR(255),
-    EmailId          		VARCHAR(255),
-    EmailTime         		DATETIME,
-    EmailTags         		TEXT,
-    EmailSubject      		TEXT,
-    EmailFolderName   		TEXT,
-    EmailFrom         		VARCHAR(255),
-    EmailTo           		TEXT,
-    EmailCc           		TEXT,
-    EmailInternetMessageId 	VARCHAR(255),
-    EmailBodyPreview  		TEXT,
-    EmailImportance   		VARCHAR(255),
-    EmailConversationId    	VARCHAR(255),
-    EmailIsRead       		TINYINT,
-    EmailIsDraft      		TINYINT,
-    EmailHasAttachment 		TINYINT,
-    EmailSize	 			INTEGER,
-    Plugin       			VARCHAR(255),
-    FileIndex   	 		INTEGER,
-    JobId        			INTEGER,
+    EmailTenant                 TEXT,
+    EmailOwner                  TEXT,
+    EmailId                     TEXT,
+    EmailTime                   DATETIME,
+    EmailTags                   TEXT,
+    EmailSubject                TEXT,
+    EmailFolderName             TEXT,
+    EmailFrom                   TEXT,
+    EmailTo                     TEXT,
+    EmailCc                     TEXT,
+    EmailInternetMessageId      TEXT,
+    EmailBodyPreview            TEXT,
+    EmailImportance             VARCHAR(255),
+    EmailConversationId         TEXT,
+    EmailIsRead                 TINYINT,
+    EmailIsDraft                TINYINT,
+    EmailHasAttachment          TINYINT,
+    EmailSize                           INTEGER,
+    Plugin                              TEXT,
+    FileIndex                           INTEGER,
+    JobId                               INTEGER,
     PRIMARY KEY(EmailPKId)
 );
 
@@ -108,21 +108,21 @@ CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
 CREATE TABLE MetaAttachment
 (
     AttachmentPKId  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT, -- Used for replication
-    AttachmentTenant            VARCHAR(255),
-    AttachmentOwner    		VARCHAR(255),
+    AttachmentTenant            TEXT,
+    AttachmentOwner    		TEXT,
     AttachmentName     		TEXT,
-    AttachmentEmailId  		VARCHAR(255),
+    AttachmentEmailId  		TEXT,
     AttachmentContentType 	VARCHAR(255),
     AttachmentIsInline 		SMALLINT,
     AttachmentSize	 		INTEGER,
-    Plugin      			VARCHAR(255),
+    Plugin      			TEXT,
     FileIndex    			INTEGER,
     JobId        			INTEGER,
     PRIMARY KEY(AttachmentPKId)
 );
 
-CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
-CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant(255),AttachmentOwner(255));
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId(255));
 CREATE INDEX meta_attachmentjobid on MetaAttachment (Jobid);
 
 CREATE TABLE TagJob
@@ -330,7 +330,7 @@ CREATE TABLE Job (
    WriteStorageId    integer    default 0,   -- Id of the Storage used to Write
    WriteDevice       blob,                   -- Name of the Write Device
    StatusInfo        blob,                   -- Info to determine the error status
-   Encrypted         int        default 0,   -- 0 no, 1 fd side, 2 sd side, 3 both
+   Encrypted         int        default 0,   -- 0 n/a, 1 no, 2 fd side, 4 sd side, 6 both
    PRIMARY KEY(JobId),
    INDEX (Name(128))
    );
