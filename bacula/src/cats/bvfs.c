@@ -916,8 +916,8 @@ void Bvfs::get_all_file_versions(DBId_t pathid, FileId_t fnid, alist *clients)
 "SELECT DISTINCT 'V', File.PathId, File.FileId,  File.JobId, "
 //         4          5           6
         "File.LStat, File.FileId, File.Md5,  "
-//         7                    8
-       "Media.VolumeName, Media.InChanger "
+//         7                    8             9
+       "Media.VolumeName, Media.InChanger, Media.VolType "
 "FROM File, Job, Client, JobMedia, Media "
 "WHERE File.Filename = %s "
   "AND File.PathId = %s "

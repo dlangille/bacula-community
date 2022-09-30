@@ -60,6 +60,7 @@ typedef enum {
    BVFS_Md5     = 6,
    BVFS_VolName = 7,
    BVFS_VolInchanger = 8,
+   BVFS_VolType  = 9,
 
    /* Only if Delta record */
    BVFS_DeltaSeq = 6,

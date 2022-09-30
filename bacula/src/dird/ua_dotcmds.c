@@ -494,10 +494,10 @@ static int bvfs_result_handler(void *ctx, int fields, char **row)
                    jobid, lstat, path);
 
    } else if (bvfs_is_version(row)) {
-      ua->send_msg("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", row[BVFS_PathId],
+      ua->send_msg("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", row[BVFS_PathId],
                    row[BVFS_FilenameId], fileid, jobid,
                    lstat, row[BVFS_Md5], row[BVFS_VolName],
-                   row[BVFS_VolInchanger]);
+                   row[BVFS_VolInchanger], row[BVFS_VolType]);
 
    } else if (bvfs_is_file(row)) {
       ua->send_msg("%s\t%s\t%s\t%s\t%s\t%s\n", row[BVFS_PathId],
@@ -505,8 +505,8 @@ static int bvfs_result_handler(void *ctx, int fields, char **row)
                    lstat, row[BVFS_Name]);
 
    } else if (bvfs_is_volume_list(row)) {
-      ua->send_msg("%s\t%s\n", row[BVFS_VolName],
-                   row[BVFS_VolInchanger]);
+      ua->send_msg("%s\t%s\t%s\n", row[BVFS_VolName],
+                   row[BVFS_VolInchanger], row[BVFS_VolType]);
 
    } else if (bvfs_is_delta_list(row)) {
       ua->send_msg("%s\t%s\t%s\t%s\t%s\t%s\t%s\n", row[BVFS_PathId],
