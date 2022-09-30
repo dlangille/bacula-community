@@ -717,7 +717,50 @@ fi
 if [ "$DBVERSION" -eq 1025 ] ; then
     if psql -f - -d ${db_name} $* <<END-OF-DATA
 begin;
+CREATE TABLE MalwareMD5
+(
+    MD5     char(22)    -- Same as File
+);
+CREATE INDEX malwaremd5_idx on MalwareMD5 (MD5);
+
+CREATE TABLE MalwareSHA256
+(
+    MD5     char(65)    -- Same as File
+);
+CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
+
+CREATE TABLE FileEvents 
+(
+   Id   bigserial,
+   Time timestamp without time zone default NOW(), -- Time of the detection
+   SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
+   JobId         int,        -- JobId where the file was found. Used for pruning
+   FileIndex     int,        -- File reference
+   Type          char,       -- Event type (antivirus, malware scanning (M), lost file)
+   Description   text,       -- Description of the event
+   Severity      int,        -- level of severity. (0 OK, 100 Important)
+   Source        text        -- Information about the source of the event
+);
+
+CREATE INDEX FileEvents_jobid_idx ON FileEvents (JobId, FileIndex);
+CREATE INDEX FileEvents_sourcejobid_idx ON FileEvents (SourceJobId);
 CREATE INDEX meta_emailid on MetaEmail (EmailId);
+
+ALTER TABLE Object ADD COLUMN FileIndex    integer  not null default 0;
+ALTER TABLE Job ADD COLUMN RealStartTime     timestamp   without time zone;
+ALTER TABLE Job ADD COLUMN isVirtualFull     smallint    default 0;
+ALTER TABLE Job ADD COLUMN CompressRatio     float       default 0;
+ALTER TABLE Job ADD COLUMN Rate              float       default 0;
+ALTER TABLE Job ADD COLUMN LastReadStorageId integer     default 0;
+ALTER TABLE Job ADD COLUMN LastReadDevice    text        default '';
+ALTER TABLE Job ADD COLUMN WriteStorageId    integer     default 0;
+ALTER TABLE Job ADD COLUMN WriteDevice       text        default ''
+ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
+ATLER TABLE Job ADD COLUMN Encrypted         int         default 0;
+
+ALTER TABLE Media ADD COLUMN Worm              smallint    default 0;
+ALTER TABLE Media ADD COLUMN IsWorm            smallint    default 0;
+
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
 UPDATE Version SET VersionId=1026;
