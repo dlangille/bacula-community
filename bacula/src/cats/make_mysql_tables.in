@@ -479,6 +479,8 @@ CREATE TABLE Media (
    ScratchPoolId INTEGER UNSIGNED DEFAULT 0,
    RecyclePoolId INTEGER UNSIGNED DEFAULT 0,
    Comment BLOB,
+   Worm TINYINT DEFAULT 0,
+   UseWorm TINYINT DEFAULT 0,
    PRIMARY KEY(MediaId),
    UNIQUE (VolumeName(128)),
    INDEX (PoolId),
