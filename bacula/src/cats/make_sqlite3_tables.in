@@ -277,6 +277,7 @@ CREATE TABLE JobHisto (
    StartTime DATETIME DEFAULT 0,
    EndTime DATETIME DEFAULT 0,
    RealEndTime DATETIME DEFAULT 0,
+   RealStartTime     DATETIME DEFAULT 0,
    JobTDate BIGINT UNSIGNED DEFAULT 0,
    VolSessionId INTEGER UNSIGNED DEFAULT 0,
    VolSessionTime INTEGER UNSIGNED DEFAULT 0,
@@ -294,7 +295,16 @@ CREATE TABLE JobHisto (
    HasCache TINYINT DEFAULT 0,
    Reviewed TINYINT DEFAULT 0,
    Comment TEXT,
-   FileTable TEXT DEFAULT 'File'
+   FileTable TEXT DEFAULT 'File',
+   isVirtualFull     TINYINT     default 0,   -- Result of a VirtualFull?
+   CompressRatio     float       default 0,   -- Compression Ratio
+   Rate              float       default 0,   -- Job Rate B/s
+   LastReadStorageId integer     default 0,   -- Id of the last Storage used to Read
+   LastReadDevice    text        default '',  -- Name of the last Read Device
+   WriteStorageId    integer     default 0,   -- Id of the Storage used to Write
+   WriteDevice       text        default '',  -- Name of the Write Device
+   StatusInfo        text        default '',  -- Info to determine the error status
+   Encrypted         int         default 0,   -- 0 no, 1 fd side, 2 sd side, 3 both
    );
 CREATE INDEX inx61 ON JobHisto (StartTime);
 
@@ -415,6 +425,8 @@ CREATE TABLE Media (
    ScratchPoolId INTEGER UNSIGNED REFERENCES Pool DEFAULT 0,
    RecyclePoolId INTEGER UNSIGNED REFERENCES Pool DEFAULT 0,
    Comment TEXT,
+   Worm TINYINT DEFAULT 0,
+   UseWorm TINYINT DEFAULT 0,
    PRIMARY KEY(MediaId)
    );
 

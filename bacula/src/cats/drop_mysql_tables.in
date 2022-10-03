@@ -10,6 +10,9 @@ db_name=@db_name@
 
 if $bindir/mysql $* <<END-OF-DATA
 USE ${db_name};
+drop TABLE IF EXISTS MalwareMD5;
+drop TABLE IF EXISTS MalwareSHA256;
+drop TABLE IF EXISTS FileEvents;
 DROP TABLE IF EXISTS MetaEmail;
 DROP TABLE IF EXISTS MetaAttachment;
 DROP TABLE IF EXISTS TagJob;
