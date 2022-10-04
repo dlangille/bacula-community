@@ -27,6 +27,7 @@
 
 extern CLIENT *me;
 extern DLL_IMP_EXP char *exepath;
+extern DLL_IMP_EXP char *sysconfigpath;
 extern DLL_IMP_EXP char *version;
 extern DLL_IMP_EXP char *dist_name;
 extern DLL_IMP_EXP int beef;
@@ -1989,6 +1990,9 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
    case bVarExePath:
       *(char **)value = exepath;
       break;
+   case bVarSysConfigPath:
+      *(char **)value = sysconfigpath;
+      break;
    case bVarVersion:
       *(char **)value = version;
       break;
@@ -2099,6 +2103,7 @@ static bRC baculaGetValue(bpContext *ctx, bVariable var, void *value)
    case bVarWorkingDir:
    case bVarPluginDir:
    case bVarExePath:
+   case bVarSysConfigPath:
    case bVarVersion:
    case bVarDistName:
       break;

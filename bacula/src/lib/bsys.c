@@ -1929,6 +1929,81 @@ void b_uname(POOLMEM *&un)
    }
 }
 
+/* Get path/fname from argument, use realpath to get the full name if
+ * available
+ */
+void get_path_and_fname(const char *name, char **path, char **fname)
+{
+   char *l, *p;
+   char *cpath;
+   char *cargv0;
+   int len;
+   int path_max;
+   bool respath;
+
+   if (name) {
+      /* use a dynamic PATH_MAX and allocate temporary variables */
+      path_max = pathconf(name, _PC_PATH_MAX);
+      if (path_max < 4096){
+         path_max = 4096;
+      }
+      cpath = (char *)malloc(path_max);
+      cargv0 = (char *)malloc(path_max);
+
+      respath = false;
+#ifdef HAVE_REALPATH
+      /* make a canonical argv[0] */
+      if (realpath(name, cargv0) != NULL){
+         respath = true;
+      }
+#endif
+      if (!respath){
+         /* no resolved_path available in cargv0, so populate it */
+         bstrncpy(cargv0, name, path_max);
+      }
+      /* strip trailing filename and save exepath */
+      for (l=p=cargv0; *p; p++) {
+         if (IsPathSeparator(*p)) {
+            l = p;                       /* set pos of last path separator */
+         }
+      }
+      if (IsPathSeparator(*l)) {
+         l++;
+      } else {
+         l = cargv0;
+#if defined(HAVE_WIN32)
+         /* On Windows allow c: drive specification */
+         if (l[1] == ':') {
+            l += 2;
+         }
+#endif
+      }
+      len = strlen(l) + 1;
+      if (*fname) {
+         free(*fname);
+      }
+      *fname = (char *)malloc(len);
+      strcpy(*fname, l);
+      if (*path) {
+         free(*path);
+      }
+      /* separate exepath from exename */
+      *l = 0;
+      *path = bstrdup(cargv0);
+      if (strstr(*path, PathSeparatorUp) != NULL || strstr(*fname, PathSeparatorCur) != NULL || !IsPathSeparator(*path[0])) {
+         /* fallback to legacy code */
+         if (getcwd(cpath, path_max)) {
+            free(*path);
+            *path = (char *)malloc(strlen(cpath) + 1 + len);
+            strcpy(*path, cpath);
+         }
+      }
+      Dmsg2(500, "path=%s fname=%s\n", *path, *fname);
+      free(cpath);
+      free(cargv0);
+   }
+}
+
 #ifdef TEST_PROGRAM
 
 #include "unittests.h"
@@ -2196,6 +2271,31 @@ int main(int argc, char **argv)
       is(bstrcasestr(p1, "this"), p1, "Test with lower string at the start");
       ok(bstrcasestr(p1, "xxxxxxxxxxxxxxxxxxxxxxxxx") == NULL, "Test with non existing string");
       is(bstrcasestr(p1, " iS"), " is a test", "Test with a middle string");
+   }
+   {
+      char *fname = NULL;
+      char *path = NULL;
+      char cwd[512];
+      bstrncpy(cwd, getenv("PWD"), sizeof(cwd));
+      bstrncat(cwd, "/", sizeof(cwd));
+      get_path_and_fname("./config", &path, &fname);
+      is(fname, "config", "get_path_and_fname(./config)");
+      is(path, cwd, "get_path_and_fname(./config)");
+
+      get_path_and_fname("/etc/passwd", &path, &fname);
+      is(fname, "passwd", "get_path_and_fname(/etc/passwd)");
+      is(path, "/etc/", "get_path_and_fname(/etc/passwd)");
+
+      get_path_and_fname("/tmp/../etc/passwd", &path, &fname);
+      is(fname, "passwd", "get_path_and_fname(/tmp/../etc/passwd)");
+      is(path, "/etc/", "get_path_and_fname(/tmp/../etc/passwd)");
+
+      get_path_and_fname("/etc/./passwd", &path, &fname);
+      is(fname, "passwd", "get_path_and_fname(/etc/./passwd)");
+      is(path, "/etc/", "get_path_and_fname(/etc/./passwd)");
+
+      free(path);
+      free(fname);
    }
    return report();
 }

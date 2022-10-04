@@ -70,6 +70,8 @@ int display_global_item(HPKT &hpkt); //
 void display_collector_types(HPKT &hpkt);
 
 /* bsys.c */
+
+void get_path_and_fname(const char *file, char **path, char **fname);
 const char *get_timezone();
 int get_user_home_directory(const char *user, POOLMEM *&home);
 int get_home_directories(const char *grpname, alist *dirs);
@@ -294,6 +296,7 @@ extern "C" {
 }
 
 /* message.c */
+void       set_sysconfig_path    (const char *file);
 void       my_name_is            (int argc, char *argv[], const char *name);
 void       init_msg              (JCR *jcr, MSGS *msg, job_code_callback_t job_code_callback = NULL);
 void       term_msg              (void);

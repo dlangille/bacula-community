@@ -218,6 +218,7 @@ int main (int argc, char *argv[])
 
    config = New(CONFIG());
    parse_fd_config(config, configfile, M_ERROR_TERM);
+   set_sysconfig_path(configfile); /* Set bVarSysConfigPath for plugins */
 
    if (init_crypto() != 0) {
       Emsg0(M_ERROR, 0, _("Cryptography library initialization failed.\n"));

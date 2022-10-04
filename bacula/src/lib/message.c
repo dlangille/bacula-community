@@ -48,6 +48,7 @@ const char *assert_msg = NULL;        /* ASSERT2 error message */
 const char *version = VERSION " (" BDATE ")";
 const char *dist_name = DISTNAME " " DISTVER;
 char *exepath = (char *)NULL;
+char *sysconfigpath = (char *)NULL;
 char *exename = (char *)NULL;
 char db_engine_name[50] = {0};        /* Database engine name or type */
 char con_fname[500];                  /* Console filename */
@@ -237,7 +238,6 @@ void register_message_callback(void msg_callback(int type, char *msg))
    message_callback = msg_callback;
 }
 
-
 /*
  * Set daemon name. Also, find canonical execution
  *  path.  Note, exepath has spare room for tacking on
@@ -250,79 +250,22 @@ void register_message_callback(void msg_callback(int type, char *msg))
  */
 void my_name_is(int argc, char *argv[], const char *name)
 {
-   char *l, *p;
-   char *cpath;
-   char *cargv0;
-   int len;
-   int path_max;
-   bool respath;
-
    if (gethostname(host_name, sizeof(host_name)) != 0) {
       bstrncpy(host_name, "Hostname unknown", sizeof(host_name));
    }
    bstrncpy(my_name, name, sizeof(my_name));
 
    if (argc>0 && argv && argv[0]) {
-      /* use a dynamic PATH_MAX and allocate temporary variables */
-      path_max = pathconf(argv[0], _PC_PATH_MAX);
-      if (path_max < 4096){
-         path_max = 4096;
-      }
-      cpath = (char *)malloc(path_max);
-      cargv0 = (char *)malloc(path_max);
-
-      respath = false;
-#ifdef HAVE_REALPATH
-      /* make a canonical argv[0] */
-      if (realpath(argv[0], cargv0) != NULL){
-         respath = true;
-      }
-#endif
-      if (!respath){
-         /* no resolved_path available in cargv0, so populate it */
-         bstrncpy(cargv0, argv[0], path_max);
-      }
-      /* strip trailing filename and save exepath */
-      for (l=p=cargv0; *p; p++) {
-         if (IsPathSeparator(*p)) {
-            l = p;                       /* set pos of last path separator */
-         }
-      }
-      if (IsPathSeparator(*l)) {
-         l++;
-      } else {
-         l = cargv0;
-#if defined(HAVE_WIN32)
-         /* On Windows allow c: drive specification */
-         if (l[1] == ':') {
-            l += 2;
-         }
-#endif
-      }
-      len = strlen(l) + 1;
-      if (exename) {
-         free(exename);
-      }
-      exename = (char *)malloc(len);
-      strcpy(exename, l);
-      if (exepath) {
-         free(exepath);
-      }
-      /* separate exepath from exename */
-      *l = 0;
-      exepath = bstrdup(cargv0);
-      if (strstr(exepath, PathSeparatorUp) != NULL || strstr(exepath, PathSeparatorCur) != NULL || !IsPathSeparator(exepath[0])) {
-         /* fallback to legacy code */
-         if (getcwd(cpath, path_max)) {
-            free(exepath);
-            exepath = (char *)malloc(strlen(cpath) + 1 + len);
-            strcpy(exepath, cpath);
-         }
-      }
-      Dmsg2(500, "exepath=%s\nexename=%s\n", exepath, exename);
-      free(cpath);
-      free(cargv0);
+      get_path_and_fname(argv[0], &exepath, &exename);
    }
+}
+
+void set_sysconfig_path(const char *file)
+{
+   char *notused=NULL;
+   /* /opt/bacula/etc/bacula-fd.conf -> /opt/bacula/etc/ */
+   get_path_and_fname(file, &sysconfigpath, &notused);
+   bfree_and_null(notused);
 }
 
 /* Set special ASSERT2 message where debugger can find it */
@@ -786,6 +729,10 @@ void term_msg()
    if (exename) {
       free(exename);
       exename = NULL;
+   }
+   if (sysconfigpath) {
+      free(sysconfigpath);
+      sysconfigpath = NULL;
    }
    if (trace_fd != -1) {
       close(trace_fd);
