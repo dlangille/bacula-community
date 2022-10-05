@@ -563,9 +563,7 @@ void set_pooldbr_from_poolres(POOL_DBR *pr, POOL *pool, e_pool_op op)
       pr->MaxVols = pool->max_volumes;
       pr->NumVols = 0;
    } else {          /* update pool */
-      if (pr->MaxVols != pool->max_volumes) {
-         pr->MaxVols = pool->max_volumes;
-      }
+      pr->MaxVols = pool->max_volumes;
       if (pr->MaxVols != 0 && pr->MaxVols < pr->NumVols) {
          pr->MaxVols = pr->NumVols;
       }
@@ -580,10 +578,8 @@ void set_pooldbr_from_poolres(POOL_DBR *pr, POOL *pool, e_pool_op op)
    pr->MaxVolJobs = pool->MaxVolJobs;
    pr->MaxVolFiles = pool->MaxVolFiles;
    pr->MaxVolBytes = pool->MaxVolBytes;
-   pr->MaxPoolBytes = pool->MaxPoolBytes;
    pr->AutoPrune = pool->AutoPrune;
    pr->ActionOnPurge = pool->action_on_purge;
-   pr->Recycle = pool->Recycle;
    pr->MaxPoolBytes = pool->MaxPoolBytes;
    if (pool->label_format) {
       bstrncpy(pr->LabelFormat, pool->label_format, sizeof(pr->LabelFormat));

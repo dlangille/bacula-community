@@ -319,7 +319,7 @@ static bool sd_testnetwork_cmd(JCR *jcr)
 
    if (scan_string(fd->msg, "testnetwork bytes=%lld rtt=%lld bw=%lld", &nb, &nbrtt, &bandwidth) != 3) {
       if (scan_string(fd->msg, "testnetwork bytes=%lld", &nb) != 1) {
-         Dmsg1(0, "Invalid command %s\n", fd->msg);
+         Dmsg1(50, "Invalid command %s\n", fd->msg);
          return false;
       }
    }

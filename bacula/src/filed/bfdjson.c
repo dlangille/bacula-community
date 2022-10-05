@@ -416,7 +416,7 @@ static void dump_json(display_filter *filter)
 
          sz = get_resource_size(resinx + r_first);
          if (sz < 0) {
-            Dmsg1(0, "Unknown resource type %d\n", resinx);
+            Dmsg1(10, "Unknown resource type %d\n", resinx);
             continue;
          }
 

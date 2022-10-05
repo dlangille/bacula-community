@@ -654,7 +654,7 @@ public:
 
       if (chk_dbglvl(DT_SNAPSHOT|100)) {
          for (i = 0; env[i] ; i++) {
-            Dmsg1(0, "%s\n", env[i]);
+            Dmsg1(DT_SNAPSHOT|100, "%s\n", env[i]);
          }
       }
 

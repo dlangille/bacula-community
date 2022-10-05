@@ -363,7 +363,6 @@ bool unload_autochanger(DCR *dcr, int loaded)
    DEVICE *dev = dcr->dev;
    JCR *jcr = dcr->jcr;
    const char *old_vol_name;
-   int slot;
    uint32_t timeout = dcr->device->max_changer_wait;
    bool ok = true;
 
@@ -398,6 +397,7 @@ bool unload_autochanger(DCR *dcr, int loaded)
    if (loaded > 0) {
       POOL_MEM results(PM_MESSAGE);
       POOLMEM *changer = get_pool_memory(PM_FNAME);
+      int slot;
       Jmsg(jcr, M_INFO, 0,
          _("3307 Issuing autochanger \"unload Volume %s, Slot %d, Drive %d\" command.\n"),
          old_vol_name, loaded, dev->drive_index);
@@ -450,7 +450,6 @@ static bool unload_other_drive(DCR *dcr, int slot, bool writing)
    DEVRES *device;
    int retries = 0;                /* wait for device retries */
    int loaded;
-   int i;
 
    if (!changer || !changer->device) {
       return false;
@@ -471,7 +470,7 @@ static bool unload_other_drive(DCR *dcr, int slot, bool writing)
     * The above fails to loop through all devices. It is
     * probably a compiler bug.
     */
-   for (i=0; i < changer->device->size(); i++) {
+   for (int i=0; i < changer->device->size(); i++) {
       device = (DEVRES *)changer->device->get(i);
       dev = device->dev;
       if (!dev) {
@@ -755,7 +754,7 @@ void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *c
             str = NPRT(dcr->device->control_name);
             break;
          case 'd':
-            sprintf(add, "%d", dcr->dev->drive_index);
+            sprintf(add, "%u", dcr->dev->drive_index);
             str = add;
             break;
          case 'o':

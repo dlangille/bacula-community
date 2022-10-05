@@ -130,7 +130,7 @@ int read_ansi_ibm_label(DCR *dcr)
                free_volume(dev);
                /* Store new Volume name */
                q = dev->VolHdr.VolumeName;
-               for (int i=0; *p != ' ' && i < 6; i++) {
+               for (int j=0; *p != ' ' && j < 6; j++) {
                   *q++ = *p++;
                }
                *q = 0;

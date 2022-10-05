@@ -238,7 +238,7 @@ int insert_tree_handler(void *ctx, int num_fields, char **row)
                                     "skipping new parts. Current sequence is %d\n"),
                                   row[1], node->delta_seq);
 
-            Dmsg3(0, "Something is wrong with Delta, skip it "
+            Dmsg3(50, "Something is wrong with Delta, skip it "
                   "fname=%s d1=%d d2=%d\n", row[1], node->delta_seq, delta_seq);
          }
          return 0;

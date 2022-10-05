@@ -153,7 +153,7 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
       }
 
       if ((script->when & SCRIPT_AtJobCompletion) && (when & SCRIPT_AtJobCompletion)) {
-         Dmsg1(0, "AtJobCompletion jobstatus=%c\n", jcr->JobStatus);
+         Dmsg1(200, "AtJobCompletion jobstatus=%c\n", jcr->JobStatus);
          if ((script->on_success &&
               (jcr->JobStatus == JS_Terminated || jcr->JobStatus == JS_Warnings))
             || (script->on_failure &&

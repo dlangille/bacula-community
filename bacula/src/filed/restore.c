@@ -327,7 +327,7 @@ static inline bool pop_delayed_data_streams(r_ctx &rctx)
       default:
          Jmsg(jcr, M_WARNING, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
               rds->stream);
-         Dmsg2(0, "Unknown stream=%d data=%s\n", rds->stream, rds->content);
+         Dmsg2(50, "Unknown stream=%d data=%s\n", rds->stream, rds->content);
          break;
       }
       if (rds->content) {
@@ -1103,7 +1103,7 @@ void do_restore(JCR *jcr)
          }
          Jmsg(jcr, M_WARNING, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
               rctx.stream);
-         Dmsg2(0, "Unknown stream=%d data=%s\n", rctx.stream, bmsg->rbuf);
+         Dmsg2(50, "Unknown stream=%d data=%s\n", rctx.stream, bmsg->rbuf);
          break;
       } /* end switch(stream) */
 

@@ -82,7 +82,7 @@ bool EVENTS_DBR::scan_line(const char *line)
 {
    if (scan_string(line, "Events: code=%127s daemon=%127s ref=%llx type=%127s source=%127s text=",
                    EventsCode, EventsDaemon, &EventsRef, EventsType, EventsSource) != 5) {
-      Dmsg1(0, "Malformed Audit message [%s]\n", line);
+      Dmsg1(50, "Malformed Audit message [%s]\n", line);
       return false;             /* invalid format */
    }
    unbash_spaces(EventsSource);

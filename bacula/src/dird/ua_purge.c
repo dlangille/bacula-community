@@ -863,7 +863,7 @@ int truncate_cmd(UAContext *ua, const char *cmd)
                             drive, sd);
          }
       } else {
-         Dmsg1(0, "Can't find MediaId=%lu\n", mr.MediaId);
+         Dmsg1(10, "Can't find MediaId=%lu\n", mr.MediaId);
       }
    }
 

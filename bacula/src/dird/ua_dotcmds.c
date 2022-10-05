@@ -543,10 +543,16 @@ static bool bvfs_parse_arg_version(UAContext *ua,
                                    bool *copies)
 {
    bool fnid_found=false;
-   *fnid=0;
    *client=NULL;
-   *versions=false;
-   *copies=false;
+   if (copies) {
+      *copies=false;
+   }
+   if (fnid) {
+      *fnid=0;
+   }
+   if (versions) {
+      *versions=false;
+   }
 
    for (int i=1; i<ua->argc; i++) {
       if (fnid && strcasecmp(ua->argk[i], NT_("fnid")) == 0) {

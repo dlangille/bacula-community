@@ -1366,12 +1366,12 @@ int copyfile(const char *src, const char *dst)
    berrno  be;
    fd_src = open(src, O_RDONLY);
    if (fd_src < 0) {
-      Dmsg2(0, "Unable to open %s ERR=%s\n", src, be.bstrerror(errno));
+      Dmsg2(10, "Unable to open %s ERR=%s\n", src, be.bstrerror(errno));
       goto bail_out;
    }
    fd_dst = open(dst, O_WRONLY | O_CREAT | O_EXCL, 0600);
    if (fd_dst < 0) {
-      Dmsg2(0, "Unable to open %s ERR=%s\n", dst, be.bstrerror(errno));
+      Dmsg2(10, "Unable to open %s ERR=%s\n", dst, be.bstrerror(errno));
       goto bail_out;
    }
 
@@ -1384,7 +1384,7 @@ int copyfile(const char *src, const char *dst)
                 len -= lenw;
                 out_ptr += lenw;
             } else if (errno != EINTR) {
-               Dmsg3(0, "Unable to write %d bytes in %s. ERR=%s\n", len, dst, be.bstrerror(errno));
+               Dmsg3(10, "Unable to write %d bytes in %s. ERR=%s\n", len, dst, be.bstrerror(errno));
                goto bail_out;
             }
         } while (len > 0);
@@ -1393,7 +1393,7 @@ int copyfile(const char *src, const char *dst)
     if (len == 0) {
        close(fd_src);
        if (close(fd_dst) < 0) {
-          Dmsg2(0, "Unable to close %s properly. ERR=%s\n", dst, be.bstrerror(errno));
+          Dmsg2(10, "Unable to close %s properly. ERR=%s\n", dst, be.bstrerror(errno));
           return -1;
        }
        /* Success! */

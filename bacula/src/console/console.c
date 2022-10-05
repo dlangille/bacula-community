@@ -73,8 +73,6 @@ extern "C" void got_sigtin(int sig);
 /* Static variables */
 static char *configfile = NULL;
 static BSOCK *UA_sock = NULL;
-static DIRRES *dir = NULL;
-static CONRES *cons = NULL;
 static FILE *output = stdout;
 static bool teeout = false;               /* output to output and stdout */
 static bool teein = false;                /* input to output and stdout */
@@ -82,7 +80,6 @@ static bool stop = false;
 static bool no_conio = false;
 static int timeout = 0;
 static int argc;
-static int numdir;
 static POOLMEM *args;
 static char *argk[MAX_CMD_ARGS];
 static char *argv[MAX_CMD_ARGS];
@@ -997,7 +994,7 @@ static bool select_director(const char *director, const char *console,
 {
    int numcon=0, numdir=0;
    int i=0, item=0;
-   BSOCK *UA_sock;
+   BSOCK *UA;
    DIRRES *dir = NULL;
    CONRES *cons = NULL;
 
@@ -1034,7 +1031,7 @@ static bool select_director(const char *director, const char *console,
    }
 
    if (dir == NULL) {               /* prompt for director */
-      UA_sock = new_bsock();
+      UA = new_bsock();
 try_again:
       sendit(_("Available Directors:\n"));
       LockRes();
@@ -1045,23 +1042,23 @@ try_again:
       }
       UnlockRes();
       if (get_cmd(stdin, _("Select Director by entering a number: "),
-                  UA_sock, 600) < 0)
+                  UA, 600) < 0)
       {
          (void)WSACleanup();               /* Cleanup Windows sockets */
          return 0;
       }
-      if (!is_a_number(UA_sock->msg)) {
+      if (!is_a_number(UA->msg)) {
          senditf(_("%s is not a number. You must enter a number between "
                    "1 and %d\n"),
-                 UA_sock->msg, numdir);
+                 UA->msg, numdir);
          goto try_again;
       }
-      item = atoi(UA_sock->msg);
+      item = atoi(UA->msg);
       if (item < 0 || item > numdir) {
          senditf(_("You must enter a number between 1 and %d\n"), numdir);
          goto try_again;
       }
-      free_bsock(UA_sock);
+      free_bsock(UA);
       LockRes();
       for (i=0; i<item; i++) {
          dir = (DIRRES *)GetNextRes(R_DIRECTOR, (RES *)dir);
@@ -1130,6 +1127,8 @@ int main(int argc, char *argv[])
    bool test_config = false;
    utime_t heart_beat;
    bool avoid_getpass = false;
+   DIRRES *dir = NULL;
+   CONRES *cons = NULL;
 
    setlocale(LC_ALL, "");
    bindtextdomain("bacula", LOCALEDIR);
@@ -1473,10 +1472,10 @@ static int check_resources()
    bool OK = true;
    DIRRES *director;
    bool tls_needed;
+   int numdir = 0;
 
    LockRes();
 
-   numdir = 0;
    foreach_res(director, R_DIRECTOR) {
 
       numdir++;
@@ -1785,7 +1784,6 @@ static int sleepcmd(FILE *input, BSOCK *UA_sock)
  */
 static int putfilecmd(FILE *input, BSOCK *UA_sock)
 {
-   int i = 0;
    const char *key = "putfile";
    const char *fname;
    FILE *fp;
@@ -1814,7 +1812,7 @@ static int putfilecmd(FILE *input, BSOCK *UA_sock)
 
    /* Just read the file and send it to the director */
    while (!feof(fp)) {
-      i = fread(UA_sock->msg, 1, sizeof_pool_memory(UA_sock->msg) - 1, fp);
+      int i = fread(UA_sock->msg, 1, sizeof_pool_memory(UA_sock->msg) - 1, fp);
       if (i > 0) {
          UA_sock->msg[i] = 0;
          UA_sock->msglen = i;

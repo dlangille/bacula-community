@@ -159,7 +159,6 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
             char *data = msg.c_str();
             POOL_MEM buf(PM_MESSAGE);
             char *input;
-            char *passwd;
 
             // the command is encoded as a first char of the message
             switch (dir->msg[0]){
@@ -187,8 +186,7 @@ bool ConsoleAuthenticate::ClientAuthenticate(CONRES *cons, const char *password)
                         pm_strcpy(buf, NULL);
                      }
 #else
-                     passwd = getpass(data);
-                     bstrncpy(buf.c_str(), passwd, buf.size());
+                     bstrncpy(buf.c_str(), getpass(data), buf.size());
 #endif
 #if defined(DEVELOPER)
                   } else {

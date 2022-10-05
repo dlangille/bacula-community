@@ -79,6 +79,8 @@ public:
       working(NULL),
       statp(),                  /* will be zero initialized */
       xtrabackupconf(NULL),
+      backup_binary(NULL),
+      stream_binary(NULL),
       bpipe(NULL)
       {
       };

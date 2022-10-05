@@ -845,7 +845,7 @@ static int proxy_cmd(JCR *jcr)
          OK = !jcr->is_canceled();
          break;
       case -1:
-         Dmsg1(0, "Bad call to select ERR=%d\n", errno);
+         Dmsg1(10, "Bad call to select ERR=%d\n", errno);
          OK = false;
          break;
       default:
