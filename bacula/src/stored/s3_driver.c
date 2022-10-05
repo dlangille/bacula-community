@@ -211,8 +211,10 @@ static cloud_glacier *load_glacier_driver(const char* plugin_directory)
             dlclose(glacier_item.handle);
             return NULL;
          }
-         return glacier_item.newDriver();
       }
+   }
+   if (glacier_item.newDriver) {
+      return glacier_item.newDriver();
    }
    return NULL;
 }
