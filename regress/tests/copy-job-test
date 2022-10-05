@@ -36,7 +36,7 @@ sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
 sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
 change_jobname NightlySave $JobName
 
-if /bin/true ; then
+if true ; then
    # add a dummy client for the copy-job to test for bug #9116
    $bperl -e "add_attribute('$conf/bacula-dir.conf', 'Client', 'dummy-fd', 'Job', 'copy-job')"
    cat >> $conf/bacula-dir.conf <<EOF
