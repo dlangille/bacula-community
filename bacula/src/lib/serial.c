@@ -174,6 +174,12 @@ void serial_string(uint8_t * * const ptr, const char * const str)
 // Dmsg2(000, "ser src=%s dest=%s\n", src, dest);
 }
 
+/* skip some bytes without writing anything */
+
+void serial_skip(uint8_t * * const ptr, int len)
+{
+    *ptr += len;
+}
 
 /*  unserial_int16  --  Unserialise a signed 16 bit integer.  */
 

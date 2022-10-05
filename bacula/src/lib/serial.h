@@ -33,6 +33,7 @@ extern void serial_uint64(uint8_t * * const ptr, const uint64_t v);
 extern void serial_btime(uint8_t * * const ptr, const btime_t v);
 extern void serial_float64(uint8_t * * const ptr, const float64_t v);
 extern void serial_string(uint8_t * * const ptr, const char * const str);
+extern void serial_skip(uint8_t * * const ptr, int len);
 
 extern int16_t unserial_int16(uint8_t * * const ptr);
 extern uint16_t unserial_uint16(uint8_t * * const ptr);
@@ -134,11 +135,17 @@ extern void unserial_string(uint8_t * * const ptr, char * const str, int max);
 /*  Binary byte stream len bytes not requiring serialisation  */
 #define ser_bytes(x, len) memcpy(ser_ptr, (x), (len)), ser_ptr += (len)
 
+/*  initialize len bytes to x using memset()  */
+#define ser_set(x, len) memset(ser_ptr, (x), (len)), ser_ptr += (len)
+
 /*  Binary byte stream not requiring serialisation (length obtained by sizeof)  */
 #define ser_buffer(x)   ser_bytes((x), (sizeof (x)))
 
 /* Binary string not requiring serialization */
 #define ser_string(x)   serial_string(&ser_ptr, (x))
+
+/* skip some bytes without writing anything */
+#define ser_skip(len) serial_skip(&ser_ptr, len)
 
 /*                         Unserialisation                  */
 
