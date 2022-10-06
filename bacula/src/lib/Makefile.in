@@ -86,18 +86,22 @@ LIBBACFINDTARGET = ../findlib/libbacfind.la
 # inference rules
 .c.o:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 .c.lo:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 .cc.o:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 .cc.lo:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -E -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 
 # specific build rules

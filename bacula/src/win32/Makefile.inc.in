@@ -40,6 +40,9 @@ MINGW_BIN := @WIN32BINDIR@
 MINGW_INCLUDE := @WIN32INCDIR@
 MINGW_DLLDIR := @WIN32DLLDIR@
 
+DO_CHECK_DMSG = @DO_CHECK_DMSG@
+CHECK_DMSG = @CHECK_DMSG@
+
 # Point only to GCC (CC is already used for g++...)
 # Used to compile libobk for windows (just need simple gcc)
 GCC = $(MINGW_BIN)$(MINGW_BASE)-gcc

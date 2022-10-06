@@ -1,0 +1,22 @@
+#!/usr/bin/perl -w
+use strict;
+
+# Copyright (C) 2000-2022 Kern Sibbald
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+# Written by Eric Bollengier
+# Code analysis tool to detect incorrect debug levels
+
+# Usage:
+# g++ -E  -c  -fno-strict-aliasing -fno-exceptions -fno-rtti  -I. -I..  -g -O2 -Wall -fno-strict-aliasing -fno-exceptions -fno-rtti  file.c | check_dmsg
+
+my $found=0;
+while (my $line = <>) {
+    if ($line =~ /d_msg\("(.+?)\", (\d+), 0, "(.+?)",/) {
+        print "$1:$2\t[$3]\n";
+        $found++;
+    }
+}
+
+print "Found $found Dmsg(0) problems\n" if ($found);
+exit ($found>0);

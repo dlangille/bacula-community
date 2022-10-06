@@ -71,6 +71,7 @@ WIN32LIBS = $(@WIN32@)
 # inference rules
 .c.o:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) $(LZO_INC) $(ZSTD_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 #-------------------------------------------------------------------------
 all: Makefile @WIN32@ bacula-fd @STATIC_FD@ bfdjson

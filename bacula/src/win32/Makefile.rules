@@ -55,11 +55,13 @@ endef
 $(OBJDIR)/%.o: %.c
 	@echo "Compiling $<"
 	$(call checkdir, $@)
+	$(ECHO_CMD)$(DO_CHECK_DMSG) $(CXX) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(ECHO_CMD)$(CXX) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.cpp
 	@echo "Compiling $<"
 	$(call checkdir, $@)
+	$(ECHO_CMD)$(DO_CHECK_DMSG) $(CXX) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(ECHO_CMD)$(CXX) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.res: %.rc

@@ -41,6 +41,7 @@ CONS_LDFLAGS=@CONS_LDFLAGS@
 # inference rules
 .c.o:
 	@echo "Compiling $<"
+	$(NO_ECHO)$(DO_CHECK_DMSG) $(CXX) $(DEFS) $(DEBUG) -c $(WCFLAGS) $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) -E $< | $(CHECK_DMSG)
 	$(NO_ECHO)$(CXX) $(DEFS) $(DEBUG) -c $(CPPFLAGS) $(CONS_INC) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) $<
 #-------------------------------------------------------------------------
 all: Makefile bconsole @STATIC_CONS@ bbconsjson
