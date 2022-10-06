@@ -213,6 +213,24 @@ EOF
       $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SD Calls Client", "yes", "Client")'
       variant_name="${variant_name} SDcall"
    fi
+   if [ x$FORCE_SDENC = xyes ]; then
+      SDENC_COMMAND="\"$bin/key-manager-cmd.sh\""
+      cat > $bin/key-manager-cmd.sh <<EOF
+# --key-dir "$working/keydir"
+# --log "$working/key-manager.log"
+VERBOSE=-v
+#VERBOSE=
+OPTION=-m
+exec $bin/key-manager.py getkey \$VERBOSE \$OPTION --cipher AES_128_XTS
+EOF
+      chmod a+x $bin/key-manager-cmd.sh
+      $bperl -e "add_attribute('$conf/bacula-sd.conf', 'EncryptionCommand', '$SDENC_COMMAND', 'Storage')"
+      $bperl -e "add_attribute('$conf/bacula-sd.conf', 'BlockEncryption', 'enable', 'Device')"
+      variant_name="${variant_name} SDEnc"
+
+#      $bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'no', 'Job')"
+
+   fi
    if [ $devicetype -gt 1 ]; then
        echo "ERROR: Found multiple FORCE_XXX switches"
        set | awk '/^FORCE_/ { print $0 }'
