@@ -82,7 +82,12 @@ ALTER TABLE Media
     MODIFY COLUMN UseWorm TINYINT DEFAULT 0;
 
 ALTER TABLE Object
-    ADD COLUMN FileIndex integer not null default 0;
+    ADD COLUMN FileIndex integer not null default 0,
+    MODIFY COLUMN ObjectSource BLOB,
+    MODIFY COLUMN ObjectName BLOB,
+    MODIFY COLUMN ObjectType BLOB;
+    MODIFY COLUMN ObjectCategory BLOB;
+    MODIFY COLUMN ObjectUUID BLOB;
 
 ALTER TABLE Job
     ADD COLUMN RealStartTime DATETIME,

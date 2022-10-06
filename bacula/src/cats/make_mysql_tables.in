@@ -163,12 +163,12 @@ CREATE TABLE Object
    PluginName   BLOB NOT NULL,
    FileIndex    integer  not null default 0,
 
-   ObjectCategory  TINYBLOB NOT NULL,
-   ObjectType   TINYBLOB     NOT NULL,
-   ObjectName   TINYBLOB     NOT NULL,
-   ObjectSource TINYBLOB     NOT NULL,
-   ObjectUUID   TINYBLOB     NOT NULL,
-   ObjectSize   bigint       NOT NULL,
+   ObjectCategory  BLOB NOT NULL,
+   ObjectType   BLOB     NOT NULL,
+   ObjectName   BLOB     NOT NULL,
+   ObjectSource BLOB     NOT NULL,
+   ObjectUUID   BLOB     NOT NULL,
+   ObjectSize   bigint   NOT NULL,
    ObjectStatus BINARY(1) NOT NULL DEFAULT 'U',
    ObjectCount  INTEGER UNSIGNED NOT NULL DEFAULT 1,
    primary key (ObjectId)
