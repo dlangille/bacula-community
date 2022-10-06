@@ -186,7 +186,6 @@ bool file_dev::open_device(DCR *dcr, int omode)
          pm_strcat(archive_name, getVolCatName());
       }
    }
-
    mount(1);                          /* do mount if required */
 
    set_mode(omode);

@@ -61,7 +61,7 @@ static int const dbglvl = 200;
  */
 static RES_ITEM store_items[] = {
    {"Name",                  store_name, ITEM(res_store.hdr.name),   0, ITEM_REQUIRED, 0},
-   {"Description",           store_str,  ITEM(res_dir.hdr.desc),     0, 0, 0},
+   {"Description",           store_str,  ITEM(res_store.hdr.desc),     0, 0, 0},
    {"SdAddress",             store_addresses_address,  ITEM(res_store.sdaddrs),     0, ITEM_DEFAULT, 9103},
    {"SdAddresses",           store_addresses,  ITEM(res_store.sdaddrs), 0, ITEM_DEFAULT, 9103},
    {"Messages",              store_res,  ITEM(res_store.messages),   R_MSGS, 0, 0},
@@ -101,6 +101,7 @@ static RES_ITEM store_items[] = {
    {"DedupScrubMaximumBandwidth", store_speed, ITEM(res_store.dedup_scrub_max_bandwidth), 0, ITEM_DEFAULT, 15*1024*1024},
    {"MaximumContainerSize",  store_size64, ITEM(res_store.max_container_size), 0, 0, 0},
 #endif
+   {"EncryptionCommand",     store_strname,ITEM(res_store.encryption_command), 0, 0, 0},
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -201,6 +202,8 @@ static RES_ITEM dev_items[] = {
    {"Dedupengine",           store_res,    ITEM(res_dev.dedup), R_DEDUP, 0, 0},
 #endif
    {"SyncOnClose",           store_bit,    ITEM(res_dev.cap_bits), CAP_SYNCONCLOSE, ITEM_DEFAULT, 0},
+   {"BlockEncryption",       store_enctype,ITEM(res_dev.block_encryption), 0, ITEM_DEFAULT, 0},
+
    {NULL, NULL, {0}, 0, 0, 0}
 };
 
@@ -288,6 +291,41 @@ s_kw dev_types[] = {
    {NULL,            0}
 };
 
+/*
+ * Device Encryption types
+ *
+ *   encryption type     encryption code = token
+ */
+s_kw enc_types[] = {
+   {"None",          ET_NONE},
+   {"Enable",        ET_ENABLE},
+   {"Strong",        ET_STRONG},
+   {NULL,            0}
+};
+
+/*
+ * Store Encryption Type (None, Enable, Strong)
+ *
+ */
+void store_enctype(LEX *lc, RES_ITEM *item, int index, int pass)
+{
+   bool found = false;
+
+   lex_get_token(lc, T_NAME);
+   /* Store the label pass 2 so that type is defined */
+   for (int i=0; enc_types[i].name; i++) {
+      if (strcasecmp(lc->str, enc_types[i].name) == 0) {
+         *(uint32_t *)(item->value) = enc_types[i].token;
+         found = true;
+         break;
+      }
+   }
+   if (!found) {
+      scan_err1(lc, _("Expected a Device Encryption Type keyword, got: %s"), lc->str);
+   }
+   scan_to_eol(lc);
+   set_bit(index, res_all.hdr.item_present);
+}
 
 /*
  * Store Device Type (File, FIFO, Tape, Cloud, ...)
@@ -968,6 +1006,9 @@ void free_resource(RES *sres, int type)
       }
       if (res->res_store.dedup_index_dir) {
          free(res->res_store.dedup_index_dir);
+      }
+      if (res->res_store.encryption_command) {
+         free(res->res_store.encryption_command);
       }
       break;
    case R_CLOUD:

@@ -121,6 +121,7 @@ struct DEV_RECORD {
    uint32_t extra_bytes;              /* the extra size that must be accounted in VolABytes */
    uint32_t state_bits;               /* state bits */
    uint32_t RecNum;                   /* Record number in the block */
+   int      BlockVer;                 /* 1, 2 or .. from BB01, BB02, ... */
    uint32_t BlockNumber;              /* Block number for this record (used in read_records()) */
    bool     invalid;                  /* The record may be invalid if it was merged with a previous record */
    rec_state wstate;                  /* state of write_record_to_block */
@@ -205,9 +206,18 @@ struct Volume_Label {
   /* For Cloud */
   uint64_t  MaxPartSize;              /* Maximum Part Size */
 
+  /* For Volume encryption */
+  uint32_t EncCypherKeySize;
+  uint32_t MasterKeyIdSize;
+  unsigned char EncCypherKey[MAX_BLOCK_CIPHER_KEY_LEN]; /* The encryption key
+                                                 encrypted with the MasterKey */
+  unsigned char MasterKeyId[MAX_MASTERKEY_ID_LEN]; /* the ID of the MasterKey */
+  /* For Volume Signature (not yet implemented) */
+  uint32_t SignatureKeyIdSize;
+  unsigned char SignatureKeyId[MAX_MASTERKEY_ID_LEN];
 };
 
-#define SER_LENGTH_Volume_Label 1024   /* max serialised length of volume label */
+#define SER_LENGTH_Volume_Label 2048   /* max serialised length of volume label */
 #define SER_LENGTH_Session_Label 1024  /* max serialised length of session label */
 
 typedef struct Volume_Label VOLUME_LABEL;

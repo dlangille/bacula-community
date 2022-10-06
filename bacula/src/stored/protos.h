@@ -320,6 +320,7 @@ void store_truncate(LEX *lc, RES_ITEM *item, int index, int pass);
 bool find_truncate_option(const char* truncate, uint32_t& truncate_option);
 void store_upload(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_devtype(LEX *lc, RES_ITEM *item, int index, int pass);
+void store_enctype(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_cloud_driver(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_maxblocksize(LEX *lc, RES_ITEM *item, int index, int pass);
 void store_transfer_priority(LEX *lc, RES_ITEM *item, int index, int pass);

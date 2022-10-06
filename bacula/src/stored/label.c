@@ -291,6 +291,11 @@ int DEVICE::read_dev_volume_label(DCR *dcr)
       goto bail_out;
    }
 
+   if (!load_encryption_key(dcr, "READ", VolHdr.VolumeName, &VolHdr.EncCypherKeySize, VolHdr.EncCypherKey, &VolHdr.MasterKeyIdSize, VolHdr.MasterKeyId)) {
+      stat = VOL_LABEL_ERROR;
+      goto bail_out; /* a message is already loaded into jcr->errmsg */
+   }
+
    if (dcr->is_writing()) {
        empty_block(dcr->block);
    }
@@ -408,6 +413,9 @@ bool DEVICE::write_volume_label(DCR *dcr, const char *VolName,
    }
    Dmsg1(150, "Label type=%d\n", dev->label_type);
 
+   if (!load_encryption_key(dcr, "LABEL", VolName, &VolHdr.EncCypherKeySize, VolHdr.EncCypherKey, &VolHdr.MasterKeyIdSize, VolHdr.MasterKeyId)) {
+      goto bail_out;
+   }
    if (!write_volume_label_to_dev(dcr, VolName, PoolName, relabel, no_prelabel)) {
       goto bail_out;
    }
@@ -735,7 +743,11 @@ static void create_volume_label_record(DCR *dcr, DEVICE *dev,
    ser_string(dev->VolHdr.PoolType);
    ser_string(dev->VolHdr.MediaType);
 
-   ser_string(dev->VolHdr.HostName);
+   if (dev->device->block_encryption == ET_STRONG) {
+      ser_string("OBFUSCATED");
+   } else {
+      ser_string(dev->VolHdr.HostName);
+   }
    ser_string(dev->VolHdr.LabelProg);
    ser_string(dev->VolHdr.ProgVersion);
    ser_string(dev->VolHdr.ProgDate);
@@ -750,10 +762,18 @@ static void create_volume_label_record(DCR *dcr, DEVICE *dev,
    /* adata and dedup volumes */
    ser_uint32(dev->VolHdr.BlockSize);
 
+   /* new in for BB03 */
+   ser_uint32(dev->VolHdr.EncCypherKeySize);
+   ser_bytes(dev->VolHdr.EncCypherKey, dev->VolHdr.EncCypherKeySize);
+   ser_uint32(dev->VolHdr.MasterKeyIdSize);
+   ser_bytes(dev->VolHdr.MasterKeyId, dev->VolHdr.MasterKeyIdSize);
+   ser_uint32(0); /* This for a Signature Key identifier a upcoming feature */
+
    ser_end(rec->data, SER_LENGTH_Volume_Label);
    if (!adata) {
       bstrncpy(dcr->VolumeName, dev->VolHdr.VolumeName, sizeof(dcr->VolumeName));
    }
+   dcr->block->first_block = true;
    ASSERT2(dcr->VolumeName[0], "Empty Volume name");
    rec->data_len = ser_length(rec->data);
    rec->FileIndex = dev->VolHdr.LabelType;
@@ -834,6 +854,9 @@ void create_volume_header(DEVICE *dev, const char *VolName,
    bstrncpy(dev->VolHdr.LabelProg, my_name, sizeof(dev->VolHdr.LabelProg));
    sprintf(dev->VolHdr.ProgVersion, "Ver. %s %s ", VERSION, BDATE);
    sprintf(dev->VolHdr.ProgDate, "Build %s %s ", __DATE__, __TIME__);
+
+   /* Warning in BB03 EncCypherKey* & MasterKeyId* have already been set, don't reset */
+
    dev->set_labeled();               /* set has Bacula label */
    if (chk_dbglvl(100)) {
       dev->dump_volume_label();
@@ -1036,12 +1059,25 @@ bool unser_volume_label(DEVICE *dev, DEV_RECORD *rec)
    unser_string(dev->VolHdr.ProgVersion);
    unser_string(dev->VolHdr.ProgDate);
 
-//   unser_string(dev->VolHdr.AlignedVolumeName);
+   unser_string(dev->VolHdr.AlignedVolumeName);
    dev->VolHdr.AlignedVolumeName[0] = 0;
    unser_uint64(dev->VolHdr.FirstData);
    unser_uint32(dev->VolHdr.FileAlignment);
    unser_uint32(dev->VolHdr.PaddingSize);
    unser_uint32(dev->VolHdr.BlockSize);
+
+   if (rec->BlockVer == 3) {
+      unser_uint32(dev->VolHdr.EncCypherKeySize);
+      unser_bytes(dev->VolHdr.EncCypherKey, dev->VolHdr.EncCypherKeySize);
+      unser_uint32(dev->VolHdr.MasterKeyIdSize);
+      unser_bytes(dev->VolHdr.MasterKeyId, dev->VolHdr.MasterKeyIdSize);
+      uint32_t SignatureKeyIdSize;
+      unser_uint32(SignatureKeyIdSize);
+      (void)SignatureKeyIdSize;  /* don't complain about unused variable */
+   } else {
+      dev->VolHdr.EncCypherKeySize = 0;
+      dev->VolHdr.MasterKeyIdSize = 0;
+   }
 
    ser_end(rec->data, SER_LENGTH_Volume_Label);
    Dmsg0(190, "unser_vol_label\n");
@@ -1137,7 +1173,7 @@ void DEVICE::dump_volume_label()
       break;
    }
 
-   Pmsg12(-1, _("\nVolume Label:\n"
+   Pmsg14(-1, _("\nVolume Label:\n"
 "Adata             : %d\n"
 "Id                : %s"
 "VerNo             : %d\n"
@@ -1150,13 +1186,16 @@ void DEVICE::dump_volume_label()
 "MediaType         : %s\n"
 "PoolType          : %s\n"
 "HostName          : %s\n"
+"EncCypherKeySize  : %ld\n"
+"MasterKeyIdSize   : %ld\n"
 ""),
              adata,
              VolHdr.Id, VolHdr.VerNum,
              VolHdr.VolumeName, VolHdr.PrevVolumeName,
              File, LabelType, VolHdr.LabelSize,
              VolHdr.PoolName, VolHdr.MediaType,
-             VolHdr.PoolType, VolHdr.HostName);
+             VolHdr.PoolType, VolHdr.HostName,
+             VolHdr.EncCypherKeySize, VolHdr.MasterKeyIdSize);
 
    if (VolHdr.VerNum >= 11) {
       char dt[50];

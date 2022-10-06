@@ -26,6 +26,7 @@
 
 #include "bacula.h"
 #include "stored.h"
+#include "lib/xxhash.h"
 
 static const int dbglvl = 160;
 
@@ -51,7 +52,8 @@ void dump_block(DEVICE *dev, DEV_BLOCK *b, const char *msg, bool force)
    char *p;
    char *bufp;
    char Id[BLKHDR_ID_LENGTH+1];
-   uint32_t CheckSum, BlockCheckSum;
+   uint64_t CheckSum64, BlockCheckSum64;
+   uint32_t CheckSumLo;
    uint32_t block_len, reclen;
    uint32_t BlockNumber;
    uint32_t VolSessionId, VolSessionTime, data_len;
@@ -74,22 +76,12 @@ void dump_block(DEVICE *dev, DEV_BLOCK *b, const char *msg, bool force)
       }
    }
    unser_begin(b->buf, BLKHDR1_LENGTH);
-   unser_uint32(CheckSum);
+   unser_uint32(CheckSumLo);
    unser_uint32(block_len);
    unser_uint32(BlockNumber);
    unser_bytes(Id, BLKHDR_ID_LENGTH);
    ASSERT(unser_length(b->buf) == BLKHDR1_LENGTH);
    Id[BLKHDR_ID_LENGTH] = 0;
-   if (Id[3] == '2') {
-      unser_uint32(VolSessionId);
-      unser_uint32(VolSessionTime);
-      bhl = BLKHDR2_LENGTH;
-      rhl = RECHDR2_LENGTH;
-   } else {
-      VolSessionId = VolSessionTime = 0;
-      bhl = BLKHDR1_LENGTH;
-      rhl = RECHDR1_LENGTH;
-   }
 
    if (block_len > 4000000 || block_len < BLKHDR_CS_LENGTH) {
       Dmsg3(20, "Will not dump blocksize too %s %lu msg: %s\n",
@@ -98,11 +90,41 @@ void dump_block(DEVICE *dev, DEV_BLOCK *b, const char *msg, bool force)
       return;
    }
 
-   BlockCheckSum = bcrc32((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
-                         block_len-BLKHDR_CS_LENGTH);
+   if (Id[3] == '3') {
+      // CheckSumLo is the header option field
+      unser_uint32(VolSessionId);
+      unser_uint32(VolSessionTime);
+      unser_uint64(CheckSum64);
+      bhl = BLKHDR3_LENGTH;
+      rhl = RECHDR3_LENGTH;
+      /* backup the CheckSum64, replace it with 0x0...0 and calculate the CheckSum64 */
+      uint64_t save;
+      memcpy(&save, b->buf+BLKHDR_CS64_OFFSET, BLKHDR_CS64_LENGTH);
+      memset(b->buf+BLKHDR_CS64_OFFSET, '\0', BLKHDR_CS64_LENGTH);
+      BlockCheckSum64 = XXH3_64bits((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
+                            block_len-BLKHDR_CS_LENGTH);
+      /* restore the checksum */
+      memcpy(b->buf+BLKHDR_CS64_OFFSET, &save, BLKHDR_CS64_LENGTH);
+   } else if (Id[3] == '2') {
+      unser_uint32(VolSessionId);
+      unser_uint32(VolSessionTime);
+      bhl = BLKHDR2_LENGTH;
+      rhl = RECHDR2_LENGTH;
+      CheckSum64 = CheckSumLo;
+      BlockCheckSum64 = bcrc32((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
+                            block_len-BLKHDR_CS_LENGTH);
+   } else {
+      VolSessionId = VolSessionTime = 0;
+      bhl = BLKHDR1_LENGTH;
+      rhl = RECHDR1_LENGTH;
+      CheckSum64 = CheckSumLo;
+      BlockCheckSum64 = bcrc32((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
+                            block_len-BLKHDR_CS_LENGTH);
+   }
+
    Pmsg7(000, _("Dump block %s %p: adata=%d size=%d BlkNum=%d\n"
-"                           Hdrcksum=%x cksum=%x\n"),
-      msg, b, b->adata, block_len, BlockNumber, CheckSum, BlockCheckSum);
+"                           Hdrcksum=%llx cksum=%llx\n"),
+      msg, b, b->adata, block_len, BlockNumber, CheckSum64, BlockCheckSum64);
    p = b->buf + bhl;
    while (p < bufp) {
       unser_begin(p, WRITE_RECHDR_LENGTH);
@@ -164,11 +186,14 @@ DEV_BLOCK *DEVICE::new_block(DCR *dcr, int size)
    }
    block->buf_len = len;
    block->buf = get_memory(block->buf_len);
+   block->buf_enc = get_memory(block->buf_len);
    block->rechdr_queue = get_memory(block->buf_len);
    block->rechdr_items = 0;
    Dmsg2(510, "Rechdr len=%d max_items=%d\n", sizeof_pool_memory(block->rechdr_queue),
       sizeof_pool_memory(block->rechdr_queue)/WRITE_ADATA_RECHDR_LENGTH);
    block->filemedia = New(alist(1, owned_by_alist));
+   block->blkh_options = 0;
+   block->blkh_options |= do_checksum() ? BLKHOPT_CHKSUM : 0;
    empty_block(block);
    block->BlockVer = BLOCK_VER;       /* default write version */
    Dmsg3(150, "New block adata=%d len=%d block=%p\n", block->adata, len, block);
@@ -187,7 +212,11 @@ DEV_BLOCK *dup_block(DEV_BLOCK *eblock)
 
    memcpy(block, eblock, sizeof(DEV_BLOCK));
    block->buf = get_memory(buf_len);
+   block->buf_enc = get_memory(buf_len);
+   block->buf_out = (eblock->buf_out==eblock->buf)?block->buf:eblock->buf_enc;
+
    memcpy(block->buf, eblock->buf, buf_len);
+   memcpy(block->buf_enc, eblock->buf_enc, buf_len);
 
    block->rechdr_queue = get_memory(rechdr_len);
    memcpy(block->rechdr_queue, eblock->rechdr_queue, rechdr_len);
@@ -298,6 +327,9 @@ void free_block(DEV_BLOCK *block)
       if (block->buf) {
          free_memory(block->buf);
       }
+      if (block->buf_enc) {
+         free_memory(block->buf_enc);
+      }
       if (block->rechdr_queue) {
          free_memory(block->rechdr_queue);
       }
@@ -329,6 +361,7 @@ void empty_block(DEV_BLOCK *block)
    Dmsg3(250, "empty_block: adata=%d len=%d set binbuf=%d\n",
          block->adata, block->buf_len, block->binbuf);
    block->bufp = block->buf + block->binbuf;
+   block->buf_out = block->buf;
    block->read_len = 0;
    block->write_failed = false;
    block->block_read = false;
@@ -338,6 +371,7 @@ void empty_block(DEV_BLOCK *block)
    block->BlockAddr = 0;
    block->filemedia->destroy();
    block->extra_bytes = 0;
+   block->first_block = false; // by default this block don't hold a volume label
 }
 
 /*
@@ -345,40 +379,60 @@ void empty_block(DEV_BLOCK *block)
  * in the buffer should have already been reserved by
  * init_block.
  */
-uint32_t ser_block_header(DEV_BLOCK *block, bool do_checksum)
+uint64_t ser_block_header(DEV_BLOCK *block, bool do_checksum)
 {
+   DEVICE *dev = block->dev;
    ser_declare;
    uint32_t block_len = block->binbuf;
-
-   block->CheckSum = 0;
+   uint32_t hdr_option = 0x0;
+   bool do_encrypt_vol = dev->device->block_encryption!=ET_NONE && dev->crypto_device_ctx!=NULL;
+   bool do_encrypt_block = do_encrypt_vol && !block->first_block;
+   hdr_option |= (do_checksum?BLKHOPT_CHKSUM:0) |
+                 (do_encrypt_vol?BLKHOPT_ENCRYPT_VOL:0) |
+                 (do_encrypt_block?BLKHOPT_ENCRYPT_BLOCK:0);
+   block->CheckSum64 = 0;
    /* ***BEEF*** */
    if (block->adata) {
       /* Checksum whole block */
       if (do_checksum) {
-         block->CheckSum = bcrc32((uint8_t *)block->buf, block_len);
+         block->CheckSum64 = bcrc32((uint8_t *)block->buf, block_len);
       }
    } else {
+      int chk_off = BLKHDR_CS64_OFFSET;
+      int bhl = BLKHDR3_LENGTH;
       Dmsg1(160, "block_header: block_len=%d\n", block_len);
-      ser_begin(block->buf, BLKHDR2_LENGTH);
-      ser_uint32(block->CheckSum);
+      ser_begin(block->buf, BLKHDR3_LENGTH);
+      ser_uint32(hdr_option); /* Was the crc32, is now an "option" bit field in BB03 */
       ser_uint32(block_len);
       ser_uint32(block->BlockNumber);
-      ser_bytes(WRITE_BLKHDR_ID, BLKHDR_ID_LENGTH);
-      if (BLOCK_VER >= 2) {
-         ser_uint32(block->VolSessionId);
-         ser_uint32(block->VolSessionTime);
-      }
-
-      /* Checksum whole block except for the checksum */
+      ser_bytes(WRITE_BLKHDR_ID, BLKHDR_ID_LENGTH); // BB03
+      // BLOCK_VER >= 2
+      ser_uint32(block->VolSessionId);
+      ser_uint32(block->VolSessionTime);
+      // BLOCK_VER >= 3;
+//      ASSERTD((do_checksum && (block->blkh_options&BLKHOPT_CHKSUM))
+//            || (!do_checksum && !(block->blkh_options&BLKHOPT_CHKSUM)), "checksum configuration mismatch");
+      ser_uint64(0x00); // the XXH3_64 checksum
       if (do_checksum) {
-         block->CheckSum = bcrc32((uint8_t *)block->buf+BLKHDR_CS_LENGTH,
-                       block_len-BLKHDR_CS_LENGTH);
+         /* Checksum whole block including the checksum with value 0x0 */
+         block->CheckSum64 = XXH3_64bits((uint8_t *)block->buf,
+                       block_len);
+         /* update the checksum in the block header */
+         ser_begin(block->buf+chk_off, BLKHDR_CS64_LENGTH);
+         ser_uint64(block->CheckSum64);
       }
-      Dmsg2(160, "ser_block_header: adata=%d checksum=%x\n", block->adata, block->CheckSum);
-      ser_begin(block->buf, BLKHDR2_LENGTH);
-      ser_uint32(block->CheckSum);    /* now add checksum to block header */
+      Dmsg3(160, "ser_block_header: adata=%d checksum=0x%016llx enc=%d\n",
+            block->adata, block->CheckSum64, do_encrypt_block);
+      block->buf_out = block->buf;
+      if (do_encrypt_block) {
+         /* Does the encryption, checksum is encrypted too */
+         block_cipher_init_iv_header(block->dev->crypto_device_ctx, block->BlockNumber, block->VolSessionId, block->VolSessionTime);
+         block_cipher_encrypt(block->dev->crypto_device_ctx, block_len-bhl, block->buf+bhl, block->buf_enc+bhl);
+         memcpy(block->buf_enc, block->buf, bhl);
+         block->buf_out = block->buf_enc;
+      }
    }
-   return block->CheckSum;
+   return block->CheckSum64;
 }
 
 /*
@@ -392,23 +446,25 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
 {
    ser_declare;
    char Id[BLKHDR_ID_LENGTH+1];
-   uint32_t BlockCheckSum;
+   uint64_t BlockCheckSum64;
    uint32_t block_len;
    uint32_t block_end;
    uint32_t BlockNumber;
+   uint32_t CheckSumLo;
    JCR *jcr = dcr->jcr;
    int bhl;
+   int chk_off = BLKHDR_CS64_OFFSET; /* used only in BB03 */
 
    if (block->adata) {
       /* Checksum the whole block */
       if (block->block_len <= block->read_len && dev->do_checksum()) {
-         BlockCheckSum = dcr->crc32((uint8_t *)block->buf, block->block_len, block->CheckSum);
-         if (BlockCheckSum != block->CheckSum) {
+         BlockCheckSum64 = dcr->crc32((uint8_t *)block->buf, block->block_len, block->CheckSum64);
+         if (BlockCheckSum64 != block->CheckSum64) {
             dev->dev_errno = EIO;
             Mmsg5(dev->errmsg, _("Volume data error at %lld!\n"
-               "Adata block checksum mismatch in block=%u len=%d: calc=%x blk=%x\n"),
+               "Adata block checksum mismatch in block=%u len=%d: calc=%llx blk=%llx\n"),
                block->BlockAddr, block->BlockNumber,
-               block->block_len, BlockCheckSum, block->CheckSum);
+               block->block_len, BlockCheckSum64, block->CheckSum64);
             if (block->read_errors == 0 || verbose >= 2) {
                Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
                dump_block(dev, block, "with checksum error");
@@ -426,13 +482,13 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
       return true;
    }
    unser_begin(block->buf, BLKHDR_LENGTH);
-   unser_uint32(block->CheckSum);
+   unser_uint32(CheckSumLo); // can be blkh_options in BB03
    unser_uint32(block_len);
    unser_uint32(BlockNumber);
    unser_bytes(Id, BLKHDR_ID_LENGTH);
    ASSERT(unser_length(block->buf) == BLKHDR1_LENGTH);
    Id[BLKHDR_ID_LENGTH] = 0;
-
+   block->CheckSum64 = CheckSumLo; // only for BB01 & BB02
    if (Id[3] == '1') {
       bhl = BLKHDR1_LENGTH;
       block->BlockVer = 1;
@@ -470,12 +526,45 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
          block->read_errors++;
          return false;
       }
+   } else if (Id[3] == '3') {
+      bhl = BLKHDR3_LENGTH;
+      uint32_t blkh_options = CheckSumLo; /* in BB03 blkh_options is stored at the checksum location */
+      unser_uint32(block->VolSessionId);
+      unser_uint32(block->VolSessionTime);
+
+      /* decrypt the block before to calculate the checksum */
+      if ((blkh_options & BLKHOPT_ENCRYPT_BLOCK) && block->dev->crypto_device_ctx)
+      {
+         block_cipher_init_iv_header(block->dev->crypto_device_ctx, BlockNumber, block->VolSessionId, block->VolSessionTime);
+         block_cipher_decrypt(block->dev->crypto_device_ctx, block_len-bhl, block->buf+bhl, block->buf_enc);
+         memcpy(block->buf+bhl, block->buf_enc, block_len-bhl);
+      }
+
+      unser_begin(block->buf+chk_off, BLKHDR_CS64_LENGTH);
+      unser_uint64(block->CheckSum64);
+
+      block->BlockVer = 3;
+      block->bufp = block->buf + bhl;
+      //Dmsg5(100, "Read-blkhdr Block=%p adata=%d buf=%p bufp=%p off=%d\n", block, block->adata,
+      //   block->buf, block->bufp, block->bufp-block->buf);
+      if (strncmp(Id, BLKHDR3_ID, BLKHDR_ID_LENGTH) != 0) {
+         dev->dev_errno = EIO;
+         Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
+               dev->get_hi_addr(block->BlockAddr),
+               dev->get_low_addr(block->BlockAddr),
+               BLKHDR3_ID, Id);
+         if (block->read_errors == 0 || verbose >= 2) {
+            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
+         }
+         block->read_errors++;
+         return false;
+      }
    } else {
       dev->dev_errno = EIO;
       Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
             dev->get_hi_addr(block->BlockAddr),
             dev->get_low_addr(block->BlockAddr),
-            BLKHDR2_ID, Id);
+            BLKHDR3_ID, Id);
       Dmsg1(50, "%s", dev->errmsg);
       if (block->read_errors == 0 || verbose >= 2) {
          Jmsg(jcr, M_FATAL, 0, "%s", dev->errmsg);
@@ -512,16 +601,24 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
    Dmsg3(390, "Read binbuf = %d %d block_len=%d\n", block->binbuf,
       bhl, block_len);
    if (block_len <= block->read_len && dev->do_checksum()) {
-      BlockCheckSum = dcr->crc32((uint8_t *)block->buf+BLKHDR_CS_LENGTH,
+      if (Id[3] == '3') {
+         uint64_t save; /* make a copy of the xxh64 */
+         memcpy(&save, block->buf+chk_off, BLKHDR_CS64_LENGTH);
+         memset(block->buf+chk_off, '\0', BLKHDR_CS64_LENGTH);
+         BlockCheckSum64 = XXH3_64bits((uint8_t *)block->buf,
+                               block_len);
+         memcpy(block->buf+chk_off, &save, BLKHDR_CS64_LENGTH);
+      } else {
+         BlockCheckSum64 = dcr->crc32((uint8_t *)block->buf+BLKHDR_CS_LENGTH,
                                  block_len-BLKHDR_CS_LENGTH,
-                                 block->CheckSum);
-
-      if (BlockCheckSum != block->CheckSum) {
+                                 block->CheckSum64);
+      }
+      if (BlockCheckSum64 != block->CheckSum64) {
          dev->dev_errno = EIO;
          Mmsg6(dev->errmsg, _("Volume data error at %u:%u!\n"
-            "Block checksum mismatch in block=%u len=%d: calc=%x blk=%x\n"),
+            "Block checksum mismatch in block=%u len=%d: calc=%llx blk=%llx\n"),
             dev->file, dev->block_num, (unsigned)BlockNumber,
-            block_len, BlockCheckSum, block->CheckSum);
+            block_len, BlockCheckSum64, block->CheckSum64);
          if (block->read_errors == 0 || verbose >= 2) {
             Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
             dump_block(dev, block, "with checksum error");
@@ -547,6 +644,7 @@ uint32_t get_len_and_clear_block(DEV_BLOCK *block, DEVICE *dev, uint32_t &pad)
     *  and on tape devices, apply min and fixed blocking.
     */
    wlen = block->binbuf;
+
    if (wlen != block->buf_len) {
       Dmsg2(250, "binbuf=%d buf_len=%d\n", block->binbuf, block->buf_len);
 
@@ -564,7 +662,7 @@ uint32_t get_len_and_clear_block(DEV_BLOCK *block, DEVICE *dev, uint32_t &pad)
          }
       }
       if (block->adata && dev->padding_size > 0) {
-         /* Write to next aligned boundry */
+         /* Write to next aligned boundary */
          wlen = ((wlen + dev->padding_size - 1) / dev->padding_size) * dev->padding_size;
       }
       ASSERT(wlen <= block->buf_len);

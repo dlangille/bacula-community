@@ -63,8 +63,10 @@ static bool read_header(DCR *dcr, DEV_BLOCK *block, DEV_RECORD *rec)
          block->adata, block->BlockNumber, block->BlockVer, block->block_len);
    if (block->BlockVer == 1) {
       rhl = RECHDR1_LENGTH;
-   } else {
+   } if (block->BlockVer == 2) {
       rhl = RECHDR2_LENGTH;
+   } else {
+      rhl = RECHDR3_LENGTH;
    }
    if (rec->remlen >= rhl) {
       Dmsg0(dbgep, "=== rpath 2 begin unserial header\n");
@@ -250,7 +252,7 @@ bool read_record_from_block(DCR *dcr,  DEV_RECORD *rec)
       rec->VolumeName = dcr->CurrentVol->VolumeName; /* From JCR::VolList, freed at the end */
       rec->Addr = rec->StartAddr = dcr->block->BlockAddr;
    }
-
+   rec->BlockVer = dcr->block->BlockVer; /* needed for unser_volume_label() */
    /* We read the next record */
    dcr->block->RecNum++;
    

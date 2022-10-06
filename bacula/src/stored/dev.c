@@ -652,6 +652,10 @@ void DEVICE::term(DCR *dcr)
    if (device && device->dev == this) {
       device->dev = NULL;
    }
+   if (crypto_device_ctx) {
+      block_cipher_context_free(crypto_device_ctx);
+      crypto_device_ctx = NULL;
+   }
    delete this;
 }
 
@@ -1167,4 +1171,239 @@ void DEVICE::register_metrics(bstatcollect *collector)
 bool DEVICE::get_tape_worm(DCR *dcr)
 {
    return false;
+}
+
+bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
+      const char *volume_name,
+      uint32_t *enc_cipher_key_size, unsigned char *enc_cipher_key,
+      uint32_t *master_keyid_size, unsigned char *master_keyid)
+{
+   enum { op_none, op_label, op_read };
+   bool ok = true; // No error
+   if (!device->block_encryption) {
+      return ok;
+   }
+   JCR *jcr = dcr->jcr;
+//      char *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd)
+   POOLMEM *encrypt_program = get_pool_memory(PM_FNAME);
+   POOL_MEM results(PM_MESSAGE);
+   POOL_MEM err_msg(PM_MESSAGE);
+   POOL_MEM envv;
+
+   int op = op_none;
+   if (0 == strcmp(operation, "LABEL")) {
+      op = op_label;
+   } else if (0 == strcmp(operation, "READ")) {
+      op = op_read;
+   }
+
+   edit_device_codes(dcr, &encrypt_program, me->encryption_command, "load");
+   char *envp[5];
+   Mmsg(envv, "OPERATION=%s", operation);
+   envp[0] = bstrdup(envv.c_str());
+   Mmsg(envv, "VOLUME_NAME=%s", volume_name);
+   envp[1] = bstrdup(envv.c_str());
+   if (op == op_read && enc_cipher_key != NULL && *enc_cipher_key_size > 0) {
+      char buf[2*MAX_BLOCK_CIPHER_KEY_LEN]; // for the base64 encoded enc_cipherkey
+      bin_to_base64_pad(buf, sizeof(buf), (char *)enc_cipher_key, *enc_cipher_key_size);
+      Mmsg(envv, "ENC_CIPHER_KEY=%s", buf);
+   } else {
+      Mmsg(envv, "ENC_CIPHER_KEY=");
+   }
+   envp[2] = bstrdup(envv.c_str());
+   if (op == op_read && master_keyid != NULL && *master_keyid_size > 0) {
+      char buf[2*MAX_MASTERKEY_ID_LEN]; // for the base64 encoded masterkey_id
+      bin_to_base64_pad(buf, sizeof(buf), (char *)master_keyid, *master_keyid_size);
+      Mmsg(envv, "MASTER_KEYID=%s", buf);
+   } else {
+      Mmsg(envv, "MASTER_KEYID=");
+   }
+   envp[3] = bstrdup(envv.c_str());
+   envp[4] = NULL;
+
+   Dmsg3(60, "Run keymanager op=%s volume=%s %s\n", operation, volume_name, encrypt_program);
+   for (char **p=envp; *p!=NULL; p++) Dmsg1(200, "keymanager query %s\n", *p);
+
+   uint32_t timeout = 60;
+   int status = run_program_full_output(encrypt_program, timeout, results.addr(), envp);
+   free_pool_memory(encrypt_program);
+   for (unsigned i = 0; i < sizeof(envp)/sizeof(char *)-1; i++)
+   {
+      bfree(envp[i]);
+   }
+
+   block_cipher_type cipher = BLOCK_CIPHER_NONE;
+   const char *cipher_name = "undefined";
+   int cipher_key_size = 0; /* from the cipher */
+   char *in_cipher_key = NULL;
+   int in_cipher_key_size = 0;
+   char *in_enc_cipher_key = NULL;
+   int in_enc_cipher_key_size = 0;
+   int in_master_keyid_size = 0;
+   char *in_master_keyid = NULL;
+   char *comment = NULL;
+   char keybuf[4096], enckeybuf[4096], masterkeyidbuf[4096];
+   if (status == 0) {
+      if (chk_dbglvl(200)) {
+         /* display the response of the key manager */
+         char *s = results.c_str();
+         while (*s != '\0') {
+            char *e = strchr(s, '\n');
+            if (e != NULL) {
+               char c = *e;
+               *e = '\0';
+               Dmsg1(200, "keymanager response %s\n", s);
+               *e = c;
+               s = e + 1;
+            }
+         }
+      }
+      /* iterate line to retrieve field */
+      char *p = results.c_str();
+      char *fieldname = NULL;
+      char *value = NULL;
+      char *end;
+      while (*p != '\0') {
+         while (isspace(*p)) p++;
+         fieldname = p; /* start of the fieldname */
+         while (isalnum(*p) || *p == '_') p++;
+         if (fieldname == p) {
+            /* fieldname is empty, EOF */
+            break;
+         }
+         if (isblank(*p) || *p=='=' || *p==':') {
+            end = p;
+         } else {
+            Dmsg1(10, "keymanager response format mismatch at %d\n", p-results.c_str());
+            Mmsg(err_msg, "line format mismatch");
+            break;
+         }
+         while (isblank(*p)) p++; /* skip blank just before the separator */
+         if (*p != '=' && *p != ':') {
+            Dmsg2(10, "keymanager response wrong separator %d %d\n", p-results.c_str(), *p);
+            Mmsg(err_msg, "wrong separator");
+            break;
+         }
+         p++; /* skip the separator */
+         while (isblank(*p)) p++; /* skip blank just after the separator */
+         *end = '\0'; /* end the fieldname */
+         value = p; /* start of the value */
+         while (*p && *p != '\n') p++;
+         if (*p != '\0') {
+            *p = '\0';
+            p++;
+         }
+         Dmsg3(200, "keymanager response fieldname=%s value=\"%s\" pos=%d\n",
+               fieldname, value, p-results.c_str());
+         if (0==strcmp("error", fieldname)) {
+            Mmsg(err_msg, "got error message: \"%s\"", value);
+            break;
+         } else if (0==strcmp("volume_name", fieldname)) {
+            /* ignore */
+         } else if (0==strcmp("comment", fieldname)) {
+            comment=value;
+            /* ignore */
+         } else if (0==strcmp("cipher", fieldname)) {
+            cipher_name = value;
+            if (0==strcasecmp("AES_128_XTS", value)) {
+               cipher = BLOCK_CIPHER_AES_128_XTS;
+               cipher_key_size = 32;
+            } else if (0==strcasecmp("AES_256_XTS", value)) {
+               cipher = BLOCK_CIPHER_AES_256_XTS;
+               cipher_key_size = 64;
+            } else if (0==strcasecmp("NULL", value)) {
+               cipher = BLOCK_CIPHER_NULL;
+               cipher_key_size = 16;
+            } else {
+               cipher_key_size = 0;
+               Mmsg(err_msg, "unknown cipher: \"%s\"", value);
+               break;
+            }
+         } else if (0==strcmp("cipher_key", fieldname)) {
+            in_cipher_key = value;
+         } else if (0==strcmp("enc_cipher_key", fieldname)) {
+            in_enc_cipher_key = value;
+         } else if (0==strcmp("master_keyid", fieldname)) {
+            in_master_keyid = value;
+         }
+      }
+      if (err_msg.c_str()[0] == '\0') {
+         /* no error, check that we have all the parameter we need */
+         if (cipher == BLOCK_CIPHER_NONE) {
+            Mmsg(err_msg, "cipher is missing");
+         } else if (in_cipher_key == NULL) {
+            Mmsg(err_msg, "key is missing");
+         }
+      }
+      if (err_msg.c_str()[0] == '\0' && in_cipher_key != NULL) {
+         /* no error, check that we can decode the key */
+         in_cipher_key_size = base64_to_bin(keybuf, sizeof(keybuf), in_cipher_key, strlen(in_cipher_key));
+         if (cipher_key_size != in_cipher_key_size) {
+            Mmsg(err_msg, "Wrong cipher key size for \"%s\" expect %d, got %d", cipher_name, cipher_key_size, in_cipher_key_size);
+         }
+      }
+      if (err_msg.c_str()[0] == '\0' && in_enc_cipher_key != NULL) {
+         /* no error, check that we can decode the key */
+         in_enc_cipher_key_size = base64_to_bin(enckeybuf, sizeof(enckeybuf), in_enc_cipher_key, strlen(in_enc_cipher_key));
+         if (cipher_key_size != in_enc_cipher_key_size) {
+            Mmsg(err_msg, "Wrong cipher key size for \"%s\" expect %d, got %d", cipher_name, cipher_key_size, in_cipher_key_size);
+         }
+      }
+      if (err_msg.c_str()[0] == '\0' && in_master_keyid != NULL) {
+         /* no error, check that we can decode the  master_keyid*/
+         in_master_keyid_size = base64_to_bin(masterkeyidbuf, sizeof(masterkeyidbuf), in_master_keyid, strlen(in_master_keyid));
+      }
+   } else {
+      /* status != 0 the script returned an error code */
+      berrno be;
+      be.set_errno(status);
+      Mmsg(err_msg, "encryption script returned an error, code=%d ERR=%s", status, be.bstrerror());
+   }
+   if (crypto_device_ctx != NULL) {
+      block_cipher_context_free(crypto_device_ctx);
+      crypto_device_ctx = NULL;
+   }
+   if (err_msg.c_str()[0] == '\0' && in_enc_cipher_key_size > 0) {
+      if (in_enc_cipher_key_size > MAX_BLOCK_CIPHER_KEY_LEN) {
+         Mmsg(err_msg, "encrypted key is too large");
+      } else {
+         *enc_cipher_key_size = in_enc_cipher_key_size;
+         memcpy(enc_cipher_key, enckeybuf, *enc_cipher_key_size);
+      }
+   }
+   if (err_msg.c_str()[0] == '\0' && in_master_keyid_size > 0) {
+      if (in_master_keyid_size > MAX_MASTERKEY_ID_LEN) {
+         Mmsg(err_msg, "masterkey id is too large");
+      } else {
+         *master_keyid_size = in_master_keyid_size;
+         memcpy(master_keyid, masterkeyidbuf, *master_keyid_size);
+      }
+   }
+
+   if (err_msg.c_str()[0] == '\0') {
+      /* initialize the crypto context */
+      crypto_device_ctx = block_cipher_context_new(cipher);
+      block_cipher_init_key(crypto_device_ctx, (unsigned char*)keybuf);
+      Jmsg(jcr, M_INFO, 0, _("3305 LoadEncryptionKey \"for Volume %s\", status is OK.\n"),
+            dcr->VolumeName);
+      if (comment!=NULL) {
+         /* ignored for now */
+      }
+      Dmsg1(20, "load encryption key for volume %s OK\n", dcr->VolumeName);
+   }
+   if (err_msg.c_str()[0] != '\0') {
+      Dmsg2(10, "load encryption key for volume %s Err=%s\n", dcr->VolumeName, err_msg.c_str());
+      Jmsg(jcr, M_FATAL, 0, _("3992 Bad LoadEncryptionKey \"load Volume %s\": "
+           "ERR=%s\n"), dcr->VolumeName, err_msg.c_str());
+      if (jcr != NULL) {
+         Mmsg(jcr->errmsg, _("3992 Bad LoadEncryptionKey \"load Volume %s\": "
+               "ERR=%s\n"), dcr->VolumeName, err_msg.c_str());
+      }
+      ok = false;
+   } else {
+      /* crypto key successfully loaded */
+      if (op == op_label) {
+      }
+   }
+   return ok;
 }

@@ -731,6 +731,11 @@ private:
    bool mount_tape(int mount, int dotimeout); /* in dev.c */
 protected:
    void set_mode(int omode);                     /* in dev.c */
+   bool load_encryption_key(DCR *dcr, const char *operation,
+         const char *volume_name, /* in dev.c */
+         uint32_t *enc_cipher_key_size, unsigned char *enc_cipher_key,
+         uint32_t *master_keyid_size, unsigned char *master_keyid);
+
 };
 inline const char *DEVICE::strerror() const { return errmsg; }
 inline const char *DEVICE::archive_name() const { return dev_name; }

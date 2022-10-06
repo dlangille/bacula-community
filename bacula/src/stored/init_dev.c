@@ -314,6 +314,7 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
    dev->read_only = device->read_only;
    dev->dev_type = device->dev_type;
    dev->device = device;
+   dev->crypto_device_ctx = NULL;
    if (dev->is_tape()) { /* No parts on tapes */
       dev->max_part_size = 0;
    } else {

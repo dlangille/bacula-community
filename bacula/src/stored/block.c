@@ -74,6 +74,12 @@ bool DCR::write_block_to_device(bool final)
       ok = false;
       goto bail_out;   /* fatal error */
    }
+   if (dcr->despooling && dev->device->block_encryption!=ET_NONE && dev->crypto_device_ctx!=NULL) {
+//      DEVICE *old = block->dev;
+      block->dev = dev;
+//      uint64_t checksum = ser_block_header(block, dev->do_checksum());
+//      block->dev = old;
+   }
 
    Dmsg1(500, "Write block to dev=%p\n", dcr->dev);
    if (!write_block_to_dev()) {
@@ -125,7 +131,7 @@ bool DCR::write_block_to_dev()
    uint32_t wlen;                     /* length to write */
    bool ok = true;
    DCR *dcr = this;
-   uint32_t checksum;
+   uint64_t checksum;
    uint32_t pad;                      /* padding or zeros written */
    boffset_t pos;
    char ed1[50];
@@ -234,10 +240,11 @@ bool DCR::write_block_to_dev()
          bmicrosleep(5, 0);    /* pause a bit if busy or lots of errors */
          dev->clrerror(-1);
       }
-      stat = dev->write(block->buf, (size_t)wlen);
+      stat = dev->write(block->buf_out, (size_t)wlen);
+
       Dmsg4(100, "%s write() BlockAddr=%lld wlen=%d Vol=%s\n",
-            block->adata?"Adata":"Ameta",
-            block->BlockAddr, wlen, dev->VolHdr.VolumeName);
+         block->adata?"Adata":"Ameta", block->BlockAddr, wlen,
+         dev->VolHdr.VolumeName);
    } while (stat == -1 && (errno == EBUSY || errno == EIO) && retry++ < 3);
 
    /* ***FIXME*** remove 2 lines debug */
@@ -269,7 +276,14 @@ bool DCR::write_block_to_dev()
       }
    }
 
-   if (stat != (ssize_t)wlen) {
+   if (stat == (ssize_t)wlen) {
+      if (block->first_block)
+      {  // It was a volume label, it has been successfully written
+         // next block should not hold a volume_label and should
+         // be encrypted if encryption is enable
+         block->first_block = false;
+      }
+   } else {
       /* Some devices simply report EIO when the volume is full.
        * With a little more thought we may be able to check
        * capacity and distinguish real errors and EOT

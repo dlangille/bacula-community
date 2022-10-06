@@ -202,6 +202,8 @@ public:
    int64_t max_container_size;        /* Maximum container size then split */
    bool  dedup_check_hash;            /* Check Hash of each chunk after rehydration */
    int64_t dedup_scrub_max_bandwidth; /* Maximum disk bandwidth usable for scrub */
+
+   char *encryption_command;          /* encryption key command -- external program */
 };
 typedef class s_res_store STORES;
 
@@ -238,6 +240,7 @@ public:
    bool set_vol_append_only;          /* Set 'Append Only' filesystem flag for volumes */
    bool set_vol_immutable;            /* Set 'Immutable' filesystem flag for volumes */
    bool set_vol_read_only;            /* Set permission of volumes when marking them as Full/Used */
+   uint32_t block_encryption;         /* call the key-manager command to get the cipher and the key to use */
    utime_t min_volume_protection_time;         /* Minimum Volume Protection Time */
    uint32_t drive_index;              /* Autochanger drive index */
    uint32_t cap_bits;                 /* Capabilities of this device */
@@ -292,3 +295,12 @@ union URES {
 
 /* Get the size of a give resource */
 int get_resource_size(int type);
+
+extern s_kw enc_types[];
+
+/* Encryption type */
+enum  {
+   ET_NONE,
+   ET_ENABLE,
+   ET_STRONG,
+};

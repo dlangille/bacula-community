@@ -36,15 +36,29 @@
 /* Block Header definitions. */
 #define BLKHDR1_ID       "BB01"
 #define BLKHDR2_ID       "BB02"
+#define BLKHDR3_ID       "BB03"
 #define BLKHDR_ID_LENGTH  4
 #define BLKHDR_CS_LENGTH  4             /* checksum length */
 #define BLKHDR1_LENGTH   16             /* Total length */
 #define BLKHDR2_LENGTH   24             /* Total length */
+#define BLKHDR3_LENGTH   32             /* Total length including the checksum) */
+#define BLKHDR_CS64_OFFSET  24           /* 64bits checksum offset */
+#define BLKHDR_CS64_LENGTH   8           /* 64bits checksum length */
 
-#define WRITE_BLKHDR_ID     BLKHDR2_ID
-#define WRITE_BLKHDR_LENGTH BLKHDR2_LENGTH
+#define WRITE_BLKHDR_ID     BLKHDR3_ID
+#define WRITE_BLKHDR_LENGTH BLKHDR3_LENGTH
 #define WRITE_ADATA_BLKHDR_LENGTH (6*sizeof(int32_t)+sizeof(uint64_t))
-#define BLOCK_VER               2
+#define BLOCK_VER               3
+
+enum BLKH_OPTIONS {
+   BLKHOPT_NONE = 0x0,
+   BLKHOPT_CHKSUM = 0x1,         // set if the checksum is enable
+   BLKHOPT_ENCRYPT_VOL = 0x2,    // set if the volume is encrypted
+   BLKHOPT_ENCRYPT_BLOCK = 0x4,  // set if this block is encrypted (volume label are not)
+
+   BLKHOPT_MASK = 0x7,     // Update this one after adding some values above
+   BLKHOPT_LAST = 0x8,     // Update this one too
+};
 
 /* Record header definitions */
 #define RECHDR1_LENGTH      20
@@ -55,6 +69,7 @@
  *  uint32_t data_length
  */
 #define RECHDR2_LENGTH  (3*sizeof(int32_t))
+#define RECHDR3_LENGTH RECHDR2_LENGTH
 #define WRITE_RECHDR_LENGTH RECHDR2_LENGTH
 
 /*
@@ -118,6 +133,18 @@
    uint32_t VolSessionTime;
    uint64_t BlockAddr;
 
+ * for BB03 block, we have
+   variable header length, minimum is 24 bytes
+
+   uint32_t blkh_options; // bit field describing the extra fields
+   uint32_t block_len;
+   uint32_t BlockNumber;
+   char     Id[BLKHDR_ID_LENGTH];
+   uint32_t VolSessionId;
+   uint32_t VolSessionTime;
+   ---- no come extra field ----
+   uint64_t  xxhash64; if (blkh_options&BLKHOPT_CHKSUM)
+
  */
 
 class DEVICE;                         /* for forward reference */
@@ -148,7 +175,7 @@ struct DEV_BLOCK {
    uint32_t VolSessionId;             /* */
    uint32_t VolSessionTime;           /* */
    uint32_t read_errors;              /* block errors (checksum, header, ...) */
-   uint32_t CheckSum;                 /* Block checksum */
+   uint64_t CheckSum64;               /* Block checksum */
    uint32_t RecNum;                   /* Number of records read from the current block */
    uint32_t extra_bytes;              /* the extra size that must be accounted in VolABytes */
    int      BlockVer;                 /* block version 1 or 2 */
@@ -158,13 +185,17 @@ struct DEV_BLOCK {
    bool     adata;                    /* adata block */
    bool     no_header;                /* Set if no block header */
    bool     new_fi;                   /* New FI arrived */
+   bool     first_block;              /* Is the block holding a volume label */
    int32_t  FirstIndex;               /* first index this block */
    int32_t  LastIndex;                /* last index this block */
    int32_t  rechdr_items;             /* number of items in rechdr queue */
    char    *bufp;                     /* pointer into buffer */
    POOLMEM *rechdr_queue;             /* record header queue */
    POOLMEM *buf;                      /* actual data buffer */
+   POOLMEM *buf_enc;                  /* buffer with the encrypted data */
+   char    *buf_out;                  /* point to the data that must be written to the media */
    alist   *filemedia;                /* Filemedia attached to the current block */
+   uint32_t blkh_options;             /* see BLKH_OPTIONS */
 };
 
 #define block_is_empty(block) ((block)->read_len == 0)

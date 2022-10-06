@@ -66,7 +66,7 @@ static bool write_header_to_block(DCR *dcr, DEV_BLOCK *block, DEV_RECORD *rec)
       Dmsg0(dbgep, "=== wpath 13 write_header_to_block\n");
       ser_uint32(rec->VolSessionId);
       ser_uint32(rec->VolSessionTime);
-   } else {
+   } else { // BLOCK_VER is 2 or 3
       Dmsg0(dbgep, "=== wpath 14 write_header_to_block\n");
       block->VolSessionId = rec->VolSessionId;
       block->VolSessionTime = rec->VolSessionTime;

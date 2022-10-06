@@ -245,6 +245,18 @@ static void display_devtype(HPKT &hpkt)
    }
 }
 
+static void display_enctype(HPKT &hpkt)
+{
+   int i;
+   for (i=0; enc_types[i].name; i++) {
+      if (*(int32_t *)(hpkt.ritem->value) == enc_types[i].token) {
+         hpkt.sendit(hpkt, "\n    \"%s\": \"%s\"", hpkt.ritem->name,
+                enc_types[i].name);
+         return;
+      }
+   }
+}
+
 static void display_label(HPKT &hpkt)
 {
    int i;
@@ -478,6 +490,8 @@ static void dump_json(display_filter *filter)
                   display_int32_pair(hpkt);
                } else if (items[item].handler == store_devtype) {
                   display_devtype(hpkt);
+               } else if (items[item].handler == store_enctype) {
+                  display_enctype(hpkt);
                } else if (items[item].handler == store_label) {
                   display_label(hpkt);
                } else if (items[item].handler == store_cloud_driver) {

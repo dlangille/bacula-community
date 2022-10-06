@@ -238,8 +238,8 @@ static bool despool_data(DCR *dcr, bool commit)
    rdev->device = dcr->dev->device;
    rdcr = new_dcr(jcr, NULL, rdev, SD_READ);
    rdcr->spool_fd = dcr->spool_fd;
-   block = dcr->block;                /* save block */
-   dcr->block = rdcr->block;          /* make read and write block the same */
+   block = rdcr->block;                /* save block */
+   rdcr->block = dcr->block;          /* make read and write block the same */
 
    Dmsg1(800, "read/write block size = %d\n", block->buf_len);
    lseek(rdcr->spool_fd, 0, SEEK_SET); /* rewind */
@@ -302,7 +302,7 @@ static bool despool_data(DCR *dcr, bool commit)
          despool_elapsed / 3600, despool_elapsed % 3600 / 60, despool_elapsed % 60,
          edit_uint64_with_suffix(jcr->dcr->job_spool_size / despool_elapsed, ec1));
 
-   dcr->block = block;                /* reset block */
+   rdcr->block = block;                /* reset block */
 
 #if defined(HAVE_POSIX_FADVISE) && defined(POSIX_FADV_DONTNEED)
    posix_fadvise(rdcr->spool_fd, 0, 0, POSIX_FADV_DONTNEED);
@@ -437,7 +437,6 @@ bool write_block_to_spool_file(DCR *dcr)
    if (block->binbuf <= WRITE_BLKHDR_LENGTH) {  /* Does block have data in it? */
       return true;
    }
-
    hlen = sizeof(spool_hdr);
    wlen = block->binbuf;
    P(dcr->dev->spool_mutex);
