@@ -304,7 +304,7 @@ CREATE TABLE JobHisto (
    WriteStorageId    integer     default 0,   -- Id of the Storage used to Write
    WriteDevice       text        default '',  -- Name of the Write Device
    StatusInfo        text        default '',  -- Info to determine the error status
-   Encrypted         int         default 0,   -- 0 no, 1 fd side, 2 sd side, 3 both
+   Encrypted         int         default 0    -- 0 no, 1 fd side, 2 sd side, 3 both
    );
 CREATE INDEX inx61 ON JobHisto (StartTime);
 
