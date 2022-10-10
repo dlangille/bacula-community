@@ -31,6 +31,7 @@ private:
    bool set_fattr(const char *vol_name, int attr);
    bool clear_fattr(const char *vol_name, int attr);
    bool check_for_immutable(const char *vol_name);
+   bool check_for_read_only(const char *vol_name);
    bool append_open_needed(const char *vol_name);
    bool is_attribute_supported(int attr);
 
@@ -50,6 +51,9 @@ public:
    bool check_volume_protection_time(const char *vol_name);
    bool get_os_device_freespace();
    bool is_fs_nearly_full(uint64_t threshold);
+   int set_writable();
+   int set_readonly();
+   int set_atime(btime_t val);
 };
 
 #endif /* __FILE_DEV_ */

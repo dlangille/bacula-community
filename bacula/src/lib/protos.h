@@ -72,6 +72,8 @@ void display_collector_types(HPKT &hpkt);
 /* bsys.c */
 
 void get_path_and_fname(const char *file, char **path, char **fname);
+int set_own_time(int fd, const char *path, btime_t atime, btime_t mtime);
+int bstat(int fd, const char *path, struct stat *sp);
 const char *get_timezone();
 int get_user_home_directory(const char *user, POOLMEM *&home);
 int get_home_directories(const char *grpname, alist *dirs);

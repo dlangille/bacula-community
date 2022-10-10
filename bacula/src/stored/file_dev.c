@@ -248,6 +248,49 @@ bool file_dev::open_device(DCR *dcr, int omode)
    return m_fd >= 0;
 }
 
+int file_dev::set_writable()
+{
+   POOL_MEM fname;
+   get_volume_fpath(getVolCatName(), fname.handle());
+   int ret = bchmod(m_fd, fname.c_str(), 0600);
+   if (ret < 0) {
+      berrno be;
+      Mmsg(errmsg, _("Unable to change permission to 0600. ERR=%s\n"), be.bstrerror());
+   }
+   return ret;
+}
+
+int file_dev::set_readonly()
+{
+   POOL_MEM fname;
+   get_volume_fpath(getVolCatName(), fname.handle());
+   int ret = bchmod(m_fd, fname.c_str(), 0400);
+   if (ret < 0) {
+      berrno be;
+      Mmsg(errmsg, _("Unable to change permission to 0400. ERR=%s\n"), be.bstrerror());
+   }
+   return ret;
+}
+
+int file_dev::set_atime(btime_t val)
+{
+   struct stat sp;
+   int ret;
+   POOL_MEM fname;
+   get_volume_fpath(getVolCatName(), fname.handle());
+   if (bstat(m_fd, fname.c_str(), &sp) < 0) {
+      berrno be;
+      Mmsg(errmsg, _("Unable to stat %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
+      return -1;
+   }
+   ret = set_own_time(m_fd, fname.c_str(), val, sp.st_mtime);
+   if (ret < 0) {
+      berrno be;
+      Mmsg(errmsg, _("Unable to set atime/mtime to %s. ERR=%s\n"), fname.c_str(), be.bstrerror());
+   }
+   return ret;
+}
+
 /*
  * Truncate a volume.  If this is aligned disk, we
  *    truncate both volumes.
@@ -275,6 +318,14 @@ bool DEVICE::truncate(DCR *dcr)
       if (!clear_append_only(dcr->VolumeName)) {
          Mmsg2(errmsg, _("Unable to clear append_only flag for volume %s on device %s.\n"),
                dcr->VolumeName, print_name());
+         return false;
+      }
+   }
+
+   if (dev->device->set_vol_read_only) {
+      if (set_writable() < 0) {
+         Mmsg3(errmsg, _("Unable to set write permission for volume %s on device %s. %s\n"),
+               dcr->VolumeName, print_name(), dev->errmsg);
          return false;
       }
    }
@@ -574,7 +625,9 @@ void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
 /* Check if volume can be reused or not yet.
  * Used in the truncate path.
  * This method is based on the 'MinimumVolumeProtection' time directive,
- * current system time is compared against m_time of volume file.
+ * current system time is compared against m_time of volume file for immutable flag
+ *
+ * For the read-only (on NetApp Snaplock for example), we check a_time
  *
  * @return true  if volume can be reused
  * @return false if volume's protection time hasn't expired yet,
@@ -582,8 +635,8 @@ void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
  */
 bool file_dev::check_volume_protection_time(const char *vol_name)
 {
-   if (!device->set_vol_immutable) {
-      Dmsg1(DT_VOLUME|50, "SetVolumeImmutable turned off for volume: %s\n", vol_name);
+   if (!device->set_vol_immutable && !device->set_vol_read_only) {
+      Dmsg1(DT_VOLUME|50, "SetVolumeImmutable/SetVolumeReadOnly turned off for volume: %s\n", vol_name);
       return true;
    }
 
@@ -594,7 +647,7 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
       Dmsg1(DT_VOLUME|50, _("Immutable flag cannot be cleared for volume: %s, "
                     "because Minimum Volume Protection Time is set to 0\n"),
                     vol_name);
-      Mmsg(errmsg, _("Immutable flag cannot be cleared for volume: %s, "
+      Mmsg(errmsg, _("Immutable/ReadOnly flag cannot be cleared for volume: %s, "
                     "because Minimum Volume Protection Time is set to 0\n"),
                     vol_name);
       return false;
@@ -618,22 +671,27 @@ bool file_dev::check_volume_protection_time(const char *vol_name)
    }
 
    /* Check if enough time elapsed since last file's modification and compare it with current */
-   time_t expiration_time = sp.st_mtime + device->min_volume_protection_time;
+   time_t expiration_time;
    time_t now = time(NULL);
+   if (device->set_vol_immutable) {
+      expiration_time = sp.st_mtime + device->min_volume_protection_time;
+   } else {                     // ReadOnly, we check both and we take the biggest one
+      expiration_time = MAX(sp.st_atime, sp.st_mtime + device->min_volume_protection_time);
+   }
    char dt[50], dt2[50];
    bstrftime(dt, sizeof(dt), expiration_time);
    bstrftime(dt2, sizeof(dt2), now);
    if (expiration_time > now) {
-      Mmsg1(errmsg, _("Immutable flag cannot be cleared for volume: %s, "
+      Mmsg1(errmsg, _("Immutable/ReadOnly flag cannot be cleared for volume: %s, "
                       "because Minimum Volume Protection Time hasn't expired yet.\n"),
             vol_name);
-      Dmsg3(DT_VOLUME|50, "Immutable flag cannot be cleared for volume: %s, "
+      Dmsg3(DT_VOLUME|50, "Immutable/ReadOnly flag cannot be cleared for volume: %s, "
                     "because:\nexpiration time: %s\nnow: %s\n",
                     vol_name, dt, dt2);
       return false;
    }
 
-   Dmsg1(DT_VOLUME|50, "Immutable flag can be cleared for volume: %s\n", vol_name);
+   Dmsg1(DT_VOLUME|50, "Immutable/ReadOnly flag can be cleared for volume: %s\n", vol_name);
    return true;
 }
 
@@ -657,7 +715,7 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
 
    if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
       berrno be;
-      Dmsg2(DT_VOLUME|50, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
+      Dmsg2(DT_VOLUME|50, "Failed to open %s, ERR=%s\n", fname.c_str(), be.bstrerror());
       Mmsg2(errmsg, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
       return ret;
    }
@@ -665,7 +723,7 @@ bool file_dev::check_for_attr(const char *vol_name, int attr)
    ioctl_ret = d_ioctl(tmp_fd, FS_IOC_GETFLAGS, (char *)&get_attr);
    if (ioctl_ret < 0) {
       berrno be;
-      Dmsg2(DT_VOLUME|50, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+      Dmsg2(DT_VOLUME|50, "Failed to get attributes for %s, ERR=%s\n", fname.c_str(), be.bstrerror());
       Mmsg2(errmsg, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
    } else {
       ret = get_attr & attr;
@@ -853,6 +911,29 @@ bool file_dev::check_for_immutable(const char* vol_name)
    return true;
 }
 #endif // HAVE_IMMUTABLE_FL
+
+bool file_dev::check_for_read_only(const char *vol)
+{   
+   if (!device->set_vol_read_only) {
+      return false;              // Feature not used
+   }
+
+   struct stat sp;
+   POOL_MEM fname;
+   get_volume_fpath(vol, fname.handle());
+
+   if (stat(fname.c_str(), &sp) < 0) {
+      return false;              // Not found, no problem?
+   }
+
+   if ((sp.st_mode & 07777) == S_IRUSR) {
+      return true;
+   }
+
+   return false;
+}
+
+bool check_for_immutable(const char *vol_name);
 
 /*
  * Position device to end of medium (end of data)

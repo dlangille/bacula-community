@@ -98,11 +98,9 @@ void set_own_mod(ATTR *attr, char *path, uid_t owner, gid_t group, mode_t mode)
    }
 }
 
-
 bool set_mod_own_time(JCR *jcr, BFILE *ofd, ATTR *attr)
 {
    bool ok = true;
-   struct utimbuf ut;
 
    ASSERTD(attr->type != FT_LNK, "function set_mod_own_time() not designed to handle SYMLINK");
 
@@ -134,25 +132,13 @@ bool set_mod_own_time(JCR *jcr, BFILE *ofd, ATTR *attr)
          ok = false;
       }
 
-#ifdef HAVE_FUTIMES
-      struct timeval times[2];
-      times[0].tv_sec = attr->statp.st_atime;
-      times[0].tv_usec = 0;
-      times[1].tv_sec = attr->statp.st_mtime;
-      times[1].tv_usec = 0;
-      if (futimes(ofd->fid, times) < 0 && print_error(jcr)) {
-#else
-      ut.actime = attr->statp.st_atime;
-      ut.modtime = attr->statp.st_mtime;
-      //bclose(ofd);
-      if (utime(attr->ofname, &ut) < 0 && print_error(jcr)) {
-#endif
+      if (set_own_time(ofd->fid, attr->ofname,  attr->statp.st_atime, attr->statp.st_mtime) < 0) {
          berrno be;
          Jmsg2(jcr, M_ERROR, 0, _("Unable to set file times %s: ERR=%s\n"),
             attr->ofname, be.bstrerror());
          ok = false;
       }
-   } else {
+   } else {                     // Not open
       if (lchown(attr->ofname, attr->statp.st_uid, attr->statp.st_gid) < 0 && print_error(jcr)) {
          berrno be;
          Jmsg2(jcr, M_ERROR, 0, _("Unable to set file owner %s: ERR=%s\n"),
@@ -165,13 +151,11 @@ bool set_mod_own_time(JCR *jcr, BFILE *ofd, ATTR *attr)
             attr->ofname, be.bstrerror());
          ok = false;
       }
+
       /*
        * Reset file times.
        */
-      ut.actime = attr->statp.st_atime;
-      ut.modtime = attr->statp.st_mtime;
-
-      if (utime(attr->ofname, &ut) < 0 && print_error(jcr)) {
+      if (set_own_time(-1, attr->ofname,  attr->statp.st_atime, attr->statp.st_mtime) < 0 && print_error(jcr)) {
          berrno be;
          Jmsg2(jcr, M_ERROR, 0, _("Unable to set file times %s: ERR=%s\n"),
             attr->ofname, be.bstrerror());

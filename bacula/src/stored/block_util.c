@@ -626,6 +626,25 @@ bool is_user_volume_size_reached(DCR *dcr, bool quiet)
             /* We may proceed with that but warn the user */
             Jmsg(dcr->jcr, M_WARNING, 0, _("Failed to set the volume %s on device %s as immutable, ERR=%s.\n"),
                  dev->getVolCatName(), dev->print_name(), dev->errmsg);
+         } else if (!quiet) {
+            Jmsg(dcr->jcr, M_INFO, 0, _("Marking Volume \"%s\" as immutable\n"),
+                 dev->getVolCatName());
+         }
+      }
+
+      if (dev->device->set_vol_read_only) {
+         /* Set volume as immutable/read only */
+         if (dev->set_atime(time(NULL) + dev->device->min_volume_protection_time) < 0) {
+            Jmsg(dcr->jcr, M_WARNING, 0, _("Failed to set the volume %s on device %s in atime retention, ERR=%s.\n"),
+                 dev->getVolCatName(), dev->print_name(), dev->errmsg);
+         }
+         if (dev->set_readonly() < 0) {
+            /* We may proceed with that but warn the user */
+            Jmsg(dcr->jcr, M_WARNING, 0, _("Failed to set the volume %s on device %s in read-only, ERR=%s.\n"),
+                 dev->getVolCatName(), dev->print_name(), dev->errmsg);
+         } else if (!quiet) {
+            Jmsg(dcr->jcr, M_INFO, 0, _("Marking Volume \"%s\" as read-only\n"),
+                 dev->getVolCatName());
          }
       }
 

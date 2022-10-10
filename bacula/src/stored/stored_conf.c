@@ -161,6 +161,7 @@ static RES_ITEM dev_items[] = {
    {"ReadOnly",              store_bool, ITEM(res_dev.read_only), 0, ITEM_DEFAULT, 0},
    {"SetVolumeAppendOnly",   store_bool, ITEM(res_dev.set_vol_append_only), 0, ITEM_DEFAULT, 0},
    {"SetVolumeImmutable",    store_bool, ITEM(res_dev.set_vol_immutable), 0, ITEM_DEFAULT, 0},
+   {"SetVolumeReadOnly",     store_bool, ITEM(res_dev.set_vol_read_only), 0, ITEM_DEFAULT, 0},
    {"MinimumVolumeProtectionTime",    store_time,   ITEM(res_dev.min_volume_protection_time), 0, ITEM_DEFAULT, 30*24*60*60},
    {"ChangerDevice",         store_strname,ITEM(res_dev.changer_name), 0, 0, 0},
    {"ControlDevice",         store_strname,ITEM(res_dev.control_name), 0, 0, 0},

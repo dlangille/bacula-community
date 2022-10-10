@@ -608,6 +608,10 @@ public:
    virtual bool clear_immutable(const char *vol_name) { return true; };
    virtual bool check_volume_protection_time(const char *vol_name) { return true; };
    virtual bool check_for_immutable(const char *vol_name) { return false; };
+   virtual bool check_for_read_only(const char *vol_name) { return false; };
+   virtual int set_writable() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
+   virtual int set_readonly() { pm_strcpy(errmsg, _("Not implemented")); return -1;};
+   virtual int set_atime(btime_t val) { pm_strcpy(errmsg, _("Not implemented")); return -1;};
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};
    virtual const char *print_full_type() { return print_type();};

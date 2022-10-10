@@ -37,6 +37,9 @@
 #else
 #include <sys/utsname.h>
 #endif
+#ifdef HAVE_UTIME_H
+#include <utime.h>
+#endif
 
 static pthread_mutex_t timer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t timer = PTHREAD_COND_INITIALIZER;
@@ -1674,15 +1677,36 @@ FILE *bfopen(const char *path, const char *mode)
 }
 
 /* Helper method to use fchown() whenever possible, chown() otherwise */
+int bstat(int fd, const char *path, struct stat *sp)
+{
+#ifdef HAVE_FSTAT
+   if (fd >= 0) {                // fd can be 0 as well
+      return fstat(fd, sp);
+
+   } else if (path) {
+      return stat(path, sp);
+
+   } else {
+      Dmsg0(100, "bchown failed, neither the fd nor path was specified\n");
+      return -1;
+   }
+#else
+   return stat(path, sp);
+#endif
+}
+
+/* Helper method to use fchown() whenever possible, chown() otherwise */
 int bchown(int fd, const char *path, uid_t uid, gid_t gid)
 {
 #ifdef HAVE_FCHOWN
-   if (fd) {
-      return fchown(fd, uid, gid);
+   if (fd >= 0) {
       Dmsg3(100, "Calling fchown for file descriptor %d uid: %ld gid: %ld\n", fd, uid, gid);
+      return fchown(fd, uid, gid);
+
    } else if (path) {
       Dmsg3(100, "Calling chown for file %s uid: %ld gid: %ld\n", path, uid, gid);
       return chown(path, uid, gid);
+
    } else {
       Dmsg0(100, "bchown failed, neither the fd nor path was specified\n");
       return -1;
@@ -1697,12 +1721,14 @@ int bchown(int fd, const char *path, uid_t uid, gid_t gid)
 int bchmod(int fd, const char *path, mode_t mode)
 {
 #ifdef HAVE_FCHOWN
-   if (fd) {
+   if (fd >= 0) {                // TODO: fd can be 0
       Dmsg2(100, "Calling chmod for file descriptor %d mode: %d\n", fd, mode);
       return fchmod(fd, mode);
+
    } else if (path) {
       Dmsg2(100, "Calling chmod for file: %s mode: %d\n", path, mode);
       return chmod(path, mode);
+
    } else {
       Dmsg0(100, "bchmod failed, neither the fd nor path was specified\n");
       return -1;
@@ -2002,6 +2028,33 @@ void get_path_and_fname(const char *name, char **path, char **fname)
       free(cpath);
       free(cargv0);
    }
+
+/* Set atime/mtime for a given file
+ * Must be called on open file
+ */
+int set_own_time(int fd, const char *path, btime_t atime, btime_t mtime)
+{
+#ifdef HAVE_FUTIMES
+   struct timeval times[2];
+   times[0].tv_sec = atime;
+   times[0].tv_usec = 0;
+   times[1].tv_sec = mtime;
+   times[1].tv_usec = 0;
+
+   if (fd > 0) {
+      if (futimes(fd, times) == 0) {
+         return 0;
+      }
+   }
+#endif
+   struct utimbuf ut;
+   ut.actime = atime;
+   ut.modtime = mtime;
+
+   if (utime(path, &ut) == 0) {
+      return 0;
+   }
+   return -1;
 }
 
 #ifdef TEST_PROGRAM
