@@ -741,6 +741,29 @@ bRC METAPLUGIN::send_jobinfo(bpContext *ctx, char type)
       }
    }
 
+   const char *dir;
+   bfuncs->getBaculaValue(ctx, bVarWorkingDir, &dir);
+   Mmsg(cmd, "WorkingDir=%s\n", dir);
+   rc = backend.ctx->write_command(ctx, cmd);
+   if (rc < 0) {
+      /* error */
+      return bRC_Error;
+   }
+   bfuncs->getBaculaValue(ctx, bVarSysConfigPath, &dir);
+   Mmsg(cmd, "SysconfigPath=%s\n", dir);
+   rc = backend.ctx->write_command(ctx, cmd);
+   if (rc < 0) {
+      /* error */
+      return bRC_Error;
+   }
+   bfuncs->getBaculaValue(ctx, bVarExePath, &dir);
+   Mmsg(cmd, "ExePath=%s\n", dir);
+   rc = backend.ctx->write_command(ctx, cmd);
+   if (rc < 0) {
+      /* error */
+      return bRC_Error;
+   }
+
    backend.ctx->signal_eod(ctx);
 
    if (!backend.ctx->read_ack(ctx)){
@@ -873,28 +896,7 @@ bRC METAPLUGIN::send_parameters(bpContext *ctx, char *command)
       return bRC_Error;
    }
 #endif
-   const char *dir;
-   bfuncs->getBaculaValue(ctx, bVarWorkingDir, &dir);
-   Mmsg(cmd, "WorkingDir=%s\n", dir);
-   rc = backend.ctx->write_command(ctx, cmd);
-   if (rc < 0) {
-      /* error */
-      return bRC_Error;
-   }
-   bfuncs->getBaculaValue(ctx, bVarSysConfigPath, &dir);
-   Mmsg(cmd, "SysconfigPath=%s\n", dir);
-   rc = backend.ctx->write_command(ctx, cmd);
-   if (rc < 0) {
-      /* error */
-      return bRC_Error;
-   }
-   bfuncs->getBaculaValue(ctx, bVarExePath, &dir);
-   Mmsg(cmd, "ExePath=%s\n", dir);
-   rc = backend.ctx->write_command(ctx, cmd);
-   if (rc < 0) {
-      /* error */
-      return bRC_Error;
-   }
+
    // signal end of parameters block
    backend.ctx->signal_eod(ctx);
    /* ack Params command */
