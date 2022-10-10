@@ -24,7 +24,7 @@ for i in *.o ; do \
    echo " "; \
 done
 
-DATA="console_command b_plugin_list plugin_bopen plugin_bclose plugin_bwrite plugin_bread plugin_blseek exepath beef version dist_name"
+DATA="console_command b_plugin_list plugin_bopen plugin_bclose plugin_bwrite plugin_bread plugin_blseek exepath beef version dist_name sysconfigpath"
 
 for i in ${DATA}; do \
    echo "$i DATA"; \
