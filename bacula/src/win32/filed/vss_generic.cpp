@@ -277,7 +277,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
    IVssBackupComponents* pVssObj = (IVssBackupComponents*)m_pVssObject;
 
    if (!(p_CreateVssBackupComponents && p_VssFreeSnapshotProperties)) {
-      Dmsg2(0, "VSSClientGeneric::Initialize: p_CreateVssBackupComponents=0x%08X, p_VssFreeSnapshotProperties=0x%08X\n", p_CreateVssBackupComponents, p_VssFreeSnapshotProperties);
+      Dmsg2(10, "VSSClientGeneric::Initialize: p_CreateVssBackupComponents=0x%08X, p_VssFreeSnapshotProperties=0x%08X\n", p_CreateVssBackupComponents, p_VssFreeSnapshotProperties);
       Jmsg(m_jcr, M_FATAL, 0, "Entry point CreateVssBackupComponents or VssFreeSnapshotProperties missing.\n");
       return false;
    }
@@ -297,7 +297,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
    if (!m_bCoInitializeCalled) {
       hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
       if (FAILED(hr)) {
-         Dmsg1(0, "VSSClientGeneric::Initialize: CoInitializeEx returned 0x%08X\n", hr);
+         Dmsg1(10, "VSSClientGeneric::Initialize: CoInitializeEx returned 0x%08X\n", hr);
          JmsgVssApiStatus(m_jcr, M_FATAL, hr, "CoInitializeEx");
          errno = b_errno_win32;
          return false;
@@ -315,7 +315,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
    hr = p_CreateVssBackupComponents((IVssBackupComponents**)&m_pVssObject);
    if (FAILED(hr)) {
       berrno be;
-      Dmsg2(0, "VSSClientGeneric::Initialize: CreateVssBackupComponents returned 0x%08X. ERR=%s\n",
+      Dmsg2(10, "VSSClientGeneric::Initialize: CreateVssBackupComponents returned 0x%08X. ERR=%s\n",
             hr, be.bstrerror(b_errno_win32));
       JmsgVssApiStatus(m_jcr, M_FATAL, hr, "CreateVssBackupComponents");
       errno = b_errno_win32;
@@ -331,7 +331,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
       if (dwContext != VSS_CTX_BACKUP) {
          hr = pVssObj->SetContext(dwContext);
          if (FAILED(hr)) {
-            Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->SetContext returned 0x%08X\n", hr);
+            Dmsg1(10, "VSSClientGeneric::Initialize: IVssBackupComponents->SetContext returned 0x%08X\n", hr);
             JmsgVssApiStatus(m_jcr, M_FATAL, hr, "SetContext");
             errno = b_errno_win32;
             return false;
@@ -342,7 +342,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
       // 1. InitializeForBackup
       hr = pVssObj->InitializeForBackup();
       if (FAILED(hr)) {
-         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->InitializeForBackup returned 0x%08X\n", hr);
+         Dmsg1(10, "VSSClientGeneric::Initialize: IVssBackupComponents->InitializeForBackup returned 0x%08X\n", hr);
          JmsgVssApiStatus(m_jcr, M_FATAL, hr, "InitializeForBackup");
          errno = b_errno_win32; 
          return false;
@@ -360,13 +360,13 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
          backup_type = VSS_BT_INCREMENTAL;
          break;
       default:
-         Dmsg1(0, "VSSClientGeneric::Initialize: unknown backup level %d\n", m_jcr->getJobLevel());
+         Dmsg1(10, "VSSClientGeneric::Initialize: unknown backup level %d\n", m_jcr->getJobLevel());
          backup_type = VSS_BT_FULL;
          break;
       }
       hr = pVssObj->SetBackupState(true, true, backup_type, false); /* FIXME: need to support partial files - make last parameter true when done */
       if (FAILED(hr)) {
-         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->SetBackupState returned 0x%08X\n", hr);
+         Dmsg1(10, "VSSClientGeneric::Initialize: IVssBackupComponents->SetBackupState returned 0x%08X\n", hr);
          JmsgVssApiStatus(m_jcr, M_FATAL, hr, "SetBackupState");
          errno = b_errno_win32;
          return false;
@@ -375,7 +375,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
       // 3. GatherWriterMetaData
       hr = pVssObj->GatherWriterMetadata(&pAsync1.p);
       if (FAILED(hr)) {
-         Dmsg1(0, "VSSClientGeneric::Initialize: IVssBackupComponents->GatherWriterMetadata returned 0x%08X\n", hr);
+         Dmsg1(10, "VSSClientGeneric::Initialize: IVssBackupComponents->GatherWriterMetadata returned 0x%08X\n", hr);
          JmsgVssApiStatus(m_jcr, M_FATAL, hr, "GatherWriterMetadata");
          errno = b_errno_win32;
          return false;
