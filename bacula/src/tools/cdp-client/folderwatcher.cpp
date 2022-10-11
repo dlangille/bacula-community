@@ -123,7 +123,7 @@ POOLMEM *FolderWatcher::watchDirRecursive(const char *dir)
       goto bail_out;
    }
 
-   Dmsg1(0, "Started Watching: %s\n", dir);
+   Dmsg1(10, "Started Watching: %s\n", dir);
    _watchedDirs[wd] = bstrdup(dir);
    dirReader = opendir(dir);
 
@@ -244,7 +244,7 @@ FolderWatcher::~FolderWatcher()
    std::map<int, char *>::iterator it;
    for(it = _watchedDirs.begin(); it != _watchedDirs.end(); it++) {
       inotify_rm_watch(_fd, it->first);
-      Dmsg1(0, "Stopped Watching: %s\n", it->second);
+      Dmsg1(10, "Stopped Watching: %s\n", it->second);
       free(it->second);
    }
 }
@@ -288,9 +288,9 @@ void *thread_watcher(void *arg) {
          DWORD errorCode = GetLastError();
 
          if (errorCode == ERROR_NOTIFY_ENUM_DIR) {
-            Dmsg0(0, "WinNotify buffer overflow\n");
+            Dmsg0(10, "WinNotify buffer overflow\n");
          } else {
-            Dmsg0(0, "Generic ReadDirectoryChangesW error\n");
+            Dmsg0(10, "Generic ReadDirectoryChangesW error\n");
          }
          continue;
       }
@@ -302,12 +302,12 @@ void *thread_watcher(void *arg) {
             INFINITE);
 
       if (result == 1) {
-         Dmsg0(0, "Received stop event, aborting folder watcher thread\n");
+         Dmsg0(10, "Received stop event, aborting folder watcher thread\n");
          continue;
       }
 
       if (result != 0) {
-         Dmsg1(0, "WaitForMultipleObjects failed. Error: %ld\n", GetLastError());
+         Dmsg1(10, "WaitForMultipleObjects failed. Error: %ld\n", GetLastError());
          continue;
       }
 
@@ -316,9 +316,9 @@ void *thread_watcher(void *arg) {
       if (!ok) {
          DWORD errorCode = GetLastError();
          if (errorCode == ERROR_NOTIFY_ENUM_DIR) {
-            Dmsg0(0, "WinNotify buffer overflow\n");
+            Dmsg0(10, "WinNotify buffer overflow\n");
          } else {
-            Dmsg0(0, "Generic GetOverlappedResult error\n");
+            Dmsg0(10, "Generic GetOverlappedResult error\n");
          }
          continue;
       }
@@ -335,8 +335,8 @@ void *thread_watcher(void *arg) {
                watcher->_watchedDirPath,
                fsubpath);
          CDP::winToUnixPath(fpath);
-         Dmsg1(0, "WinNotify Event: 0x%08x\n", curEntry->Action);
-         Dmsg1(0, "Event for file: %s\n", fpath);
+         Dmsg1(10, "WinNotify Event: 0x%08x\n", curEntry->Action);
+         Dmsg1(10, "Event for file: %s\n", fpath);
 
 #ifdef UNICODE
          const size_t fpathSize = strlen(fpath) + 1;
@@ -360,7 +360,7 @@ void *thread_watcher(void *arg) {
                fp = fopen(fpath, "r");
    
                if (fp) {
-                  Dmsg1(0, "Change detected in file: %s\n", fpath);
+                  Dmsg1(10, "Change detected in file: %s\n", fpath);
                   watcher->_changeHandler->onChange(fpath);
                   fclose(fp);
                   break;
@@ -426,7 +426,7 @@ POOLMEM *FolderWatcher::watch(const char *folder)
    }
 
    delete wfolder;
-   Dmsg1(0, "Started watching: %s\n", folder);
+   Dmsg1(10, "Started watching: %s\n", folder);
    return NULL;
 }
 
@@ -438,7 +438,7 @@ FolderWatcher::~FolderWatcher()
    CancelIo(_dirHandle);
    CloseHandle(_dirHandle);
    _dirHandle = NULL;
-   Dmsg1(0, "Stopped watching: %s\n", _watchedDirPath);
+   Dmsg1(10, "Stopped watching: %s\n", _watchedDirPath);
    free(_watchedDirPath);
 }
 #endif

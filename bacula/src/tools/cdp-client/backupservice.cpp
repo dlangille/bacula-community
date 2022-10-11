@@ -38,7 +38,7 @@ void BackupService::start(const char *spoolPath, Journal *j)
        err_msg = w->watch(rec->path);
 
        if (err_msg != NULL) {
-          Dmsg2(0, "Error while trying to watch %s. %s", rec->path, err_msg);
+          Dmsg2(10, "Error while trying to watch %s. %s", rec->path, err_msg);
           free_and_null_pool_memory(err_msg);
        } else {
           _watchers[rec->path] = w;
@@ -64,7 +64,7 @@ POOLMEM *BackupService::watch(const char *folder)
         _journal->writeFolderRecord(rec);
         _watchers[rec.path] = w;
     } else {
-        Dmsg2(0, "Error while trying to watch %s. %s", fpath, err_msg);
+        Dmsg2(10, "Error while trying to watch %s. %s", fpath, err_msg);
         delete w;
     }
 
@@ -87,7 +87,7 @@ void BackupService::onChange(const char *fpath)
     POOLMEM *spoolFilename = get_pool_memory(PM_FNAME);
 
     if (strcmp(fpath, _journal->_jPath) == 0) {
-        Dmsg0(0, "Change on Journal File ignored.\n");
+        Dmsg0(10, "Change on Journal File ignored.\n");
         goto bail_out;
     }
         
@@ -109,11 +109,11 @@ void BackupService::onChange(const char *fpath)
     Mmsg(spoolFilename, "%s/%s_%s", _spoolPath, str_mtime, fname);
 
     if (copyfile(fpath, spoolFilename) == 0) {
-        Dmsg2(0, "Copied file %s into %s\n", fpath, spoolFilename);
+        Dmsg2(10, "Copied file %s into %s\n", fpath, spoolFilename);
         rec.sname = bstrdup(spoolFilename);
         _journal->writeFileRecord(rec);
     } else {
-        Dmsg2(0, "Could not copy file %s into %s\n", fpath, spoolFilename);
+        Dmsg2(10, "Could not copy file %s into %s\n", fpath, spoolFilename);
     }
 
 bail_out:

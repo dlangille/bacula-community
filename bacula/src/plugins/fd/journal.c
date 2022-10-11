@@ -34,7 +34,7 @@ bool Journal::beginTransaction(const char *mode)
       _fp = bfopen(_jPath, mode);
 
       if (!_fp) {
-         Dmsg0(0, "Tried to start transaction but Journal File was not found.\n");
+         Dmsg0(10, "Tried to start transaction but Journal File was not found.\n");
          return false;
       }
 
@@ -55,7 +55,7 @@ bool Journal::beginTransaction(const char *mode)
       hasTransaction = true;
       return true;
    } else {
-      Dmsg0(0, "Tried to start transaction but could not lock Journal File.\n");
+      Dmsg0(10, "Tried to start transaction but could not lock Journal File.\n");
       return false;
    }
 }
@@ -70,7 +70,7 @@ void Journal::endTransaction()
       int rc = flock(_fd, LOCK_UN);
 
       if (rc != 0) {
-         Dmsg0(0, "could not release flock\n");
+         Dmsg0(10, "could not release flock\n");
       }
 
       fclose(_fp);
@@ -129,7 +129,7 @@ bool Journal::setJournalPath(const char *path)
          rec.journalVersion = JOURNAL_VERSION;
          this->writeSettings(rec);
       } else {
-         Dmsg1(0, "(ERROR) Could not create Journal File: %s\n", path);
+         Dmsg1(10, "(ERROR) Could not create Journal File: %s\n", path);
          return false;
       }
    } else {
@@ -151,7 +151,7 @@ bool Journal::setJournalPath(const char *path, const char *spoolDir)
          rec.setSpoolDir(spoolDir);
          this->writeSettings(rec);
       } else {
-         Dmsg1(0, "(ERROR) Could not create Journal File: %s\n", path);
+         Dmsg1(10, "(ERROR) Could not create Journal File: %s\n", path);
          return false;
       }
    } else {
@@ -229,7 +229,7 @@ SettingsRecord *Journal::readSettings()
    SettingsRecord *rec = NULL;
 
    if(!this->beginTransaction("r+")) {
-      Dmsg0(0, "Could not start transaction for readSettings()\n");
+      Dmsg0(10, "Could not start transaction for readSettings()\n");
       goto bail_out;
    }
 
@@ -308,7 +308,7 @@ bail_out:
    }
 
    if(corrupted) {
-      Dmsg0(0, "Could not read Settings Record. Journal is Corrupted.\n");
+      Dmsg0(10, "Could not read Settings Record. Journal is Corrupted.\n");
 
       if(rec != NULL) {
          delete rec;
@@ -328,7 +328,7 @@ bool Journal::writeFileRecord(const FileRecord &record)
 
    if(!this->beginTransaction("a")) {
       success = false;
-      Dmsg0(0, "Could not start transaction for writeFileRecord()\n");
+      Dmsg0(10, "Could not start transaction for writeFileRecord()\n");
       goto bail_out;
    }
 
@@ -382,7 +382,7 @@ FileRecord *Journal::readFileRecord()
    FileRecord *rec = NULL;
 
    if(!hasTransaction) {
-      Dmsg0(0, "(ERROR) Journal::readFileRecord() called without any transaction\n");
+      Dmsg0(10, "(ERROR) Journal::readFileRecord() called without any transaction\n");
       goto bail_out;
    }
 
@@ -469,7 +469,7 @@ bail_out:
    }
 
    if(corrupted) {
-      Dmsg0(0, "Could not read File Record. Journal is Corrupted.\n");
+      Dmsg0(10, "Could not read File Record. Journal is Corrupted.\n");
 
       if(rec != NULL) {
          delete rec;
@@ -487,7 +487,7 @@ bool Journal::writeFolderRecord(const FolderRecord &record)
 
    if(!this->beginTransaction("a")) {
       success = false;
-      Dmsg0(0, "Could not start transaction for writeFileRecord()\n");
+      Dmsg0(10, "Could not start transaction for writeFileRecord()\n");
       goto bail_out;
    }
 
@@ -499,7 +499,7 @@ bool Journal::writeFolderRecord(const FolderRecord &record)
 
    if(rc < 0) {
       success = false;
-      Dmsg1(0, "(ERROR) Could not write FolderRecord. RC=%d\n", rc);
+      Dmsg1(10, "(ERROR) Could not write FolderRecord. RC=%d\n", rc);
       goto bail_out;
    }
 
@@ -524,7 +524,7 @@ FolderRecord *Journal::readFolderRecord()
    FolderRecord *rec = NULL;
 
    if(!hasTransaction) {
-      Dmsg0(0, "(ERROR) Journal::readFolderRecord() called without any transaction\n");
+      Dmsg0(10, "(ERROR) Journal::readFolderRecord() called without any transaction\n");
       goto bail_out;
    }
 
@@ -568,7 +568,7 @@ FolderRecord *Journal::readFolderRecord()
 
 bail_out:
    if(corrupted) {
-      Dmsg0(0, "Could not read FolderRecord. Journal is Corrupted.\n");
+      Dmsg0(10, "Could not read FolderRecord. Journal is Corrupted.\n");
 
       if(rec != NULL) {
          delete rec;
@@ -658,7 +658,7 @@ bail_out:
       rc = rename(tmp_jPath.c_str(), _jPath);
 
       if(rc != 0) {
-         Dmsg0(0, "Could not rename TMP Journal\n");
+         Dmsg0(10, "Could not rename TMP Journal\n");
       }
    }
 
@@ -688,13 +688,13 @@ bool Journal::migrateTo(const char *newPath)
    newFp = bfopen(newPath, "w");
 
    if (tmpFp == NULL) { 
-      Dmsg1(0, "Could not bfopen %s. Aborting migration.\n", tmp_jPath);
+      Dmsg1(10, "Could not bfopen %s. Aborting migration.\n", tmp_jPath);
       success = false;
       goto bail_out;
    }
 
    if (newFp == NULL) {
-      Dmsg1(0, "Could not bfopen %s. Aborting migration.\n", newPath);
+      Dmsg1(10, "Could not bfopen %s. Aborting migration.\n", newPath);
       success = false;
       goto bail_out;
    }
@@ -715,7 +715,7 @@ bool Journal::migrateTo(const char *newPath)
          for(int i = 0; i < 5; i++) {
             if(!bfgets(tmp, SANITY_CHECK, _fp)) {
                //Found a corrupted FileRecord
-               Dmsg0(0, "Found a corrupt FileRecord. Canceling Migration");
+               Dmsg0(10, "Found a corrupt FileRecord. Canceling Migration");
                success = false;
                goto bail_out;
             }
@@ -746,7 +746,7 @@ bail_out:
       rc = rename(tmp_jPath, _jPath);
 
       if(rc != 0) {
-         Dmsg0(0, "Could not rename TMP Journal\n");
+         Dmsg0(10, "Could not rename TMP Journal\n");
       }
 
       free(_jPath);

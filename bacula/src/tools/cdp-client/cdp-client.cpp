@@ -46,7 +46,7 @@ static void waitForChanges(BackupService *bservice) {
         pthread_join(watcher->_watcherThread, NULL);
 #endif
     } else {
-        Dmsg0(0, "No folders te be watched. Terminating Client.\n");
+        Dmsg0(10, "No folders te be watched. Terminating Client.\n");
     }
 }
 
@@ -95,7 +95,7 @@ static void writeFolders(Journal *journal, alist *newFolders) {
         rec.path = bstrdup(folder);
 
        if(!journal->writeFolderRecord(rec)) {
-           Dmsg1(0, "ERROR: Could not write folder %s", rec.path);
+           Pmsg1(0, "ERROR: Could not write folder %s", rec.path);
            exit(-1);
        }
     }
@@ -105,11 +105,11 @@ static void writeFolders(Journal *journal, alist *newFolders) {
 static void makeJournalFile(Journal *journal, const char *journal_path, const char *spool_dir) {
 
     if (!journal->setJournalPath(journal_path, spool_dir)) {
-       Dmsg1(0, "Could not set journal file to: %s\n", journal_path);
+       Pmsg1(0, "Could not set journal file to: %s\n", journal_path);
        exit(1);
     }
 
-    Dmsg1(0, "Set journal file to: %s\n", journal_path);
+    Dmsg1(10, "Set journal file to: %s\n", journal_path);
 }
 
 static void makeSpoolDir(const char *spool_dir) {
@@ -144,11 +144,11 @@ static void makeSpoolDir(const char *spool_dir) {
     }
 
     if (error != NULL) {
-       Dmsg2(0, "(ERROR) - could not set spool directory to %s. %s\n", spool_dir, error);
+       Pmsg2(0, "(ERROR) - could not set spool directory to %s. %s\n", spool_dir, error);
        exit(-1);
     }
       
-    Dmsg1(0, "Set spool directory to: %s\n", spool_dir);
+    Dmsg1(10, "Set spool directory to: %s\n", spool_dir);
 }
 
 static void printHelp()

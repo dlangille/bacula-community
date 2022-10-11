@@ -59,7 +59,7 @@ class FileRecord
          FILE *fp = fopen(this->name, "r");
 
          if (!fp) {
-            Dmsg1(0, "Could not open file %s\n", this->name);
+            Dmsg1(10, "Could not open file %s\n", this->name);
             return false;
          }
 
@@ -67,7 +67,7 @@ class FileRecord
 
          if(fstat(fd, &statbuf) != 0) {
             fclose(fp);
-            Dmsg1(0, "Could not encode attributes of file %s\n", this->name);
+            Dmsg1(10, "Could not encode attributes of file %s\n", this->name);
             return false;
          }
 
