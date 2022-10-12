@@ -285,68 +285,6 @@ bool generic_driver::init(CLOUD *cloud, POOLMEM *&err) {
    return false;
 }
 
-/*
-%w : pwd
-%b : bucket name
-%u : userID
-%f : cache file path (file system)
-%c : cloud path
-%v : volume name
-%o : command
-
-NOTE : this is not used anymore. Parameter order is fixed. See pipe_fct
-*/
-char *generic_driver::edit_device_codes(
-   char *omsg,
-   const char *cmd,
-   const char *cache_path_name,
-   const char *cloud_path_name,
-   const char *volume_name)
-{
-   const char *p;
-   const char *str;
-   char add[20];
-
-   *omsg = 0;
-   Dmsg1(dbglvl, "generic_driver::edit_device_codes: %s\n", NPRTB(driver_command));
-   for (p=driver_command; *p; p++) {
-      if (*p == '%') {
-         switch (*++p) {
-         case '%':
-            str = "%";
-            break;
-         case 'f':
-            str = NPRT(cache_path_name);
-            break;
-         case 'c':
-            str = NPRT(cloud_path_name);
-            break;
-         case 'v':
-            str = NPRT(volume_name);
-            break;
-         case 'o':
-            str = NPRT(cmd);
-            break;
-         default:
-            add[0] = '%';
-            add[1] = *p;
-            add[2] = 0;
-            str = add;
-            break;
-         }
-      } else {
-         add[0] = *p;
-         add[1] = 0;
-         str = add;
-      }
-      Dmsg1(dbglvl, "add_str %s\n", str);
-      pm_strcat(&omsg, (char *)str);
-      Dmsg1(dbglvl, "omsg=%s\n", omsg);
-   }
-   Dmsg1(dbglvl, "omsg=%s\n", omsg);
-   return omsg;
-}
-
 /* helper to handler close_bpipe error code */
 int handle_error(int stat, POOLMEM *&err)
 {

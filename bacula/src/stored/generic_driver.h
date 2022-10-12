@@ -118,14 +118,6 @@ public:
    bool get_cloud_volumes_list(alist *volumes, cancel_callback *cancel_cb, POOLMEM *&err);
 
 private:
-   char *edit_device_codes(
-      char *omsg,
-      const char *cmd, 
-      const char *cache_path_name = 0,
-      const char *cloud_path_name = 0,
-      const char *volume_name = 0);
-
-private:
    POOLMEM *access_key_env;
    POOLMEM *secret_key_env;
    POOLMEM *bucket_env;
