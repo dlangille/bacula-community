@@ -197,7 +197,7 @@ int autoload_device(DCR *dcr, bool writing, BSOCK *dir)
             new_vol_name, slot, drive);
 
          dcr->VolCatInfo.Slot = slot;    /* slot to be loaded */
-         changer = edit_device_codes(dcr, changer, dcr->device->changer_command, "load");
+         edit_device_codes(dcr, &changer, dcr->device->changer_command, "load");
          dev->close(dcr);
          Dmsg1(dbglvl, "Run program=%s\n", changer);
          status = run_program_full_output(changer, timeout, results.addr());
@@ -284,7 +284,7 @@ int get_autochanger_loaded_slot(DCR *dcr)
       Jmsg(jcr, M_INFO, 0, _("3301 Issuing autochanger \"loaded? drive %d\" command.\n"),
            drive);
    }
-   changer = edit_device_codes(dcr, changer, dcr->device->changer_command, "loaded");
+   edit_device_codes(dcr, &changer, dcr->device->changer_command, "loaded");
    Dmsg1(dbglvl, "Run program=%s\n", changer);
    status = run_program_full_output(changer, timeout, results.addr());
    Dmsg3(dbglvl, "run_prog: %s stat=%d result=%s", changer, status, results.c_str());
@@ -406,7 +406,7 @@ bool unload_autochanger(DCR *dcr, int loaded)
          old_vol_name, loaded, dev->drive_index);
       slot = dcr->VolCatInfo.Slot;
       dcr->VolCatInfo.Slot = loaded;
-      changer = edit_device_codes(dcr, changer,
+      edit_device_codes(dcr, &changer,
                    dcr->device->changer_command, "unload");
       dev->close(dcr);
       Dmsg1(dbglvl, "Run program=%s\n", changer);
@@ -590,8 +590,7 @@ bool unload_dev(DCR *dcr, DEVICE *dev)
    Dmsg3(0/*dbglvl*/, "Issuing autochanger \"unload Volume %s, Slot %d, Drive %d\" command.\n",
         old_vol_name, dev->get_slot(), dev->drive_index);
 
-   changer_cmd = edit_device_codes(dcr, changer_cmd,
-                dcr->device->changer_command, "unload");
+   edit_device_codes(dcr, &changer_cmd, dcr->device->changer_command, "unload");
    dev->close(dcr);
    Dmsg2(dbglvl, "close dev=%s reserve=%d\n", dev->print_name(),
       dev->num_reserved());
@@ -671,8 +670,7 @@ bool autochanger_cmd(DCR *dcr, BSOCK *dir, const char *cmd)
    changer = get_pool_memory(PM_FNAME);
    lock_changer(dcr);
    /* Now issue the command */
-   changer = edit_device_codes(dcr, changer,
-                 dcr->device->changer_command, cmd);
+   edit_device_codes(dcr, &changer, dcr->device->changer_command, cmd);
    dir->fsend(_("3306 Issuing autochanger \"%s\" command.\n"), cmd);
    bpipe = open_bpipe(changer, timeout, "r");
    if (!bpipe) {
@@ -733,7 +731,7 @@ bail_out:
  *  cmd = command string (load, unload, ...)
  *
  */
-char *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd)
+void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *cmd)
 {
    const char *p;
    const char *str;
@@ -804,9 +802,8 @@ char *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd)
          str = add;
       }
       Dmsg1(1900, "add_str %s\n", str);
-      pm_strcat(&omsg, (char *)str);
+      pm_strcat(omsg, (char *)str);
       Dmsg1(1800, "omsg=%s\n", omsg);
    }
    Dmsg1(800, "omsg=%s\n", omsg);
-   return omsg;
 }

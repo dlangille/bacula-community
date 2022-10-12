@@ -110,7 +110,7 @@ int      autoload_device(DCR *dcr, bool writing, BSOCK *dir);
 bool     autochanger_cmd(DCR *dcr, BSOCK *dir, const char *cmd);
 bool     unload_autochanger(DCR *dcr, int loaded);
 bool     unload_dev(DCR *dcr, DEVICE *dev);
-char    *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd);
+void     edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *cmd);
 int      get_autochanger_loaded_slot(DCR *dcr);
 
 /* From block.c */

@@ -39,7 +39,7 @@ static bRC baculaJobMsg(bpContext *ctx, const char *file, int line,
   int type, utime_t mtime, const char *fmt, ...);
 static bRC baculaDebugMsg(bpContext *ctx, const char *file, int line,
   int level, const char *fmt, ...);
-static char *baculaEditDeviceCodes(DCR *dcr, char *omsg,
+static void baculaEditDeviceCodes(DCR *dcr, POOLMEM **omsg,
   const char *imsg, const char *cmd);
 static bool is_plugin_compatible(Plugin *plugin);
 
@@ -465,10 +465,10 @@ static bRC baculaDebugMsg(bpContext *ctx, const char *file, int line,
    return bRC_OK;
 }
 
-static char *baculaEditDeviceCodes(DCR *dcr, char *omsg,
+static void baculaEditDeviceCodes(DCR *dcr, POOLMEM **omsg,
   const char *imsg, const char *cmd)
 {
-   return edit_device_codes(dcr, omsg, imsg, cmd);
+   edit_device_codes(dcr, omsg, imsg, cmd);
 }
 
 #ifdef TEST_PROGRAM

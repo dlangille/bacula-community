@@ -46,7 +46,7 @@ bool tape_dev::get_tape_worm(DCR *dcr)
       const char *fmt = " %d";
 
       wormcmd = get_pool_memory(PM_FNAME);
-      wormcmd = edit_device_codes(dcr, wormcmd, dcr->device->worm_command, "");
+      edit_device_codes(dcr, &wormcmd, dcr->device->worm_command, "");
       /* Wait maximum 5 minutes */
       bpipe = open_bpipe(wormcmd, 60 * 5, "r");
       if (bpipe) {

@@ -99,7 +99,7 @@ bool tape_dev::get_tape_alerts(DCR *dcr)
          alert_list = New(alist(10));
       }
       alertcmd = get_pool_memory(PM_FNAME);
-      alertcmd = edit_device_codes(dcr, alertcmd, dcr->device->alert_command, "");
+      edit_device_codes(dcr, &alertcmd, dcr->device->alert_command, "");
       /* Wait maximum 5 minutes */
       bpipe = open_bpipe(alertcmd, 60 * 5, "r");
       if (bpipe) {
