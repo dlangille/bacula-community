@@ -74,6 +74,13 @@ install: installdirs
 		   $(DESTDIR)$(scriptdir)/btraceback.dbx \
 		   $(DESTDIR)$(scriptdir)/btraceback.mdb
 	$(INSTALL_SCRIPT) btraceback $(DESTDIR)$(sbindir)/btraceback
+	@if  test -f ${DESTDIR}${scriptdir}/key-manager.py; then \
+	  echo "  ==> Saving existing key-manager.py to key-manager.py.old"; \
+	  $(MV) -f ${DESTDIR}${scriptdir}/key-manager.py ${DESTDIR}${scriptdir}/key-manager.py.old; \
+	fi
+	$(INSTALL_SCRIPT) key-manager.py $(DESTDIR)$(scriptdir)/key-manager.py
+ 
+
 
 
 uninstall:
@@ -126,7 +133,7 @@ Makefiles:
 	$(SHELL) config.status
 	chmod 755 bacula btraceback
 	chmod 755 bacula-ctl-dir bacula-ctl-fd bacula-ctl-sd
-	chmod 755 mtx-changer bconsole tapealert
+	chmod 755 mtx-changer bconsole tapealert key-manager.py
 
 clean:
 	@$(RMF) *~ 1 2 3

@@ -4140,6 +4140,7 @@ AC_CONFIG_FILES([
    scripts/logrotate \
    scripts/mtx-changer \
    scripts/disk-changer \
+   scripts/key-manager.py \
    scripts/logwatch/Makefile \
    scripts/logwatch/logfile.bacula.conf \
    scripts/bat.desktop \
@@ -4286,7 +4287,7 @@ cd ${BUILD_DIR}
 
 cd scripts
 chmod 755 bacula btraceback mtx-changer
-chmod 755 bconsole disk-changer devel_bacula logrotate
+chmod 755 bconsole disk-changer devel_bacula logrotate key-manager.py
 cd ..
 
 c=updatedb
