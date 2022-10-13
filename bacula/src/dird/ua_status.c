@@ -1259,7 +1259,7 @@ static void list_running_jobs(UAContext *ua)
 
    } else if (ua->api > 1) {    // We always return something in APIv2
       ow.start_group("running");
-      ow.get_output(OT_START_ARRAY, OT_END);
+      ua->send_msg("%s", ow.get_output(OT_START_ARRAY, OT_END));
    }
 
    njobs = 0; /* count the number of job really displayed */
@@ -1454,27 +1454,31 @@ static void list_running_jobs(UAContext *ua)
          STORE    *w = wstore;
          STORE    *r = rstore;
          JOB      *j = jcr->job;
-         ow.get_output(OT_START_OBJ,
-                       OT_INT32,   "jobid",     jcr->JobId,
-                       OT_JOBLEVEL,"level",     jcr->getJobLevel(),
-                       OT_JOBTYPE, "type",      jcr->getJobType(),
-                       OT_JOBSTATUS,"status",   status,
-                       OT_STRING,  "status_desc",msg_buf.c_str(),
-                       OT_STRING,  "comment",   jcr->comment,
-                       OT_SIZE,    "jobbytes",  jcr->JobBytes,
-                       OT_INT32,   "jobfiles",  jcr->JobFiles,
-                       OT_STRING,  "job",       jcr->Job,
-                       OT_STRING,  "name",      j?j->name():"",
-                       OT_STRING,  "clientname",c?c->name():"",
-                       OT_STRING,  "fileset",   f?f->name():"",
-                       OT_STRING,  "storage",   w?w->name():"",
-                       OT_STRING,  "rstorage",  r?r->name():"",
-                       OT_UTIME,   "schedtime", jcr->sched_time,
-                       OT_UTIME,   "starttime", jcr->start_time,
-                       OT_INT32,   "priority",  jcr->JobPriority,
-                       OT_INT32,   "errors",    jcr->JobErrors,
-                       OT_END_OBJ,
-                       OT_END);
+         ua->send_msg("%s",
+                      ow.get_output(OT_CLEAR,
+                                    (njobs > 1) ? OT_SEP : OT_NOP,
+                                    OT_START_OBJ,
+                                    OT_INT32,   "jobid",     jcr->JobId,
+                                    OT_JOBLEVEL,"level",     jcr->getJobLevel(),
+                                    OT_JOBTYPE, "type",      jcr->getJobType(),
+                                    OT_JOBSTATUS,"status",   status,
+                                    OT_STRING,  "status_desc",msg_buf.c_str(),
+                                    OT_STRING,  "comment",   jcr->comment,
+                                    OT_SIZE,    "jobbytes",  jcr->JobBytes,
+                                    OT_INT32,   "jobfiles",  jcr->JobFiles,
+                                    OT_STRING,  "job",       jcr->Job,
+                                    OT_STRING,  "name",      j?j->name():"",
+                                    OT_STRING,  "clientname",c?c->name():"",
+                                    OT_STRING,  "fileset",   f?f->name():"",
+                                    OT_STRING,  "storage",   w?w->name():"",
+                                    OT_STRING,  "rstorage",  r?r->name():"",
+                                    OT_UTIME,   "schedtime", jcr->sched_time,
+                                    OT_UTIME,   "starttime", jcr->start_time,
+                                    OT_INT32,   "priority",  jcr->JobPriority,
+                                    OT_INT32,   "errors",    jcr->JobErrors,
+                                    OT_END_OBJ,
+                                    OT_END)
+            );
 
       } else {
          char b1[50], b2[50], b3[50];
@@ -1491,9 +1495,9 @@ static void list_running_jobs(UAContext *ua)
    endeach_jcr(jcr);
 
    if (ua->api > 1) {
+      ow.get_output(OT_CLEAR, OT_END);
       ow.end_list();
-      char *p = ow.end_group();
-      ua->send_msg("%s", p);
+      ua->send_msg("%s", ow.end_group());
    }
 
    if (njobs == 0) {
