@@ -476,7 +476,7 @@ static struct json_sql email_json_v1[] = {
    SAME_KW("EmailInternetMessageId", OT_STRING),
    SAME_KW("EmailIsRead", OT_BOOL),
    SAME_KW("EmailIsDraft", OT_BOOL),
-   SAME_KW("EmailTime", OT_STRING),
+   SAME_KW("EmailTime", OT_DATE),
    SAME_KW("EmailSubject", OT_STRING),
    SAME_KW("EmailTags", OT_STRING),
    SAME_KW("EmailTo", OT_STRING),
@@ -539,6 +539,26 @@ bool META_JSON_SCANNER::parse(JCR *jcr, BDB *db,
               first?' ':',',
               val->valuedouble == 0 ? 0 : 1);
          break;
+      case OT_DATE:
+      {
+         const char *def = sql_now[db_get_type_index(db)];
+         if (!cJSON_IsString(val) || (val->valuestring == NULL)) {
+            Mmsg(dest, "JSON Error: Unable to find %s", m_j2s[i].json_name);
+            goto bail_out;
+         }
+         // TODO: Need to check the date format
+         if (val->valuestring[0] != 0) { // not empty string
+            def = val->valuestring;
+         }
+         len = strlen(def);
+         esc.check_size(len*2+1);
+         db_escape_string(jcr, db, esc.c_str(), def, len);
+
+         Mmsg(tmp, "%c'%s'",
+              first?' ':',',
+              esc.c_str());
+      }
+      break;
       case OT_STRING:
          if (!cJSON_IsString(val) || (val->valuestring == NULL)) {
             Mmsg(dest, "JSON Error: Unable to find %s", m_j2s[i].json_name);

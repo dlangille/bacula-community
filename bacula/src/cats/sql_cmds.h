@@ -27,6 +27,7 @@
  *     Kern Sibbald, July MMII
  */
 
+extern const char CATS_IMP_EXP *sql_now[];
 extern const char CATS_IMP_EXP *batch_fill_filename_query[];
 extern const char CATS_IMP_EXP *batch_fill_path_query[];
 extern const char CATS_IMP_EXP *batch_lock_filename_query[];

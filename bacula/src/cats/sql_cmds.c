@@ -986,6 +986,15 @@ const char *update_counter_values[] =
    update_counter_values_default 
 }; 
 
+const char *sql_now[] = {
+   /* MySQL */
+   " NOW() ",
+   /* PostgreSQL */
+   " NOW() ",
+   /* SQLite */
+   " strftime('%s', datetime('now', 'localtime')) "
+};
+
 const char *prune_cache[] = {
    /* MySQL */
    " (Media.LastWritten + Media.CacheRetention) < NOW() ",
