@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Cloud storageclass test. Exercice the StorageClass directive.
+# Only available for AWSDriver (Amazon)
+#
+TestName="cloud-storageclass-test"
+JobName=NightlySave
+. scripts/functions
+
+require_cloud
+
+#config is required for cloud cleanup
+scripts/copy-test-confs
+scripts/cleanup
+
+FORCE_FILE_SET=${FORCE_FILE_SET:-"${cwd}/build"}
+echo "$FORCE_FILE_SET" >${cwd}/tmp/file-list
+
+start_test
+
+#requires Amazon 
+cloud_driver=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'Driver')" | awk '{print tolower($0)}') 
+if [ "x$cloud_driver" != "xamazon" ]; then
+    echo "requires Amazon cloud driver. $cloud_driver found. Test skipped."
+    exit 0
+fi
+
+# choose infrequent access for quick test
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "StorageClass", "S3StandardIA", "Cloud")'
+# extract the bucket name
+bucket_name=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'BucketName')" | awk '{print tolower($0)}') 
+
+
+##### Label
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log0.out
+setdebug tags=cloud level=50 trace=1 storage
+label storage=File volume=Vol1
+END_OF_DATA
+
+# do label
+run_bacula
+
+###### Backup
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+setdebug tags=cloud level=50 trace=1 storage
+run job=$JobName level=Full yes
+wait
+list volumes
+llist volume=Vol1
+messages
+truncate cache volume=Vol1 storage=File
+END_OF_DATA
+
+run_bconsole
+
+# Simply use the CLI to retrieve the storage class of Vol1/part.2 in bucket $bucket_name
+region=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'Region')") 
+export AWS_DEFAULT_REGION=$region
+access_key=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'AccessKey')") 
+export AWS_ACCESS_KEY_ID=$access_key
+secret_key=$($bperl -e "get_attribute('$conf/bacula-sd.conf', 'Cloud', '$CLOUD_NAME', 'SecretKey')") 
+export AWS_SECRET_ACCESS_KEY=$secret_key
+
+headobject=$(aws s3api head-object --bucket $bucket_name --key Vol1/part.2)
+
+echo $headobject
+
+echo "$headobject" | grep -q '"StorageClass"'
+if test $? -ne 0; then
+    echo "Error: No StorageClass found"
+    estat=1
+fi
+
+echo "$headobject" | grep -q '"StorageClass": "STANDARD_IA"'
+if test $? -ne 0; then
+    echo "Error: StorageClass is not STANDARD_IA"
+    estat=2
+fi
+
+check_for_zombie_jobs storage=File 
+stop_bacula
+end_test
