@@ -35,6 +35,7 @@ enum _OutputType {
    OT_STRING,
    OT_BTIME,                    /* btime_t */
    OT_UTIME,                    /* utime_t */
+   OT_DATE,
    OT_JOBTYPE,
    OT_JOBLEVEL,
    OT_JOBSTATUS,

@@ -429,6 +429,7 @@ char *OutputWriter::get_output(va_list ap, POOLMEM **out, OutputType first)
          i = va_arg(ap, int);
          Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, i?"true":"false");
          break;
+      case OT_DATE:             // Same as string for the moment
       case OT_STRING:
          s = va_arg(ap, char *);
          Mmsg(tmp, "%s%c%s", ow_quote_string(k), equal, ow_quote_string2(NPRTB(s))) ;
