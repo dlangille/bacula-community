@@ -723,6 +723,7 @@ bail_out:
  *  %s = Slot base 0
  *  %S = Slot base 1
  *  %v = Volume name
+ *  %V = Volume name from dcr->VolCatInfo first
  *
  *
  *  omsg = edited output message
@@ -736,7 +737,7 @@ void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *c
    const char *str;
    char add[20];
 
-   *omsg = 0;
+   **omsg = 0;
    Dmsg1(1800, "edit_device_codes: %s\n", imsg);
    for (p=imsg; *p; p++) {
       if (*p == '%') {
@@ -784,6 +785,19 @@ void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *c
                str = dcr->dev->VolHdr.VolumeName;
             }
             break;
+         case 'V':
+            if (dcr->VolCatInfo.VolCatName[0]) {
+               str = dcr->VolCatInfo.VolCatName;
+            } else if (dcr->VolumeName[0]) {
+               str = dcr->VolumeName;
+            } else if (dcr->dev->LoadedVolName[0]) {
+                  str = dcr->dev->LoadedVolName;
+            } else if (dcr->dev->vol && dcr->dev->vol->vol_name) {
+               str = dcr->dev->vol->vol_name;
+            } else {
+               str = dcr->dev->VolHdr.VolumeName;
+            }
+            break;
          case 'f':
             str = NPRT(dcr->jcr->client_name);
             break;
@@ -802,7 +816,7 @@ void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *c
       }
       Dmsg1(1900, "add_str %s\n", str);
       pm_strcat(omsg, (char *)str);
-      Dmsg1(1800, "omsg=%s\n", omsg);
+      Dmsg1(1800, "omsg=%s\n", *omsg);
    }
-   Dmsg1(800, "omsg=%s\n", omsg);
+   Dmsg1(800, "omsg=%s\n", *omsg);
 }
