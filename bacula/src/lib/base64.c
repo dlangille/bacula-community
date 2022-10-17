@@ -228,32 +228,55 @@ int bin_to_base64_pad(char *buf, int buflen, char *bin, int binlen)
  */
 int base64_to_bin(char *dest, int dest_size, const char *src, int srclen)
 {
+   uint8_t *ui8_dest = (uint8_t*) dest;
    uint8_t *bufout = (uint8_t*) dest;
    const uint8_t *bufin0 = (const uint8_t *) src;
+
    bool err = false;
    /* Bacula base64 strings are not always padded with = */
    while (1) {
-      while (*bufin0 != 0 && *bufin0 != '=' && isspace(*bufin0)) bufin0++;
-      if (*bufin0 == 0 || *bufin0 == '=' || (err=base64_map[*bufin0] == 0xff)) break;
+      while (*bufin0 != 0 && *bufin0 != '=' && isspace(*bufin0)) {
+         bufin0++;
+      }
+      if (*bufin0 == 0 || *bufin0 == '=' || (err=(base64_map[*bufin0] == 0xff))) {
+         break;
+      }
       const uint8_t *bufin1 = bufin0 + 1;
-      while (*bufin1 != 0 && *bufin1 != '=' && isspace(*bufin1)) bufin1++;
-      if (*bufin1 == 0 || *bufin1 == '=' || (err=base64_map[*bufin1] == 0xff)
-            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      while (*bufin1 != 0 && *bufin1 != '=' && isspace(*bufin1)) {
+         bufin1++;
+      }
+      if (*bufin1 == 0 || *bufin1 == '=' ||
+          (err=(base64_map[*bufin1] == 0xff)) ||
+          (err=((bufout-ui8_dest) > dest_size)))
+      {
+         break;
+      }
       *(bufout++) = (base64_map[*bufin0] << 2 | base64_map[*bufin1] >> 4);
       const uint8_t *bufin2 = bufin1 + 1;
-      while (*bufin2 != 0 && *bufin2 != '=' && isspace(*bufin2)) bufin2++;
-      if (*bufin2 == 0 || *bufin2 == '=' || (err=base64_map[*bufin2] == 0xff)
-            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      while (*bufin2 != 0 && *bufin2 != '=' && isspace(*bufin2)) {
+         bufin2++;
+      }
+      if (*bufin2 == 0 || *bufin2 == '=' ||
+          (err=(base64_map[*bufin2] == 0xff)) ||
+          (err=(bufout-ui8_dest > dest_size)))
+      {
+         break;
+      }
       *(bufout++) = (base64_map[*bufin1] << 4 | base64_map[*bufin2] >> 2);
       const uint8_t *bufin3 = bufin2 + 1;
-      while (*bufin3 != 0 && *bufin3 != '=' && isspace(*bufin3)) bufin3++;
-      if (*bufin3 == 0 || *bufin3 == '=' || (err=base64_map[*bufin3] == 0xff)
-            || (err=bufout-(uint8_t *)dest > dest_size)) break;
+      while (*bufin3 != 0 && *bufin3 != '=' && isspace(*bufin3)) {
+         bufin3++;
+      }
+      if (*bufin3 == 0 || *bufin3 == '=' ||
+          (err=(base64_map[*bufin3] == 0xff)) ||
+          (err=(bufout-ui8_dest > dest_size))) {
+         break;
+      }
       *(bufout++) = (base64_map[*bufin2] << 6 | base64_map[*bufin3]);
       bufin0 = bufin3 + 1;
    }
    /* *bufout = 0; // don't end binary with 0 */
-   return err?0:(bufout - (uint8_t *) dest);
+   return err?0:(bufout - ui8_dest);
 }
 #ifdef BIN_TEST
 int main(int argc, char *argv[])
