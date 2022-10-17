@@ -1226,13 +1226,12 @@ static void list_running_jobs(UAContext *ua)
    int i;
    int32_t status;
    const char *msg, *msgdir;
-   char *emsg;                        /* edited message */
    char dt[MAX_TIME_LENGTH];
    char level[10];
-   bool pool_mem = false;
    OutputWriter ow(ua->api_opts);
    JobId_t jid = 0;
    POOL_MEM msg_buf;
+   POOL_MEM emsg;
 
    if ((i = find_arg_with_value(ua, "jobid")) >= 0) {
       jid = str_to_int64(ua->argv[i]);
@@ -1318,17 +1317,14 @@ static void list_running_jobs(UAContext *ua)
          msg = _("has been canceled");
          break;
       case JS_WaitFD:
-         emsg = (char *) get_pool_memory(PM_FNAME);
          if (!jcr->client) {
             Mmsg(emsg, _("is waiting on Client"));
          } else {
             Mmsg(emsg, _("is waiting on Client %s"), jcr->client->name());
          }
-         pool_mem = true;
-         msg = emsg;
+         msg = emsg.c_str();
          break;
       case JS_WaitSD:
-         emsg = (char *) get_pool_memory(PM_FNAME);
          if (wstore) {
             Mmsg(emsg, _("is waiting on Storage \"%s\""), wstore->name());
          } else if (rstore) {
@@ -1336,8 +1332,7 @@ static void list_running_jobs(UAContext *ua)
          } else {
             Mmsg(emsg, _("is waiting on Storage"));
          }
-         pool_mem = true;
-         msg = emsg;
+         msg = emsg.c_str();
          break;
       case JS_WaitStoreRes:
          msg = _("is waiting on max Storage jobs");
@@ -1352,11 +1347,9 @@ static void list_running_jobs(UAContext *ua)
          msg = _("is waiting on max total jobs");
          break;
       case JS_WaitStartTime:
-         emsg = (char *) get_pool_memory(PM_FNAME);
          Mmsg(emsg, _("is waiting for its start time (%s)"),
               bstrftime_ny(dt, sizeof(dt), jcr->sched_time));
-         pool_mem = true;
-         msg = emsg;
+         msg = emsg.c_str();
          break;
       case JS_WaitPriority:
          msg = _("is waiting for higher priority jobs to finish");
@@ -1378,10 +1371,8 @@ static void list_running_jobs(UAContext *ua)
          break;
 
       default:
-         emsg = (char *)get_pool_memory(PM_FNAME);
          Mmsg(emsg, _("is in unknown state %c"), jcr->JobStatus);
-         pool_mem = true;
-         msg = emsg;
+         msg = emsg.c_str();
          break;
       }
       msgdir = msg;             /* Keep it to know if we update the status variable */
@@ -1390,34 +1381,22 @@ static void list_running_jobs(UAContext *ua)
        */
       switch (jcr->SDJobStatus) {
       case JS_WaitMount:
-         if (pool_mem) {
-            free_pool_memory(emsg);
-            pool_mem = false;
-         }
          msg = _("is waiting for a mount request");
          break;
       case JS_WaitMedia:
-         if (pool_mem) {
-            free_pool_memory(emsg);
-            pool_mem = false;
-         }
          msg = _("is waiting for an appendable Volume");
          break;
       case JS_WaitFD:
          /* Special case when JobStatus=JS_WaitFD, we don't have a FD link yet 
           * we need to stay in WaitFD status See bee mantis #1414 */
          if (jcr->JobStatus != JS_WaitFD) {
-            if (!pool_mem) {
-               emsg = (char *)get_pool_memory(PM_FNAME);
-               pool_mem = true;
-            }
             if (!jcr->client || !wstore) {
                Mmsg(emsg, _("is waiting for Client to connect to Storage daemon"));
             } else {
                Mmsg(emsg, _("is waiting for Client %s to connect to Storage %s"),
                     jcr->client->name(), wstore->name());
             }
-            msg = emsg;
+            msg = emsg.c_str();
          }
         break;
       case JS_DataCommitting:
@@ -1507,11 +1486,6 @@ static void list_running_jobs(UAContext *ua)
             edit_uint64_with_commas(jcr->JobFiles, b2),
             edit_uint64_with_suffix(jcr->JobBytes, b3),
             jcr->job->name(), msg_buf.c_str());
-      }
-
-      if (pool_mem) {
-         free_pool_memory(emsg);
-         pool_mem = false;
       }
    }
    endeach_jcr(jcr);
