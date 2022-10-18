@@ -78,6 +78,9 @@ void new_rx(RESTORE_CTX *rx)
    rx->JobIds = get_pool_memory(PM_FNAME);
    rx->JobIds[0] = 0;
 
+   rx->jobids_inserted = get_pool_memory(PM_FNAME);
+   rx->jobids_inserted[0] = 0;
+
    rx->component_fname = get_pool_memory(PM_FNAME);
    rx->component_fname[0] = 0;
 
@@ -417,6 +420,8 @@ int restore_cmd(UAContext *ua, const char *cmd)
    jcr->JobIds = rx.JobIds;
    rx.JobIds = NULL;
 
+   free_and_null_pool_memory(rx.jobids_inserted);
+
    free_and_null_pool_memory(jcr->component_fname);
    jcr->component_fname = rx.component_fname;
    rx.component_fname = NULL;
@@ -489,6 +494,7 @@ void free_rx(RESTORE_CTX *rx)
    }
 
    free_and_null_pool_memory(rx->JobIds);
+   free_and_null_pool_memory(rx->jobids_inserted);
    free_and_null_pool_memory(rx->BaseJobIds);
    free_and_null_pool_memory(rx->fname);
    free_and_null_pool_memory(rx->path);
@@ -717,7 +723,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       NULL
    };
 
-   rx->JobIds[0] = 0;
+   rx->jobids_inserted[0] = rx->JobIds[0] = 0;
 
    for (i=1; i<ua->argc; i++) {       /* loop through arguments */
       bool found_kw = false;
@@ -1177,8 +1183,7 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
    }
 
    memset(&jr, 0, sizeof(JOB_DBR));
-   POOLMEM *JobIds = get_pool_memory(PM_FNAME);
-   *JobIds = 0;
+   POOL_MEM JobIds;
    rx->TotalFiles = 0;
    /*
     * Find total number of files to be restored, and filter the JobId
@@ -1189,7 +1194,6 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       int stat = get_next_jobid_from_list(&p, &JobId);
       if (stat < 0) {
          ua->error_msg(_("Invalid JobId in list.\n"));
-         free_pool_memory(JobIds);
          return 0;
       }
       if (stat == 0) {
@@ -1203,7 +1207,6 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
       if (!db_get_job_record(ua->jcr, ua->db, &jr)) {
          ua->error_msg(_("Unable to get Job record for JobId=%s: ERR=%s\n"),
             edit_int64(JobId, ed1), db_strerror(ua->db));
-         free_pool_memory(JobIds);
          return 0;
       }
       if (!acl_access_ok(ua, Job_ACL, jr.Name)) {
@@ -1211,14 +1214,13 @@ static int user_select_jobids_or_files(UAContext *ua, RESTORE_CTX *rx)
             edit_int64(JobId, ed1), jr.Name);
          continue;
       }
-      if (*JobIds != 0) {
+      if (JobIds.c_str()[0] != 0) {
          pm_strcat(JobIds, ",");
       }
       pm_strcat(JobIds, edit_int64(JobId, ed1));
       rx->TotalFiles += jr.JobFiles;
    }
    pm_strcpy(rx->JobIds, JobIds);     /* Set ACL filtered list */
-   free_pool_memory(JobIds);
    if (*rx->JobIds == 0) {
       ua->warning_msg(_("No Jobs selected.\n"));
       return 0;
@@ -1447,6 +1449,13 @@ bool insert_table_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *table)
     * TODO: We might check if we have a RestoreObject associated with the job to
     * compute or not the list.
     */
+   if (*rx->jobids_inserted) {  /* Some records can come from insert_dir_into_findex_list() */
+      if (*rx->JobIds) {
+         pm_strcat(rx->JobIds, ",");
+      }
+      pm_strcat(rx->JobIds, rx->jobids_inserted);
+      *rx->jobids_inserted = 0;
+   }
    Mmsg(rx->query,
         "SELECT Path.Path, File.Filename "
         "FROM File JOIN Path USING (PathId) "
@@ -1953,7 +1962,7 @@ static bool select_backups_before_date(UAContext *ua, RESTORE_CTX *rx, char *dat
    }
 
    /* Get the JobIds from that list */
-   rx->last_jobid[0] = rx->JobIds[0] = 0;
+   rx->last_jobid[0] = rx->JobIds[0] = rx->jobids_inserted[0] = 0;
 
    if (!db_sql_query(ua->db, uar_sel_jobid_temp, jobid_handler, (void *)rx)) {
       ua->warning_msg("%s\n", db_strerror(ua->db));
@@ -1994,7 +2003,7 @@ static int jobid_fileindex_handler(void *ctx, int num_fields, char **row)
 
    Dmsg3(200, "JobId=%s JobIds=%s FileIndex=%s\n", row[0], rx->JobIds, row[1]);
 
-   /* New JobId, add it to JobIds
+   /* New JobId, add it to jobids_inserted
     * The list is sorted by JobId, so we need a cache for the previous value
     *
     * It will permit to find restore objects to send during the restore
@@ -2002,11 +2011,11 @@ static int jobid_fileindex_handler(void *ctx, int num_fields, char **row)
    if (!rx->found) {
       rx->JobId = JobId;
    }
-   if (*rx->JobIds == '\0' || rx->JobId != JobId) {
-      if (*rx->JobIds) {
-         pm_strcat(rx->JobIds, ",");
+   if (*rx->jobids_inserted == '\0' || rx->JobId != JobId) {
+      if (*rx->jobids_inserted) {
+         pm_strcat(rx->jobids_inserted, ",");
       }
-      pm_strcat(rx->JobIds, row[0]);
+      pm_strcat(rx->jobids_inserted, row[0]);
       rx->JobId = JobId;
    }
 

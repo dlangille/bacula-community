@@ -117,6 +117,7 @@ struct RESTORE_CTX {
    char RestoreMediaType[MAX_NAME_LENGTH];   /* restore Media type when storage override */
    char last_jobid[20];
    POOLMEM *JobIds;                   /* User entered string of JobIds */
+   POOLMEM *jobids_inserted;          /* JobIds inserted into the restore */
    POOLMEM *BaseJobIds;               /* Base jobids */
    STORE  *store;
    JOB *restore_job;
