@@ -22,6 +22,7 @@ cd ${cwd}/tmp/build
 ls >../1
 cd ..
 sed s%\^%${cwd}/tmp/build/% 1 | sort | uniq >restore-list
+echo $tmp/build/fr.po >> restore-list
 rm -f 1
 cd ${cwd}
 
@@ -33,6 +34,10 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @$out ${cwd}/tmp/log1.out
 label storage=File volume=TestVolume001
+run job=$JobName yes
+wait
+messages
+@exec "cp $cwd/build/po/fr.po $tmp/build"
 run job=$JobName yes
 wait
 messages
