@@ -1472,7 +1472,6 @@ bool crypto_cipher_finalize (CIPHER_CONTEXT *cipher_ctx, uint8_t *dest, uint32_t
    }
 }
 
-
 /*
  * Free memory associated with a cipher context.
  */
@@ -1482,238 +1481,6 @@ void crypto_cipher_free (CIPHER_CONTEXT *cipher_ctx)
    free (cipher_ctx);
 }
 
-#else /* HAVE_OPENSSL */
-# error No encryption library available
-#endif /* HAVE_OPENSSL */
-
-#else /* HAVE_CRYPTO */
-
-/*
- * Cryptography Support Disabled
- */
-
-/* Message Digest Structure */
-struct Digest {
-   crypto_digest_t type;
-   JCR *jcr;
-   union {
-      SHA1Context sha1;
-      MD5Context md5;
-   };
-};
-
-/* Dummy Signature Structure */
-struct Signature {
-   JCR *jcr;
-};
-
-DIGEST *crypto_digest_new(JCR *jcr, crypto_digest_t type)
-{
-   DIGEST *digest;
-
-   digest = (DIGEST *)malloc(sizeof(DIGEST));
-   digest->type = type;
-   digest->jcr = jcr;
-
-   switch (type) {
-   case CRYPTO_DIGEST_MD5:
-      MD5Init(&digest->md5);
-      break;
-   case CRYPTO_DIGEST_SHA1:
-      SHA1Init(&digest->sha1);
-      break;
-   default:
-      Jmsg1(jcr, M_ERROR, 0, _("Unsupported digest type=%d specified\n"), type);
-      free(digest);
-      return NULL;
-   }
-
-   return (digest);
-}
-
-bool crypto_digest_update(DIGEST *digest, const uint8_t *data, uint32_t length)
-{
-   switch (digest->type) {
-   case CRYPTO_DIGEST_MD5:
-      /* Doesn't return anything ... */
-      MD5Update(&digest->md5, (unsigned char *) data, length);
-      return true;
-   case CRYPTO_DIGEST_SHA1:
-      int ret;
-      if ((ret = SHA1Update(&digest->sha1, (const u_int8_t *) data, length)) == shaSuccess) {
-         return true;
-      } else {
-         Jmsg1(NULL, M_ERROR, 0, _("SHA1Update() returned an error: %d\n"), ret);
-         return false;
-      }
-      break;
-   default:
-      return false;
-   }
-}
-
-bool crypto_digest_finalize(DIGEST *digest, uint8_t *dest, uint32_t *length)
-{
-   switch (digest->type) {
-   case CRYPTO_DIGEST_MD5:
-      /* Guard against programmer error by either the API client or
-       * an out-of-sync CRYPTO_DIGEST_MAX_SIZE */
-      assert(*length >= CRYPTO_DIGEST_MD5_SIZE);
-      *length = CRYPTO_DIGEST_MD5_SIZE;
-      /* Doesn't return anything ... */
-      MD5Final((unsigned char *)dest, &digest->md5);
-      return true;
-   case CRYPTO_DIGEST_SHA1:
-      /* Guard against programmer error by either the API client or
-       * an out-of-sync CRYPTO_DIGEST_MAX_SIZE */
-      assert(*length >= CRYPTO_DIGEST_SHA1_SIZE);
-      *length = CRYPTO_DIGEST_SHA1_SIZE;
-      if (SHA1Final(&digest->sha1, (u_int8_t *) dest) == shaSuccess) {
-         return true;
-      } else {
-         return false;
-      }
-      break;
-   default:
-      return false;
-   }
-
-   return false;
-}
-
-void crypto_digest_free(DIGEST *digest)
-{
-   free(digest);
-}
-
-SIGNATURE *crypto_sign_new(JCR *jcr) { return NULL; }
-
-crypto_error_t crypto_sign_get_digest (SIGNATURE *sig, X509_KEYPAIR *keypair,
-                                       crypto_digest_t &type, DIGEST **digest)
-   { return CRYPTO_ERROR_INTERNAL; }
-
-crypto_error_t crypto_sign_verify (SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST *digest) { return CRYPTO_ERROR_INTERNAL; }
-
-int crypto_sign_add_signer (SIGNATURE *sig, DIGEST *digest, X509_KEYPAIR *keypair) { return false; }
-int crypto_sign_encode (SIGNATURE *sig, uint8_t *dest, uint32_t *length) { return false; }
-
-SIGNATURE *crypto_sign_decode (JCR *jcr, const uint8_t *sigData, uint32_t length) { return NULL; }
-void crypto_sign_free (SIGNATURE *sig) { }
-
-
-X509_KEYPAIR *crypto_keypair_new(void) { return NULL; }
-X509_KEYPAIR *crypto_keypair_dup (X509_KEYPAIR *keypair) { return NULL; }
-int crypto_keypair_load_cert (X509_KEYPAIR *keypair, const char *file) { return false; }
-bool crypto_keypair_has_key (const char *file) { return false; }
-int crypto_keypair_load_key (X509_KEYPAIR *keypair, const char *file, CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata) { return false; }
-void crypto_keypair_free (X509_KEYPAIR *keypair) { }
-
-CRYPTO_SESSION *crypto_session_new (crypto_cipher_t cipher, alist *pubkeys) { return NULL; }
-void crypto_session_free (CRYPTO_SESSION *cs) { }
-bool crypto_session_encode (CRYPTO_SESSION *cs, uint8_t *dest, uint32_t *length) { return false; }
-crypto_error_t crypto_session_decode(const uint8_t *data, uint32_t length, alist *keypairs, CRYPTO_SESSION **session) { return CRYPTO_ERROR_INTERNAL; }
-
-CIPHER_CONTEXT *crypto_cipher_new (CRYPTO_SESSION *cs, bool encrypt, uint32_t *blocksize) { return NULL; }
-bool crypto_cipher_update (CIPHER_CONTEXT *cipher_ctx, const uint8_t *data, uint32_t length, const uint8_t *dest, uint32_t *written) { return false; }
-bool crypto_cipher_finalize (CIPHER_CONTEXT *cipher_ctx, uint8_t *dest, uint32_t *written) { return false; }
-void crypto_cipher_free (CIPHER_CONTEXT *cipher_ctx) { }
-
-#endif /* HAVE_CRYPTO */
-
-/* Shared Code */
-
-/*
- * Default PEM encryption passphrase callback.
- * Returns an empty password.
- */
-int crypto_default_pem_callback(char *buf, int size, const void *userdata)
-{
-   bstrncpy(buf, "", size);
-   return (strlen(buf));
-}
-
-/*
- * Returns the ASCII name of the digest type.
- * Returns: ASCII name of digest type.
- */
-const char *crypto_digest_name(DIGEST *digest)
-{
-   switch (digest->type) {
-   case CRYPTO_DIGEST_MD5:
-      return "MD5";
-   case CRYPTO_DIGEST_SHA1:
-      return "SHA1";
-   case CRYPTO_DIGEST_SHA256:
-      return "SHA256";
-   case CRYPTO_DIGEST_SHA512:
-      return "SHA512";
-   case CRYPTO_DIGEST_XXHASH64:
-      return "XXHASH64";
-   case CRYPTO_DIGEST_XXH3_64:
-      return "XXH3_64";
-   case CRYPTO_DIGEST_XXH3_128:
-      return "XXH3_128";
-   case CRYPTO_DIGEST_NONE:
-      return "None";
-   default:
-      return "Invalid Digest Type";
-   }
-
-}
-
-/*
- * Given a stream type, returns the associated
- * crypto_digest_t value.
- */
-crypto_digest_t crypto_digest_stream_type(int stream)
-{
-   switch (stream) {
-   case STREAM_MD5_DIGEST:
-      return CRYPTO_DIGEST_MD5;
-   case STREAM_SHA1_DIGEST:
-      return CRYPTO_DIGEST_SHA1;
-   case STREAM_SHA256_DIGEST:
-      return CRYPTO_DIGEST_SHA256;
-   case STREAM_SHA512_DIGEST:
-      return CRYPTO_DIGEST_SHA512;
-   case STREAM_XXHASH64_DIGEST:
-      return CRYPTO_DIGEST_XXHASH64;
-   case STREAM_XXH3_64_DIGEST:
-      return CRYPTO_DIGEST_XXH3_64;
-   case STREAM_XXH3_128_DIGEST:
-      return CRYPTO_DIGEST_XXH3_128;
-   default:
-      return CRYPTO_DIGEST_NONE;
-   }
-}
-
-/*
- *  * Given a crypto_error_t value, return the associated
- *   * error string
- *    */
-const char *crypto_strerror(crypto_error_t error) {
-   switch (error) {
-   case CRYPTO_ERROR_NONE:
-      return _("No error");
-   case CRYPTO_ERROR_NOSIGNER:
-      return _("Signer not found");
-   case CRYPTO_ERROR_NORECIPIENT:
-      return _("Recipient not found");
-   case CRYPTO_ERROR_INVALID_DIGEST:
-      return _("Unsupported digest algorithm");
-   case CRYPTO_ERROR_INVALID_CRYPTO:
-      return _("Unsupported encryption algorithm");
-   case CRYPTO_ERROR_BAD_SIGNATURE:
-      return _("Signature is invalid");
-   case CRYPTO_ERROR_DECRYPTION:
-      return _("Decryption error");
-   case CRYPTO_ERROR_INTERNAL:
-      /* This shouldn't happen */
-      return _("Internal error");
-   default:
-      return _("Unknown error");
-   }
-}
 
 struct block_cipher_context
 {
@@ -1867,11 +1634,281 @@ int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx)
    return blk_ctx->key_length;
 }
 
+
+#else /* HAVE_OPENSSL */
+# error No encryption library available
+#endif /* HAVE_OPENSSL */
+
+#else /* HAVE_CRYPTO */
+
+/*
+ * Cryptography Support Disabled
+ */
+
+/* Message Digest Structure */
+struct Digest {
+   crypto_digest_t type;
+   JCR *jcr;
+   union {
+      SHA1Context sha1;
+      MD5Context md5;
+   };
+};
+
+/* Dummy Signature Structure */
+struct Signature {
+   JCR *jcr;
+};
+
+DIGEST *crypto_digest_new(JCR *jcr, crypto_digest_t type)
+{
+   DIGEST *digest;
+
+   digest = (DIGEST *)malloc(sizeof(DIGEST));
+   digest->type = type;
+   digest->jcr = jcr;
+
+   switch (type) {
+   case CRYPTO_DIGEST_MD5:
+      MD5Init(&digest->md5);
+      break;
+   case CRYPTO_DIGEST_SHA1:
+      SHA1Init(&digest->sha1);
+      break;
+   default:
+      Jmsg1(jcr, M_ERROR, 0, _("Unsupported digest type=%d specified\n"), type);
+      free(digest);
+      return NULL;
+   }
+
+   return (digest);
+}
+
+bool crypto_digest_update(DIGEST *digest, const uint8_t *data, uint32_t length)
+{
+   switch (digest->type) {
+   case CRYPTO_DIGEST_MD5:
+      /* Doesn't return anything ... */
+      MD5Update(&digest->md5, (unsigned char *) data, length);
+      return true;
+   case CRYPTO_DIGEST_SHA1:
+      int ret;
+      if ((ret = SHA1Update(&digest->sha1, (const u_int8_t *) data, length)) == shaSuccess) {
+         return true;
+      } else {
+         Jmsg1(NULL, M_ERROR, 0, _("SHA1Update() returned an error: %d\n"), ret);
+         return false;
+      }
+      break;
+   default:
+      return false;
+   }
+}
+
+bool crypto_digest_finalize(DIGEST *digest, uint8_t *dest, uint32_t *length)
+{
+   switch (digest->type) {
+   case CRYPTO_DIGEST_MD5:
+      /* Guard against programmer error by either the API client or
+       * an out-of-sync CRYPTO_DIGEST_MAX_SIZE */
+      assert(*length >= CRYPTO_DIGEST_MD5_SIZE);
+      *length = CRYPTO_DIGEST_MD5_SIZE;
+      /* Doesn't return anything ... */
+      MD5Final((unsigned char *)dest, &digest->md5);
+      return true;
+   case CRYPTO_DIGEST_SHA1:
+      /* Guard against programmer error by either the API client or
+       * an out-of-sync CRYPTO_DIGEST_MAX_SIZE */
+      assert(*length >= CRYPTO_DIGEST_SHA1_SIZE);
+      *length = CRYPTO_DIGEST_SHA1_SIZE;
+      if (SHA1Final(&digest->sha1, (u_int8_t *) dest) == shaSuccess) {
+         return true;
+      } else {
+         return false;
+      }
+      break;
+   default:
+      return false;
+   }
+
+   return false;
+}
+
+void crypto_digest_free(DIGEST *digest)
+{
+   free(digest);
+}
+
+SIGNATURE *crypto_sign_new(JCR *jcr) { return NULL; }
+
+crypto_error_t crypto_sign_get_digest (SIGNATURE *sig, X509_KEYPAIR *keypair,
+                                       crypto_digest_t &type, DIGEST **digest)
+   { return CRYPTO_ERROR_INTERNAL; }
+
+crypto_error_t crypto_sign_verify (SIGNATURE *sig, X509_KEYPAIR *keypair, DIGEST *digest) { return CRYPTO_ERROR_INTERNAL; }
+
+int crypto_sign_add_signer (SIGNATURE *sig, DIGEST *digest, X509_KEYPAIR *keypair) { return false; }
+int crypto_sign_encode (SIGNATURE *sig, uint8_t *dest, uint32_t *length) { return false; }
+
+SIGNATURE *crypto_sign_decode (JCR *jcr, const uint8_t *sigData, uint32_t length) { return NULL; }
+void crypto_sign_free (SIGNATURE *sig) { }
+
+
+X509_KEYPAIR *crypto_keypair_new(void) { return NULL; }
+X509_KEYPAIR *crypto_keypair_dup (X509_KEYPAIR *keypair) { return NULL; }
+int crypto_keypair_load_cert (X509_KEYPAIR *keypair, const char *file) { return false; }
+bool crypto_keypair_has_key (const char *file) { return false; }
+int crypto_keypair_load_key (X509_KEYPAIR *keypair, const char *file, CRYPTO_PEM_PASSWD_CB *pem_callback, const void *pem_userdata) { return false; }
+void crypto_keypair_free (X509_KEYPAIR *keypair) { }
+
+CRYPTO_SESSION *crypto_session_new (crypto_cipher_t cipher, alist *pubkeys) { return NULL; }
+void crypto_session_free (CRYPTO_SESSION *cs) { }
+bool crypto_session_encode (CRYPTO_SESSION *cs, uint8_t *dest, uint32_t *length) { return false; }
+crypto_error_t crypto_session_decode(const uint8_t *data, uint32_t length, alist *keypairs, CRYPTO_SESSION **session) { return CRYPTO_ERROR_INTERNAL; }
+
+CIPHER_CONTEXT *crypto_cipher_new (CRYPTO_SESSION *cs, bool encrypt, uint32_t *blocksize) { return NULL; }
+bool crypto_cipher_update (CIPHER_CONTEXT *cipher_ctx, const uint8_t *data, uint32_t length, const uint8_t *dest, uint32_t *written) { return false; }
+bool crypto_cipher_finalize (CIPHER_CONTEXT *cipher_ctx, uint8_t *dest, uint32_t *written) { return false; }
+void crypto_cipher_free (CIPHER_CONTEXT *cipher_ctx) { }
+
+
+BLOCK_CIPHER_CONTEXT *block_cipher_context_new(block_cipher_type blk_type)
+{
+   return NULL;
+}
+
+void block_cipher_context_free(BLOCK_CIPHER_CONTEXT *blk_ctx)
+{
+}
+
+void block_cipher_init_key(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *key)
+{
+}
+
+void block_cipher_init_iv(BLOCK_CIPHER_CONTEXT *blk_ctx, const unsigned char *iv)
+{
+}
+
+void block_cipher_init_iv_header(BLOCK_CIPHER_CONTEXT *blk_ctx, uint32_t BlockNumber, uint32_t VolSessionId, uint32_t VolSessionTime)
+{
+}
+
+int block_cipher_encrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst)
+{
+   return -1;
+}
+
+int block_cipher_decrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst)
+{
+   return -1;
+}
+
+int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx)
+{
+   return 0;
+}
+
+#endif /* HAVE_CRYPTO */
+
+/* Shared Code */
+
 /* wrapper for XXH3_64bits, this is for Windows bacula.dll because XXH3_64bits
  * don't show up in  bacula64.def
  */
 uint64_t bXXH3_64bits(const void* input, size_t length)
 {
-   return XXH3_64bits(input, length);
+   return 0;
 }
 
+/*
+ * Default PEM encryption passphrase callback.
+ * Returns an empty password.
+ */
+int crypto_default_pem_callback(char *buf, int size, const void *userdata)
+{
+   bstrncpy(buf, "", size);
+   return (strlen(buf));
+}
+
+/*
+ * Returns the ASCII name of the digest type.
+ * Returns: ASCII name of digest type.
+ */
+const char *crypto_digest_name(DIGEST *digest)
+{
+   switch (digest->type) {
+   case CRYPTO_DIGEST_MD5:
+      return "MD5";
+   case CRYPTO_DIGEST_SHA1:
+      return "SHA1";
+   case CRYPTO_DIGEST_SHA256:
+      return "SHA256";
+   case CRYPTO_DIGEST_SHA512:
+      return "SHA512";
+   case CRYPTO_DIGEST_XXHASH64:
+      return "XXHASH64";
+   case CRYPTO_DIGEST_XXH3_64:
+      return "XXH3_64";
+   case CRYPTO_DIGEST_XXH3_128:
+      return "XXH3_128";
+   case CRYPTO_DIGEST_NONE:
+      return "None";
+   default:
+      return "Invalid Digest Type";
+   }
+
+}
+
+/*
+ * Given a stream type, returns the associated
+ * crypto_digest_t value.
+ */
+crypto_digest_t crypto_digest_stream_type(int stream)
+{
+   switch (stream) {
+   case STREAM_MD5_DIGEST:
+      return CRYPTO_DIGEST_MD5;
+   case STREAM_SHA1_DIGEST:
+      return CRYPTO_DIGEST_SHA1;
+   case STREAM_SHA256_DIGEST:
+      return CRYPTO_DIGEST_SHA256;
+   case STREAM_SHA512_DIGEST:
+      return CRYPTO_DIGEST_SHA512;
+   case STREAM_XXHASH64_DIGEST:
+      return CRYPTO_DIGEST_XXHASH64;
+   case STREAM_XXH3_64_DIGEST:
+      return CRYPTO_DIGEST_XXH3_64;
+   case STREAM_XXH3_128_DIGEST:
+      return CRYPTO_DIGEST_XXH3_128;
+   default:
+      return CRYPTO_DIGEST_NONE;
+   }
+}
+
+/*
+ *  * Given a crypto_error_t value, return the associated
+ *   * error string
+ *    */
+const char *crypto_strerror(crypto_error_t error) {
+   switch (error) {
+   case CRYPTO_ERROR_NONE:
+      return _("No error");
+   case CRYPTO_ERROR_NOSIGNER:
+      return _("Signer not found");
+   case CRYPTO_ERROR_NORECIPIENT:
+      return _("Recipient not found");
+   case CRYPTO_ERROR_INVALID_DIGEST:
+      return _("Unsupported digest algorithm");
+   case CRYPTO_ERROR_INVALID_CRYPTO:
+      return _("Unsupported encryption algorithm");
+   case CRYPTO_ERROR_BAD_SIGNATURE:
+      return _("Signature is invalid");
+   case CRYPTO_ERROR_DECRYPTION:
+      return _("Decryption error");
+   case CRYPTO_ERROR_INTERNAL:
+      /* This shouldn't happen */
+      return _("Internal error");
+   default:
+      return _("Unknown error");
+   }
+}
