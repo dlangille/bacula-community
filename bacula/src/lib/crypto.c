@@ -1866,3 +1866,12 @@ int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx)
 {
    return blk_ctx->key_length;
 }
+
+/* wrapper for XXH3_64bits, this is for Windows bacula.dll because XXH3_64bits
+ * don't show up in  bacula64.def
+ */
+uint64_t bXXH3_64bits(const void* input, size_t length)
+{
+   return XXH3_64bits(input, length);
+}
+

@@ -26,7 +26,6 @@
 
 #include "bacula.h"
 #include "stored.h"
-#include "lib/xxhash.h"
 
 static const int dbglvl = 160;
 
@@ -101,7 +100,7 @@ void dump_block(DEVICE *dev, DEV_BLOCK *b, const char *msg, bool force)
       uint64_t save;
       memcpy(&save, b->buf+BLKHDR_CS64_OFFSET, BLKHDR_CS64_LENGTH);
       memset(b->buf+BLKHDR_CS64_OFFSET, '\0', BLKHDR_CS64_LENGTH);
-      BlockCheckSum64 = XXH3_64bits((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
+      BlockCheckSum64 = bXXH3_64bits((uint8_t *)b->buf+BLKHDR_CS_LENGTH,
                             block_len-BLKHDR_CS_LENGTH);
       /* restore the checksum */
       memcpy(b->buf+BLKHDR_CS64_OFFSET, &save, BLKHDR_CS64_LENGTH);
@@ -415,7 +414,7 @@ uint64_t ser_block_header(DEV_BLOCK *block, bool do_checksum)
       ser_uint64(0x00); // the XXH3_64 checksum
       if (do_checksum) {
          /* Checksum whole block including the checksum with value 0x0 */
-         block->CheckSum64 = XXH3_64bits((uint8_t *)block->buf,
+         block->CheckSum64 = bXXH3_64bits((uint8_t *)block->buf,
                        block_len);
          /* update the checksum in the block header */
          ser_begin(block->buf+chk_off, BLKHDR_CS64_LENGTH);
@@ -605,7 +604,7 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
          uint64_t save; /* make a copy of the xxh64 */
          memcpy(&save, block->buf+chk_off, BLKHDR_CS64_LENGTH);
          memset(block->buf+chk_off, '\0', BLKHDR_CS64_LENGTH);
-         BlockCheckSum64 = XXH3_64bits((uint8_t *)block->buf,
+         BlockCheckSum64 = bXXH3_64bits((uint8_t *)block->buf,
                                block_len);
          memcpy(block->buf+chk_off, &save, BLKHDR_CS64_LENGTH);
       } else {

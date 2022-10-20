@@ -238,6 +238,8 @@ int block_cipher_encrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src
 int block_cipher_decrypt(BLOCK_CIPHER_CONTEXT *blk_ctx, int len, const char *src, char *dst);
 int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx);
 
+uint64_t bXXH3_64bits(const void* input, size_t length);
+
 /* daemon.c */
 void     daemon_start            ();
 
