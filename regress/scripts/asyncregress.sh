@@ -26,5 +26,5 @@ for d in scripts tests win32 ; do
    rsync -av ${src}/ ${d}/ 
 done
 # rsync the top of regress/ directory
-rsync -dlptgoDv --exclude config ${regress_dir}/* .
+rsync -dlptgoDv --exclude core --exclude .gdb_history --exclude config ${regress_dir}/* .
 
