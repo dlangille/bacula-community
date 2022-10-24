@@ -1180,7 +1180,7 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
 {
    enum { op_none, op_label, op_read };
    bool ok = true; // No error
-   if (!device->block_encryption) {
+   if (!device->volume_encryption) {
       return ok;
    }
    JCR *jcr = dcr->jcr;

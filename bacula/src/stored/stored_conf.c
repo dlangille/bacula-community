@@ -202,7 +202,7 @@ static RES_ITEM dev_items[] = {
    {"Dedupengine",           store_res,    ITEM(res_dev.dedup), R_DEDUP, 0, 0},
 #endif
    {"SyncOnClose",           store_bit,    ITEM(res_dev.cap_bits), CAP_SYNCONCLOSE, ITEM_DEFAULT, 0},
-   {"BlockEncryption",       store_enctype,ITEM(res_dev.block_encryption), 0, ITEM_DEFAULT, 0},
+   {"VolumeEncryption",      store_enctype,ITEM(res_dev.volume_encryption), 0, ITEM_DEFAULT, 0},
 
    {NULL, NULL, {0}, 0, 0, 0}
 };

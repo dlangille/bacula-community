@@ -743,7 +743,7 @@ static void create_volume_label_record(DCR *dcr, DEVICE *dev,
    ser_string(dev->VolHdr.PoolType);
    ser_string(dev->VolHdr.MediaType);
 
-   if (dev->device->block_encryption == ET_STRONG) {
+   if (dev->device->volume_encryption == ET_STRONG) {
       ser_string("OBFUSCATED");
    } else {
       ser_string(dev->VolHdr.HostName);

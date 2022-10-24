@@ -384,7 +384,7 @@ uint64_t ser_block_header(DEV_BLOCK *block, bool do_checksum)
    ser_declare;
    uint32_t block_len = block->binbuf;
    uint32_t hdr_option = 0x0;
-   bool do_encrypt_vol = dev->device->block_encryption!=ET_NONE && dev->crypto_device_ctx!=NULL;
+   bool do_encrypt_vol = dev->device->volume_encryption!=ET_NONE && dev->crypto_device_ctx!=NULL;
    bool do_encrypt_block = do_encrypt_vol && !block->first_block;
    hdr_option |= (do_checksum?BLKHOPT_CHKSUM:0) |
                  (do_encrypt_vol?BLKHOPT_ENCRYPT_VOL:0) |
