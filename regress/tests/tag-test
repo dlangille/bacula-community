@@ -27,6 +27,9 @@ $bperl -e "extract_resource('$conf/bacula-dir.conf', 'Client', '$HOST-fd')" \
 
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'Tag', '\"#byresource\"', 'Job', 'MonsterSave')"
 
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Tag', '\"#byjobdef\"', 'JobDefs', 'BackupJob')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'JobDefs', 'BackupJob', 'Job', 'Simple')"
+
 sed "s/$HOST-fd/test1-fd/" $tmp/1 >> $conf/bacula-dir.conf
 sed "s/$HOST-fd/test2-fd/" $tmp/1 >> $conf/bacula-dir.conf
 sed "s/$HOST-fd/test-rst-fd/" $tmp/1 >> $conf/bacula-dir.conf
@@ -483,6 +486,12 @@ run_bconsole
 nb=`grep "#tagviamenu" $tmp/tag.50.client | wc -l`
 if [ $nb != 6 ]; then
     print_debug "ERROR: Should find 3 #tagviamenu tag into $tmp/tag.50.client"
+    estat=1
+fi
+
+nb=`grep "#byjobdef" $tmp/tag.50.job | wc -l`
+if [ $nb != 2 ]; then
+    print_debug "ERROR: Should find 1 #byjobdef tag into $tmp/tag.50.job"
     estat=1
 fi
 
