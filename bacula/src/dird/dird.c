@@ -1140,6 +1140,22 @@ static bool check_resources()
                   }
                   set_bit(i, job->hdr.item_present);
                /*
+                * Handle alist str resources
+                */
+               } else if (job_items[i].handler == store_alist_str) {
+                  char *elt;
+
+                  def_avalue = (alist **)((char *)(job->jobdefs) + offset);
+                  avalue = (alist **)((char *)job + offset);
+
+                  *avalue = New(alist(10, owned_by_alist));
+
+                  foreach_alist(elt, (*def_avalue)) {
+                     (*avalue)->append(bstrdup(elt));
+                  }
+                  set_bit(i, job->hdr.item_present);
+
+               /*
                 * Handle integer fields
                 *    Note, our store_bit does not handle bitmaped fields
                 */
