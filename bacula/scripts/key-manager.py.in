@@ -81,12 +81,12 @@
 # and return an error code of 0.
 #
 # Here are some input/output sample to illustrate the script
-#   $ OPERATION=LABEL VOLUME_NAME=Volume0001 ./sd_encryption_command.py getkey --cipher AES_128_XTS --key-dir tmp/keys 
+#   $ OPERATION=LABEL VOLUME_NAME=Volume0001 ./key-manager.py getkey --cipher AES_128_XTS --key-dir tmp/keys 
 #   cipher: AES_128_XTS
 #   cipher_key: G6HksAYDnNGr67AAx2Lb/vecTVjZoYAqSLZ7lGMyDVE=
 #   volume_name: Volume0001
 #
-#   $ OPERATION=READ VOLUME_NAME=Volume0001 ./sd_encryption_command.py getkey --cipher AES_128_XTS --key-dir tmp/keys 
+#   $ OPERATION=READ VOLUME_NAME=Volume0001 ./key-manager.py getkey --cipher AES_128_XTS --key-dir tmp/keys 
 #   cipher: AES_128_XTS
 #   cipher_key: G6HksAYDnNGr67AAx2Lb/vecTVjZoYAqSLZ7lGMyDVE=
 #   volume_name: Volume0001
@@ -96,12 +96,12 @@
 #   cipher_key: G6HksAYDnNGr67AAx2Lb/vecTVjZoYAqSLZ7lGMyDVE=
 #   volume_name: Volume0001
 #
-#   $ OPERATION=READ VOLUME_NAME=DontExist ./sd_encryption_command.py getkey --cipher AES_128_XTS --key-dir tmp/keys 2>/dev/null
+#   $ OPERATION=READ VOLUME_NAME=DontExist ./key-manager.py getkey --cipher AES_128_XTS --key-dir tmp/keys 2>/dev/null
 #   error: no key information for volume "DontExist"
 #   $ echo $?
 #   0
 #
-#   $ OPERATION=BAD_CMD VOLUME_NAME=Volume0002 ./sd_encryption_command.py getkey --cipher AES_128_XTS --key-dir tmp/keys 2>/dev/null
+#   $ OPERATION=BAD_CMD VOLUME_NAME=Volume0002 ./key-manager.py getkey --cipher AES_128_XTS --key-dir tmp/keys 2>/dev/null
 #   error: environment variable OPERATION invalid "BAD_CMD" for volume "Volume0002"
 #   $ echo $?
 #   0
@@ -280,14 +280,14 @@ def getkey0(args):
     key_filename=os.path.join(args.key_dir, escape_volume_name(volume_name))
     if operation=='LABEL':
         if os.path.isfile(key_filename):
-            logging.info("delete old keyfile for volume \"%s\" : ", volume_name, key_filename)
+            logging.info("delete old keyfile for volume \"%s\" : %s", volume_name, key_filename)
             os.unlink(key_filename)
         cipher=check_force_cipher_env(args.cipher)
         ctx=generate_key(cipher, args.master_key)
         if ctx==None:
             return 1
         ctx['volume_name']=volume_name
-        logging.info("generate key volume=%s cipher=%s key=%s enckey=%s masterkey=%s", ctx['volume_name'], ctx['cipher'], ctx['cipher_key'], ctx.get('enc_cipher_key', ''), ctx.get('master_keyid', ''))
+        logging.info("generate key volume=%s cipher=%s enckey=%s masterkey=%s", ctx['volume_name'], ctx['cipher'], ctx.get('enc_cipher_key', ''), ctx.get('master_keyid', ''))
         if args.master_key:
             # don't keep an un-encrypted version of the cipher_key
             # use the masterkey id to decrypte the enckey
@@ -321,10 +321,10 @@ def getkey0(args):
             master_keyid_raw=base64.b64decode(codecs.encode(master_keyid))
             cipher_key_raw=bytes_xor(enc_cipher_key_raw, master_keyid_raw)
             ctx['cipher_key']=codecs.decode(base64.b64encode(cipher_key_raw))
-            logging.info("read key volume=%s cipher=%s key=%s enc_key=%s masterkey=%s", ctx['volume_name'], ctx['cipher'], ctx['cipher_key'], ctx['enc_cipher_key'], ctx['master_keyid'])
+            logging.info("read key volume=%s cipher=%s enc_key=%s masterkey=%s", ctx['volume_name'], ctx['cipher'], ctx['enc_cipher_key'], ctx['master_keyid'])
             output=encode_data(ctx)
         else:
-            logging.info("read key volume=%s cipher=%s key=%s", ctx['volume_name'], ctx['cipher'], ctx['cipher_key'])
+            logging.info("read key volume=%s cipher=%s", ctx['volume_name'], ctx['cipher'])
             output=encode_data(ctx)
     else:
         output='error: unknown operation \"%r\"'.format(operation)
