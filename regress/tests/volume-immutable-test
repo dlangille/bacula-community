@@ -85,10 +85,19 @@ messages
 run job=$JobName yes
 wait
 messages
+@output $tmp/vol1.out
+llist volumes
 quit
 END_OF_DATA
 
 run_bconsole
+
+$bperl -e 'check_protect("$tmp/vol1.out", "Vol-0001", "Full", 1, 1)'
+if [ $? != 0 ]; then
+    grep -iE 'info|volumename|protect|status' $tmp/vol1.out
+    estat=1
+fi
+
 
 backup_res=`cat $tmp/log1.out| grep 'Termination:' | grep 'Backup OK' | wc -l`
 if [ ${backup_res} -ne 1 ]; then
@@ -116,15 +125,45 @@ fi
 
 cat <<END_OF_DATA >$tmp/bconcmds
 @$out $tmp/log2.out
+label volume=Vol-0010 slot=0 pool=Default storage=File1 drive=0
+update volume=Vol-0010 volstatus=Used
+@output $tmp/vol22.out
+llist volume=Vol-0010
+@$out $tmp/log2.out
+@exec "grep -iE 'info|volumename|protect|status' $tmp/vol22.out"
+@#################################"
 purge volume=Vol-0001
+update volume=Vol-0001 actiononpurge=truncate
+truncate volume=Vol-0001 storage=File1 yes
+@output $tmp/vol2.out
+llist volume=Vol-0001
+@$out $tmp/log2.out
 relabel oldvolume=Vol-0001 volume=RelabeledVol-0001 slot=0 pool=Default storage=File1 drive=0
 @$out $tmp/log3.out
-@sleep 20
+@sleep 15
 relabel oldvolume=Vol-0001 volume=RelabeledVol-0001 slot=0 pool=Default storage=File1 drive=0
+@output $tmp/vol3.out
+llist volume
+@$out $tmp/log3.out
+update volumeprotect
+@output $tmp/vol4.out
+llist volume
 quit
 END_OF_DATA
 
 run_bconsole
+
+$bperl -e 'check_protect("$tmp/vol2.out", "Vol-0001", "Purged", 1, 1)'
+if [ $? != 0 ]; then
+    grep -iE 'info|volumename|protect|status' $tmp/vol2.out
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/vol3.out", "RelabeledVol-0001", "Append", 0, 1)'
+if [ $? != 0 ]; then
+    grep -iE 'info|volumename|protect|status' $tmp/vol3.out
+    estat=1
+fi
 
 # Check if volume has not been relabeled before expiration time
 label_res=`cat $tmp/log2.out| grep "Cannot open Volume Vol-0001 for writing/truncating, because Minimum Volume Protection Time hasn't expired yet" | wc -l`

@@ -52,7 +52,7 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_openfile check_cloud_hash check_bscan add_log_message compare_backup_content
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
-                  check_storage_selection check_json get_perm
+                  check_storage_selection check_json get_perm check_protect
 );
 
 
@@ -2584,5 +2584,41 @@ sub get_perm
     my ($file) = @_;
     my $mode = (stat($file))[2];
     printf "%04o\n", $mode & 07777;
+}
+
+# Parse the output of llist volume to check the protection parameters
+sub check_protect
+{
+    my ($file, $name, $status, $protect, $useprotect) = @_;
+    open(FP, $file) or die "Unable to open $file. $!";
+    my $found=0;
+    while (my $line = <FP>) {
+        if ($line =~ /volumename: (\S+)/i) {
+            if ($name eq $1) {
+                $found=1;
+            } else {
+                $found=0;
+            }
+        }
+        if ($found) {
+            if ($line =~ /volstatus: +(\S+)/i) {
+                if (defined $status && $status ne $1) {
+                    print "ERROR: volstatus for $name $status != $1 in $file\n";
+                    exit 1;
+                }
+            } elsif ($line =~ /useprotect: +(\S+)/i) {
+                if (defined $useprotect && $useprotect != $1) {
+                    print "ERROR: useprotect for $name $protect != $1 in $file\n";
+                    exit 1;
+                }
+            } elsif ($line =~ /protect: +(\S+)/i) {
+                if (defined $protect && $protect != $1) {
+                    print "ERROR: protect for $name $protect != $1 in $file $line\n";
+                    exit 1;
+                }
+            }
+        }
+    }
+    close(FP);
 }
 1;

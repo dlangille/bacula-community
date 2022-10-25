@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory
+#   then restore it. Use the Set Volume Read Only storage
+#   daemon directive.
+#
+TestName="read-only-volume-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'SetVolumeReadOnly', 'yes', 'Device')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '50MB', 'Pool')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeJobs', '1', 'Pool')"
+
+cat <<EOF >> $conf/bacula-dir.conf
+Job {
+  Name = adm-update-protected
+  Type = Admin
+  Runscript {
+   Console = "update volumeprotect"
+   RunsOnClient = no
+   RunsWhen = Before
+  }
+  JobDefs = DefaultJob
+}
+EOF
+
+change_jobname BackupClient1 $JobName
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=50 tags=volume trace=1 storage=File1
+setdebug level=50 tags=volume trace=1 dir
+run job=$JobName yes
+wait
+messages
+@exec "stat $tmp/Vol-0001"
+@output $tmp/log4.out
+@# info: List volumes after the first job
+llist volume=Vol-0001
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out  
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+purge volume=Vol-0001 yes
+update volume=Vol-0002 volstatus=Used
+run job=$JobName yes
+wait
+messages
+run job=$JobName level=Full yes
+wait
+messages
+run job=$JobName level=Full storage=File2 yes
+wait
+messages
+@output $tmp/log3.out
+@# info: List volumes at the end
+@exec "stat $tmp/Vol-0001"
+@exec "stat $tmp/Vol-0002"
+llist volume
+@$out $tmp/log1.out
+setbandwidth limit=1000 client
+run job=$JobName level=Full storage=File2 yes
+@sleep 5
+.status dir running
+messages
+update volumeprotect
+setbandwidth limit=10000000 client
+wait
+messages
+@output $tmp/vol1.out
+llist volume
+@$out $tmp/log5.out
+run job=adm-update-protected yes
+wait
+messages
+@output $tmp/vol5.out
+llist volume=Vol-0014
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+$bperl -e 'my @r = stat("$tmp/Vol-0001"); exit (($r[2] & 07777 & 0400) && $r[8] > $r[9] && $r[7] > 1000*1000*49);'
+if [ $? -ne 1 ]; then
+    print_debug "ERROR: problem with volume attribute"
+    stat $tmp/Vol-0001
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0001", "Used", 1, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0002", "Used", 1, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0004", "Used", 1, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0003", "Used", undef, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0005", "Used", undef, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log3.out", "Vol-0001", "Recycle")'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log5.out", "Vol-0014", "Used", 1, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+
+$bperl -e 'check_protect("$tmp/log1.out", "Vol-0014", "Used", 0, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+check_two_logs
+check_restore_diff
+end_test
