@@ -1175,10 +1175,18 @@ vd_msg(const char *file, int line, int64_t level, const char *fmt, va_list arg_p
 void
 d_msg(const char *file, int line, int64_t level, const char *fmt,...)
 {
+   /* Do not update the errno with a debug message that cannot be delivered
+    * correctly
+    */
+   int errno_save = errno;
+
    va_list arg_ptr;
    va_start(arg_ptr, fmt);
    vd_msg(file, line, level, fmt, arg_ptr); /* without tags */
    va_end(arg_ptr);
+
+   /* Revert the errno if the subroutines are in error */
+   errno = errno_save;
 }
 
 
