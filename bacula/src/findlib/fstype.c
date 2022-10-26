@@ -643,8 +643,6 @@ bool check_current_fs(char *fname, FF_PKT *ff, const char *fstype_name)
  */
 bool check_current_fs(char *fname, FF_PKT *ff, uint64_t fstype_magic)
 {
-   uint64_t fsid;
-
    if (fstype_magic > 0){
       // get fsid for file
       char fsname[NAME_MAX];
