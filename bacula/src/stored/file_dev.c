@@ -771,13 +771,13 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **
    POOL_MEM fname(PM_FNAME);
 
    if (!got_caps_needed) {
-      MmsgD1(DT_VOLUME|50, error, "Early return from modify_fattr for volume %s, do not have caps needed\n",
+      MmsgD1(DT_VOLUME|50, error, _("Early return from modify_fattr for volume %s, do not have caps needed\n"),
              vol_name);
       return false; /* We cannot set needed attributes, no work here */
    }
 
    if (!is_attribute_supported(attr)) {
-      MmsgD2(DT_VOLUME|50, error, "File attribute 0x%0x is not supported for volume %s\n", attr, vol_name);
+      MmsgD2(DT_VOLUME|50, error, _("File attribute 0x%0x is not supported for volume %s\n"), attr, vol_name);
       return ret;
    }
 
@@ -785,14 +785,14 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **
 
    if ((tmp_fd = d_open(fname.c_str(), O_RDONLY|O_CLOEXEC)) < 0) {
       berrno be;
-      MmsgD2(DT_VOLUME|50, error, "Failed to open %s, ERR=%s", fname.c_str(), be.bstrerror());
+      MmsgD2(DT_VOLUME|50, error, _("Failed to open %s, ERR=%s"), fname.c_str(), be.bstrerror());
       return false;
    }
 
    ioctl_ret = d_ioctl(tmp_fd, FS_IOC_GETFLAGS, (char *)&get_attr);
    if (ioctl_ret < 0) {
       berrno be;
-      MmsgD2(DT_VOLUME|50, error, "Failed to get attributes for %s, ERR=%s", fname.c_str(), be.bstrerror());
+      MmsgD2(DT_VOLUME|50, error, _("Failed to get attributes for %s, ERR=%s"), fname.c_str(), be.bstrerror());
       goto bail_out;
    }
 
@@ -822,9 +822,9 @@ bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **
    if (ioctl_ret < 0) {
       berrno be;
       if (set) {
-         MmsgD3(DT_VOLUME|50, error, "Failed to set 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+         MmsgD3(DT_VOLUME|50, error, _("Failed to set 0x%0x attribute for %s, err: %d\n"), attr, fname.c_str(), errno);
       } else {
-         MmsgD3(DT_VOLUME|50, error, "Failed to clear 0x%0x attribute for %s, err: %d\n", attr, fname.c_str(), errno);
+         MmsgD3(DT_VOLUME|50, error, _("Failed to clear 0x%0x attribute for %s, err: %d\n"), attr, fname.c_str(), errno);
       }
       goto bail_out;
    }
@@ -843,7 +843,7 @@ bail_out:
 #else
 bool file_dev::modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **error)
 {
-   MmsgD3(DT_VOLUME|50, error, "Returning from mocked modify_fattr() for volume: %s, attr: 0x%08x, set: %d\n",
+   MmsgD3(DT_VOLUME|50, error, _("Returning from mocked modify_fattr() for volume: %s, attr: 0x%08x, set: %d\n"),
          vol_name, attr, set);
    return false;
 }
@@ -882,13 +882,13 @@ bool file_dev::append_open_needed(const char *vol_name)
 }
 bool file_dev::set_append_only(const char *vol_name, POOLMEM **error)
 {
-   MmsgD1(DT_VOLUME|50, error, "Returning from mocked set_append_only() for volume: %s\n", vol_name);
+   MmsgD1(DT_VOLUME|50, error, _("Returning from mocked set_append_only() for volume: %s\n"), vol_name);
    return false;
 }
 
 bool file_dev::clear_append_only(const char *vol_name, POOLMEM **error)
 {
-   MmsgD1(DT_VOLUME|50, error, "Returning from mocked clear_append_only() for volume: %s\n", vol_name);
+   MmsgD1(DT_VOLUME|50, error, _("Returning from mocked clear_append_only() for volume: %s\n"), vol_name);
    return false;
 }
 #endif // HAVE_APPEND_FL
@@ -911,19 +911,19 @@ bool file_dev::check_for_immutable(const char* vol_name)
 #else
 bool file_dev::set_immutable(const char *vol_name, POOLMEM **error)
 {
-   MmsgD1(DT_VOLUME|50, error, "Returning from mocked set_immutable() for volume: %s\n", vol_name);
+   MmsgD1(DT_VOLUME|50, error, _("Returning from mocked set_immutable() for volume: %s\n"), vol_name);
    return false;
 }
 
 bool file_dev::clear_immutable(const char *vol_name, POOLMEM **error)
 {
-   MmsgD1(DT_VOLUME|50, error, "Returning from mocked clear_immutable() for volume: %s\n", vol_name);
+   MmsgD1(DT_VOLUME|50, error, _("Returning from mocked clear_immutable() for volume: %s\n"), vol_name);
    return false;
 }
 
 bool file_dev::check_for_immutable(const char* vol_name)
 {
-   Dmsg1(DT_VOLUME|50, "Returning from mocked check_for_immutable() for volume: %s\n", vol_name);
+   Dmsg1(DT_VOLUME|50, _("Returning from mocked check_for_immutable() for volume: %s\n"), vol_name);
    return true;
 }
 #endif // HAVE_IMMUTABLE_FL
