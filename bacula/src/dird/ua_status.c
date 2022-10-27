@@ -727,7 +727,7 @@ struct sched_pkt {
    STORE *store;
 };
 
-static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
+static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter *ow, POOL_MEM &tmp)
 {
    char dt[MAX_TIME_LENGTH], edl[50];
    const char *level_ptr;
@@ -735,7 +735,6 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
    bool close_db = false;
    JCR *jcr = ua->jcr;
    MEDIA_DBR mr;
-   POOL_MEM errmsg;
    int orig_jobtype;
 
    orig_jobtype = jcr->getJobType();
@@ -746,13 +745,16 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, OutputWriter *ow)
       if (jcr->db) {
          close_db = true;             /* new db opened, remember to close it */
       }
+      if (novolume) {       /* Do not compute volumes */
+         ok = false;
+      }
       if (ok) {
          mr.PoolId = jcr->jr.PoolId;
          jcr->store_mngr->set_wstorage(sp->store, "PRT runtime");
          set_storageid_in_mr(jcr->store_mngr->get_wstore(), &mr);
          Dmsg0(250, "call find_next_volume_for_append\n");
          /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
-         ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, errmsg);
+         ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, tmp);
       }
       if (!ok) {
          bstrncpy(mr.VolumeName, "*unknown*", sizeof(mr.VolumeName));
@@ -1146,10 +1148,11 @@ static int my_compare(void *item1, void *item2)
 static void list_scheduled_jobs(UAContext *ua)
 {
    OutputWriter ow(ua->api_opts);
+   POOL_MEM tmp;
    utime_t runtime;
    RUN *run;
    JOB *job;
-   int level, num_jobs = 0;
+   int level, num_jobs = 0, novolume=0;
    int priority;
    char sched_name[MAX_NAME_LENGTH];
    dlist sched;
@@ -1166,6 +1169,10 @@ static void list_scheduled_jobs(UAContext *ua)
        ua->send_msg(_("Ignoring invalid value for days. Max is 500.\n"));
        days = 1;
      }
+   }
+   i = find_arg(ua, NT_("novolume"));
+   if (i >= 0) {
+      novolume=1;
    }
    i = find_arg_with_value(ua, NT_("schedule"));
    if (i >= 0) {
@@ -1210,7 +1217,7 @@ static void list_scheduled_jobs(UAContext *ua)
    UnlockRes();
    prt_runhdr(ua);
    foreach_dlist(sp, &sched) {
-      prt_runtime(ua, sp, &ow);
+      prt_runtime(ua, sp, novolume, &ow, tmp);
    }
    if (num_jobs == 0 && !ua->api) {
       ua->send_msg(_("No Scheduled Jobs.\n"));
