@@ -727,7 +727,12 @@ struct sched_pkt {
    STORE *store;
 };
 
-static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter *ow, POOL_MEM &tmp)
+struct sched_cache {
+   hlink link;                  /* key PoolId <<32| StorageId */
+   char VolumeName[MAX_NAME_LENGTH];
+};
+
+static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter *ow, htable *cache, POOL_MEM &tmp)
 {
    char dt[MAX_TIME_LENGTH], edl[50];
    const char *level_ptr;
@@ -739,6 +744,10 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter
 
    orig_jobtype = jcr->getJobType();
    if (sp->job->JobType == JT_BACKUP) {
+      bool tocache = true;
+      struct sched_cache *elt = NULL;
+      uint64_t key = 0;
+
       jcr->db = NULL;
       ok = complete_jcr_for_job(jcr, sp->job, sp->pool);
       Dmsg1(250, "Using pool=%s\n", jcr->pool->name());
@@ -749,15 +758,30 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter
          ok = false;
       }
       if (ok) {
+         tocache = true;        /* Keep the record in our cache */
          mr.PoolId = jcr->jr.PoolId;
          jcr->store_mngr->set_wstorage(sp->store, "PRT runtime");
          set_storageid_in_mr(jcr->store_mngr->get_wstore(), &mr);
-         Dmsg0(250, "call find_next_volume_for_append\n");
-         /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
-         ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, tmp);
+
+         key = ((uint64_t)mr.PoolId << 32) | (uint64_t)mr.StorageId;
+         elt = (struct sched_cache *)cache->lookup(key);
+         if (elt) {
+            ok = true;
+            tocache =  false;   /* already done */
+            bstrncpy(mr.VolumeName, elt->VolumeName, sizeof(mr.VolumeName));
+         } else {
+            Dmsg0(250, "call find_next_volume_for_append\n");
+            /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
+            ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, tmp);
+         }
       }
       if (!ok) {
          bstrncpy(mr.VolumeName, "*unknown*", sizeof(mr.VolumeName));
+      }
+      if (tocache) {
+         elt = (struct sched_cache *) cache->hash_malloc(sizeof(struct sched_cache));
+         bstrncpy(elt->VolumeName, mr.VolumeName, sizeof(elt->VolumeName));
+         cache->insert(key, elt);
       }
    }
    bstrftime_nc(dt, sizeof(dt), sp->runtime);
@@ -1158,6 +1182,8 @@ static void list_scheduled_jobs(UAContext *ua)
    dlist sched;
    sched_pkt *sp;
    int days, i;
+   struct sched_cache *item=NULL;
+   htable cache(item, &item->link);
 
    Dmsg0(200, "enter list_sched_jobs()\n");
 
@@ -1217,7 +1243,7 @@ static void list_scheduled_jobs(UAContext *ua)
    UnlockRes();
    prt_runhdr(ua);
    foreach_dlist(sp, &sched) {
-      prt_runtime(ua, sp, novolume, &ow, tmp);
+      prt_runtime(ua, sp, novolume, &ow, &cache, tmp);
    }
    if (num_jobs == 0 && !ua->api) {
       ua->send_msg(_("No Scheduled Jobs.\n"));
