@@ -655,7 +655,7 @@ FileSet {
        signature=MD5
        compression = GZIP1
      }
-     Plugin = "postgresql: service=main mode=pitr"
+     Plugin = "postgresql: service=main mode=pitr fast_backup"
   }
 }
 
