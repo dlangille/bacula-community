@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+# Attempt to schedule thousand of jobs
+#
+TestName="many-schedule-test"
+JobName=ScheduleTest
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+
+# Generate a Schedule to run a lot of jobs
+cat <<EOF >> $conf/bacula-dir.conf
+Schedule {
+   Name = AllTheTime
+EOF
+
+for i in `seq 0 23`; do
+    for j in `seq 0 59`; do
+        printf "Run = Level=Full mon-sun at %02i:%02i\n" $i $j >> $conf/bacula-dir.conf
+    done
+done
+
+echo "}" >> $conf/bacula-dir.conf
+
+start_test
+
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Schedule', 'AllTheTime', 'Job', 'NightlySave')"
+
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label storage=File volume=TestVolume001 slot=1 drive=0 pool=Default
+@output $tmp/l1.out
+.status dir scheduled
+@output $tmp/l2.out
+status scheduled
+@output $tmp/l3.out
+.api 2 api_opts=j
+.status dir scheduled
+@output $tmp/l4.out
+status schedule
+@output $tmp/l5.out
+.status dir scheduled limit=10
+@output $tmp/l6.out
+status schedule limit=10
+quit
+END_OF_DATA
+
+run_bacula
+
+grep '{' $tmp/l3.out | perl -MJSON -e 'decode_json(<>)'
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Unable to decode JSON in $tmp/l3.out"
+    estat=1
+fi
+
+grep '{' $tmp/l4.out | perl -MJSON -e 'decode_json(<>)'
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Unable to decode JSON in $tmp/l4.out"
+    estat=1
+fi
+
+grep '{' $tmp/l5.out | perl -MJSON -e 'decode_json(<>)'
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Unable to decode JSON in $tmp/l5.out"
+    estat=1
+fi
+
+grep '{' $tmp/l6.out | perl -MJSON -e 'decode_json(<>)'
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Unable to decode JSON in $tmp/l6.out"
+    estat=1
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+disable schedule=AllTheTime
+cancel all yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File1
+stop_bacula
+
+end_test
