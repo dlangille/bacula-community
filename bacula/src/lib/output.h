@@ -116,6 +116,8 @@ private:
       need_separator=false;
       will_need_separator=true;
 
+      limit = -1;               // not set
+      offset = -1;              // not set
       error = 0;
       errmsg = NULL; 
    };
@@ -141,6 +143,8 @@ protected:
    const char     *close_hash;
    const char     *label;
 
+   int             limit;
+   int             offset;
    int             error;
    char           *errmsg;
 
@@ -181,6 +185,10 @@ public:
    virtual char *start_list(const char *name, bool append=true);
    virtual char *end_list(bool append=true);
 
+   void set_limit_offset(int l, int o) {
+      limit = l;
+      offset = o;
+   };
    void set_label(const char *l) {
       label = l;
    };

@@ -198,6 +198,12 @@ char *OutputWriter::start_group(const char *name, bool append)
 char *OutputWriter::end_group(bool append)
 {
    get_buf(append);
+   if (limit >= 0) {
+      get_output(OT_SEP, OT_INT, "limit", limit, OT_END);
+   }
+   if (offset >= 0) {
+      get_output(OT_SEP, OT_INT, "offset", offset, OT_END);
+   }
    return get_output(OT_SEP,
                      OT_INT32, "error", error,
                      OT_STRING, "errmsg", NPRTB(errmsg),
