@@ -697,21 +697,29 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
    return;
 }
 
-static void prt_runhdr(UAContext *ua)
+static void prt_runhdr(UAContext *ua, OutputWriter *ow, int num, int limit)
 {
    if (!ua->api) {
-      ua->send_msg(_("\nScheduled Jobs:\n"));
+      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), limit>0 ? limit : num, num);
       ua->send_msg(_("Level          Type     Pri  Scheduled          Job Name           Volume\n"));
       ua->send_msg(_("===================================================================================\n"));
+
+   } else if (ua->api > 1) {
+      ow->start_group("scheduled");
+      ua->send_msg("%s", ow->get_output(OT_START_ARRAY, OT_END));
    }
 }
 
-static void prt_lrunhdr(UAContext *ua)
+static void prt_lrunhdr(UAContext *ua, OutputWriter *ow, int num, int limit)
 {
    if (!ua->api) {
-      ua->send_msg(_("\nScheduled Jobs:\n"));
+      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), limit>0 ? limit : num, num);
       ua->send_msg(_("Level          Type     Pri  Scheduled          Job Name           Schedule\n"));
       ua->send_msg(_("=====================================================================================\n"));
+
+   } else if (ua->api > 1) {
+      ow->start_group("scheduled");
+      ua->send_msg("%s", ow->get_output(OT_START_ARRAY, OT_END));
    }
 }
 
@@ -732,7 +740,7 @@ struct sched_cache {
    char VolumeName[MAX_NAME_LENGTH];
 };
 
-static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter *ow, htable *cache, POOL_MEM &tmp)
+static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter *ow, htable *cache, POOL_MEM &tmp, int index)
 {
    char dt[MAX_TIME_LENGTH], edl[50];
    const char *level_ptr;
@@ -806,6 +814,7 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter
       STORE *s = jcr->store_mngr->get_wstore();
       ua->send_msg("%s",
                    ow->get_output(OT_CLEAR,
+                      (index>1)?OT_SEP : OT_NOP,
                       OT_START_OBJ,
                       OT_STRING,    "name",    sp->job->name(),
                       OT_JOBLEVEL,  "level",   sp->level,
@@ -1075,11 +1084,9 @@ static void llist_scheduled_jobs(UAContext *ua)
    } /* end for loop over resources */
 
    UnlockRes();
-   prt_lrunhdr(ua);
    OutputWriter ow(ua->api_opts);
-   if (ua->api > 1) {
-      ua->send_msg("%s", ow.start_group("scheduled"));
-   }
+   prt_lrunhdr(ua, &ow, list->size(), limit);
+
    foreach_rblist(item, list) {
       char dt[MAX_TIME_LENGTH];
       const char *level_ptr;
@@ -1109,6 +1116,7 @@ static void llist_scheduled_jobs(UAContext *ua)
             && (item->job->client != NULL);
 
          ua->send_msg("%s", ow.get_output(OT_CLEAR,
+                         (num_jobs>1) ? OT_SEP : OT_NOP,
                          OT_START_OBJ,
                          OT_JOBLEVEL ,"level",  item->level,
                          OT_JOBTYPE, "type",      item->job->JobType,
@@ -1133,7 +1141,13 @@ static void llist_scheduled_jobs(UAContext *ua)
       }
    }
    if (ua->api > 1) {
-      ua->send_msg("%s", ow.end_group(false));
+      ow.get_output(OT_CLEAR, OT_END_ARRAY, OT_END);
+      ow.set_limit_offset(limit, -1);
+      ua->send_msg("%s", ow.end_group());
+   }
+
+   if (num_jobs > list->size() && !ua->api) {
+      ua->send_msg(_("\n%d scheduled Jobs over %d are displayed. Use the limit parameter to display more Jobs.\n"), limit, list->size(), days);
    }
    delete list;
 
@@ -1181,7 +1195,7 @@ static void list_scheduled_jobs(UAContext *ua)
    char sched_name[MAX_NAME_LENGTH];
    dlist sched;
    sched_pkt *sp;
-   int days, i;
+   int days, i, limit=50;
    struct sched_cache *item=NULL;
    htable cache(item, &item->link);
 
@@ -1199,6 +1213,15 @@ static void list_scheduled_jobs(UAContext *ua)
    i = find_arg(ua, NT_("novolume"));
    if (i >= 0) {
       novolume=1;
+   }
+   i = find_arg_with_value(ua, NT_("limit"));
+   if (i >= 0 && is_a_number(ua->argv[i])) {
+      limit=atoi(ua->argv[i]);
+      if (limit == 0) {
+         limit = -1;            // disable limit
+      }
+   } else if (ua->api) {
+      limit = -1;               // no limit with the api mode
    }
    i = find_arg_with_value(ua, NT_("schedule"));
    if (i >= 0) {
@@ -1241,14 +1264,31 @@ static void list_scheduled_jobs(UAContext *ua)
       }
    } /* end for loop over resources */
    UnlockRes();
-   prt_runhdr(ua);
+   prt_runhdr(ua, &ow, num_jobs, limit);
+
+   i = 0;
    foreach_dlist(sp, &sched) {
-      prt_runtime(ua, sp, novolume, &ow, &cache, tmp);
+      if (limit == i++) {
+         break;
+      }
+      prt_runtime(ua, sp, novolume, &ow, &cache, tmp, i);
+   }
+   if (num_jobs > i && !ua->api) {
+      ua->send_msg(_("\n%d scheduled Jobs over %d are displayed. Use the limit parameter to display more Jobs.\n"),
+                   limit, num_jobs, days);
    }
    if (num_jobs == 0 && !ua->api) {
       ua->send_msg(_("No Scheduled Jobs.\n"));
    }
-   if (!ua->api) ua->send_msg("====\n");
+   if (!ua->api) {
+      ua->send_msg("====\n");
+
+   } else if (ua->api > 1) {
+      ow.get_output(OT_CLEAR, OT_END);
+      ow.end_list();
+      ow.set_limit_offset(limit, -1);
+      ua->send_msg("%s", ow.end_group());
+   }
    Dmsg0(200, "Leave list_sched_jobs_runs()\n");
 }
 
