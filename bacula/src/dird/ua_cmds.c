@@ -3097,6 +3097,7 @@ int wait_cmd(UAContext *ua, const char *cmd)
 static int help_cmd(UAContext *ua, const char *cmd)
 {
    int i;
+   const char *msg="";
    const char *kw = ua->argk[1];
    if (ua->argc == 2) {
       if (strcasecmp(ua->argk[0], NT_("help")) == 0) {
@@ -3115,13 +3116,18 @@ static int help_cmd(UAContext *ua, const char *cmd)
             break;
          }
       } else {
-         ua->send_msg(_("  %-13s %s\n"), commands[i].key, commands[i].help);
+         if (acl_access_ok(ua, Command_ACL, commands[i].key, strlen(commands[i].key))) {
+            ua->send_msg(_(" %-13s %s\n"),
+                         commands[i].key, commands[i].help);
+         } else {
+            msg = _("Some commands are not available in this restricted console. ");
+         }
       }
    }
    if (i == comsize && ua->argc == 2) {
       ua->send_msg(_("\nCan't find %s command.\n\n"), kw);
    }
-   ua->send_msg(_("\nWhen at a prompt, entering a period cancels the command.\n\n"));
+   ua->send_msg(_("\n%sWhen at a prompt, entering a period cancels the command.\n\n"), msg);
    return 1;
 }
 
@@ -3149,7 +3155,10 @@ int qhelp_cmd(UAContext *ua, const char *cmd)
    }
    /* Want to display everything */
    for (i=0; i<comsize; i++) {
-      ua->send_msg("%s %s -- %s\n", commands[i].key, commands[i].help, commands[i].usage);
+      if (acl_access_ok(ua, Command_ACL, commands[i].key, strlen(commands[i].key))) {
+         ua->send_msg("%s %s -- %s\n",
+                      commands[i].key, commands[i].help, commands[i].usage);
+      }
    }
    return 1;
 }
