@@ -731,7 +731,7 @@ bool is_user_volume_size_reached(DCR *dcr, bool quiet)
             }
             events_send_msg(dcr->jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)dcr->jcr,
                             "Mark Volume \"%s\" as immutable", dev->getVolCatName());;
-            dev->VolCatInfo.Protect = 1;
+            dev->VolCatInfo.Protected = 1;
          }
       }
 
@@ -752,7 +752,7 @@ bool is_user_volume_size_reached(DCR *dcr, bool quiet)
                Jmsg(dcr->jcr, M_INFO, 0, _("Marking Volume \"%s\" as read-only\n"),
                     dev->getVolCatName());
             }
-            dev->VolCatInfo.Protect = 1;
+            dev->VolCatInfo.Protected = 1;
             events_send_msg(dcr->jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)dcr->jcr,
                             "Mark Volume \"%s\" as read-only", dev->getVolCatName());;
          }

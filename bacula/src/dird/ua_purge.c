@@ -727,7 +727,7 @@ static void truncate_volume(UAContext *ua, MEDIA_DBR *mr,
     * is disabled for the specific device, this will be a no-op.
     */
 
-   /* Protect us from spaces */
+   /* Protected us from spaces */
    bash_spaces(mr->VolumeName);
    bash_spaces(mr->MediaType);
    bash_spaces(pool);

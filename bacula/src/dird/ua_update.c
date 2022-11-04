@@ -1138,7 +1138,7 @@ static int media_protect_list_handler(void *ctx, int num_fields, char **row)
 } 
 
 /*
- * Protect a volume. If the command is executed from RunScript Admin
+ * Protected a volume. If the command is executed from RunScript Admin
  * the return code of the commnand is used to update the status.
  */
 static int update_volumeprotect_cmd(UAContext *ua)
@@ -1196,7 +1196,7 @@ static int update_volumeprotect_cmd(UAContext *ua)
 
    Mmsg(tmp, "SELECT Media.MediaId, Media.MediaType, Media.VolumeName, Storage.Name "
                "FROM Media JOIN Storage USING (StorageId) JOIN Pool USING (PoolId) "
-              "WHERE UseProtect=1 AND Protect=0 AND VolStatus IN ('Used', 'Full') %s "
+              "WHERE UseProtect=1 AND Protected=0 AND VolStatus IN ('Used', 'Full') %s "
            "ORDER BY Storage.Name", filter.c_str());
 
    db_sql_query(ua->db, tmp.c_str(),
@@ -1265,7 +1265,7 @@ static int update_volumeprotect_cmd(UAContext *ua)
          ua->send_events("DC0013", EVENTS_TYPE_COMMAND, "volumeprotect storage=%s dev=%s volume=%s",
                          elt->storage, selected_dev_name, elt->volname);
          ua->send_msg("%s", sd->msg);
-         Mmsg(tmp, "UPDATE Media SET Protect=1 WHERE MediaId=%d", elt->id);
+         Mmsg(tmp, "UPDATE Media SET Protected=1 WHERE MediaId=%d", elt->id);
          db_lock(ua->db);
          if (!db_sql_query(ua->db, tmp.c_str(), NULL, NULL)) {
             ua->error_msg("Unable to update volume record. %s\n", ua->db->errmsg);

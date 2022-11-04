@@ -229,7 +229,7 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
       }
       Dmsg2(dbglvl, "VolJobs=%d FirstWritten=%d\n", mr->VolJobs, mr->FirstWritten);
       if (ok) {
-         /* If the current device uses the Protect feature, we need to keep track of it */
+         /* If the current device uses the Protected feature, we need to keep track of it */
          if (use_protect == 1) {
             mr->UseProtect = 1;
          }
@@ -328,7 +328,7 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
          expired = true;
       }
    }
-   /* Here, if the volume is Protect, we cannot change the status if a storage
+   /* Here, if the volume is Protected, we cannot change the status if a storage
     * is not connected
     */
    if (expired) {
@@ -342,7 +342,7 @@ bool has_volume_expired(JCR *jcr, MEDIA_DBR *mr)
    }
    Dmsg2(dbglvl, "Vol=%s expired=%d\n", mr->VolumeName, expired);
    /* Special case, we have marked the volume as Expired, and the Storage
-    * Daemon wants to mark it as Protect
+    * Daemon wants to mark it as Protected
     */
    if (expired && mr->UseProtect) {
       return false;

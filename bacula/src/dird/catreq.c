@@ -47,7 +47,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolErrors=%u VolWrites=%lld MaxVolBytes=%lld EndTime=%lld VolStatus=%10s"
    " Slot=%d relabel=%d InChanger=%d VolReadTime=%llu VolWriteTime=%llu"
    " VolFirstWritten=%lld VolType=%u VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d Recycle=%d Protect=%d UseProtect=%d\n";
+   " LastPartBytes=%lld Enabled=%d Recycle=%d Protected=%d UseProtect=%d\n";
 
 static char FileEvent_add[] = "%c %d %127s %127s 0";
 /* Full format when coming from the Verify Job */
@@ -67,7 +67,7 @@ static char OK_media[] = "1000 OK VolName=%s VolJobs=%u VolFiles=%u"
    " MaxVolJobs=%u MaxVolFiles=%u InChanger=%d VolReadTime=%s"
    " VolWriteTime=%s EndFile=%u EndBlock=%u VolType=%u LabelType=%d"
    " MediaId=%s ScratchPoolId=%s VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d Protect=%d UseProtect=%d\n";
+   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d Protected=%d UseProtect=%d\n";
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
 
@@ -120,7 +120,7 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
       mr->Enabled,
       edit_uint64(pr.MaxPoolBytes, ed11),
       edit_uint64(pr.PoolBytes, ed12),
-      mr->Recycle, mr->Protect, mr->UseProtect);
+      mr->Recycle, mr->Protected, mr->UseProtect);
    unbash_spaces(mr->VolumeName);
    Dmsg2(100, "Vol Info for %s: %s", jcr->Job, sd->msg);
    return stat;
@@ -188,7 +188,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
    utime_t VolLastWritten;
    int n;
    int can_create=0, use_protect=0;
-   int Enabled, Recycle, Protect, UseProtect;
+   int Enabled, Recycle, Protected, UseProtect;
    JobId_t JobId = 0;
    STORE *wstore = jcr->store_mngr->get_wstore();
 
@@ -316,7 +316,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       &VolLastWritten, &sdmr.VolStatus, &sdmr.Slot, &label, &sdmr.InChanger,
       &sdmr.VolReadTime, &sdmr.VolWriteTime, &VolFirstWritten,
       &sdmr.VolType, &sdmr.VolParts, &sdmr.VolCloudParts,
-      &sdmr.LastPartBytes, &Enabled, &Recycle, &Protect, &UseProtect);
+      &sdmr.LastPartBytes, &Enabled, &Recycle, &Protected, &UseProtect);
     if (n == 29) {
       db_lock(jcr->db);
       Dmsg3(400, "Update media %s oldStat=%s newStat=%s\n", sdmr.VolumeName,
@@ -403,7 +403,7 @@ void catalog_request(JCR *jcr, BSOCK *bs)
       mr.LastPartBytes = sdmr.LastPartBytes;
       mr.Enabled       = Enabled;  /* byte assignment */
       mr.Recycle       = Recycle;  /* byte assignment */
-      mr.Protect          = Protect;    /* byte assignment */
+      mr.Protected          = Protected;    /* byte assignment */
       mr.UseProtect       = UseProtect;  /* byte assignment */
       bstrncpy(mr.VolStatus, sdmr.VolStatus, sizeof(mr.VolStatus));
       mr.VolReadTime  = sdmr.VolReadTime;

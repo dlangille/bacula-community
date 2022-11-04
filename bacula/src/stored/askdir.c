@@ -37,7 +37,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolErrors=%u VolWrites=%u MaxVolBytes=%s EndTime=%s VolStatus=%s"
    " Slot=%d relabel=%d InChanger=%d VolReadTime=%s VolWriteTime=%s"
    " VolFirstWritten=%s VolType=%u VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d Recycle=%d Protect=%d UseProtect=%d\n";
+   " LastPartBytes=%lld Enabled=%d Recycle=%d Protected=%d UseProtect=%d\n";
 static char Create_jobmedia[] = "CatReq JobId=%ld CreateJobMedia\n";
 static char FileAttributes[] = "UpdCat JobId=%ld FileAttributes ";
 
@@ -51,7 +51,7 @@ static char OK_media[] = "1000 OK VolName=%127s VolJobs=%u VolFiles=%lu"
    " VolReadTime=%lld VolWriteTime=%lld EndFile=%lu EndBlock=%lu"
    " VolType=%lu LabelType=%ld MediaId=%lld ScratchPoolId=%lld"
    " VolParts=%d VolCloudParts=%d LastPartBytes=%lld Enabled=%d MaxPoolBytes=%lld PoolBytes=%lld Recycle=%d"
-   " Protect=%d UseProtect=%d\n";
+   " Protected=%d UseProtect=%d\n";
 
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
@@ -200,7 +200,7 @@ static bool do_get_volume_info(DCR *dcr)
     BSOCK *dir = jcr->dir_bsock;
     VOLUME_CAT_INFO vol;
     int n;
-    int32_t Enabled, Recycle, Protect, UseProtect;
+    int32_t Enabled, Recycle, Protected, UseProtect;
     int32_t InChanger;
 
     dcr->setVolCatInfo(false);
@@ -222,7 +222,7 @@ static bool do_get_volume_info(DCR *dcr)
                &vol.EndFile, &vol.EndBlock, &vol.VolCatType,
                &vol.LabelType, &vol.VolMediaId, &vol.VolScratchPoolId,
                &vol.VolCatParts, &vol.VolCatCloudParts,
-               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes, &vol.PoolBytes, &Recycle, &Protect, &UseProtect);
+               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes, &vol.PoolBytes, &Recycle, &Protected, &UseProtect);
     Dmsg2(dbglvl, "<dird n=%d %s", n, dir->msg);
     if (n != 35) {
        Dmsg1(dbglvl, "get_volume_info failed: ERR=%s", dir->msg);
@@ -238,7 +238,7 @@ static bool do_get_volume_info(DCR *dcr)
     vol.InChanger = InChanger;        /* bool in structure */
     vol.VolEnabled = Enabled;         /* bool in structure */
     vol.VolRecycle = Recycle;         /* bool in structure */
-    vol.Protect = Protect;            /* bool in structure */
+    vol.Protected = Protected;        /* bool in structure */
     vol.UseProtect = UseProtect;      /* bool in structure */
     vol.is_valid = true;
     vol.VolCatBytes = vol.VolCatAmetaBytes + vol.VolCatAdataBytes;
@@ -486,7 +486,7 @@ bool dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
    if (dev->is_worm() && vol.VolRecycle) {
       Jmsg(jcr, M_INFO, 0, _("WORM cassette detected: setting Recycle=No on Volume=\"%s\"\n"), vol.VolCatName);
       vol.VolRecycle = false;
-      vol.Protect = true;
+      vol.Protected = true;
    }
    pm_strcpy(VolumeName, vol.VolCatName);
    bash_spaces(VolumeName);
@@ -525,7 +525,7 @@ bool dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
          vol.VolLastPartBytes,
          Enabled,
          Recycle,
-         vol.Protect,
+         vol.Protected,
          dev->use_protect()
          );
        Dmsg1(100, ">dird %s", dir->msg);

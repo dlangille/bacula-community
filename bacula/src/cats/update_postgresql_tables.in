@@ -758,7 +758,7 @@ ALTER TABLE Job ADD COLUMN WriteDevice       text        default ''
 ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
 ATLER TABLE Job ADD COLUMN Encrypted         int         default 0;
 
-ALTER TABLE Media ADD COLUMN Protect              smallint    default 0;
+ALTER TABLE Media ADD COLUMN Protected              smallint    default 0;
 ALTER TABLE Media ADD COLUMN IsProtect            smallint    default 0;
 
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES

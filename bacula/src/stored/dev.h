@@ -233,7 +233,7 @@ struct VOLUME_CAT_INFO {
    utime_t  VolFirstWritten;          /* Time of first write */
    utime_t  VolLastWritten;           /* Time of last write */
    bool     InChanger;                /* Set if vol in current magazine */
-   bool     Protect;                  /* Set if the vol is Readonly, worm or immutable */
+   bool     Protected;                /* Set if the vol is Readonly, worm or immutable */
    bool     UseProtect;               /* Set if the device can set the volume Readonly, worm or immutable */
    bool     is_valid;                 /* set if this data is valid */
    bool     VolEnabled;               /* set if volume enabled */

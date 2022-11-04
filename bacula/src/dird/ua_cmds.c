@@ -2626,7 +2626,7 @@ int cloud_volumes_cmd(UAContext *ua, const char *cmd, const char *mode)
       ua->send_events("DC0014", EVENTS_TYPE_COMMAND,
                       "%s storage=%s volume=%s", action, storage, mr.VolumeName);
 
-      /* Protect us from spaces */
+      /* Protected us from spaces */
       bash_spaces(mr.VolumeName);
       bash_spaces(mr.MediaType);
       bash_spaces(pr.Name);
@@ -2723,7 +2723,7 @@ static int cloud_list_cmd(UAContext *ua, const char *cmd)
       goto bail_out;
    }
 
-   /* Protect us from spaces */
+   /* Protected us from spaces */
    bash_spaces(mr.MediaType);
    bash_spaces(storage);
    bash_spaces(mr.VolumeName);

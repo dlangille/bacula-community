@@ -1370,7 +1370,7 @@ bool BDB::bdb_get_media_record(JCR *jcr, MEDIA_DBR *mr)
          "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
          "LabelType,LabelDate,StorageId,"
          "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention,Pool.Name,Protect,UseProtect "
+         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention,Pool.Name,Protected,UseProtect "
          "FROM Media JOIN Pool USING (PoolId) WHERE MediaId=%s",
          edit_int64(mr->MediaId, ed1));
    } else {                           /* find by name */
@@ -1383,7 +1383,7 @@ bool BDB::bdb_get_media_record(JCR *jcr, MEDIA_DBR *mr)
          "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
          "LabelType,LabelDate,StorageId,"
          "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention,Pool.Name,Protect,UseProtect "
+         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention,Pool.Name,Protected,UseProtect "
          "FROM Media JOIN Pool USING (PoolId) WHERE VolumeName='%s'", esc);
    }
 
@@ -1449,8 +1449,9 @@ bool BDB::bdb_get_media_record(JCR *jcr, MEDIA_DBR *mr)
             mr->ActionOnPurge = str_to_int32(row[43]);
             mr->CacheRetention = str_to_int64(row[44]);
             bstrncpy(mr->Pool, row[45], sizeof(mr->Pool));
-            mr->Protect = str_to_int64(row[46]);
-            mr->UseProtect = str_to_int64(row[47]);
+            mr->Protected = str_to_int64(row[45]);
+            mr->UseProtect = str_to_int64(row[46]);
+
             ok = true;
          }
       } else {
