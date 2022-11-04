@@ -466,7 +466,7 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
    m_terminated = false;
    m_suppress_error_msgs = false;
    errors = 0;
-   m_blocking = 0;
+   m_blocking = 1;              /* The socket will block by default */
 
 #ifdef INET6_ADDRSTRLEN
    char info[2*INET6_ADDRSTRLEN+20];

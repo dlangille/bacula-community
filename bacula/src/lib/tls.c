@@ -719,8 +719,8 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
 {
    TLS_CONNECTION *tls = bsock->tls;
    int err;
-   int flags;
    int stat = true;
+   int flags;
 
    /* Ensure that socket is non-blocking */
    flags = bsock->set_nonblocking();
@@ -768,8 +768,10 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
    }
 
 cleanup:
-   /* Restore saved flags */
-   bsock->restore_blocking(flags);
+   if (!stat) {
+      // Got an error, restore the blocking state
+      bsock->restore_blocking(flags);
+   }
    /* Clear timer */
    bsock->timer_start = 0;
    bsock->set_killable(true);
@@ -866,8 +868,6 @@ static inline int openssl_bsock_readwrite(BSOCK *bsock, char *ptr, int nbytes, b
    while (nleft > 0) {
 
       pthread_mutex_lock(&tls->rwlock);
-      /* Ensure that socket is non-blocking */
-      int flags = bsock->set_nonblocking();
       int ssl_error = SSL_ERROR_NONE;
       while (nleft > 0 && ssl_error == SSL_ERROR_NONE) {
          if (write) {
@@ -884,8 +884,6 @@ static inline int openssl_bsock_readwrite(BSOCK *bsock, char *ptr, int nbytes, b
             ssl_error = SSL_get_error(tls->openssl, nwritten);
          }
       }
-      /* Restore saved flags */
-      bsock->restore_blocking(flags);
       pthread_mutex_unlock(&tls->rwlock);
 
       /* Handle errors */
