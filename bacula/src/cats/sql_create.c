@@ -442,7 +442,7 @@ int BDB::bdb_create_media_record(JCR *jcr, MEDIA_DBR *mr)
 "VolStatus,Slot,VolBytes,InChanger,VolReadTime,VolWriteTime,VolType,"
 "VolParts,VolCloudParts,LastPartBytes,"
 "EndFile,EndBlock,LabelType,StorageId,DeviceId,LocationId,"
-"ScratchPoolId,RecyclePoolId,Enabled,ActionOnPurge,CacheRetention,UseProtect)"
+"ScratchPoolId,RecyclePoolId,Enabled,ActionOnPurge,CacheRetention,UseProtect,Protect)"
 "VALUES ('%s','%s',0,%lu,%s,%s,%ld,%s,%s,%lu,%lu,'%s',%ld,%s,%ld,%s,%s,%ld,"
         "%ld,%ld,'%s',%ld,%ld,%ld,%s,%s,%s,%s,%s,%ld,%ld,%s,%ld)",
           esc_name,
@@ -475,7 +475,8 @@ int BDB::bdb_create_media_record(JCR *jcr, MEDIA_DBR *mr)
           mr->Enabled, 
           mr->ActionOnPurge,
           edit_uint64(mr->CacheRetention, ed14),
-          mr->UseProtect
+          mr->UseProtect,
+          mr->Protect
           );
 
 
