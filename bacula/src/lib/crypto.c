@@ -1817,7 +1817,7 @@ int block_cipher_get_key_length(BLOCK_CIPHER_CONTEXT *blk_ctx)
  */
 uint64_t bXXH3_64bits(const void* input, size_t length)
 {
-   return 0;
+   return XXH3_64bits(input, length);
 }
 
 /*
