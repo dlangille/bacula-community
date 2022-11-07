@@ -1173,6 +1173,11 @@ bool DEVICE::get_tape_worm(DCR *dcr)
    return false;
 }
 
+int DEVICE::use_volume_encryption()
+{
+   return device->volume_encryption != ET_NONE;
+};
+
 bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
       const char *volume_name,
       uint32_t *enc_cipher_key_size, unsigned char *enc_cipher_key,
@@ -1180,22 +1185,23 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
 {
    enum { op_none, op_label, op_read };
    bool ok = true; // No error
-   if (!device->volume_encryption) {
-      return ok;
-   }
-   JCR *jcr = dcr->jcr;
-//      char *edit_device_codes(DCR *dcr, char *omsg, const char *imsg, const char *cmd)
-   POOLMEM *encrypt_program = get_pool_memory(PM_FNAME);
-   POOL_MEM results(PM_MESSAGE);
-   POOL_MEM err_msg(PM_MESSAGE);
-   POOL_MEM envv;
-
+   Dmsg4(0, "load_encryption_key %s %s enc=%ld ver=%d\n", operation, volume_name, device->volume_encryption, VolHdr.BlockVer);
    int op = op_none;
    if (0 == strcmp(operation, "LABEL")) {
       op = op_label;
    } else if (0 == strcmp(operation, "READ")) {
       op = op_read;
    }
+   /* don't use encryption if volume encryption is not enable or we are reading
+    * (aka not recycling) a BB02 volume */
+   if (device->volume_encryption == ET_NONE || (op != op_label && VolHdr.BlockVer <= 2)) {
+      return ok;
+   }
+   JCR *jcr = dcr->jcr;
+   POOLMEM *encrypt_program = get_pool_memory(PM_FNAME);
+   POOL_MEM results(PM_MESSAGE);
+   POOL_MEM err_msg(PM_MESSAGE);
+   POOL_MEM envv;
 
    edit_device_codes(dcr, &encrypt_program, me->encryption_command, "load");
    char *envp[5];

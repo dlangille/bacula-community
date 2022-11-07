@@ -682,6 +682,7 @@ static bool send_label_request(UAContext *ua, MEDIA_DBR *mr, MEDIA_DBR *omr,
    uint64_t VolABytes = 0;
    uint32_t VolType = 0;
    int UseProtect = 0;
+   int VolEncrypted = 0;
    STORE *wstore = ua->jcr->store_mngr->get_wstore();
 
    if (!(sd=open_sd_bsock(ua))) {
@@ -713,8 +714,8 @@ static bool send_label_request(UAContext *ua, MEDIA_DBR *mr, MEDIA_DBR *omr,
 
    while (bget_dirmsg(ua->jcr, sd, BSOCK_TYPE_SD) >= 0) {
       ua->send_msg("%s", sd->msg);
-      if (sscanf(sd->msg, "3000 OK label. VolBytes=%llu VolABytes=%lld VolType=%ld UseProtect=%d",
-                 &VolBytes, &VolABytes, &VolType, &UseProtect) == 4) {
+      if (sscanf(sd->msg, "3000 OK label. VolBytes=%llu VolABytes=%lld VolType=%ld UseProtect=%d VolEncrypted=%d",
+                 &VolBytes, &VolABytes, &VolType, &UseProtect, &VolEncrypted) == 5) {
          ok = true;
          if (media_record_exists) {      /* we update it */
             mr->VolBytes = VolBytes;
@@ -722,6 +723,7 @@ static bool send_label_request(UAContext *ua, MEDIA_DBR *mr, MEDIA_DBR *omr,
             mr->VolType = VolType;
             mr->InChanger = mr->Slot > 0;  /* if slot give assume in changer */
             mr->UseProtect = UseProtect;
+            mr->VolEncrypted = VolEncrypted;
             set_storageid_in_mr(wstore, mr);
             if (!db_update_media_record(ua->jcr, ua->db, mr)) {
                ua->error_msg("%s", db_strerror(ua->db));
@@ -735,6 +737,7 @@ static bool send_label_request(UAContext *ua, MEDIA_DBR *mr, MEDIA_DBR *omr,
             mr->InChanger = mr->Slot > 0;  /* if slot give assume in changer */
             mr->Enabled = 1;
             mr->UseProtect = UseProtect;
+            mr->VolEncrypted = VolEncrypted;
             set_storageid_in_mr(wstore, mr);
             if (db_create_media_record(ua->jcr, ua->db, mr)) {
                ua->info_msg(_("Catalog record for Volume \"%s\", Slot %d  successfully created.\n"),

@@ -481,6 +481,7 @@ CREATE TABLE Media (
    Comment BLOB,
    Protected TINYINT DEFAULT 0,
    UseProtect TINYINT DEFAULT 0,
+   VolEncrypted TINYINT DEFAULT 0,
    PRIMARY KEY(MediaId),
    UNIQUE (VolumeName(128)),
    INDEX (PoolId),

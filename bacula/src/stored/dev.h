@@ -235,6 +235,7 @@ struct VOLUME_CAT_INFO {
    bool     InChanger;                /* Set if vol in current magazine */
    bool     Protected;                /* Set if the vol is Readonly, worm or immutable */
    bool     UseProtect;               /* Set if the device can set the volume Readonly, worm or immutable */
+   bool     VolEncrypted;             /* Set if the volume is encrypted */
    bool     is_valid;                 /* set if this data is valid */
    bool     VolEnabled;               /* set if volume enabled */
    bool     VolRecycle;               /* set if volume can be recycled */
@@ -617,6 +618,7 @@ public:
    virtual int set_readonly(int fd, const char *vol_name) { errno=ENOSYS; return -1;};
    virtual int set_atime(int fd, const char *vol_name, btime_t val) { errno=ENOSYS; return -1;};
    virtual int use_protect() { return 0; };
+   virtual int use_volume_encryption();
    virtual const char *print_type() = 0;        /* in dev.c */
    virtual const char *print_driver_type() { return "";};
    virtual const char *print_full_type() { return print_type();};

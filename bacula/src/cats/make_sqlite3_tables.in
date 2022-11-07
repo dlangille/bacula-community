@@ -427,6 +427,7 @@ CREATE TABLE Media (
    Comment TEXT,
    Protected TINYINT DEFAULT 0,
    UseProtect TINYINT DEFAULT 0,
+   VolEncrypted TINYINT DEFAULT 0,
    PRIMARY KEY(MediaId)
    );
 

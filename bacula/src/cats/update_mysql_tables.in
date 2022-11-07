@@ -707,7 +707,8 @@ CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId(255));
 
 ALTER TABLE Media
     MODIFY COLUMN Protected TINYINT DEFAULT 0,
-    MODIFY COLUMN UseProtect TINYINT DEFAULT 0;
+    MODIFY COLUMN UseProtect TINYINT DEFAULT 0,
+    MODIFY COLUMN VolEncrypted TINYINT DEFAULT 0;
 
 ALTER TABLE Object
     ADD COLUMN FileIndex integer not null default 0,

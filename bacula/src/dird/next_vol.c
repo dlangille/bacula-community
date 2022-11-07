@@ -100,7 +100,8 @@ static void set_volume_to_exclude_list(JCR *jcr, int index, MEDIA_DBR *mr)
  *   use_protect -- whether or not the device will mark the volume as protected (0 no, -1 don't know, 1 yes)
  */
 int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
-                                bool create, bool prune, int use_protect, POOL_MEM &errmsg)
+                                bool create, bool prune, int use_protect,
+                                int vol_encrypted, POOL_MEM &errmsg)
 {
    int retry = 0;
    bool ok;
@@ -108,9 +109,9 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
    STORE *store = jcr->store_mngr->get_wstore();
 
    bstrncpy(mr->MediaType, store->media_type, sizeof(mr->MediaType));
-   Dmsg7(dbglvl, "find_next_vol_for_append: JobId=%u PoolId=%d, MediaType=%s index=%d create=%d prune=%d protect=%d\n",
+   Dmsg8(dbglvl, "find_next_vol_for_append: JobId=%u PoolId=%d, MediaType=%s index=%d create=%d prune=%d protect=%d vol_encrypted=%d\n",
          (uint32_t)jcr->JobId, (int)mr->PoolId, mr->MediaType, index,
-         create, prune, use_protect);
+         create, prune, use_protect, vol_encrypted);
    /*
     * If we are using an Autochanger, restrict Volume
     *   search to the Autochanger on the first pass
@@ -119,6 +120,12 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
 
    /* Make sure we don't send two times the same volume in the same session */
    set_volume_to_exclude_list(jcr, index, mr);
+
+   if (vol_encrypted == 1) {
+      mr->VolEncrypted = 1;
+   } else {
+      mr->VolEncrypted = 0;
+   }
 
    /*
     * Find the Next Volume for Append

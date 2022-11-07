@@ -172,7 +172,7 @@ struct Volume_Label {
   char Id[32];                        /* Bacula Immortal ... */
 
   uint32_t VerNum;                    /* Label version number */
-
+  int      BlockVer;                  /* 1, 2 or .. from BB01, BB02 from the FIRST block */
   /* VerNum <= 10 */
   float64_t label_date;               /* Date tape labeled */
   float64_t label_time;               /* Time tape labeled */

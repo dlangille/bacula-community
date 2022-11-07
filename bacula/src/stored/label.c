@@ -659,6 +659,7 @@ bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
    VolCatInfo.VolLastPartBytes = 0;
    VolCatInfo.VolCatType = 0; /* Will be set by dir_update_volume_info() */
    VolCatInfo.UseProtect = use_protect();
+   VolCatInfo.VolEncrypted = use_volume_encryption();
    if (recycle) {
       VolCatInfo.VolCatMounts++;
       VolCatInfo.VolCatRecycles++;
@@ -809,7 +810,7 @@ void create_volume_header(DEVICE *dev, const char *VolName,
    Enter(130);
 
    ASSERT2(dev != NULL, "dev ptr is NULL");
-
+   dev->VolHdr.BlockVer = BLOCK_VER;
    if (dev->is_aligned()) {
       bstrncpy(dev->VolHdr.Id, BaculaMetaDataId, sizeof(dev->VolHdr.Id));
       dev->VolHdr.VerNum = BaculaMetaDataVersion;
@@ -1035,7 +1036,7 @@ bool unser_volume_label(DEVICE *dev, DEV_RECORD *rec)
 
    dev->VolHdr.LabelType = rec->FileIndex;
    dev->VolHdr.LabelSize = rec->data_len;
-
+   dev->VolHdr.BlockVer = rec->BlockVer;
 
    /* Unserialize the record into the Volume Header */
    Dmsg2(100, "reclen=%d recdata=%s", rec->data_len, rec->data);
@@ -1180,7 +1181,7 @@ void DEVICE::dump_volume_label()
       break;
    }
 
-   Pmsg14(-1, _("\nVolume Label:\n"
+   Pmsg15(-1, _("\nVolume Label:\n"
 "Adata             : %d\n"
 "Id                : %s"
 "VerNo             : %d\n"
@@ -1193,6 +1194,7 @@ void DEVICE::dump_volume_label()
 "MediaType         : %s\n"
 "PoolType          : %s\n"
 "HostName          : %s\n"
+"BlockVer          : BB%02%d\n"
 "EncCypherKeySize  : %ld\n"
 "MasterKeyIdSize   : %ld\n"
 ""),
@@ -1202,7 +1204,7 @@ void DEVICE::dump_volume_label()
              File, LabelType, VolHdr.LabelSize,
              VolHdr.PoolName, VolHdr.MediaType,
              VolHdr.PoolType, VolHdr.HostName,
-             VolHdr.EncCypherKeySize, VolHdr.MasterKeyIdSize);
+             VolHdr.BlockVer, VolHdr.EncCypherKeySize, VolHdr.MasterKeyIdSize);
 
    if (VolHdr.VerNum >= 11) {
       char dt[50];

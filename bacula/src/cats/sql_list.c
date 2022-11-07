@@ -490,7 +490,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
             "EndFile,EndBlock,VolType,Media.LabelType,StorageId,DeviceId,"
             "MediaAddressing,VolReadTime,VolWriteTime,"
             "LocationId,RecycleCount,InitialWrite,Media.ScratchPoolId,Media.RecyclePoolId, "
-            "Media.ActionOnPurge,%s AS ExpiresIn, Comment, Protected, UseProtect"
+            "Media.ActionOnPurge,%s AS ExpiresIn, Comment, Protected, UseProtect, VolEncrypted"
            " FROM Media %s WHERE Media.VolumeName='%s' %s",
               expiresin,
               join,
@@ -508,7 +508,7 @@ void BDB::bdb_list_media_records(JCR *jcr, MEDIA_DBR *mdbr,
             "EndFile,EndBlock,VolType,Media.LabelType,StorageId,DeviceId,"
             "MediaAddressing,VolReadTime,VolWriteTime,"
             "LocationId,RecycleCount,InitialWrite,Media.ScratchPoolId,Media.RecyclePoolId, "
-            "Media.ActionOnPurge,%s AS ExpiresIn, Comment, Protected, UseProtect"
+            "Media.ActionOnPurge,%s AS ExpiresIn, Comment, Protected, UseProtect, VolEncrypted"
             " FROM Media %s WHERE Media.PoolId=%s %s ORDER BY MediaId",
               expiresin,
               join,

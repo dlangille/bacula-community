@@ -426,11 +426,13 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          "LabelType,LabelDate,StorageId,"
          "Enabled,LocationId,RecycleCount,InitialWrite,"
          "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention "
+         "VolEncrypted "
          "FROM Media WHERE PoolId=%s AND MediaType='%s' "
          " AND (VolStatus IN ('Full', 'Append', 'Used') OR (VolStatus IN ('Recycle', 'Purged', 'Used') AND Recycle=1)) "
          " AND Enabled=1 "
+         " AND VolEncrypted=%d "
          "ORDER BY LastWritten LIMIT 1",
-         edit_int64(mr->PoolId, ed1), esc_type);
+         edit_int64(mr->PoolId, ed1), esc_type, mr->VolEncrypted);
      item = 1;
    } else {
       POOL_MEM changer(PM_FNAME);
@@ -483,15 +485,17 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
          "LabelType,LabelDate,StorageId,"
          "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention "
+         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention,"
+         "VolEncrypted "
          "FROM Media WHERE PoolId=%s AND MediaType='%s' AND Enabled=1 "
          "AND VolStatus='%s' "
+         "AND VolEncrypted=%d "
          "%s "
          "%s "
          "%s "
          "%s LIMIT %d",
          edit_int64(mr->PoolId, ed1), esc_type,
-         esc_status,
+         esc_status, mr->VolEncrypted,
          voltype.c_str(),
          changer.c_str(), exclude.c_str(), order, item);
    }
@@ -573,6 +577,7 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
    mr->VolWriteTime = str_to_int64(row[39]);
    mr->ActionOnPurge = str_to_int64(row[40]);
    mr->CacheRetention = str_to_int64(row[41]);
+   mr->VolEncrypted = str_to_int64(row[42]);
 
    sql_free_result();
 

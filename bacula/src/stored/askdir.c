@@ -29,7 +29,7 @@
 static const int dbglvl = 200;
 
 /* Requests sent to the Director */
-static char Find_media[]   = "CatReq JobId=%ld FindMedia=%d pool_name=%s media_type=%s vol_type=%d create=%d use_protect=%d\n";
+static char Find_media[]   = "CatReq JobId=%ld FindMedia=%d pool_name=%s media_type=%s vol_type=%d create=%d use_protect=%d vol_encrypted=%d\n";
 static char Get_Vol_Info[] = "CatReq JobId=%ld GetVolInfo VolName=%s write=%d\n";
 static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolJobs=%u VolFiles=%u VolBlocks=%u VolBytes=%s VolABytes=%s"
@@ -37,7 +37,7 @@ static char Update_media[] = "CatReq JobId=%ld UpdateMedia VolName=%s"
    " VolErrors=%u VolWrites=%u MaxVolBytes=%s EndTime=%s VolStatus=%s"
    " Slot=%d relabel=%d InChanger=%d VolReadTime=%s VolWriteTime=%s"
    " VolFirstWritten=%s VolType=%u VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d Recycle=%d Protected=%d UseProtect=%d\n";
+   " LastPartBytes=%lld Enabled=%d Recycle=%d Protected=%d UseProtect=%d VolEncrypted=%d\n";
 static char Create_jobmedia[] = "CatReq JobId=%ld CreateJobMedia\n";
 static char FileAttributes[] = "UpdCat JobId=%ld FileAttributes ";
 
@@ -51,7 +51,7 @@ static char OK_media[] = "1000 OK VolName=%127s VolJobs=%u VolFiles=%lu"
    " VolReadTime=%lld VolWriteTime=%lld EndFile=%lu EndBlock=%lu"
    " VolType=%lu LabelType=%ld MediaId=%lld ScratchPoolId=%lld"
    " VolParts=%d VolCloudParts=%d LastPartBytes=%lld Enabled=%d MaxPoolBytes=%lld PoolBytes=%lld Recycle=%d"
-   " Protected=%d UseProtect=%d\n";
+   " Protected=%d UseProtect=%d VolEncrypted=%d\n";
 
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
@@ -200,7 +200,7 @@ static bool do_get_volume_info(DCR *dcr)
     BSOCK *dir = jcr->dir_bsock;
     VOLUME_CAT_INFO vol;
     int n;
-    int32_t Enabled, Recycle, Protected, UseProtect;
+    int32_t Enabled, Recycle, Protected, UseProtect, VolEncrypted;
     int32_t InChanger;
 
     dcr->setVolCatInfo(false);
@@ -222,9 +222,10 @@ static bool do_get_volume_info(DCR *dcr)
                &vol.EndFile, &vol.EndBlock, &vol.VolCatType,
                &vol.LabelType, &vol.VolMediaId, &vol.VolScratchPoolId,
                &vol.VolCatParts, &vol.VolCatCloudParts,
-               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes, &vol.PoolBytes, &Recycle, &Protected, &UseProtect);
+               &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes,
+               &vol.PoolBytes, &Recycle, &Protected, &UseProtect, &VolEncrypted);
     Dmsg2(dbglvl, "<dird n=%d %s", n, dir->msg);
-    if (n != 35) {
+    if (n != 36) {
        Dmsg1(dbglvl, "get_volume_info failed: ERR=%s", dir->msg);
        /*
         * Note, we can get an error here either because there is
@@ -240,6 +241,7 @@ static bool do_get_volume_info(DCR *dcr)
     vol.VolRecycle = Recycle;         /* bool in structure */
     vol.Protected = Protected;        /* bool in structure */
     vol.UseProtect = UseProtect;      /* bool in structure */
+    vol.VolEncrypted = VolEncrypted;  /* bool in structure */
     vol.is_valid = true;
     vol.VolCatBytes = vol.VolCatAmetaBytes + vol.VolCatAdataBytes;
     unbash_spaces(vol.VolCatName);
@@ -340,7 +342,8 @@ bool dir_find_next_appendable_volume(DCR *dcr)
        bash_spaces(dcr->media_type);
        bash_spaces(dcr->pool_name);
        dir->fsend(Find_media, jcr->JobId, vol_index, dcr->pool_name, dcr->media_type,
-                  dcr->dev->dev_type, can_create, dcr->dev->use_protect());
+                  dcr->dev->dev_type, can_create, dcr->dev->use_protect(),
+                  dcr->dev->use_volume_encryption());
        unbash_spaces(dcr->media_type);
        unbash_spaces(dcr->pool_name);
        Dmsg1(dbglvl, ">dird %s", dir->msg);
@@ -526,7 +529,8 @@ bool dir_update_volume_info(DCR *dcr, bool label, bool update_LastWritten,
          Enabled,
          Recycle,
          vol.Protected,
-         dev->use_protect()
+         dev->use_protect(),
+         vol.VolEncrypted
          );
        Dmsg1(100, ">dird %s", dir->msg);
       /*

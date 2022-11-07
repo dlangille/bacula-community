@@ -420,6 +420,7 @@ CREATE TABLE media
     comment	      text,
     protected         smallint    default 0,
     useprotect        smallint    default 0,
+    volencrypted      smallint    default 0,
     primary key (mediaid)
 );
 

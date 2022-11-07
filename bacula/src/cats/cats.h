@@ -458,8 +458,9 @@ public:
    uint32_t MaxVolJobs;               /* Max Jobs on Volume */
    uint32_t MaxVolFiles;              /* Max files on Volume */
    int32_t  Recycle;                  /* recycle yes/no */
-   int32_t  Protected;                  /* Protected yes/no */
+   int32_t  Protected;                /* Protected yes/no */
    int32_t  UseProtect;               /* Use Protected feature yes/no */
+   int32_t  VolEncrypted;             /* Volume is encrypted */
    int32_t  Slot;                     /* slot in changer */
    int32_t  Enabled;                  /* 0=disabled, 1=enabled, 2=archived */
    int32_t  InChanger;                /* Volume currently in changer */

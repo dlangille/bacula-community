@@ -778,7 +778,7 @@ static void prt_runtime(UAContext *ua, sched_pkt *sp, int novolume, OutputWriter
          } else {
             Dmsg0(250, "call find_next_volume_for_append\n");
             /* no need to set ScratchPoolId, since we use fnv_no_create_vol */
-            ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, tmp);
+            ok = find_next_volume_for_append(jcr, &mr, 1, fnv_no_create_vol, fnv_no_prune, -1, -1, tmp);
          }
       }
       if (!ok) {

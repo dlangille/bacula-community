@@ -1105,9 +1105,10 @@ static void label_volume_if_ok(DCR *dcr, char *oldname,
       } else {
          type = 0;
       }
-      dir->fsend("3000 OK label. VolBytes=%lld VolABytes=%lld VolType=%d UseProtect=%d Volume=\"%s\" Device=%s\n",
+      dir->fsend("3000 OK label. VolBytes=%lld VolABytes=%lld VolType=%d UseProtect=%d VolEncrypted=%d Volume=\"%s\" Device=%s\n",
                  volCatBytes, dev->VolCatInfo.VolCatAdataBytes,
-                 type, dev->use_protect(), newname, dev->print_name());
+                 type, dev->use_protect(), dev->use_volume_encryption(),
+                 newname, dev->print_name());
       break;
    case VOL_TYPE_ERROR:
       dir->fsend(_("3917 Failed to label Volume: ERR=%s\n"), dcr->jcr->errmsg);
