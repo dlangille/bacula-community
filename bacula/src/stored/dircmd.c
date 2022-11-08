@@ -325,7 +325,7 @@ static bool client_cmd(JCR *jcr)
       /* destroy() OK because cl is local */
       cl->destroy();
       pm_strcpy(jcr->errmsg, dir->msg);
-      Jmsg(jcr, M_FATAL, 0, _("Bad client command: %s"), jcr->errmsg);
+      Jmsg(jcr, M_FATAL, 0, _("[SE0011] Bad client command: %s"), jcr->errmsg);
       Dmsg1(050, "Bad client command: %s", jcr->errmsg);
       goto bail_out;
    }
@@ -337,11 +337,10 @@ static bool client_cmd(JCR *jcr)
    if (!cl->connect(jcr, 10, (int)me->ClientConnectTimeout, me->heartbeat_interval,
                 _("Client daemon"), jcr->client_addr, NULL, jcr->client_port, 1)) {
       /* destroy() OK because cl is local */
-      cl->destroy();
-      Jmsg(jcr, M_FATAL, 0, _("[SF0102] Failed to connect to Client daemon: %s:%d\n"),
-          jcr->client_addr, jcr->client_port);
+      Jmsg(jcr, M_FATAL, 0, "%s", cl->errmsg);
       Dmsg2(100, "Failed to connect to Client daemon: %s:%d\n",
           jcr->client_addr, jcr->client_port);
+      cl->destroy();
       goto bail_out;
    }
 

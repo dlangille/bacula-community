@@ -97,6 +97,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    utime_t heart_beat;
    STORE *wstore = jcr->store_mngr->get_wstore();
    POOL_MEM buf;
+   int status;
 
    if (is_bsock_open(sd)) {
       return true;                    /* already connected */
@@ -113,7 +114,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    }
 
    if (!store) {
-      Dmsg1(100, "No storage resource found in jcr for JobId: %d!\n", jcr->JobId);
+      MmsgD1(100, jcr->errmsg, "[DE0017] No storage resource found in jcr for JobId: %d!\n", jcr->JobId);
       return false;
    }
 
@@ -131,8 +132,9 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    sd->set_source_address(director->DIRsrc_addr);
    Mmsg(buf, _("Storage Daemon \"%s\""), store->name());
    if (!sd->connect(jcr, retry_interval, max_retry_time, heart_beat, buf.c_str(),
-         store->address, NULL, store->SDport, verbose)) {
-
+         store->address, NULL, store->SDport, verbose))
+   {
+      pm_strcpy(jcr->errmsg, sd->errmsg);
       if (!jcr->store_bsock) {  /* The bsock was locally created, so we free it here */
          free_bsock(sd);
       }
@@ -140,24 +142,16 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    }
 
    if (sd == NULL) {
+      /* Not able to connect the SD, error message in jcr->errmsg */
       return false;
    }
    sd->res = (RES *)store;        /* save pointer to other end */
    jcr->store_bsock = sd;
 
-   if (!authenticate_storage_daemon(jcr, store)) {
+   if (!authenticate_storage_daemon(jcr, store, &status, &jcr->errmsg)) {
       sd->close();
       return false;
    }
-
-   if (jcr->JobId > 0) {
-      /* Print connection info only for real jobs */
-      build_connecting_info_log(_("Storage"), store->name(),
-            get_storage_address(jcr->client, store), store->SDport,
-            sd->tls ? true : false, buf.addr());
-      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
-   }
-
    return true;
 }
 

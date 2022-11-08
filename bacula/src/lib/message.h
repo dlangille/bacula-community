@@ -205,6 +205,7 @@ class BDB;                                              /* define forward refere
 typedef bool (*sql_insert_log)(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg);
 typedef bool (*sql_insert_event)(JCR *jcr, utime_t mtime, const char *line);
 
+extern DLL_IMP_EXP char component_code;
 extern DLL_IMP_EXP sql_insert_log  p_sql_log;
 extern DLL_IMP_EXP sql_insert_event p_sql_event;
 

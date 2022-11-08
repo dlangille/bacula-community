@@ -180,7 +180,7 @@ bool recv_sdcaps(JCR *jcr)
    stat = sd->recv();
    if (stat <= 0) {
       berrno be;
-      Jmsg1(jcr, M_FATAL, 0, _("Recv caps from SD failed. ERR=%s\n"),
+      Jmsg1(jcr, M_FATAL, 0, _("[FE0011] Recv caps from SD failed. ERR=%s\n"),
          be.bstrerror());
       Dmsg1(050, _("Recv caps from SD failed. ERR=%s\n"), be.bstrerror());
       return false;
@@ -266,8 +266,8 @@ bool FDUAAuthenticateDir::authenticate_director(const char *name, DIRINFO *dir, 
     */
    Dmsg1(dbglvl, ">dird: %s", UA_sock->msg);
    if (UA_sock->recv() <= 0) {
-      Mmsg(jcr->errmsg, _("Bad response to Hello command: ERR=%s\n"),
-                         UA_sock->bstrerror());
+      Mmsg(errmsg, _("[FE0011] Bad response to Hello command: ERR=%s\n"),
+           UA_sock->bstrerror());
       return false;
    }
 
@@ -275,7 +275,7 @@ bool FDUAAuthenticateDir::authenticate_director(const char *name, DIRINFO *dir, 
    if (strncmp(UA_sock->msg, DirOKhello, sizeof(DirOKhello)-3) == 0) {
       sscanf(UA_sock->msg, DirOKhello, &dir_version);
    } else {
-      Mmsg(jcr->errmsg, _("Director rejected Hello command\n"));
+      Mmsg(errmsg, _("[FE0011] Director rejected Hello command\n"));
       return false;
    }
    /* Turn on compression for newer Directors */
@@ -305,19 +305,21 @@ BSOCK *connect_director(JCR *jcr, const char *name, DIRINFO *dir, connect_dir_mo
    UA_sock = new_bsock();
    if (!UA_sock->connect(NULL, 5, 15, heart_beat, "Director daemon", dir->address,
                           NULL, dir->DIRport, 0)) {
+      pm_strcpy(jcr->errmsg, UA_sock->errmsg);
       free_bsock(UA_sock);
       return NULL;
    }
 
-   if (FDUAAuthenticateDir(jcr, UA_sock).authenticate_director(name, dir, mode)) {
+   FDUAAuthenticateDir auth(jcr, UA_sock);
+   if (auth.authenticate_director(name, dir, mode)) {
       return UA_sock;
    }
 
    free_bsock(UA_sock);
    Mmsg(jcr->errmsg,
-        ( _("Director authorization problem.\n"
-            "Most likely the passwords do not agree.\n"
-            "If you are using TLS, there may have been a certificate validation error during the TLS handshake.\n"
-            "For help, please see " MANUAL_AUTH_URL "\n")));
+        _("Director authorization problem.\n"
+          "Most likely the passwords do not agree.\n"
+          "If you are using TLS, there may have been a certificate validation error during the TLS handshake.\n"
+          "For help, please see " MANUAL_AUTH_URL "\n%s"), auth.errmsg);
    return NULL;
 }

@@ -38,6 +38,7 @@
 
 #ifdef HAVE_OPENSSL
 void             openssl_post_errors     (int code, const char *errstring);
+void             openssl_post_errors     (POOLMEM **errmsg);
 void             openssl_post_errors     (JCR *jcr, int code, const char *errstring);
 #endif /* HAVE_OPENSSL */
 

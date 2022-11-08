@@ -244,6 +244,7 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
    char *plugin = NULL;
    JCR *jcr = ua->jcr;
    int i;
+   bool ret = false;
 
    jcr->setJobLevel(L_FULL);
    i = find_arg_with_value(ua, NT_("client"));
@@ -289,8 +290,8 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
                 jcr->client->FDport);
 
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
-      return false;
+      ua->error_msg("%s", jcr->errmsg);
+      goto bail_out;
    }
 
    /* when .ls plugin prepare a special ls_plugin_fileset */
@@ -311,12 +312,15 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
       ua->send_msg("%s", jcr->file_bsock->msg);
    }
 
+   ret = true;
+
 bail_out:
    if (jcr->file_bsock) {
       jcr->file_bsock->signal(BNET_TERMINATE);
       free_bsock(ua->jcr->file_bsock);
    }
-   return true;
+   jcr->client = NULL;
+   return ret;
 }
 
 #ifdef COMMUNITY
@@ -1750,7 +1754,7 @@ static void do_storage_cmd(UAContext *ua, STORE *store, const char *cmd)
       store->name(), store->address, store->SDport);
    if (!connect_to_storage_daemon(jcr, 1, 15, 0)) {
       ua->error_msg(_("Failed to connect to Storage daemon.\n"));
-      return;
+      goto bail_out;
    }
    Dmsg0(120, _("Connected to storage daemon\n"));
    sd = jcr->store_bsock;
@@ -1759,6 +1763,8 @@ static void do_storage_cmd(UAContext *ua, STORE *store, const char *cmd)
       ua->send_msg("%s", sd->msg);
    }
    sd->signal(BNET_TERMINATE);
+
+bail_out:
    free_bsock(ua->jcr->store_bsock);
    return;
 }
@@ -1774,7 +1780,7 @@ static void do_client_cmd(UAContext *ua, CLIENT *client, const char *cmd)
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       goto bail_out;
    }
    Dmsg0(120, "Connected to file daemon\n");
@@ -1787,6 +1793,7 @@ static void do_client_cmd(UAContext *ua, CLIENT *client, const char *cmd)
 
 bail_out:
    free_bsock(ua->jcr->file_bsock);
+   ua->jcr->client = NULL;
    return;
 }
 
@@ -2390,7 +2397,7 @@ static bool dot_querycmd(UAContext *ua, const char *cmd)
    init_jcr_job_record(jcr);           // need job
 
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
-      ua->error_msg(_("error=Failed to connect to Client.\n"));
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
 
@@ -2405,6 +2412,7 @@ static bool dot_querycmd(UAContext *ua, const char *cmd)
    while (jcr->file_bsock->recv() >= 0) {
       ua->send_msg("%s", jcr->file_bsock->msg);
    }
+   ret = true;
 
    ret = true;
 

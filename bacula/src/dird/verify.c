@@ -303,12 +303,21 @@ bool do_verify(JCR *jcr)
     */
    jcr->setJobStatus(JS_Blocked);
    if (!connect_to_file_daemon(jcr, 10, FDConnectTimeout, 1)) {
+      Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
       goto bail_out;
    }
 
    jcr->setJobStatus(JS_Running);
    fd = jcr->file_bsock;
 
+   {
+      POOL_MEM buf, tmp;
+      /* Print connection info only for real jobs */
+      build_connecting_info_log(_("Client"), jcr->client->name(),
+                                get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
+                                fd->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+   }
 
    Dmsg0(30, ">filed: Send include list\n");
    if (!send_include_list(jcr)) {

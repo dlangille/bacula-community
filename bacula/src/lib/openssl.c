@@ -55,6 +55,34 @@ void openssl_post_errors(int code, const char *errstring)
 /*
  * Post all per-thread openssl errors
  */
+void openssl_post_errors(POOLMEM **errmsg)
+{
+   char buf[512];
+   unsigned long sslerr;
+
+   /* Pop errors off of the per-thread queue */
+   while((sslerr = ERR_get_error()) != 0) {
+      /* Acquire the human readable string */
+      ERR_error_string_n(sslerr, buf, sizeof(buf));
+#if (OPENSSL_VERSION_NUMBER > 0x10101000L) && defined(SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY)
+      if (ERR_GET_REASON(sslerr) == SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY) {
+       /* Ignore this error that is SSL_shutdown() specific and is new to TLS 1.3
+        * error:14094123:SSL routines:ssl3_read_bytes:application data after close notify
+        *
+        * This happens when there is still something to read in the socket
+        * while we are doing the TLS shutdown.  This can happens at multiple
+        * place but the message appears only on the DIR because at that time
+        * the connection with the DIR is often "terminated"
+        */
+         continue;
+      }
+#endif
+      pm_strcat(errmsg, buf);
+      pm_strcat(errmsg, " ");
+   }
+   pm_strcat(errmsg, "\n");
+}
+
 void openssl_post_errors(JCR *jcr, int code, const char *errstring)
 {
    char buf[512];
@@ -64,7 +92,6 @@ void openssl_post_errors(JCR *jcr, int code, const char *errstring)
    while((sslerr = ERR_get_error()) != 0) {
       /* Acquire the human readable string */
       ERR_error_string_n(sslerr, buf, sizeof(buf));
-      Dmsg3(50, "jcr=%p %s: ERR=%s\n", jcr, errstring, buf);
 #if (OPENSSL_VERSION_NUMBER > 0x10101000L) && defined(SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY)
       if (ERR_GET_REASON(sslerr) == SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY) {
        /* Ignore this error that is SSL_shutdown() specific and is new to TLS 1.3

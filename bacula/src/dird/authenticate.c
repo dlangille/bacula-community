@@ -71,9 +71,15 @@ public:
    bool authenticate_storage_daemon(STORE *store);
 };
 
-bool authenticate_storage_daemon(JCR *jcr, STORE *store)
+bool authenticate_storage_daemon(JCR *jcr, STORE *store, int *status, POOLMEM **errmsg)
 {
-   return DIRAuthenticateSD(jcr).authenticate_storage_daemon(store);
+   DIRAuthenticateSD elt(jcr);
+   bool ret = elt.authenticate_storage_daemon(store);
+   if (!ret) {
+      pm_strcpy(errmsg, elt.errmsg);
+      *status = elt.status;
+   }
+   return ret;
 }
 
 bool DIRAuthenticateSD::authenticate_storage_daemon(STORE *store)
@@ -95,10 +101,9 @@ bool DIRAuthenticateSD::authenticate_storage_daemon(STORE *store)
    StartAuthTimeout();
    /* Sent Hello SD: Bacula Director <dirname> calling <version> */
    if (!sd->fsend(hello, "SD: Bacula ", dirname, DIR_VERSION, tlspsk_local_need)) {
-      Dmsg3(dbglvl, _("Error sending Hello to Storage daemon at \"%s:%d\". ERR=%s\n"),
-            sd->host(), sd->port(), sd->bstrerror());
-      Jmsg(jcr, M_FATAL, 0, _("Error sending Hello to Storage daemon at \"%s:%d\". ERR=%s\n"),
-            sd->host(), sd->port(), sd->bstrerror());
+      status = M_FATAL;
+      MmsgD3(dbglvl, errmsg, _("[DE0011] Error sending Hello to Storage daemon at \"%s:%d\". ERR=%s\n"),
+             sd->host(), sd->port(), sd->bstrerror());
       return false;
    }
 
@@ -113,17 +118,19 @@ bool DIRAuthenticateSD::authenticate_storage_daemon(STORE *store)
 
    Dmsg1(116, ">stored: %s", sd->msg);
    if (sd->recv() <= 0) {
-      Jmsg3(jcr, M_FATAL, 0, _("bdird<stored: \"%s:%s\" bad response to Hello command: ERR=%s\n"),
-         sd->who(), sd->host(), sd->bstrerror());
+      status = M_FATAL;
+      Mmsg(errmsg, _("[DE0011] bdird<stored: \"%s:%s\" bad response to Hello command: ERR=%s\n"),
+           sd->who(), sd->host(), sd->bstrerror());
       return 0;
    }
    Dmsg1(110, "<stored: %s", sd->msg);
    jcr->SDVersion = 0;
    if (sscanf(sd->msg, SDOKnewHello, &jcr->SDVersion) != 1 &&
-       strncmp(sd->msg, OKhello, sizeof(OKhello)) != 0) {
-      Dmsg0(dbglvl, _("Storage daemon rejected Hello command\n"));
-      Jmsg2(jcr, M_FATAL, 0, _("Storage daemon at \"%s:%d\" rejected Hello command\n"),
-         sd->host(), sd->port());
+       strncmp(sd->msg, OKhello, sizeof(OKhello)) != 0)
+   {
+      status = M_FATAL;
+      MmsgD2(dbglvl, errmsg, _("[DE0011] Storage daemon at \"%s:%d\" rejected Hello command\n"),
+             sd->host(), sd->port());
       return 0;
    }
    /* For newer SD turn on comm line compression */
@@ -134,8 +141,9 @@ bool DIRAuthenticateSD::authenticate_storage_daemon(STORE *store)
       Dmsg0(050, "*** No Dir compression to SD\n");
    }
    if (jcr->SDVersion < SD_VERSION) {
-      Jmsg2(jcr, M_FATAL, 0, _("Older Storage daemon at \"%s:%d\" incompatible with this Director.\n"),
-         sd->host(), sd->port());
+      status = M_FATAL;
+      Mmsg(errmsg, _("[DE0011] Older Storage daemon at \"%s:%d\" incompatible with this Director.\n"),
+           sd->host(), sd->port());
       return 0;
    }
    return 1;
@@ -152,9 +160,15 @@ public:
    int authenticate_file_daemon();
 };
 
-int authenticate_file_daemon(JCR *jcr)
+int authenticate_file_daemon(JCR *jcr, int *status, POOLMEM **errmsg)
 {
-   return DIRAuthenticateFD(jcr).authenticate_file_daemon();
+   DIRAuthenticateFD auth(jcr);
+   int ret = auth.authenticate_file_daemon();
+   if (!ret) {
+      *status = auth.status;
+      pm_strcpy(errmsg, auth.errmsg);
+   }
+   return ret;
 }
 
 int DIRAuthenticateFD::authenticate_file_daemon()
@@ -176,9 +190,8 @@ int DIRAuthenticateFD::authenticate_file_daemon()
    /* Timeout Hello after 1 min */
    StartAuthTimeout();
    if (!fd->fsend(hello, "", dirname, DIR_VERSION, tlspsk_local_need)) {
-      Dmsg3(dbglvl, _("Error sending Hello to File daemon at \"%s:%d\". ERR=%s\n"),
-           fd->host(), fd->port(), fd->bstrerror());
-      Jmsg(jcr, M_FATAL, 0, _("Error sending Hello to File daemon at \"%s:%d\". ERR=%s\n"),
+      status = M_FATAL;
+      MmsgD3(dbglvl, errmsg, _("[DE0011] Error sending Hello to File daemon at \"%s:%d\". ERR=%s\n"),
            fd->host(), fd->port(), fd->bstrerror());
       return false;
    }
@@ -194,20 +207,20 @@ int DIRAuthenticateFD::authenticate_file_daemon()
 
    Dmsg1(116, ">filed: %s", fd->msg);
    if (fd->recv() <= 0) {
-      Dmsg1(dbglvl, _("Bad response from File daemon to Hello command: ERR=%s\n"),
-         fd->bstrerror());
-      Jmsg(jcr, M_FATAL, 0, _("Bad response from File daemon at \"%s:%d\" to Hello command: ERR=%s\n"),
-         fd->host(), fd->port(), fd->bstrerror());
+      status = M_FATAL;
+      MmsgD3(dbglvl, errmsg, _("[DE0011] Bad response from File daemon at \"%s:%d\" to Hello command: ERR=%s\n"),
+             fd->host(), fd->port(), fd->bstrerror());
       return 0;
    }
    Dmsg1(110, "<filed: %s", fd->msg);
    StopAuthTimeout();
    jcr->FDVersion = 0;
    if (strncmp(fd->msg, FDOKhello, sizeof(FDOKhello)) != 0 &&
-       sscanf(fd->msg, FDOKnewHello, &jcr->FDVersion) != 1) {
-      Dmsg0(dbglvl, _("File daemon rejected Hello command\n"));
-      Jmsg(jcr, M_FATAL, 0, _("File daemon at \"%s:%d\" rejected Hello command\n"),
-           fd->host(), fd->port());
+       sscanf(fd->msg, FDOKnewHello, &jcr->FDVersion) != 1)
+   {
+      status = M_FATAL;
+      MmsgD2(dbglvl, errmsg, _("[DE0011] File daemon at \"%s:%d\" rejected Hello command\n"),
+             fd->host(), fd->port());
       return 0;
    }
    /* For newer FD turn on comm line compression */
@@ -231,8 +244,9 @@ public:
    }
    virtual ~UAAuthenticate() {};
    void TLSFailure() {
-      Jmsg(jcr, M_SECURITY, 0, _("TLS negotiation failed with %s at \"%s:%d\"\n"),
-            GetRemoteClassShortName(), bsock->host(), bsock->port());
+      status = M_SECURITY;
+      MmsgD3(dbglvl, errmsg, _("TLS negotiation failed with %s at \"%s:%d\"\n"),
+             GetRemoteClassShortName(), bsock->host(), bsock->port());
    }
 
    int authenticate_user_agent();
@@ -259,8 +273,9 @@ int UAAuthenticate::authenticate_user_agent()
    bool legacy_auth = true;
 
    if (ua->msglen < 16 || ua->msglen >= MAX_NAME_LENGTH + 15) {
-      Qmsg3(NULL, M_SECURITY, 0, _("UA Hello from %s:%s is invalid. Len=%d\n"), ua->who(),
-            ua->host(), ua->msglen);
+      status = M_SECURITY;
+      Mmsg(errmsg, _("[DE0011] UA Hello from %s:%s is invalid. Len=%d\n"), ua->who(),
+           ua->host(), ua->msglen);
       sleep(5);
       return 0;
    }
@@ -273,8 +288,9 @@ int UAAuthenticate::authenticate_user_agent()
        scan_string(ua->msg, "Hello %127s calling", name) != 1)
    {
       ua->msg[100] = 0;               /* terminate string */
-      Qmsg3(NULL, M_SECURITY, 0, _("UA Hello from %s:%s is invalid. Got: %s\n"), ua->who(),
-            ua->host(), ua->msg);
+      status = M_SECURITY;
+      Mmsg(errmsg, _("[DE0011] UA Hello from %s:%s is invalid. Got: %s\n"), ua->who(),
+           ua->host(), ua->msg);
       sleep(5);
       return 0;
    }
@@ -357,8 +373,9 @@ int UAAuthenticate::authenticate_user_agent()
 auth_done:
    if (!auth_success) {
       ua->fsend("%s", _(Dir_sorry));
-      Jmsg4(NULL, M_SECURITY, 0, _("Unable to authenticate console \"%s\" at %s:%s:%d.\n"),
-            name, ua->who(), ua->host(), ua->port());
+      status = M_SECURITY;
+      Mmsg(errmsg, _("[DE0015] Unable to authenticate console \"%s\" at %s:%s:%d.\n"),
+           name, ua->who(), ua->host(), ua->port());
       sleep(5);
       return 0;
    }
@@ -405,22 +422,26 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
    authData = (bDirAuthenticationRegister*) dir_authplugin_getauthenticationData(uac->jcr, cons->hdr.name, cons->authenticationplugin);
    if (authData == NULL)
    {
+      status = M_FATAL;
+      Mmsg(errmsg, "[DE0011] Incorrect authentication plugin initialization\n");
       return false;
    }
 
    // do tls before real auth
    if (!ServerEarlyTLS())
-   {
+   {                            // errmsg already edited
       return false;
    }
    // We require to have TLS setup to use authentication plugins
    if (!tls_started) {
-      Dmsg0(dbglvl, "Unable to use Plugin Authentication because TLS is not available\n");
+      status = M_FATAL;
+      MmsgD0(dbglvl, errmsg, _("[DE0011] Unable to use Plugin Authentication because TLS is not available\n"));
       return false;
    }
    // send auth plugin start packet and optional welcome string to console
    if (!bsock->fsend("auth interactive %s\n", NPRTB(authData->welcome))) {
-      Dmsg1(dbglvl, "Send interactive start comm error. ERR=%s\n", bsock->bstrerror());
+      status = M_FATAL;
+      MmsgD1(dbglvl, errmsg, "[DE0011] Send interactive start comm error. ERR=%s\n", bsock->bstrerror());
       return false;
    }
 
@@ -430,11 +451,15 @@ bool UAAuthenticate::authenticate_with_plugin(CONRES * cons)
    for (uint i = 0; i < authData->num; i++){
       Dmsg1(dbglvl, "bDirAuthenticationData step %d\n", i);
       if (dir_authplugin_do_interaction(uac->jcr, bsock, authData->name, (void *)&data[i]) != bRC_OK){
+         status = M_FATAL;
+         Mmsg(errmsg, "[DE0011] Invalid authentication protocol\n");
          return false;
       }
    }
 
    if (dir_authplugin_authenticate(uac->jcr, bsock, authData->name) != bRC_OK){
+      status = M_FATAL;
+      Mmsg(errmsg, "[DE0015] Authorization failed\n");
       bsock->fsend(_("1999 Authorization failed !!!.\n"));
       bmicrosleep(5, 0);
       return false;

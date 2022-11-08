@@ -182,7 +182,7 @@ int delete_snapshot(UAContext *ua)
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       free_bsock(ua->jcr->file_bsock);
       ua->jcr->client = old_client;
       return 0;
@@ -233,7 +233,7 @@ int list_snapshot(UAContext *ua, alist *snap_list)
                 client->name(), get_client_address(ua->jcr, client, tmp.addr()), client->FDport);
 
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       goto bail_out;
    }
 
@@ -332,7 +332,7 @@ int prune_snapshot(UAContext *ua)
             ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                          client->name(), get_client_address(ua->jcr, client, tmp.addr()), client->FDport);
             if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-               ua->error_msg(_("Failed to connect to Client.\n"));
+               ua->error_msg("%s", ua->jcr->errmsg);
                free_bsock(ua->jcr->file_bsock);
                ua->jcr->client = NULL;
                client = NULL;

@@ -27,8 +27,8 @@ extern void admin_cleanup(JCR *jcr, int TermCode);
 
 
 /* authenticate.c */
-extern bool authenticate_storage_daemon(JCR *jcr, STORE *store);
-extern int authenticate_file_daemon(JCR *jcr);
+extern bool authenticate_storage_daemon(JCR *jcr, STORE *store, int *status, POOLMEM **errmsg);
+extern int authenticate_file_daemon(JCR *jcr, int *status, POOLMEM **errmsg);
 extern int authenticate_user_agent(UAContext *ua);
 
 /* autoprune.c */

@@ -55,15 +55,19 @@ tlspsk_local_need(0),
 tid(NULL),
 auth_success(false),
 check_early_tls(false),
-tls_started(false)
+tls_started(false),
+errmsg(get_pool_memory(PM_FNAME)),
+status(0)
 {
    local_name[0]='\0';
    remote_name[0]='\0';
+   errmsg[0]='\0';
 }
 
 AuthenticateBase::~AuthenticateBase()
 {
    StopAuthTimeout();
+   free_pool_memory(errmsg);
 }
 
 /*
@@ -343,13 +347,15 @@ bool AuthenticateBase::CheckTLSRequirement()
    /* Verify that the connection is willing to meet our TLS requirements */
    switch (TestTLSRequirement()) {
    case TLS_REQ_ERR_LOCAL:
-      Jmsg(jcr, msg_type, 0, _("Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
-           GetRemoteClassShortName(), bsock->who(), bsock->host());
+      status = msg_type;
+      Mmsg(errmsg, _("[%cE0017] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
+           component_code, GetLocalClassShortName(), bsock->who(), bsock->host());
       return false;
 
    case TLS_REQ_ERR_REMOTE:
-      Jmsg(jcr, msg_type, 0, _("Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
-           GetRemoteClassShortName(), bsock->who(), bsock->host());
+      status = msg_type;
+      Mmsg(errmsg, _("[%cE0017] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
+           component_code, GetRemoteClassShortName(), bsock->who(), bsock->host());
       return false;
    case TLS_REQ_OK:
       break;
@@ -372,6 +378,8 @@ bool AuthenticateBase::ClientEarlyTLS()
    check_early_tls=true;
    if (bsock->recv() <= 0) {
       bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
+      status = M_FATAL;
+      Mmsg(errmsg, "[%cE0011] Unable to get starttls protocol\n", component_code);
       return false;
    }
    if (scan_string(bsock->msg, "starttls tlspsk=%d\n", &tlspsk_remote) != EOF) {
@@ -403,6 +411,8 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
         (local_class == dcFD && remote_class == dcSD))) {
       if (jcr && job_canceled(jcr)) {
          auth_success = false;
+         status = M_FATAL;
+         Mmsg(errmsg, "[DE0019] Job is canceled\n");
          return false;                   /* quick exit */
       }
    }
@@ -412,6 +422,8 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
    if (local_class == dcSD && remote_class == dcSD) {
       if (jcr && job_canceled(jcr)) {
          auth_success = false;
+         status = M_FATAL;
+         Mmsg(errmsg, "[DE0019] Job is canceled\n");
          return false;                   /* quick exit */
       }
    }
@@ -432,18 +444,22 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
           (local_class == dcSD && remote_class == dcFD) ) {
          Dmsg2(authdl, "Authorization key rejected by %s at %s.\n",
             GetRemoteClassShortName(), bsock->who());
-         Jmsg(jcr, M_FATAL, 0, _("Authorization key rejected by %s at %s rejected.\n"
-           "For help, please see: " MANUAL_AUTH_URL "\n"),
-            GetRemoteClassLongName(), bsock->who());
+         status = M_FATAL;
+         Mmsg(errmsg, _("[%cE0015] Authorization key rejected by %s at %s rejected.\n"
+                        "For help, please see: " MANUAL_AUTH_URL "\n"),
+              component_code,
+              GetRemoteClassLongName(), bsock->who());
       } else if ((local_class == dcDIR && (remote_class == dcSD || remote_class == dcFD))) {
          Dmsg2(authdl, _("%s and %s passwords or names not the same.\n"),
                GetLocalClassLongName(), GetRemoteClassLongName());
-         Jmsg6(jcr, M_FATAL, 0,
-               _("%s unable to authenticate with %s at \"%s:%d\". Possible causes:\n"
+         status = M_FATAL;
+         Mmsg(errmsg,
+              _("[%cE0015] %s unable to authenticate with %s at \"%s:%d\". Possible causes:\n"
                "Passwords or names not the same or\n"
                "Maximum Concurrent Jobs exceeded on the %s or\n"
                "%s networking messed up (restart daemon).\n"
                "For help, please see: " MANUAL_AUTH_URL "\n"),
+               component_code,
                GetLocalClassLongName(), GetRemoteClassLongName(),
                bsock->host(), bsock->port(),
                GetRemoteClassShortName(), GetRemoteClassShortName());
@@ -470,8 +486,9 @@ bool AuthenticateBase::ServerEarlyTLS()
        */
       if (!bsock->fsend("starttls tlspsk=%d\n", tlspsk_local_need)) {
 // TODO tweak the error message
-         Qmsg3(NULL, M_SECURITY, 0, _("Connection with %s:%s starttls comm error. ERR=%s\n"), bsock->who(),
-               bsock->host(), bsock->bstrerror());
+         status = M_SECURITY;
+         Mmsg(errmsg, _("[%cE0011] Connection with %s:%s starttls comm error. ERR=%s\n"),
+              component_code, bsock->who(), bsock->host(), bsock->bstrerror());
          sleep(5);
          return false;
       }
@@ -523,12 +540,15 @@ bool AuthenticateBase::ServerCramMD5Authenticate(const char *password)
              bsock->who());
       } else if ((local_class == dcFD && remote_class == dcSD) ||
                  (local_class == dcSD && remote_class == dcFD) ) {
-         Jmsg(jcr, M_FATAL, 0, _("Incorrect authorization key from %s at %s rejected.\n"
-              "For help, please see: " MANUAL_AUTH_URL "\n"),
-               GetRemoteClassLongName(), bsock->who());
+         status = M_FATAL;
+         Mmsg(errmsg, _("Incorrect authorization key from %s at %s rejected.\n"
+                       "For help, please see: " MANUAL_AUTH_URL "\n"),
+              GetRemoteClassLongName(), bsock->who());
       } else {
-         Jmsg1(jcr, M_FATAL, 0, _("Incorrect password given by %s.\n"
-          "For help, please see: " MANUAL_AUTH_URL "\n"), GetRemoteClassLongName());
+         status = M_FATAL;
+         Mmsg(errmsg, _("Incorrect password given by %s.\n"
+                        "For help, please see: " MANUAL_AUTH_URL "\n"),
+              GetRemoteClassLongName());
       }
    }
    if (tls_authenticate) {       /* authentication only? */
@@ -540,8 +560,9 @@ bool AuthenticateBase::ServerCramMD5Authenticate(const char *password)
 
 void AuthenticateBase::TLSFailure()
 {
-   Jmsg(jcr, M_FATAL, 0, _("TLS negotiation failed with %s at \"%s:%d\"\n"),
-         GetRemoteClassShortName(), bsock->host(), bsock->port());
+   status = M_FATAL;
+   Mmsg(errmsg, _("TLS negotiation failed with %s at \"%s:%d\"\n"),
+        GetRemoteClassShortName(), bsock->host(), bsock->port());
 }
 
 bool AuthenticateBase::HandleTLS()
@@ -550,6 +571,7 @@ bool AuthenticateBase::HandleTLS()
       return true;
    }
    if (!CheckTLSRequirement()) {
+      status = M_FATAL;
       return false;
    }
 
@@ -568,8 +590,11 @@ bool AuthenticateBase::HandleTLS()
    }
    if (ctx != NULL) {
       if ((local_type==dtCli && !bnet_tls_client(ctx, bsock, verify_list, password)) ||
-          (local_type==dtSrv && !bnet_tls_server(ctx, bsock, verify_list, password))) {
-         TLSFailure();
+          (local_type==dtSrv && !bnet_tls_server(ctx, bsock, verify_list, password)))
+      {
+         // errmsg set by bnet_tls_server/bnet_tls_client
+         pm_strcpy(errmsg, bsock->errmsg);
+         status = M_FATAL;
          return false;
       }
       tls_started = true;

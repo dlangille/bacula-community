@@ -251,7 +251,7 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       if (fatal || (jcr && job_canceled(jcr))) {
          goto bail_out;
       }
-      Dmsg4(50, "Unable to connect to %s on %s:%d. ERR=%s\n",
+      Dmsg4(50, _("Unable to connect to %s on %s:%d. ERR=%s\n"),
             name, host, port, be.bstrerror());
       if (i < 0) {
          i = 60 * 5;               /* complain again in 5 minutes */
@@ -263,8 +263,8 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       bmicrosleep(retry_interval, 0);
       now = time(NULL);
       if (begin_time + max_retry_time <= now) {
-         Qmsg4(jcr, M_WARNING, 0, _("Unable to connect to %s on %s:%d. ERR=%s\n"),
-               name, host, port, be.bstrerror());
+         Mmsg(errmsg, _("[%cE0009] Unable to connect to %s on %s:%d. ERR=%s\n"),
+              component_code, name, host, port, be.bstrerror());
          goto bail_out;
       }
    }
@@ -339,10 +339,8 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
     */
    if ((addr_list = bnet_host2ipaddrs(host, 0, &errstr)) == NULL) {
       /* Note errstr is not malloc'ed */
-      Qmsg2(jcr, M_ERROR, 0, _("gethostbyname() for host \"%s\" failed: ERR=%s\n"),
-            host, errstr);
-      Dmsg2(100, "bnet_host2ipaddrs() for host %s failed: ERR=%s\n",
-            host, errstr);
+      MmsgD3(100, errmsg, _("[%cE0012] gethostbyname() for host \"%s\" failed: ERR=%s\n"),
+           component_code, host, errstr);
       *fatal = 1;
       return false;
    }
@@ -380,10 +378,9 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
 #endif
          default:
             *fatal = 1;
-            Qmsg3(jcr, M_ERROR, 0,  _("Socket open error. proto=%d port=%d. ERR=%s\n"),
-               ipaddr->get_family(), ipaddr->get_port_host_order(), be.bstrerror());
-            Pmsg3(300, _("Socket open error. proto=%d port=%d. ERR=%s\n"),
-               ipaddr->get_family(), ipaddr->get_port_host_order(), be.bstrerror());
+            MmsgD4(300, errmsg,  _("[%cE0012] Socket open error. proto=%d port=%d. ERR=%s\n"),
+                   component_code, ipaddr->get_family(), ipaddr->get_port_host_order(),
+                   be.bstrerror());
             break;
          }
          continue;
@@ -398,11 +395,11 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
             berrno be;
             save_errno = errno;
             *fatal = 1;
-            Qmsg2(jcr, M_ERROR, 0, _("Source address bind error. proto=%d. ERR=%s\n"),
-                  src_addr->get_family(), be.bstrerror() );
-            Pmsg2(000, _("Source address bind error. proto=%d. ERR=%s\n"),
-                  src_addr->get_family(), be.bstrerror() );
-            if (sockfd >= 0) socketClose(sockfd);
+            MmsgD3(300, errmsg, _("[%cE0013] Source address bind error. proto=%d. ERR=%s\n"),
+                   component_code, src_addr->get_family(), be.bstrerror() );
+            if (sockfd >= 0) {
+               socketClose(sockfd);
+            }
             continue;
          }
       }
@@ -412,16 +409,16 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
        */
       if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (sockopt_val_t)&turnon, sizeof(turnon)) < 0) {
          berrno be;
-         Qmsg1(jcr, M_WARNING, 0, _("Cannot set SO_KEEPALIVE on socket: %s\n"),
-               be.bstrerror());
+         Qmsg2(jcr, M_WARNING, 0, _("[%cW0014] Cannot set SO_KEEPALIVE on socket: %s\n"),
+               component_code, be.bstrerror());
       }
 #if defined(TCP_KEEPIDLE)
       if (heart_beat) {
          int opt = heart_beat;
          if (setsockopt(sockfd, SOL_TCP, TCP_KEEPIDLE, (sockopt_val_t)&opt, sizeof(opt)) < 0) {
             berrno be;
-            Qmsg1(jcr, M_WARNING, 0, _("Cannot set TCP_KEEPIDLE on socket: %s\n"),
-                  be.bstrerror());
+            Qmsg2(jcr, M_WARNING, 0, _("[%cW0014] Cannot set TCP_KEEPIDLE on socket: %s\n"),
+                  component_code, be.bstrerror());
          }
       }
 #endif
@@ -429,7 +426,9 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
       /* connect to server */
       if (::connect(sockfd, ipaddr->get_sockaddr(), ipaddr->get_sockaddr_len()) < 0) {
          save_errno = errno;
-         if (sockfd >= 0) socketClose(sockfd);
+         if (sockfd >= 0) {
+            socketClose(sockfd);
+         }
          continue;
       }
       *fatal = 0;
@@ -451,8 +450,8 @@ bool BSOCKCORE::open(JCR *jcr, const char *name, char *host, char *service,
     */
    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (sockopt_val_t)&turnon, sizeof(turnon)) < 0) {
       berrno be;
-      Qmsg1(jcr, M_WARNING, 0, _("Cannot set SO_KEEPALIVE on socket: %s\n"),
-            be.bstrerror());
+      Qmsg2(jcr, M_WARNING, 0, _("[%cW0014] Cannot set SO_KEEPALIVE on socket: %s\n"),
+            component_code, be.bstrerror());
    }
    fin_init(jcr, sockfd, name, host, port, ipaddr->get_sockaddr());
    free_addresses(addr_list);
@@ -1058,7 +1057,9 @@ void BSOCKCORE::close()
    if (!bsock->m_duped) {
       /* Shutdown tls cleanly. */
       if (bsock->tls) {
-         tls_bsock_shutdown(bsock);
+         if (tls_bsock_shutdown(bsock) < 0) {
+            Dmsg1(DT_NETWORK, "%s", bsock->errmsg);
+         }
          free_tls_connection(bsock->tls);
          bsock->tls = NULL;
       }

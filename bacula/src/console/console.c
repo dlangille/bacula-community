@@ -1369,6 +1369,7 @@ int main(int argc, char *argv[])
    }
    if (!UA_sock->connect(NULL, 5, 15, heart_beat, "Director daemon", dir->address,
                           NULL, dir->DIRport, 0)) {
+      senditf("%s", UA_sock->errmsg);
       UA_sock->destroy();
       UA_sock = NULL;
       terminate_console(0);

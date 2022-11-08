@@ -354,7 +354,7 @@ void do_collect_client(UAContext *ua, CLIENT *client, bool doall, display_format
    POOL_MEM buf;
 
    if (!acl_access_client_ok(ua, client->name(), JT_BACKUP_RESTORE)) {
-      ua->error_msg(_("No authorization for Client \"%s\"\n"), client->name());
+      ua->error_msg(_("[DE0016] No authorization for Client \"%s\"\n"), client->name());
       return;
    }
    /* Connect to File daemon */
@@ -370,8 +370,7 @@ void do_collect_client(UAContext *ua, CLIENT *client, bool doall, display_format
    if (!ua->api) ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                               client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->send_msg(_("Failed to connect to Client %s.\n====\n"),
-         client->name());
+      ua->error_msg("%s", ua->jcr->errmsg);
       free_bsock(ua->jcr->file_bsock);
       return;
    }
@@ -426,7 +425,7 @@ void do_collect_storage(UAContext *ua, STORE *store, bool doall, display_format_
     */
    if (have_restricted_acl(ua, Client_ACL) ||
        have_restricted_acl(ua, Job_ACL)) {
-      ua->error_msg(_("Restricted Client or Job does not permit access to  Storage daemons\n"));
+      ua->error_msg(_("[DE0016] Restricted Client or Job does not permit access to  Storage daemons\n"));
       return;
    }
 

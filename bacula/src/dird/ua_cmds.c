@@ -763,7 +763,7 @@ static int setbwlimit_client(UAContext *ua, CLIENT *client, char *Job, int64_t l
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       goto bail_out;
    }
    Dmsg0(120, "Connected to file daemon\n");
@@ -1106,7 +1106,7 @@ static void do_client_setdebug(UAContext *ua, CLIENT *client,
                 client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
 
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       goto bail_out;
    }
    Dmsg0(120, "Connected to file daemon\n");
@@ -1562,7 +1562,7 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
    ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                 jcr->client->name(), get_client_address(jcr, jcr->client, buf.addr()), jcr->client->FDport);
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
 

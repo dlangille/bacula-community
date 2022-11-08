@@ -31,6 +31,7 @@
 #include "bacula.h"
 #include "jcr.h"
 
+char component_code = 'X';
 sql_insert_log p_sql_log = NULL;
 sql_insert_event p_sql_event = NULL;
 
@@ -257,6 +258,15 @@ void my_name_is(int argc, char *argv[], const char *name)
 
    if (argc>0 && argv && argv[0]) {
       get_path_and_fname(argv[0], &exepath, &exename);
+   }
+   if (strcmp(name, "bacula-dir") == 0) {
+      component_code = 'D';
+   } else if (strcmp(name, "bacula-sd") == 0) {
+      component_code = 'S';
+   } else if (strcmp(name, "bacula-fd") == 0) {
+      component_code = 'F';
+   } else if (strcmp(name, "bconsole") == 0) {
+      component_code = 'C';
    }
 }
 

@@ -305,7 +305,7 @@ bool restore_bootstrap(JCR *jcr)
    uint32_t store_port;
    bool first_time = true;
    bootstrap_info info;
-   POOL_MEM restore_cmd(PM_MESSAGE);
+   POOL_MEM restore_cmd(PM_MESSAGE), buf(PM_FNAME);
    bool ret = false;
 
    /* Open the bootstrap file */
@@ -339,6 +339,13 @@ bool restore_bootstrap(JCR *jcr)
          goto bail_out;
       }
       sd = jcr->store_bsock;
+
+      build_connecting_info_log(_("Storage"), jcr->store_mngr->get_rstore()->name(),
+                                get_storage_address(jcr->client, jcr->store_mngr->get_rstore()),
+                                jcr->store_mngr->get_rstore()->SDport,
+                                sd->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+      
       /*
        * Now start a job with the Storage daemon
        */
@@ -347,16 +354,23 @@ bool restore_bootstrap(JCR *jcr)
       }
 
       if (first_time) {
+         POOL_MEM tmp, buf;
          /*
           * Start conversation with File daemon
           */
          jcr->setJobStatus(JS_WaitFD);
          jcr->keep_sd_auth_key = true; /* don't clear the sd_auth_key now */
          if (!connect_to_file_daemon(jcr, 10, FDConnectTimeout, 1)) {
+            Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
             goto bail_out;
          }
          fd = jcr->file_bsock;
          build_restore_command(jcr, restore_cmd);
+
+         build_connecting_info_log(_("Client"), jcr->client->name(),
+                                   get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
+                                   fd->tls ? true : false, buf.addr());
+         Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
       }
 
       jcr->setJobStatus(JS_Running);

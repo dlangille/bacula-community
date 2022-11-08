@@ -71,7 +71,8 @@ protected:
    bool tls_started;
 
 public:
-
+   POOLMEM *errmsg;
+   int status;
    enum DaemonClass { dcUnknown=0, dcCON, dcFD, dcSD, dcDIR, dcGUI };
    enum DaemonType { dtUnknown=0, dtCli, dtSrv };
 

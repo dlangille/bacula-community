@@ -404,7 +404,7 @@ int              tls_bsock_readn         (BSOCK *bsock, char *ptr, int32_t nbyte
 bool             tls_bsock_probe         (BSOCKCORE *bsock);
 #endif /* HAVE_TLS */
 bool             tls_bsock_connect       (BSOCK *bsock);
-void             tls_bsock_shutdown      (BSOCKCORE *bsock);
+int              tls_bsock_shutdown      (BSOCKCORE *bsock);
 void             free_tls_connection     (TLS_CONNECTION *tls);
 bool             get_tls_require         (TLS_CONTEXT *ctx);
 bool             get_tls_enable          (TLS_CONTEXT *ctx);

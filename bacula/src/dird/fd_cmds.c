@@ -76,6 +76,8 @@ static void delete_bsock_end_cb(JCR *jcr, void *ctx)
  * Open connection with File daemon.
  * Try connecting every retry_interval (default 10 sec), and
  *   give up after max_retry_time (default 30 mins).
+ * If the return code is 0, the error is stored inside jcr->errmsg
+ * Need to call free_bsock() if an error occurs outside of a job
  */
 
 int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
@@ -84,9 +86,10 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    BSOCK   *fd = jcr->file_bsock;
    char ed1[30];
    utime_t heart_beat;
+   int status;
 
    if (!jcr->client) {
-      Jmsg(jcr, M_FATAL, 0, _("File daemon not defined for current Job\n"));
+      Mmsg(jcr->errmsg, _("[DE0017] File daemon not defined for current Job\n"));
       Dmsg0(10, "No Client defined for the job.\n");
       return 0;
    }
@@ -96,7 +99,6 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    } else {
       heart_beat = director->heartbeat_interval;
    }
-
    if (!is_bsock_open(jcr->file_bsock)) {
       char name[MAX_NAME_LENGTH + 100];
       POOL_MEM buf, tmp;
@@ -114,11 +116,8 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
             Dmsg0(DT_NETWORK, "Found a socket, keep it!\n");
             job_end_push(jcr, delete_bsock_end_cb, (void *)jcr->file_bsock);
          }
-
-         /* if address == NULL  forget it */
          if (!fd) {
-            Dmsg0(DT_NETWORK, "No socket in client \n");
-            jcr->setJobStatus(JS_ErrorTerminated);
+            Mmsg(jcr->errmsg, "[DE0010] No socket found of the client\n");
             return 0;
          }
          jcr->file_bsock = fd;
@@ -142,7 +141,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
                           jcr->client->FDport,
                           verbose)) {
             fd->close();
-            jcr->setJobStatus(JS_ErrorTerminated);
+            pm_strcpy(jcr->errmsg, fd->errmsg);
             return 0;
          }
          Dmsg0(10, "Opened connection with File daemon\n");
@@ -151,21 +150,9 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    fd->res = (RES *)jcr->client;      /* save resource in BSOCK */
    jcr->setJobStatus(JS_Running);
 
-   if (!authenticate_file_daemon(jcr)) {
-      jcr->setJobStatus(JS_ErrorTerminated);
-      Dmsg0(10, "Authentication error with FD.\n");
+   if (!authenticate_file_daemon(jcr, &status, &jcr->errmsg)) {
+      Dmsg1(10, "Authentication error with FD. %s\n", jcr->errmsg);
       return 0;
-   }
-
-   if (jcr->JobId > 0) {
-      /* Print connection info only for real jobs */
-      POOL_MEM buf, tmp;
-      CLIENT *client = jcr->client;
-
-      build_connecting_info_log(_("Client"), client->name(),
-            get_client_address(jcr, client, tmp.addr()), client->FDport,
-            fd->tls ? true : false, buf.addr());
-      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
    }
 
    /*
@@ -183,10 +170,10 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    if (bget_dirmsg(jcr, fd, BSOCK_TYPE_FD) > 0) {
        Dmsg1(110, "<filed: %s", fd->msg);
        if (strncmp(fd->msg, OKjob, strlen(OKjob)) != 0) {
-          Jmsg(jcr, M_FATAL, 0, _("File daemon \"%s\" rejected Job command: %s\n"),
+          Mmsg(jcr->errmsg, _("[DE0011] File daemon \"%s\" rejected Job command: %s\n"),
              jcr->client->hdr.name, fd->msg);
-          jcr->setJobStatus(JS_ErrorTerminated);
           return 0;
+
        } else if (jcr->db) {
           CLIENT_DBR cr;
           memset(&cr, 0, sizeof(cr));
@@ -204,14 +191,13 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
           bstrncpy(cr.Uname, fd->msg+strlen(OKjob)+1, sizeof(cr.Uname));
 
           if (!db_update_client_record(jcr, jcr->db, &cr)) {
-             Jmsg(jcr, M_WARNING, 0, _("Error updating Client record. ERR=%s\n"),
-                db_strerror(jcr->db));
+             Jmsg(jcr, M_WARNING, 0, _("[DE0008] Error updating Client record. ERR=%s\n"),
+                  db_strerror(jcr->db));
           }
        }
    } else {
-      Jmsg(jcr, M_FATAL, 0, _("FD gave bad response to JobId command: %s\n"),
+      Mmsg(jcr->errmsg, _("[DE0011] FD gave bad response to JobId command: %s\n"),
          fd->bstrerror());
-      jcr->setJobStatus(JS_ErrorTerminated);
       return 0;
    }
    return 1;

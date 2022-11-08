@@ -186,7 +186,7 @@ static int do_network_status(UAContext *ua)
    }
 
    if (!connect_to_file_daemon(jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Client.\n"));
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
 
@@ -645,7 +645,7 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
    int i;
 
    if (!acl_access_client_ok(ua, client->name(), JT_BACKUP_RESTORE)) {
-      ua->error_msg(_("No authorization for Client \"%s\"\n"), client->name());
+      ua->error_msg(_("[DE0016] No authorization for Client \"%s\"\n"), client->name());
       return;
    }
 
@@ -667,8 +667,7 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
    if (!ua->api) ua->send_msg(_("Connecting to Client %s at %s:%d\n"),
                               client->name(), get_client_address(ua->jcr, client, buf.addr()), client->FDport);
    if (!connect_to_file_daemon(ua->jcr, 1, 15, 0)) {
-      ua->send_msg(_("Failed to connect to Client %s.\n====\n"),
-         client->name());
+      ua->error_msg("%s", ua->jcr->errmsg);
       free_bsock(ua->jcr->file_bsock);
       return;
    }

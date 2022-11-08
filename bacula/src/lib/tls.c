@@ -744,7 +744,8 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
          goto cleanup;
       case SSL_ERROR_ZERO_RETURN:
          /* TLS connection was cleanly shut down */
-         openssl_post_errors(bsock->get_jcr(), M_FATAL, _("Connect failure"));
+         Mmsg(bsock->errmsg, _("[%cE0018] TLS Connect failure ERR="), component_code);
+         openssl_post_errors(&bsock->errmsg);
          stat = false;
          goto cleanup;
       case SSL_ERROR_WANT_READ:
@@ -757,7 +758,8 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
          break;
       default:
          /* Socket Error Occurred */
-         openssl_post_errors(bsock->get_jcr(), M_FATAL, _("Connect failure"));
+         Mmsg(bsock->errmsg, _("[%cE0018] TLS Connect failure. Check the passwords. ERR="), component_code);
+         openssl_post_errors(&bsock->errmsg);
          stat = false;
          goto cleanup;
       }
@@ -804,7 +806,7 @@ bool tls_bsock_accept(BSOCK *bsock)
 /*
  * Shutdown TLS_CONNECTION instance
  */
-void tls_bsock_shutdown(BSOCKCORE *bsock)
+int tls_bsock_shutdown(BSOCKCORE *bsock)
 {
    /*
     * SSL_shutdown must be called twice to fully complete the process -
@@ -837,14 +839,19 @@ void tls_bsock_shutdown(BSOCKCORE *bsock)
             break;
          case SSL_ERROR_ZERO_RETURN:
             /* TLS connection was shut down on us via a TLS protocol-level closure */
-            openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
+            Mmsg(bsock->errmsg, _("[%cW0019] TLS shutdown failure ERR="), component_code);
+            openssl_post_errors(&bsock->errmsg);
+            err = -1;
             break;
          default:
             /* Socket Error Occurred */
-            openssl_post_errors(bsock->get_jcr(), M_ERROR, _("TLS shutdown failure."));
+            Mmsg(bsock->errmsg, _("[%cW0019] TLS shutdown failure ERR="), component_code);
+            openssl_post_errors(&bsock->errmsg);
+            err = -1;
             break;
       }
    }
+   return err;
 }
 
 /* Does all the manual labor for tls_bsock_readn() and tls_bsock_writen() */

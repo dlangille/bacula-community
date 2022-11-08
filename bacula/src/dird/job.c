@@ -557,7 +557,7 @@ static bool cancel_file_daemon_job(UAContext *ua, const char *cmd, JCR *jcr)
    old_client = ua->jcr->client;
    ua->jcr->client = jcr->client;
    if (!connect_to_file_daemon(ua->jcr, 10, FDConnectTimeout, 1)) {
-      ua->error_msg(_("Failed to connect to File daemon.\n"));
+      ua->error_msg("%s", ua->jcr->errmsg);
       goto bail_out;
    }
    Dmsg3(10, "Connected to file daemon %s for cancel ua.jcr=%p jcr=%p\n",

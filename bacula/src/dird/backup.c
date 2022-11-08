@@ -466,7 +466,7 @@ bool do_backup(JCR *jcr)
    char ed1[100];
    db_int64_ctx job, first, last;
    int64_t val=0;
-   POOL_MEM buf;
+   POOL_MEM buf, tmp;
 
    if (jcr->is_JobLevel(L_VIRTUAL_FULL)) {
       return do_vbackup(jcr);
@@ -581,6 +581,13 @@ bool do_backup(JCR *jcr)
             Dmsg1(100, "Connected to the storage: %s\n", jcr->store_mngr->get_wstore()->name());
          }
 
+         /* Print connection info only for real jobs */
+         build_connecting_info_log(_("Storage"), jcr->store_mngr->get_wstore()->name(),
+                                   get_storage_address(jcr->client, jcr->store_mngr->get_wstore()),
+                                   jcr->store_mngr->get_wstore()->SDport,
+                                   jcr->store_bsock->tls ? true : false, buf.addr());
+         Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+
          alist wlist;
          wlist.init(10, not_owned_by_alist);
          wlist.append(store);
@@ -638,11 +645,18 @@ bool do_backup(JCR *jcr)
    }
    jcr->setJobStatus(JS_WaitFD);
    if (!connect_to_file_daemon(jcr, 10, FDConnectTimeout, 1)) {
+      Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
       goto bail_out;
    }
 
    jcr->setJobStatus(JS_Running);
    fd = jcr->file_bsock;
+
+   /* Print connection info only for real jobs */
+   build_connecting_info_log(_("Client"), jcr->client->name(),
+                             get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
+                             fd->tls ? true : false, buf.addr());
+   Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
    if (!send_level_command(jcr)) {
       goto bail_out;
@@ -868,8 +882,8 @@ int wait_for_job_termination(JCR *jcr, int timeout)
       jcr->CommCompressedBytes = CommCompressedBytes;
       jcr->Snapshot = VSS;
       jcr->Encrypt = Encrypt;
-   } else if (jcr->getJobStatus() != JS_Canceled) {
-      Jmsg(jcr, M_FATAL, 0, _("No Job status returned from FD.\n"));
+   } else if (!jcr->is_canceled()) {
+      Jmsg(jcr, M_FATAL, 0, _("No Job status returned from FD. %c\n"), jcr->getJobStatus());
    }
 
    /* Return the first error status we find Dir, FD, or SD */
