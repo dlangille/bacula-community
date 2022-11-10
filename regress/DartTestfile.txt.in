@@ -100,6 +100,7 @@ ADD_TEST(misc:storageid-test-changer "@regressdir@/tests/storageid-test-changer"
 ADD_TEST(misc:storageid-test2-changer "@regressdir@/tests/storageid-test2-changer")
 ADD_TEST(misc:restart-reschedule-test "@regressdir@/tests/restart-reschedule-test")
 ADD_TEST(misc:console-delete-test "@regressdir@/tests/console-delete-test")
+ADD_TEST(misc:network-error-test "@regressdir@/tests/network-error-test")
 ADD_TEST(misc:migration-job-no-resource-test "@regressdir@/tests/migration-job-no-resource-test")
 ADD_TEST(misc:maxdiffinterval-test "@regressdir@/tests/maxdiffinterval-test")
 ADD_TEST(misc:noautoparent-test "@regressdir@/tests/noautoparent-test")
