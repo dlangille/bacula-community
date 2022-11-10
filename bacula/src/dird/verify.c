@@ -164,6 +164,10 @@ bool do_verify(JCR *jcr)
               db_strerror(jcr->db));
          return false;
       }
+      /* Keep the reference in the Job table to determine what is verified */
+      jcr->jr.PriorJobId = jcr->previous_jr.JobId;
+      bstrncpy(jcr->jr.PriorJob, jcr->previous_jr.Job, sizeof(jcr->jr.PriorJob));
+
       if (!(jcr->previous_jr.JobStatus == JS_Terminated ||
             jcr->previous_jr.JobStatus == JS_Warnings)) {
          Jmsg(jcr, M_FATAL, 0, _("Last Job %d did not terminate normally. JobStatus=%c\n"),
