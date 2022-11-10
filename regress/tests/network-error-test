@@ -1,0 +1,133 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+
+#
+#  Test errors
+#
+
+TestName="network-error-test"
+JobName=backup
+
+. scripts/functions
+
+scripts/cleanup
+copy_test_confs
+
+rm -f ${cwd}/tmp/*.log
+echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+start_test
+
+# Number of times the code should be in the log
+nb_errors=7
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FdConnectTimeout", "1", "Director")'
+
+cat <<EOF >> $conf/bacula-dir.conf
+Client {
+  Name = 127.0.0.12-fd
+  Address = 127.0.0.1
+  FDPort = 8100
+  Catalog = MyCatalog
+  Password = "xxx"          # password for FileDaemon
+  File Retention = 30d                # 30 days
+  Job Retention = 180d                # six months
+  AutoPrune = yes                     # Prune expired Jobs/Files
+  Maximum Concurrent Jobs = 10
+} 
+EOF
+
+# make a backup
+cp $conf/bacula-dir.conf $tmp/
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Password", "x", "Client", "127.0.0.1-fd")'
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+label volume=xxx pool=Default storage=File
+setdebug level=200 trace=1 dir
+
+@$out $tmp/log-DE0018.out
+status client=127.0.0.1-fd
+run job=NightlySave yes
+wait
+messages
+llist jobid=1
+setdebug level=1 client=127.0.0.1-fd
+cancel inactive client=127.0.0.1-fd jobid=1
+.ls client=127.0.0.1-fd path=/
+snapshot sync
+1
+
+@$out $tmp/log-DE0009.out
+status client=127.0.0.12-fd
+run job=NightlySave client=127.0.0.12-fd yes
+wait
+messages
+llist jobid=2
+setdebug level=1 client=127.0.0.12-fd
+cancel inactive client=127.0.0.12-fd jobid=2
+.ls client=127.0.0.12-fd path=/
+snapshot sync
+2
+
+@$out $tmp/log3.out
+@exec "cp $tmp/bacula-dir.conf $conf/"
+reload
+status client=127.0.0.1-fd
+run job=NightlySave yes
+wait
+messages
+setdebug level=1 client=127.0.0.1-fd
+cancel inactive client=127.0.0.1-fd jobid=1
+llist jobid=3
+.ls client=127.0.0.1-fd path=/
+snapshot sync
+1
+
+quit
+END_OF_DATA
+
+run_bacula
+
+sed -i s/127.0.0.1-dir/xxx/ $conf/bacula-fd.conf
+
+$bin/bacula-ctl-fd restart
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out $tmp/log-DE0015.out
+status client=127.0.0.1-fd
+run job=NightlySave yes
+wait
+messages
+llist jobid=4
+setdebug level=1 client=127.0.0.1-fd
+cancel inactive client=127.0.0.1-fd jobid=1
+.ls client=127.0.0.1-fd path=/
+snapshot sync
+1
+
+@sleep 2
+quit
+END_OF_DATA
+
+run_bconsole
+
+stop_bacula
+
+for i in $tmp/log-*out
+do
+    p=`echo $i | perl -ne '/log-(.*).out/ && print $1'`
+    nb=`grep "\[$p\]" $i | wc -l`
+    if [ $nb != $nb_errors ]; then
+        print_debug "ERROR: should find $nb_errors $p in $i"
+        estat=1
+    fi
+done
+
+end_test
