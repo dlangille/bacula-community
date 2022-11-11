@@ -61,9 +61,9 @@ ALTER TABLE Job ADD COLUMN Rate              float       default 0;
 ALTER TABLE Job ADD COLUMN LastReadStorageId integer     default 0;
 ALTER TABLE Job ADD COLUMN LastReadDevice    text        default '';
 ALTER TABLE Job ADD COLUMN WriteStorageId    integer     default 0;
-ALTER TABLE Job ADD COLUMN WriteDevice       text        default ''
+ALTER TABLE Job ADD COLUMN WriteDevice       text        default '';
 ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
-ATLER TABLE Job ADD COLUMN Encrypted         int         default 0;
+ALTER TABLE Job ADD COLUMN Encrypted         int         default 0;
 
 ALTER TABLE Media ADD COLUMN Protected            smallint    default 0;
 ALTER TABLE Media ADD COLUMN UseProtect           smallint    default 0;
