@@ -24,8 +24,10 @@ start_test
 
 # Number of times the code should be in the log
 nb_errors=7
+nbsd_errors=5
 
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "FdConnectTimeout", "1", "Director")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SdConnectTimeout", "1", "Director")'
 
 cat <<EOF >> $conf/bacula-dir.conf
 Client {
@@ -90,6 +92,20 @@ llist jobid=3
 snapshot sync
 1
 
+@exec "$bin/bacula-ctl-sd stop"
+@$out $tmp/logsd-DE0009.out
+status storage
+setdebug level=1 storage
+run job=NightlySave yes
+wait
+messages
+llist jobid=4
+cancel inactive client=127.0.0.1-fd jobid=1
+restore client=127.0.0.1-fd select all done yes
+wait
+messages
+llist jobid=5
+
 quit
 END_OF_DATA
 
@@ -98,6 +114,7 @@ run_bacula
 sed -i s/127.0.0.1-dir/xxx/ $conf/bacula-fd.conf
 
 $bin/bacula-ctl-fd restart
+$bin/bacula-ctl-sd start
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @$out $tmp/log-DE0015.out
@@ -105,7 +122,7 @@ status client=127.0.0.1-fd
 run job=NightlySave yes
 wait
 messages
-llist jobid=4
+llist jobid=6
 setdebug level=1 client=127.0.0.1-fd
 cancel inactive client=127.0.0.1-fd jobid=1
 .ls client=127.0.0.1-fd path=/
@@ -126,6 +143,17 @@ do
     nb=`grep "\[$p\]" $i | wc -l`
     if [ $nb != $nb_errors ]; then
         print_debug "ERROR: should find $nb_errors $p in $i"
+        estat=1
+    fi
+done
+
+
+for i in $tmp/logsd-*out
+do
+    p=`echo $i | perl -ne '/logsd-(.*).out/ && print $1'`
+    nb=`grep "\[$p\]" $i | wc -l`
+    if [ $nb != $nbsd_errors ]; then
+        print_debug "ERROR: should find $nbsd_errors $p in $i"
         estat=1
     fi
 done
