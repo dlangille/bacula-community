@@ -2815,12 +2815,9 @@ static int storage_cmd(JCR *jcr)
       sd->set_source_address(me->FDsrc_addr);
       if (!sd->connect(jcr, 10, (int)me->SDConnectTimeout, me->heartbeat_interval,
                 _("Storage daemon"), jcr->stored_addr, NULL, stored_port, 1)) {
+         Jmsg(jcr, M_FATAL, 0, "%s", sd->errmsg);
          /* destroy() OK because sd is local */
          sd->destroy();
-         Jmsg2(jcr, M_FATAL, 0, _("Failed to connect to Storage daemon: %s:%d\n"),
-             jcr->stored_addr, stored_port);
-         Dmsg2(100, "Failed to connect to Storage daemon: %s:%d\n",
-             jcr->stored_addr, stored_port);
          goto bail_out;
       }
 

@@ -338,8 +338,6 @@ static bool client_cmd(JCR *jcr)
                 _("Client daemon"), jcr->client_addr, NULL, jcr->client_port, 1)) {
       /* destroy() OK because cl is local */
       Jmsg(jcr, M_FATAL, 0, "%s", cl->errmsg);
-      Dmsg2(100, "Failed to connect to Client daemon: %s:%d\n",
-          jcr->client_addr, jcr->client_port);
       cl->destroy();
       goto bail_out;
    }
@@ -399,12 +397,9 @@ static bool storage_cmd(JCR *jcr)
       /* Try to connect for 1 hour at 10 second intervals */
       if (!sd->connect(jcr, 10, (int)me->ClientConnectTimeout, me->heartbeat_interval,
                 _("Storage daemon"), jcr->stored_addr, NULL, stored_port, 1)) {
+         Jmsg(jcr, M_FATAL, 0, "%s", sd->errmsg);
          /* destroy() OK because sd is local */
          sd->destroy();
-         Jmsg(jcr, M_FATAL, 0, _("[SF0104] Failed to connect to Storage daemon: %s:%d\n"),
-             jcr->stored_addr, stored_port);
-         Dmsg2(010, "Failed to connect to Storage daemon: %s:%d\n",
-             jcr->stored_addr, stored_port);
          goto bail_out;
       }
 
