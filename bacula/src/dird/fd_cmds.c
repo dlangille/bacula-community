@@ -151,7 +151,6 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    jcr->setJobStatus(JS_Running);
 
    if (!authenticate_file_daemon(jcr, &status, &jcr->errmsg)) {
-      Dmsg1(10, "Authentication error with FD. %s\n", jcr->errmsg);
       return 0;
    }
 

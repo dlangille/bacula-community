@@ -342,6 +342,7 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
     * Start conversation with Storage daemon
     */
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
+      Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
       return false;
    }
    sd = jcr->store_bsock;

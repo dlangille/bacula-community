@@ -161,8 +161,8 @@ static int do_network_status(UAContext *ua)
                    ustore.store->name(), ustore.store->address, ustore.store->SDport);
    }
 
-   if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-      ua->error_msg(_("Failed to connect to Storage.\n"));
+   if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 0 /* not verbose */)) {
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
 
@@ -573,8 +573,7 @@ static void do_storage_status(UAContext *ua, STORE *store, char *cmd)
    if (!ua->api) ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
    if (!connect_to_storage_daemon(ua->jcr, 1, 15, 0)) {
-      ua->send_msg(_("\nFailed to connect to Storage daemon %s.\n====\n"),
-         store->name());
+      ua->error_msg("%s", ua->jcr->errmsg);
       free_bsock(ua->jcr->store_bsock);
       return;
    }

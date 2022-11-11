@@ -466,7 +466,7 @@ bool do_backup(JCR *jcr)
    char ed1[100];
    db_int64_ctx job, first, last;
    int64_t val=0;
-   POOL_MEM buf, tmp;
+   POOL_MEM buf, tmp, lasterr;
 
    if (jcr->is_JobLevel(L_VIRTUAL_FULL)) {
       return do_vbackup(jcr);
@@ -564,6 +564,13 @@ bool do_backup(JCR *jcr)
       }
 
       foreach_alist(store, jcr->store_mngr->get_wstore_list()) {
+         /* The idea is to display the error at the start of the loop
+          * doing so, the last error will be displayed as fatal if needed
+          */
+         if (strcmp(lasterr.c_str(), "") != 0) {
+            Jmsg(jcr, M_WARNING, 0, "%s", lasterr.c_str());
+            pm_strcpy(lasterr, "");
+         }
          jcr->store_mngr->set_current_wstorage(store);
 
          if (jcr->store_bsock) {
@@ -575,8 +582,13 @@ bool do_backup(JCR *jcr)
           * Start conversation with Storage daemon
           */
          if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-            Dmsg1(100, "Failed connect to the storage: %s\n", jcr->store_mngr->get_wstore()->name());
+            /* The message will be displayed as warning in the next
+             * iteration of the loop, or as fatal at the end of the
+             * foreach block
+             */
+            pm_strcpy(lasterr, jcr->errmsg);
             continue;
+
          } else {
             Dmsg1(100, "Connected to the storage: %s\n", jcr->store_mngr->get_wstore()->name());
          }
@@ -599,7 +611,8 @@ bool do_backup(JCR *jcr)
           * because we have only 2 iterations (so 'iter' variable is either 0 or 1)
           */
          if (!start_storage_daemon_job(jcr, NULL, &wlist, wstore_group ? (bool)iter : true)) {
-            Dmsg1(100, "Failed to start job on the storage: %s\n", jcr->store_mngr->get_wstore()->name());
+            Mmsg(lasterr, _("Failed to start job on the storage: %s\n"),
+                 jcr->store_mngr->get_wstore()->name());
             continue;
          } else {
             sd_job_started = true;
@@ -626,7 +639,7 @@ bool do_backup(JCR *jcr)
    }
 
    if(!sd_job_started) {
-      Jmsg(jcr, M_FATAL, 0, _("Failed to start job on any of the storages defined!\n"));
+      Jmsg(jcr, M_FATAL, 0, "%s", lasterr.c_str());
       goto bail_out;
    }
 
@@ -654,7 +667,8 @@ bool do_backup(JCR *jcr)
 
    /* Print connection info only for real jobs */
    build_connecting_info_log(_("Client"), jcr->client->name(),
-                             get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
+                             get_client_address(jcr, jcr->client, tmp.addr()),
+                             jcr->client->FDport,
                              fd->tls ? true : false, buf.addr());
    Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
@@ -687,7 +701,7 @@ bool do_backup(JCR *jcr)
 
    if (jcr->sd_calls_client) {
       if (jcr->FDVersion < 10) {
-         Jmsg(jcr, M_FATAL, 0, _("The File daemon does not support SDCallsClient.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("[DE0011] The File daemon does not support SDCallsClient.\n"));
          goto bail_out;
       }
       if (!send_client_addr_to_sd(jcr)) {
@@ -882,8 +896,9 @@ int wait_for_job_termination(JCR *jcr, int timeout)
       jcr->CommCompressedBytes = CommCompressedBytes;
       jcr->Snapshot = VSS;
       jcr->Encrypt = Encrypt;
+
    } else if (!jcr->is_canceled()) {
-      Jmsg(jcr, M_FATAL, 0, _("No Job status returned from FD. %c\n"), jcr->getJobStatus());
+      Jmsg(jcr, M_FATAL, 0, _("[DE0011] No Job status returned from FD\n"));
    }
 
    /* Return the first error status we find Dir, FD, or SD */

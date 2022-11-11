@@ -1753,7 +1753,7 @@ static void do_storage_cmd(UAContext *ua, STORE *store, const char *cmd)
    ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
    if (!connect_to_storage_daemon(jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Storage daemon.\n"));
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
    Dmsg0(120, _("Connected to storage daemon\n"));

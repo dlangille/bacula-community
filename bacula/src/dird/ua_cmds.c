@@ -1064,8 +1064,8 @@ static void do_storage_setdebug(UAContext *ua, STORE *store,
    ua->send_msg(_("Connecting to Storage daemon %s at %s:%d\n"),
       store->name(), store->address, store->SDport);
    if (!connect_to_storage_daemon(ua->jcr, 1, 15, 0)) {
-      ua->error_msg(_("Failed to connect to Storage daemon.\n"));
-      return;
+      ua->error_msg("%s", ua->jcr->errmsg);
+      goto bail_out;
    }
    Dmsg0(120, _("Connected to storage daemon\n"));
    sd = ua->jcr->store_bsock;
@@ -1075,6 +1075,7 @@ static void do_storage_setdebug(UAContext *ua, STORE *store,
       ua->send_msg("%s", sd->msg);
    }
    sd->signal(BNET_TERMINATE);
+bail_out:
    free_bsock(ua->jcr->store_bsock);
    return;
 }
@@ -2519,7 +2520,7 @@ static void do_storage_cmd(UAContext *ua, const char *command)
    Dmsg4(120, "Cmd: %s %s drive=%d slot=%d\n", command, dev_name, drive, slot);
 
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-      ua->error_msg(_("Failed to connect to Storage daemon.\n"));
+      ua->error_msg("%s", jcr->errmsg);
       goto bail_out;
    }
 

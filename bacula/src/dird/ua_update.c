@@ -1203,7 +1203,7 @@ static int update_volumeprotect_cmd(UAContext *ua)
                 media_protect_list_handler, &list);
 
    if (list.size() > 0) {
-      ua->send_msg(_("Found %d volumes with status Used/Full that must be protected\n"), list.size());
+      ua->send_msg(_("Found %d volume(s) with status Used/Full that must be protected\n"), list.size());
 
    } else {
       ua->send_msg(_("No volume found to protect\n"));
@@ -1234,9 +1234,10 @@ static int update_volumeprotect_cmd(UAContext *ua)
             free_bsock(ua->jcr->store_bsock);
             sd = NULL;
          }
-
-         if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-            ua->error_msg(_("Failed to connect to Storage daemon.\n"));
+         ua->send_msg(_("Connecting to Storage %s at %s:%d\n"),
+                      ustore.store->name(), ustore.store->address, ustore.store->SDport);
+         if (!connect_to_storage_daemon(jcr, 5, SDConnectTimeout, 0 /* not verbose */)) {
+            ua->error_msg("%s", jcr->errmsg);
             ret = 0;
             continue;
          }

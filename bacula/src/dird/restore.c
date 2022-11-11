@@ -336,6 +336,7 @@ bool restore_bootstrap(JCR *jcr)
        * Start conversation with Storage daemon
        */
       if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
+         Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
          goto bail_out;
       }
       sd = jcr->store_bsock;

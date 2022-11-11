@@ -524,7 +524,8 @@ bool do_mac(JCR *jcr)
     */
    Dmsg0(200, "Connect to write (wjcr) storage daemon.\n");
    if (!connect_to_storage_daemon(wjcr, 10, SDConnectTimeout, 1)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not connect to write Storage Daemon \"%s\"\n"), wjcr->store_mngr->get_wstore()->name());
+      Jmsg(jcr, M_ERROR, 0, _("Could not connect to write Storage Daemon \"%s\"\n"), wjcr->store_mngr->get_wstore()->name());
+      Jmsg(jcr, M_FATAL, 0, "%s", wjcr->errmsg);
       goto bail_out;
    }
    wsd = wjcr->store_bsock;
@@ -539,7 +540,8 @@ bool do_mac(JCR *jcr)
     */
    Dmsg1(200, "Connect to read (jcr) storage daemon. Jid=%d\n", jcr->JobId);
    if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
-      Jmsg(jcr, M_FATAL, 0, _("Could not connect to read Storage Daemon \"%s\"\n"), jcr->store_mngr->get_rstore()->name());
+      Jmsg(jcr, M_ERROR, 0, _("Could not connect to read Storage Daemon \"%s\"\n"), jcr->store_mngr->get_rstore()->name());
+      Jmsg(jcr, M_FATAL, 0, "%s", wjcr->errmsg);
       goto bail_out;
    }
    sd = jcr->store_bsock;

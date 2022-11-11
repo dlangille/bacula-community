@@ -69,8 +69,9 @@ BSOCK *open_sd_bsock(UAContext *ua)
    if (!is_bsock_open(ua->jcr->store_bsock)) {
       ua->send_msg(_("Connecting to Storage daemon %s at %s:%d ...\n"),
          store->name(), store->address, store->SDport);
-      if (!connect_to_storage_daemon(ua->jcr, 10, SDConnectTimeout, 1)) {
-         ua->error_msg(_("Failed to connect to Storage daemon.\n"));
+      if (!connect_to_storage_daemon(ua->jcr, 5, SDConnectTimeout, 0 /* No need to be verbose */)) {
+         ua->error_msg("%s", ua->jcr->errmsg);
+         free_bsock(ua->jcr->store_bsock);
          return NULL;
       }
    }
