@@ -251,7 +251,7 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       if (fatal || (jcr && job_canceled(jcr))) {
          goto bail_out;
       }
-      Dmsg4(50, _("Unable to connect to %s on %s:%d. ERR=%s\n"),
+      Dmsg4(50, "Unable to connect to %s on %s:%d. ERR=%s\n",
             name, host, port, be.bstrerror());
       if (i < 0) {
          i = 60 * 5;               /* complain again in 5 minutes */
