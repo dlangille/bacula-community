@@ -1008,7 +1008,7 @@ TLS_CONTEXT *new_tls_context(const char *ca_certfile, const char *ca_certdir,
 }
 void free_tls_context(TLS_CONTEXT *ctx) { }
 
-void tls_bsock_shutdown(BSOCKCORE *bsock) { }
+int tls_bsock_shutdown(BSOCKCORE *bsock) { return 0; }
 
 void free_tls_connection(TLS_CONNECTION *tls) { }
 
