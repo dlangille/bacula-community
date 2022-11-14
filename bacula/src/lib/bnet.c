@@ -71,7 +71,7 @@ bool bnet_tls_server(TLS_CONTEXT *ctx, BSOCK * bsock, alist *verify_list,
 
    if (get_tls_psk_context(ctx)) {
       if (!psk_shared_key || !psk_set_shared_key(tls, psk_shared_key)) {
-         Dmsg0(10, "Cannot setup TLS-PSK shared key\n");
+         MmsgD1(10, bsock->errmsg, _("[%cE0016] Cannot setup TLS-PSK shared key\n"), component_code);
          goto err;
       }
    }
