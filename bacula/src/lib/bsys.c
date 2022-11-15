@@ -2045,7 +2045,11 @@ void get_path_and_fname(const char *name, char **path, char **fname)
       /* separate exepath from exename */
       *l = 0;
       *path = bstrdup(cargv0);
+#if defined(HAVE_WIN32)
+      if (strstr(*path, PathSeparatorUp) != NULL || strstr(*fname, PathSeparatorCur) != NULL) {
+#else
       if (strstr(*path, PathSeparatorUp) != NULL || strstr(*fname, PathSeparatorCur) != NULL || !IsPathSeparator(*path[0])) {
+#endif
          /* fallback to legacy code */
          if (getcwd(cpath, path_max)) {
             free(*path);
