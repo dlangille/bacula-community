@@ -1185,7 +1185,7 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
 {
    enum { op_none, op_label, op_read };
    bool ok = true; // No error
-   Dmsg4(0, "load_encryption_key %s %s enc=%ld ver=%d\n", operation, volume_name, device->volume_encryption, VolHdr.BlockVer);
+   Dmsg4(100, "load_encryption_key %s %s enc=%ld ver=%d\n", operation, volume_name, device->volume_encryption, VolHdr.BlockVer);
    int op = op_none;
    if (0 == strcmp(operation, "LABEL")) {
       op = op_label;
@@ -1390,20 +1390,20 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
       /* initialize the crypto context */
       crypto_device_ctx = block_cipher_context_new(cipher);
       block_cipher_init_key(crypto_device_ctx, (unsigned char*)keybuf);
-      Jmsg(jcr, M_INFO, 0, _("3305 LoadEncryptionKey \"for Volume %s\", status is OK.\n"),
+      Jmsg(jcr, M_INFO, 0, _("3305 LoadEncryptionKey for Volume \"%s\", status is OK.\n"),
             dcr->VolumeName);
       if (comment!=NULL) {
          /* ignored for now */
       }
-      Dmsg1(20, "load encryption key for volume %s OK\n", dcr->VolumeName);
+      Dmsg1(60, "load encryption key for volume %s OK\n", dcr->VolumeName);
    }
    if (err_msg.c_str()[0] != '\0') {
       Dmsg2(10, "load encryption key for volume %s Err=%s\n", dcr->VolumeName, err_msg.c_str());
-      Jmsg(jcr, M_FATAL, 0, _("3992 Bad LoadEncryptionKey \"load Volume %s\": "
-           "ERR=%s\n"), dcr->VolumeName, err_msg.c_str());
+      Jmsg(jcr, M_FATAL, 0, _("3992 Bad LoadEncryptionKey %s Volume \"%s\": "
+           "ERR=%s\n"), operation, dcr->VolumeName, err_msg.c_str());
       if (jcr != NULL) {
-         Mmsg(jcr->errmsg, _("3992 Bad LoadEncryptionKey \"load Volume %s\": "
-               "ERR=%s\n"), dcr->VolumeName, err_msg.c_str());
+         Mmsg(jcr->errmsg, _("3992 Bad LoadEncryptionKey %s Volume \"%s\": "
+               "ERR=%s\n"), operation, dcr->VolumeName, err_msg.c_str());
       }
       ok = false;
    } else {
