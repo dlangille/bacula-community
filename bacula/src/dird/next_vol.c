@@ -474,6 +474,7 @@ bool get_scratch_volume(JCR *jcr, bool InChanger, MEDIA_DBR *mr,
    bmemset(&spr, 0, sizeof(spr));
    bstrncpy(spr.Name, "Scratch", sizeof(spr.Name));
    spr.PoolId = mr->ScratchPoolId;
+   smr.VolEncrypted = mr->VolEncrypted;
    if (db_get_pool_record(jcr, jcr->db, &spr)) {
       smr.PoolId = spr.PoolId;
       bstrncpy(smr.VolStatus, "Append", sizeof(smr.VolStatus));  /* want only appendable volumes */
