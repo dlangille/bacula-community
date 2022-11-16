@@ -763,7 +763,7 @@ static const char *sql_bvfs_list_files_default =
 "SELECT 'F', T.PathId, T.Filename, "
         "File.JobId, File.LStat, File.FileId "
 "FROM Job, File, ( "
-    "SELECT MAX(JobTDate) AS JobTDate, MAX(DeltaSeq), PathId, Filename "
+    "SELECT MAX(JobTDate) AS JobTDate, MAX(DeltaSeq) AS DeltaSeq, PathId, Filename "
       "FROM ( "
         "SELECT JobTDate, PathId, Filename, DeltaSeq "
           "FROM File JOIN Job USING (JobId) "
@@ -812,9 +812,6 @@ const char *sql_bvfs_list_files[] = {
      "ORDER BY Filename, DeltaSeq DESC, StartTime DESC "
    ") AS A WHERE A.FileIndex > 0 "
    "LIMIT %lld OFFSET %lld ",
-
-   /* SQLite */
-   sql_bvfs_list_files_default,
 
    /* SQLite */
    sql_bvfs_list_files_default
