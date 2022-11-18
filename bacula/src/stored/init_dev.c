@@ -343,12 +343,12 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
       if (!device->mount_point || stat(device->mount_point, &statp) < 0) {
          berrno be;
          dev->dev_errno = errno;
-         Jmsg2(jcr, M_ERROR_TERM, 0, _("[SA0003] Unable to stat mount point %s: ERR=%s\n"),
+         Jmsg2(jcr, M_ERROR_TERM, 0, _("[SA0017] Unable to stat mount point %s: ERR=%s\n"),
             device->mount_point, be.bstrerror());
       }
 
       if (!device->mount_command || !device->unmount_command) {
-         Jmsg0(jcr, M_ERROR_TERM, 0, _("[SA0004] Mount and unmount commands must defined for a device which requires mount.\n"));
+         Jmsg0(jcr, M_ERROR_TERM, 0, _("[SA0017] Mount and unmount commands must defined for a device which requires mount.\n"));
       }
    }
 
@@ -359,20 +359,20 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
       max_bs = dev->max_block_size;
    }
    if (dev->min_block_size > max_bs) {
-      Jmsg(jcr, M_ERROR_TERM, 0, _("[SA0005] Min block size > max on device %s\n"),
+      Jmsg(jcr, M_ERROR_TERM, 0, _("[SA0017] Min block size > max on device %s\n"),
            dev->print_name());
    }
    if (dev->max_block_size > MAX_BLOCK_LENGTH) {
-      Jmsg3(jcr, M_ERROR, 0, _("[SA0006] Block size %u on device %s is too large, using default %u\n"),
+      Jmsg3(jcr, M_ERROR, 0, _("[SA0017] Block size %u on device %s is too large, using default %u\n"),
          dev->max_block_size, dev->print_name(), DEFAULT_BLOCK_SIZE);
       dev->max_block_size = DEFAULT_BLOCK_SIZE;
    }
    if (dev->max_block_size % TAPE_BSIZE != 0) {
-      Jmsg3(jcr, M_WARNING, 0, _("[SW0007] Max block size %u not multiple of device %s block size=%d.\n"),
+      Jmsg3(jcr, M_WARNING, 0, _("[SW0017] Max block size %u not multiple of device %s block size=%d.\n"),
          dev->max_block_size, dev->print_name(), TAPE_BSIZE);
    }
    if (dev->max_volume_size != 0 && dev->max_volume_size < (dev->max_block_size << 4)) {
-      Jmsg(jcr, M_ERROR_TERM, 0, _("[SA0008] Max Vol Size < 8 * Max Block Size for device %s\n"),
+      Jmsg(jcr, M_ERROR_TERM, 0, _("[SA0017] Max Vol Size < 8 * Max Block Size for device %s\n"),
            dev->print_name());
    }
 
@@ -382,55 +382,55 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
    if ((errstat = dev->init_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0009] Unable to init mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = pthread_cond_init(&dev->wait, NULL)) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0010] Unable to init cond variable: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init cond variable: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = pthread_cond_init(&dev->wait_next_vol, NULL)) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0011] Unable to init cond variable: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init cond variable: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = pthread_mutex_init(&dev->spool_mutex, NULL)) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0012] Unable to init spool mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init spool mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = dev->init_acquire_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0013] Unable to init acquire mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init acquire mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = dev->init_freespace_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0014] Unable to init freespace mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init freespace mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = dev->init_read_acquire_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0015] Unable to init read acquire mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init read acquire mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = dev->init_volcat_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0016] Unable to init volcat mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init volcat mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
    if ((errstat = dev->init_dcrs_mutex()) != 0) {
       berrno be;
       dev->dev_errno = errstat;
-      Mmsg1(dev->errmsg, _("[SA0017] Unable to init dcrs mutex: ERR=%s\n"), be.bstrerror(errstat));
+      Mmsg1(dev->errmsg, _("[SA0020] Unable to init dcrs mutex: ERR=%s\n"), be.bstrerror(errstat));
       Jmsg0(jcr, M_ERROR_TERM, 0, dev->errmsg);
    }
 
@@ -454,14 +454,14 @@ static DEVICE *load_driver(JCR *jcr, DEVRES *device)
 
    P(mutex);
    if (!me->plugin_directory) {
-      Jmsg2(jcr, M_FATAL, 0,  _("[SF0018] Plugin directory not defined. Cannot load SD %s driver for device %s.\n"),
+      Jmsg2(jcr, M_FATAL, 0,  _("[SF0017] Plugin directory not defined. Cannot load SD %s driver for device %s.\n"),
          driver_tab[device->dev_type - 1], device->hdr.name);
       V(mutex);
       return NULL;
    }
    len = strlen(me->plugin_directory);
    if (len == 0) {
-      Jmsg0(jcr, M_FATAL, 0,  _("[SF0019] Plugin directory not defined. Cannot load drivers.\n"));
+      Jmsg0(jcr, M_FATAL, 0,  _("[SF0017] Plugin directory not defined. Cannot load drivers.\n"));
       V(mutex);
       return NULL;
    }
@@ -492,7 +492,7 @@ static DEVICE *load_driver(JCR *jcr, DEVRES *device)
          Dmsg2(10, "Driver=%s entry point=%p\n", drv->name, newDriver);
          if (!newDriver) {
             const char *error = dlerror();
-            Jmsg(NULL, M_ERROR, 0, _("[SE0003] Lookup of symbol \"BaculaSDdriver\" in driver %s for device %s failed: ERR=%s\n"),
+            Jmsg(NULL, M_ERROR, 0, _("[SE0018] Lookup of symbol \"BaculaSDdriver\" in driver %s for device %s failed: ERR=%s\n"),
                device->hdr.name, fname.c_str(), NPRT(error));
             Dmsg2(10, "Lookup of symbol \"BaculaSDdriver\" driver=%s failed: ERR=%s\n",
                fname.c_str(), NPRT(error));
@@ -506,7 +506,7 @@ static DEVICE *load_driver(JCR *jcr, DEVRES *device)
       } else {
          /* dlopen failed */
          const char *error = dlerror();
-         Jmsg3(jcr, M_FATAL, 0, _("[SF0020] dlopen of SD driver=%s at %s failed: ERR=%s\n"),
+         Jmsg3(jcr, M_FATAL, 0, _("[SF0018] dlopen of SD driver=%s at %s failed: ERR=%s\n"),
               drv->name, fname.c_str(), NPRT(error));
          Dmsg2(0, "dlopen plugin %s failed: ERR=%s\n", fname.c_str(),
                NPRT(error));
