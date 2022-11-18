@@ -487,7 +487,8 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
    unser_bytes(Id, BLKHDR_ID_LENGTH);
    ASSERT(unser_length(block->buf) == BLKHDR1_LENGTH);
    Id[BLKHDR_ID_LENGTH] = 0;
-   block->CheckSum64 = CheckSumLo; // only for BB01 & BB02
+   block->CheckSum64 = CheckSumLo; /* only for BB01 & BB02 */
+   block->blkh_options = BLKHOPT_NONE; /* only in BB03 */
    if (Id[3] == '1') {
       bhl = BLKHDR1_LENGTH;
       block->BlockVer = 1;
@@ -527,12 +528,11 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
       }
    } else if (Id[3] == '3') {
       bhl = BLKHDR3_LENGTH;
-      uint32_t blkh_options = CheckSumLo; /* in BB03 blkh_options is stored at the checksum location */
+      block->blkh_options = CheckSumLo; /* in BB03 blkh_options is stored at the checksum location */
       unser_uint32(block->VolSessionId);
       unser_uint32(block->VolSessionTime);
-
       /* decrypt the block before to calculate the checksum */
-      if ((blkh_options & BLKHOPT_ENCRYPT_BLOCK) && block->dev->crypto_device_ctx)
+      if ((block->blkh_options & BLKHOPT_ENCRYPT_BLOCK) && block->dev->crypto_device_ctx)
       {
          block_cipher_init_iv_header(block->dev->crypto_device_ctx, BlockNumber, block->VolSessionId, block->VolSessionTime);
          block_cipher_decrypt(block->dev->crypto_device_ctx, block_len-bhl, block->buf+bhl, block->buf_enc);

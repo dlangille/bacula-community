@@ -121,7 +121,8 @@ struct DEV_RECORD {
    uint32_t extra_bytes;              /* the extra size that must be accounted in VolABytes */
    uint32_t state_bits;               /* state bits */
    uint32_t RecNum;                   /* Record number in the block */
-   int      BlockVer;                 /* 1, 2 or .. from BB01, BB02, ... */
+   int      BlockVer;                 /* from the block header: 1,2,3 from BB?? */
+   uint32_t blkh_options;             /* from the block header: about block encryption */
    uint32_t BlockNumber;              /* Block number for this record (used in read_records()) */
    bool     invalid;                  /* The record may be invalid if it was merged with a previous record */
    rec_state wstate;                  /* state of write_record_to_block */
@@ -173,6 +174,7 @@ struct Volume_Label {
 
   uint32_t VerNum;                    /* Label version number */
   int      BlockVer;                  /* 1, 2 or .. from BB01, BB02 from the FIRST block */
+  uint32_t blkh_options;              /* the block options bits from the FIRST block */
   /* VerNum <= 10 */
   float64_t label_date;               /* Date tape labeled */
   float64_t label_time;               /* Time tape labeled */
@@ -207,6 +209,7 @@ struct Volume_Label {
   uint64_t  MaxPartSize;              /* Maximum Part Size */
 
   /* For Volume encryption */
+  bool is_vol_encrypted;
   uint32_t EncCypherKeySize;
   uint32_t MasterKeyIdSize;
   unsigned char EncCypherKey[MAX_BLOCK_CIPHER_KEY_LEN]; /* The encryption key

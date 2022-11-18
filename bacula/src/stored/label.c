@@ -1037,6 +1037,7 @@ bool unser_volume_label(DEVICE *dev, DEV_RECORD *rec)
    dev->VolHdr.LabelType = rec->FileIndex;
    dev->VolHdr.LabelSize = rec->data_len;
    dev->VolHdr.BlockVer = rec->BlockVer;
+   dev->VolHdr.blkh_options = rec->blkh_options;
 
    /* Unserialize the record into the Volume Header */
    Dmsg2(100, "reclen=%d recdata=%s", rec->data_len, rec->data);

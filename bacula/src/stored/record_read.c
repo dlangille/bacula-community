@@ -253,6 +253,7 @@ bool read_record_from_block(DCR *dcr,  DEV_RECORD *rec)
       rec->Addr = rec->StartAddr = dcr->block->BlockAddr;
    }
    rec->BlockVer = dcr->block->BlockVer; /* needed for unser_volume_label() */
+   rec->blkh_options = dcr->block->blkh_options; /* needed for unser_volume_label() */
    /* We read the next record */
    dcr->block->RecNum++;
    

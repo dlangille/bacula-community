@@ -1194,7 +1194,7 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
    }
    /* don't use encryption if volume encryption is not enable or we are reading
     * (aka not recycling) a BB02 volume */
-   if (device->volume_encryption == ET_NONE || (op != op_label && VolHdr.BlockVer <= 2)) {
+   if (device->volume_encryption == ET_NONE || (op != op_label && !(VolHdr.blkh_options & BLKHOPT_ENCRYPT_VOL))) {
       return ok;
    }
    JCR *jcr = dcr->jcr;
