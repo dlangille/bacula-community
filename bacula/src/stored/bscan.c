@@ -505,6 +505,7 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          bmemset(&mr, 0, sizeof(mr));
          bstrncpy(mr.VolumeName, dev->VolHdr.VolumeName, sizeof(mr.VolumeName));
          mr.PoolId = pr.PoolId;
+         mr.VolEncrypted = !!(dev->VolHdr.blkh_options & BLKHOPT_ENCRYPT_VOL);
          num_media++;
          if (db_get_media_record(bjcr, db, &mr)) {
             if (verbose) {
