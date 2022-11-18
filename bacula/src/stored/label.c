@@ -598,6 +598,9 @@ bool DEVICE::rewrite_volume_label(DCR *dcr, bool recycle)
       }
    }
 
+   if (!load_encryption_key(dcr, "LABEL", dcr->VolumeName, &VolHdr.EncCypherKeySize, VolHdr.EncCypherKey, &VolHdr.MasterKeyIdSize, VolHdr.MasterKeyId)) {
+      return false;
+   }
    if (!write_volume_label_to_block(dcr)) {
       Dmsg0(150, "Error from write volume label.\n");
       Leave(100);
