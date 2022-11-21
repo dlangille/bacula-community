@@ -1207,6 +1207,7 @@ bool encode_and_send_attributes(bctx_t &bctx)
          } else {
             /* Uncompressed object smaller, use it */
             comp_len = ff_pkt->restore_obj.object_len;
+            free_pool_memory(comp_obj);
          }
          Dmsg2(100, "Object compressed from %d to %d bytes\n", ff_pkt->restore_obj.object_len, comp_len);
       }
