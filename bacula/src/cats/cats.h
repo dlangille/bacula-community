@@ -338,6 +338,7 @@ struct ROBJECT_DBR {
    DBId_t RestoreObjectId;
 
    int limit;                   /* Needed to restrict a search */
+   DBId_t clientid;
 };
 
 

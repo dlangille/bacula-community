@@ -378,22 +378,23 @@ void BDB::bdb_list_plugin_objects_ids(JCR *jcr, char* id_list, DB_LIST_HANDLER *
  */
 void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *sendit, void *ctx, e_list_type type)
 {
-   POOL_MEM filter;
-   char  ed1[50];
-   char *jobid;
+   POOL_MEM filter, jfilter;
 
    /* The ACL checking is done on the bconsole command */
    if (rr->JobIds && is_a_number_list(rr->JobIds)) {
-      jobid = rr->JobIds;
+      Mmsg(jfilter, " %s ", rr->JobIds);
 
    } else if (rr->JobId) {
-      jobid = edit_int64(rr->JobId, ed1);
+      Mmsg(jfilter, " %ld ", rr->JobId);
+
+   } else if (rr->clientid > 0) {
+      Mmsg(jfilter, "SELECT A.JobId FROM Job AS A JOIN RestoreObject AS B USING (JobId) WHERE A.ClientId = %ld ORDER By A.JobTDate DESC LIMIT 1", rr->clientid);
 
    } else {
       return;
    }
-
-   if (rr->FileType > 0) {
+   
+   if (rr->clientid == 0 && rr->FileType > 0) {
       Mmsg(filter, "AND ObjectType = %d ", rr->FileType);
    }
 
@@ -402,14 +403,14 @@ void BDB::bdb_list_restore_objects(JCR *jcr, ROBJECT_DBR *rr, DB_LIST_HANDLER *s
       Mmsg(cmd, "SELECT JobId, RestoreObjectId, ObjectName, "
            "PluginName, ObjectType "
            "FROM RestoreObject JOIN Job USING (JobId) WHERE JobId IN (%s) %s "
-           "ORDER BY JobTDate ASC, RestoreObjectId",
-           jobid, filter.c_str());
+           "ORDER BY JobTDate ASC, RestoreObjectId ASC",
+           jfilter.c_str(), filter.c_str());
    } else {
       Mmsg(cmd, "SELECT JobId, RestoreObjectId, ObjectName, "
            "PluginName, ObjectType, ObjectLength "
            "FROM RestoreObject JOIN Job USING (JobId) WHERE JobId IN (%s) %s "
-           "ORDER BY JobTDate ASC, RestoreObjectId",
-           jobid, filter.c_str());
+           "ORDER BY JobTDate ASC, RestoreObjectId ASC",
+           jfilter.c_str(), filter.c_str());
    }
 
    if (!QueryDB(jcr, cmd)) {

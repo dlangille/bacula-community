@@ -701,7 +701,17 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
          for (j=i+1; j<ua->argc; j++) {
             if (strcasecmp(ua->argk[j], NT_("ujobid")) == 0 && ua->argv[j]) {
                bstrncpy(jr.Job, ua->argv[j], MAX_NAME_LENGTH);
-               jr.JobId = 0;
+               jr.JobId = 0;    // TODO: jr is not used
+
+            } else if (strcasecmp(ua->argk[j], NT_("client")) == 0) {
+               if (is_name_valid(ua->argv[j], NULL)) {
+                  CLIENT_DBR cr;
+                  bmemset(&cr, 0, sizeof(cr));
+                  /* Both Backup & Restore wants to list jobs for this client */
+                  if(get_client_dbr(ua, &cr, JT_BACKUP_RESTORE)) {
+                     rr.clientid = cr.ClientId;
+                  }
+               }
 
             } else if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
 
@@ -756,8 +766,8 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
             }
          }
 
-         if (!rr.JobId && !rr.JobIds) {
-            ua->error_msg(_("list pluginrestoreconf requires jobid argument\n"));
+         if (!rr.JobId && !rr.JobIds && !rr.clientid) {
+            ua->error_msg(_("list pluginrestoreconf requires jobid argument or Client\n"));
             return 1;
          }
 
