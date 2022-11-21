@@ -37,6 +37,7 @@
 #include "bacula.h"
 #include "jcr.h"
 #include <assert.h>
+#include "xxhash.h"
 
 /**
  * For OpenSSL version 1.x, EVP_PKEY_encrypt no longer
@@ -132,7 +133,6 @@
 #ifdef HAVE_OPENSSL /* How about OpenSSL? */
 
 #include "openssl-compat.h"
-#include "xxhash.h"
 
 /* ASN.1 Declarations */
 #define BACULA_ASN1_VERSION 0
