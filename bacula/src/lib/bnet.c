@@ -65,13 +65,13 @@ bool bnet_tls_server(TLS_CONTEXT *ctx, BSOCK * bsock, alist *verify_list,
 
    tls = new_tls_connection(ctx, bsock->m_fd);
    if (!tls) {
-      Mmsg(bsock->errmsg, _("[%cE0016] TLS connection initialization failed.\n"), component_code);
+      Mmsg(bsock->errmsg, _("[%cE0066] TLS connection initialization failed.\n"), component_code);
       return false;
    }
 
    if (get_tls_psk_context(ctx)) {
       if (!psk_shared_key || !psk_set_shared_key(tls, psk_shared_key)) {
-         MmsgD1(10, bsock->errmsg, _("[%cE0016] Cannot setup TLS-PSK shared key\n"), component_code);
+         MmsgD1(10, bsock->errmsg, _("[%cE0066] Cannot setup TLS-PSK shared key\n"), component_code);
          goto err;
       }
    }
@@ -80,13 +80,13 @@ bool bnet_tls_server(TLS_CONTEXT *ctx, BSOCK * bsock, alist *verify_list,
 
    /* Initiate TLS Negotiation */
    if (!tls_bsock_accept(bsock)) {
-      Mmsg(bsock->errmsg, _("[%cE0017] TLS Negotiation failed.\n"), component_code);
+      Mmsg(bsock->errmsg, _("[%cE0067] TLS Negotiation failed.\n"), component_code);
       goto err;
    }
    if (!get_tls_psk_context(ctx)) {
       if (verify_list) {
          if (!tls_postconnect_verify_cn(jcr, tls, verify_list)) {
-            Mmsg(bsock->errmsg, _("[%cE0018] TLS certificate verification failed."
+            Mmsg(bsock->errmsg, _("[%cE0068] TLS certificate verification failed."
                                   " Peer certificate did not match a required commonName\n"),
                  component_code);
             goto err;
@@ -115,13 +115,13 @@ bool bnet_tls_client(TLS_CONTEXT *ctx, BSOCK *bsock, alist *verify_list,
 
    tls  = new_tls_connection(ctx, bsock->m_fd);
    if (!tls) {
-      Mmsg(bsock->errmsg, _("[%cE0016] TLS connection initialization failed.\n"), component_code);
+      Mmsg(bsock->errmsg, _("[%cE0066] TLS connection initialization failed.\n"), component_code);
       return false;
    }
 
    if (get_tls_psk_context(ctx)) {
       if (!psk_shared_key || !psk_set_shared_key(tls, psk_shared_key)) {
-         MmsgD1(10, bsock->errmsg, "[%cE0017] Cannot setup TLS-PSK Password\n", component_code);
+         MmsgD1(10, bsock->errmsg, "[%cE0067] Cannot setup TLS-PSK Password\n", component_code);
          goto err;
       }
    }
@@ -137,7 +137,7 @@ bool bnet_tls_client(TLS_CONTEXT *ctx, BSOCK *bsock, alist *verify_list,
        * certificate's CN. Otherwise, we use standard host/CN matching. */
       if (verify_list) {
          if (!tls_postconnect_verify_cn(jcr, tls, verify_list)) {
-            Mmsg(bsock->errmsg, _("[%cE0018] TLS certificate verification failed."
+            Mmsg(bsock->errmsg, _("[%cE0068] TLS certificate verification failed."
                                   " Peer certificate did not match a required commonName\n"), component_code);
             goto err;
          }
@@ -145,7 +145,7 @@ bool bnet_tls_client(TLS_CONTEXT *ctx, BSOCK *bsock, alist *verify_list,
          /* If host is 127.0.0.1, try localhost */
          if (strcmp(bsock->host(), "127.0.0.1") != 0 ||
                 !tls_postconnect_verify_host(jcr, tls, "localhost")) {
-            Mmsg(bsock->errmsg, _("[%cE0018] TLS host certificate verification failed. Host name \"%s\" did not match presented certificate\n"), component_code, bsock->host());
+            Mmsg(bsock->errmsg, _("[%cE0068] TLS host certificate verification failed. Host name \"%s\" did not match presented certificate\n"), component_code, bsock->host());
             goto err;
          }
       }
@@ -163,14 +163,14 @@ err:
 bool bnet_tls_server(TLS_CONTEXT *ctx, BSOCK * bsock, alist *verify_list,
       const char *psk_shared_key)
 {
-   Mmsg(bsock->errmsg, _("[%cE0019] TLS enabled but not configured.\n"), component_code);
+   Mmsg(bsock->errmsg, _("[%cE0069] TLS enabled but not configured.\n"), component_code);
    return false;
 }
 
 bool bnet_tls_client(TLS_CONTEXT *ctx, BSOCK * bsock, alist *verify_list,
       const char *psk_shared_key)
 {
-   Mmsg(bsock->errmsg, _("[%cE0019] TLS enabled but not configured.\n"), component_code);
+   Mmsg(bsock->errmsg, _("[%cE0069] TLS enabled but not configured.\n"), component_code);
    return false;
 }
 

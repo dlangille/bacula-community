@@ -94,7 +94,7 @@ bool do_backup_init(JCR *jcr)
    jcr->jr.PoolId = get_or_create_pool_record(jcr, jcr->pool->name());
    if (jcr->jr.PoolId == 0) {
       Dmsg1(100, "JobId=%d no PoolId\n", (int)jcr->JobId);
-      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not get or create a Pool record.\n"));
+      Jmsg(jcr, M_FATAL, 0, _("[DE0028] Could not get or create a Pool record.\n"));
       return false;
    }
 
@@ -319,19 +319,19 @@ bool send_accurate_current_files(JCR *jcr)
    jcr->file_bsock->fsend("accurate files=%s\n", nb.list);
 
    if (!db_open_batch_connection(jcr, jcr->db)) {
-      Jmsg0(jcr, M_FATAL, 0, "[DE0008] Can't get batch sql connection");
+      Jmsg0(jcr, M_FATAL, 0, "[DE0028] Can't get batch sql connection");
       return false;  /* Fail */
    }
 
    if (jcr->HasBase) {
       jcr->nb_base_files = str_to_int64(nb.list);
       if (!db_create_base_file_list(jcr, jcr->db, jobids.list)) {
-         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       if (!db_get_base_file_list(jcr, jcr->db, jcr->use_accurate_chksum,
                             accurate_list_handler, (void *)jcr)) {
-         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
 
@@ -340,7 +340,7 @@ bool send_accurate_current_files(JCR *jcr)
       if (!db_get_file_list(jcr, jcr->db_batch,
                        jobids.list, opts,
                        accurate_list_handler, (void *)jcr)) {
-         Jmsg1(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db_batch));
+         Jmsg1(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db_batch));
          return false;
       }
    }
@@ -484,7 +484,7 @@ bool do_backup(JCR *jcr)
    jcr->setJobStatus(JS_Running);
    Dmsg2(100, "JobId=%d JobLevel=%c\n", jcr->jr.JobId, jcr->jr.JobLevel);
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
       return false;
    }
 
@@ -496,17 +496,17 @@ bool do_backup(JCR *jcr)
          Jmsg(jcr, M_INFO, 0, _("Found %ld files from prior incomplete Job.\n"),
             (int32_t)job.value);
       } else {
-         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       Mmsg(buf, "SELECT max(LastIndex) FROM JobMedia WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &last)) {
-         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       Mmsg(buf, "SELECT max(FirstIndex) FROM JobMedia WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &first)) {
-         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       /* We skip the last FileIndex (MAX) and the one after (MAX+1), can be
@@ -517,13 +517,13 @@ bool do_backup(JCR *jcr)
       Dmsg1(100, "==== FI=%ld\n", jcr->JobFiles);
       Mmsg(buf, "SELECT VolSessionId FROM Job WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       jcr->VolSessionId = job.value;
       Mmsg(buf, "SELECT VolSessionTime FROM Job WHERE JobId=%s", ed1);
       if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-         Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+         Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
          return false;
       }
       jcr->VolSessionTime = job.value;
@@ -701,7 +701,7 @@ bool do_backup(JCR *jcr)
 
    if (jcr->sd_calls_client) {
       if (jcr->FDVersion < 10) {
-         Jmsg(jcr, M_FATAL, 0, _("[DE0011] The File daemon does not support SDCallsClient.\n"));
+         Jmsg(jcr, M_FATAL, 0, _("[DE0031] The File daemon does not support SDCallsClient.\n"));
          goto bail_out;
       }
       if (!send_client_addr_to_sd(jcr)) {
@@ -753,7 +753,7 @@ bool do_backup(JCR *jcr)
    bstrncpy(jcr->jr.WriteDevice, jcr->write_dev, sizeof(jcr->jr.WriteDevice));
 
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
    }
 
    /*
@@ -898,7 +898,7 @@ int wait_for_job_termination(JCR *jcr, int timeout)
       jcr->Encrypt = Encrypt;
 
    } else if (!jcr->is_canceled()) {
-      Jmsg(jcr, M_FATAL, 0, _("[DE0011] No Job status returned from FD\n"));
+      Jmsg(jcr, M_FATAL, 0, _("[DE0031] No Job status returned from FD\n"));
    }
 
    /* Return the first error status we find Dir, FD, or SD */
@@ -939,7 +939,7 @@ void incomplete_cleanup(JCR *jcr)
    /* Get the last valid FileIndex */
    Mmsg(buf, "SELECT max(FileIndex) FROM File WHERE JobId=%s", ed1);
    if (!db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &job)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
       return;
    }
 
@@ -948,7 +948,7 @@ void incomplete_cleanup(JCR *jcr)
         "AND (FirstIndex > %lld OR LastIndex > %lld)",
         ed1, job.value, job.value);
    if (!db_sql_query(jcr->db, buf.c_str(), db_string_list_handler, &pids)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
       return;
    }
    /* Nothing to fix */
@@ -999,7 +999,7 @@ void incomplete_cleanup(JCR *jcr)
 bail_out:
    if (!ok) {
       db_sql_query(jcr->db, "ROLLBACK", NULL, NULL);
-      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Unable to cleanup JobMedia records\n"));
+      Jmsg(jcr, M_FATAL, 0, _("[DE0028] Unable to cleanup JobMedia records\n"));
    }
    db_end_transaction(jcr, jcr->db);
    db_unlock(jcr->db);

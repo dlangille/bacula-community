@@ -89,7 +89,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    int status;
 
    if (!jcr->client) {
-      Mmsg(jcr->errmsg, _("[DE0017] File daemon not defined for current Job\n"));
+      Mmsg(jcr->errmsg, _("[DE0037] File daemon not defined for current Job\n"));
       Dmsg0(10, "No Client defined for the job.\n");
       return 0;
    }
@@ -117,7 +117,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
             job_end_push(jcr, delete_bsock_end_cb, (void *)jcr->file_bsock);
          }
          if (!fd) {
-            Mmsg(jcr->errmsg, "[DE0010] No socket found of the client\n");
+            Mmsg(jcr->errmsg, "[DE0030] No socket found of the client\n");
             return 0;
          }
          jcr->file_bsock = fd;
@@ -169,7 +169,7 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
    if (bget_dirmsg(jcr, fd, BSOCK_TYPE_FD) > 0) {
        Dmsg1(110, "<filed: %s", fd->msg);
        if (strncmp(fd->msg, OKjob, strlen(OKjob)) != 0) {
-          Mmsg(jcr->errmsg, _("[DE0011] File daemon \"%s\" rejected Job command: %s\n"),
+          Mmsg(jcr->errmsg, _("[DE0031] File daemon \"%s\" rejected Job command: %s\n"),
              jcr->client->hdr.name, fd->msg);
           return 0;
 
@@ -190,12 +190,12 @@ int connect_to_file_daemon(JCR *jcr, int retry_interval, int max_retry_time,
           bstrncpy(cr.Uname, fd->msg+strlen(OKjob)+1, sizeof(cr.Uname));
 
           if (!db_update_client_record(jcr, jcr->db, &cr)) {
-             Jmsg(jcr, M_WARNING, 0, _("[DE0008] Error updating Client record. ERR=%s\n"),
+             Jmsg(jcr, M_WARNING, 0, _("[DE0028] Error updating Client record. ERR=%s\n"),
                   db_strerror(jcr->db));
           }
        }
    } else {
-      Mmsg(jcr->errmsg, _("[DE0011] FD gave bad response to JobId command: %s\n"),
+      Mmsg(jcr->errmsg, _("[DE0031] FD gave bad response to JobId command: %s\n"),
          fd->bstrerror());
       return 0;
    }

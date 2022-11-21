@@ -348,13 +348,13 @@ bool AuthenticateBase::CheckTLSRequirement()
    switch (TestTLSRequirement()) {
    case TLS_REQ_ERR_LOCAL:
       status = msg_type;
-      Mmsg(errmsg, _("[%cE0017] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
+      Mmsg(errmsg, _("[%cE0067] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
            component_code, GetLocalClassShortName(), bsock->who(), bsock->host());
       return false;
 
    case TLS_REQ_ERR_REMOTE:
       status = msg_type;
-      Mmsg(errmsg, _("[%cE0017] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
+      Mmsg(errmsg, _("[%cE0067] Authorization problem: %s \"%s:%s\" did not advertise required TLS support.\n"),
            component_code, GetRemoteClassShortName(), bsock->who(), bsock->host());
       return false;
    case TLS_REQ_OK:
@@ -379,7 +379,7 @@ bool AuthenticateBase::ClientEarlyTLS()
    if (bsock->recv() <= 0) {
       bmicrosleep(5, 0); // original cram_md5_respond() wait for 5s here
       status = M_FATAL;
-      Mmsg(errmsg, "[%cE0011] Unable to get starttls protocol\n", component_code);
+      Mmsg(errmsg, "[%cE0071] Unable to get starttls protocol\n", component_code);
       return false;
    }
    if (scan_string(bsock->msg, "starttls tlspsk=%d\n", &tlspsk_remote) != EOF) {
@@ -412,7 +412,7 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
       if (jcr && job_canceled(jcr)) {
          auth_success = false;
          status = M_FATAL;
-         Mmsg(errmsg, "[DE0019] Job is canceled\n");
+         Mmsg(errmsg, "[DE0069] Job is canceled\n");
          return false;                   /* quick exit */
       }
    }
@@ -423,7 +423,7 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
       if (jcr && job_canceled(jcr)) {
          auth_success = false;
          status = M_FATAL;
-         Mmsg(errmsg, "[DE0019] Job is canceled\n");
+         Mmsg(errmsg, "[DE0069] Job is canceled\n");
          return false;                   /* quick exit */
       }
    }
@@ -445,7 +445,7 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
          Dmsg2(authdl, "Authorization key rejected by %s at %s.\n",
             GetRemoteClassShortName(), bsock->who());
          status = M_FATAL;
-         Mmsg(errmsg, _("[%cE0015] Authorization key rejected by %s at %s rejected.\n"
+         Mmsg(errmsg, _("[%cE0065] Authorization key rejected by %s at %s rejected.\n"
                         "For help, please see: " MANUAL_AUTH_URL "\n"),
               component_code,
               GetRemoteClassLongName(), bsock->who());
@@ -454,7 +454,7 @@ bool AuthenticateBase::ClientCramMD5AuthenticateBase(const char *password)
                GetLocalClassLongName(), GetRemoteClassLongName());
          status = M_FATAL;
          Mmsg(errmsg,
-              _("[%cE0015] %s unable to authenticate with %s at \"%s:%d\". Possible causes:\n"
+              _("[%cE0065] %s unable to authenticate with %s at \"%s:%d\". Possible causes:\n"
                "Passwords or names not the same or\n"
                "Maximum Concurrent Jobs exceeded on the %s or\n"
                "%s networking messed up (restart daemon).\n"
@@ -487,7 +487,7 @@ bool AuthenticateBase::ServerEarlyTLS()
       if (!bsock->fsend("starttls tlspsk=%d\n", tlspsk_local_need)) {
 // TODO tweak the error message
          status = M_SECURITY;
-         Mmsg(errmsg, _("[%cE0011] Connection with %s:%s starttls comm error. ERR=%s\n"),
+         Mmsg(errmsg, _("[%cE0071] Connection with %s:%s starttls comm error. ERR=%s\n"),
               component_code, bsock->who(), bsock->host(), bsock->bstrerror());
          sleep(5);
          return false;

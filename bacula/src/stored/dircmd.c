@@ -226,7 +226,7 @@ void *handle_connection_request(void *arg)
    {
       SDAuthenticateDIR auth(jcr);
       if (!auth.authenticate_director()) {
-         Qmsg(jcr, M_FATAL, 0, _("[SF0100] Unable to authenticate Director\n"));
+         Qmsg(jcr, M_FATAL, 0, _("[SF0065] Unable to authenticate Director\n"));
          goto bail_out;
       }
    }
@@ -325,7 +325,7 @@ static bool client_cmd(JCR *jcr)
       /* destroy() OK because cl is local */
       cl->destroy();
       pm_strcpy(jcr->errmsg, dir->msg);
-      Jmsg(jcr, M_FATAL, 0, _("[SE0011] Bad client command: %s"), jcr->errmsg);
+      Jmsg(jcr, M_FATAL, 0, _("[SF0031] Bad client command: %s"), jcr->errmsg);
       Dmsg1(050, "Bad client command: %s", jcr->errmsg);
       goto bail_out;
    }
@@ -1227,7 +1227,7 @@ static DCR *find_device(JCR *jcr, POOL_MEM &devname,
                if (!device->dev) {
                   Dmsg1(100, "Device %s could not be opened. Skipped\n", devname.c_str());
                   Jmsg(jcr, M_WARNING, 0, _("\n"
-                     "[SW0107] Device \"%s\" in changer \"%s\" requested by DIR could not be opened or does not exist.\n"),
+                     "[SW0106] Device \"%s\" in changer \"%s\" requested by DIR could not be opened or does not exist.\n"),
                        device->hdr.name, devname.c_str());
                   continue;
                }
@@ -1305,7 +1305,7 @@ static DCR *find_any_device(JCR *jcr, POOL_MEM &devname,
                if (!device->dev) {
                   Dmsg1(100, "Device %s could not be opened. Skipped\n", devname.c_str());
                   Jmsg(jcr, M_WARNING, 0, _("\n"
-                     "[SW0109] Device \"%s\" in changer \"%s\" requested by DIR could not be opened or does not exist.\n"),
+                     "[SW0108] Device \"%s\" in changer \"%s\" requested by DIR could not be opened or does not exist.\n"),
                        device->hdr.name, devname.c_str());
                   continue;
                }

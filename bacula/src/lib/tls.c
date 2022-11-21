@@ -744,7 +744,7 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
          goto cleanup;
       case SSL_ERROR_ZERO_RETURN:
          /* TLS connection was cleanly shut down */
-         Mmsg(bsock->errmsg, _("[%cE0018] TLS Connect failure ERR="), component_code);
+         Mmsg(bsock->errmsg, _("[%cE0064] TLS Connect failure ERR="), component_code);
          openssl_post_errors(&bsock->errmsg);
          stat = false;
          goto cleanup;
@@ -758,7 +758,7 @@ static inline bool openssl_bsock_session_start(BSOCK *bsock, bool server)
          break;
       default:
          /* Socket Error Occurred */
-         Mmsg(bsock->errmsg, _("[%cE0018] TLS Connect failure. Check the passwords. ERR="), component_code);
+         Mmsg(bsock->errmsg, _("[%cE0064] TLS Connect failure. Check the passwords. ERR="), component_code);
          openssl_post_errors(&bsock->errmsg);
          stat = false;
          goto cleanup;
@@ -839,13 +839,13 @@ int tls_bsock_shutdown(BSOCKCORE *bsock)
             break;
          case SSL_ERROR_ZERO_RETURN:
             /* TLS connection was shut down on us via a TLS protocol-level closure */
-            Mmsg(bsock->errmsg, _("[%cW0019] TLS shutdown failure ERR="), component_code);
+            Mmsg(bsock->errmsg, _("[%cW0072] TLS shutdown failure ERR="), component_code);
             openssl_post_errors(&bsock->errmsg);
             err = -1;
             break;
          default:
             /* Socket Error Occurred */
-            Mmsg(bsock->errmsg, _("[%cW0019] TLS shutdown failure ERR="), component_code);
+            Mmsg(bsock->errmsg, _("[%cW0072] TLS shutdown failure ERR="), component_code);
             openssl_post_errors(&bsock->errmsg);
             err = -1;
             break;

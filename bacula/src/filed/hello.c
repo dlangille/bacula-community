@@ -180,7 +180,7 @@ bool recv_sdcaps(JCR *jcr)
    stat = sd->recv();
    if (stat <= 0) {
       berrno be;
-      Jmsg1(jcr, M_FATAL, 0, _("[FE0011] Recv caps from SD failed. ERR=%s\n"),
+      Jmsg1(jcr, M_FATAL, 0, _("[FE0031] Recv caps from SD failed. ERR=%s\n"),
          be.bstrerror());
       Dmsg1(050, _("Recv caps from SD failed. ERR=%s\n"), be.bstrerror());
       return false;
@@ -266,7 +266,7 @@ bool FDUAAuthenticateDir::authenticate_director(const char *name, DIRINFO *dir, 
     */
    Dmsg1(dbglvl, ">dird: %s", UA_sock->msg);
    if (UA_sock->recv() <= 0) {
-      Mmsg(errmsg, _("[FE0011] Bad response to Hello command: ERR=%s\n"),
+      Mmsg(errmsg, _("[FE0031] Bad response to Hello command: ERR=%s\n"),
            UA_sock->bstrerror());
       return false;
    }
@@ -275,7 +275,7 @@ bool FDUAAuthenticateDir::authenticate_director(const char *name, DIRINFO *dir, 
    if (strncmp(UA_sock->msg, DirOKhello, sizeof(DirOKhello)-3) == 0) {
       sscanf(UA_sock->msg, DirOKhello, &dir_version);
    } else {
-      Mmsg(errmsg, _("[FE0011] Director rejected Hello command\n"));
+      Mmsg(errmsg, _("[FE0031] Director rejected Hello command\n"));
       return false;
    }
    /* Turn on compression for newer Directors */

@@ -644,7 +644,7 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
    int i;
 
    if (!acl_access_client_ok(ua, client->name(), JT_BACKUP_RESTORE)) {
-      ua->error_msg(_("[DE0016] No authorization for Client \"%s\"\n"), client->name());
+      ua->error_msg(_("[DE0021] No authorization for Client \"%s\"\n"), client->name());
       return;
    }
 

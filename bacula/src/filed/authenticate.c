@@ -97,7 +97,7 @@ bool FDAuthenticateDIR::validate_dir_hello()
    if (!director) {
       char addr[64];
       char *who = dir->get_peer(addr, sizeof(addr)) ? dir->who() : addr;
-      Jmsg2(jcr, M_FATAL, 0, _("[FE0016] Connection from unknown Director %s at %s rejected.\n"),
+      Jmsg2(jcr, M_FATAL, 0, _("[FE0027] Connection from unknown Director %s at %s rejected.\n"),
             dirname, who);
       goto auth_fatal;
    }

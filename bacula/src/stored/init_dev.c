@@ -144,7 +144,7 @@ DEVICE *init_dev(JCR *jcr, DEVRES *device, bool adata, bstatcollect *statcollect
       /* Check that device is available */
       if (stat(device->device_name, &statp) < 0) {
          berrno be;
-         Jmsg3(jcr, M_ERROR, 0, _("[SE0001] Unable to stat device %s at %s: ERR=%s\n"),
+         Jmsg3(jcr, M_ERROR, 0, _("[SE0017] Unable to stat device %s at %s: ERR=%s\n"),
             device->hdr.name, device->device_name, be.bstrerror());
          goto try_again_later;
       }
@@ -162,7 +162,7 @@ DEVICE *init_dev(JCR *jcr, DEVRES *device, bool adata, bstatcollect *statcollect
          device->dev_type = B_VTAPE_DEV;
 #endif
       } else if (!(device->cap_bits & CAP_REQMOUNT)) {
-         Jmsg2(jcr, M_ERROR, 0, _("[SE0002] %s is an unknown device type. Must be tape or directory."
+         Jmsg2(jcr, M_ERROR, 0, _("[SE0017] %s is an unknown device type. Must be tape or directory."
                " st_mode=%x\n"),
             device->device_name, statp.st_mode);
          goto try_again_later;
@@ -178,7 +178,7 @@ DEVICE *init_dev(JCR *jcr, DEVRES *device, bool adata, bstatcollect *statcollect
 
    /* If invalid dev_type get out */
    if (device->dev_type < 0 || device->dev_type > n_drivers) {
-      Jmsg2(jcr, M_FATAL, 0, _("[SF0001] Invalid device type=%d name=\"%s\"\n"),
+      Jmsg2(jcr, M_FATAL, 0, _("[SF0017] Invalid device type=%d name=\"%s\"\n"),
          device->dev_type, device->hdr.name);
       goto never_try_again;
    }
@@ -221,7 +221,7 @@ DEVICE *init_dev(JCR *jcr, DEVRES *device, bool adata, bstatcollect *statcollect
          break;
 #endif
       default:
-         Jmsg2(jcr, M_FATAL, 0, _("[SF0002] Unknown device type=%d device=\"%s\"\n"),
+         Jmsg2(jcr, M_FATAL, 0, _("[SF0017] Unknown device type=%d device=\"%s\"\n"),
             device->dev_type, device->hdr.name);
          goto never_try_again;
       }

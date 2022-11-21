@@ -131,7 +131,7 @@ bool setup_job(JCR *jcr)
                               jcr->catalog->disable_batch_insert);
 
    if (!jcr->db || !db_open_database(jcr, jcr->db)) {
-      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not open database \"%s\".\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0028] Could not open database \"%s\".\n"),
                  jcr->catalog->db_name);
       if (jcr->db) {
          Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
@@ -170,7 +170,7 @@ bool setup_job(JCR *jcr)
    }
 
    if (!db_create_job_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
       goto bail_out;
    }
    jcr->JobId = jcr->jr.JobId;
@@ -297,7 +297,7 @@ static bool setup_resume_job(JCR *jcr, JOB_DBR *jr)
                               jcr->catalog->mult_db_connections,
                               jcr->catalog->disable_batch_insert);
    if (!jcr->db || !db_open_database(jcr, jcr->db)) {
-      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not open database \"%s\".\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0028] Could not open database \"%s\".\n"),
                  jcr->catalog->db_name);
       if (jcr->db) {
          Jmsg(jcr, M_FATAL, 0, "%s", db_strerror(jcr->db));
@@ -444,7 +444,7 @@ static void *job_thread(void *arg)
    }
 
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
    }
 
    /* Run any script BeforeJob on dird */
@@ -463,7 +463,7 @@ static void *job_thread(void *arg)
    jcr->start_time = time(NULL);
    jcr->jr.StartTime = jcr->start_time;
    if (!db_update_job_start_record(jcr, jcr->db, &jcr->jr)) {
-      Jmsg(jcr, M_FATAL, 0, "[DE0008] %s", db_strerror(jcr->db));
+      Jmsg(jcr, M_FATAL, 0, "[DE0028] %s", db_strerror(jcr->db));
    }
    generate_plugin_event(jcr, bDirEventJobRun);
 
@@ -1373,7 +1373,7 @@ bool get_or_create_client_record(JCR *jcr)
    }
    pm_strcpy(jcr->client_name, jcr->client->hdr.name);
    if (!db_create_client_record(jcr, jcr->db, &cr)) {
-      Jmsg(jcr, M_FATAL, 0, _("[DE0008] Could not create Client record. ERR=%s\n"),
+      Jmsg(jcr, M_FATAL, 0, _("[DE0028] Could not create Client record. ERR=%s\n"),
          db_strerror(jcr->db));
       return false;
    }
@@ -1993,7 +1993,7 @@ bool flush_file_records(JCR *jcr)
    if (jcr->cached_attribute) {
       Dmsg0(400, "Flush last cached attribute.\n");
       if (!db_create_attributes_record(jcr, jcr->db, jcr->ar)) {
-         Jmsg1(jcr, M_FATAL, 0, _("[DE0008] Attribute create error. %s"), jcr->db->bdb_strerror());
+         Jmsg1(jcr, M_FATAL, 0, _("[DE0028] Attribute create error. %s"), jcr->db->bdb_strerror());
       }
       jcr->cached_attribute = false;
    }

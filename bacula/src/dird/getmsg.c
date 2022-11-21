@@ -416,12 +416,12 @@ bool response(JCR *jcr, BSOCK *bs, BSOCK_CLIENT_TYPE role, const char *resp, con
          return true;
       }
       if (prtmsg == DISPLAY_ERROR) {
-         Jmsg(jcr, M_FATAL, 0, _("[DE0011] Bad response to %s command: wanted %s, got %s\n"),
+         Jmsg(jcr, M_FATAL, 0, _("[DE0031] Bad response to %s command: wanted %s, got %s\n"),
             cmd, resp, bs->msg);
       }
       return false;
    }
-   Jmsg(jcr, M_FATAL, 0, _("[DE0018] Socket error on %s command: ERR=%s\n"),
+   Jmsg(jcr, M_FATAL, 0, _("[DE0038] Socket error on %s command: ERR=%s\n"),
          cmd, bs->bstrerror());
    return false;
 }

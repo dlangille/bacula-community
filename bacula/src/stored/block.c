@@ -303,7 +303,7 @@ bool DCR::write_block_to_dev()
             }
             dev->VolCatInfo.VolCatErrors++;
             Jmsg5(jcr, etype, 0, _("%s Write error at %s on device %s Vol=%s. ERR=%s.\n"),
-               etype==M_FATAL?"[SF0208]":"[SE0201]",
+               etype==M_FATAL?"[SF0201]":"[SE0201]",
                dev->print_addr(ed1, sizeof(ed1)), dev->print_name(),
                dev->getVolCatName(), be.bstrerror());
             if (dev->get_tape_alerts(this)) {
@@ -476,7 +476,7 @@ bool DCR::read_block_from_dev(bool check_block_numbers)
       return false;
    }
    if (!dev->enabled) {
-      Mmsg(dev->errmsg, _("[SF0210] Cannot write block. Device is disabled. dev=%s\n"), dev->print_name());
+      Mmsg(dev->errmsg, _("[SF023] Cannot read block. Device is disabled. dev=%s\n"), dev->print_name());
       Jmsg1(jcr, M_FATAL, 0, "%s", dev->errmsg);
       return false;
    }
@@ -490,7 +490,7 @@ bool DCR::read_block_from_dev(bool check_block_numbers)
    looping = 0;
 
    if (!dev->is_open()) {
-      Mmsg4(dev->errmsg, _("[SF0211] Attempt to read closed device: fd=%d at file:blk %u:%u on device %s\n"),
+      Mmsg4(dev->errmsg, _("[SF0206] Attempt to read closed device: fd=%d at file:blk %u:%u on device %s\n"),
          dev->fd(), dev->file, dev->block_num, dev->print_name());
       Jmsg(dcr->jcr, M_FATAL, 0, "%s", dev->errmsg);
       Pmsg4(000, "Fatal: dev=%p dcr=%p adata=%d bytes=%lld\n", dev, dcr, dev->adata,

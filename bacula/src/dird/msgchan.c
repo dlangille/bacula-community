@@ -115,7 +115,7 @@ bool connect_to_storage_daemon(JCR *jcr, int retry_interval,
    }
 
    if (!store) {
-      MmsgD1(100, jcr->errmsg, "[DE0017] No storage resource found in jcr for JobId: %d!\n", jcr->JobId);
+      MmsgD1(100, jcr->errmsg, "[DE0037] No storage resource found in jcr for JobId: %d!\n", jcr->JobId);
       return false;
    }
 
