@@ -1793,7 +1793,7 @@ failed:
    }
 
 all_done:
-   Pmsg0(-1, _("\nThe above Bacula scan should have output identical to what follows.\n"
+   Pmsg0(-1, _("\nThe above Bacula scan should have output similar to what follows.\n"
         "Please double check it ...\n"
         "=== Sample correct output ===\n"
         "1 block of 64448 bytes in file 1\n"
