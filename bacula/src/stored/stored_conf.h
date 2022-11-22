@@ -300,7 +300,7 @@ extern s_kw enc_types[];
 
 /* Encryption type */
 enum  {
-   ET_NONE,
-   ET_ENABLE,
+   ET_NO,
+   ET_YES,
    ET_STRONG,
 };

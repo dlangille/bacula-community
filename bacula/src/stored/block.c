@@ -74,11 +74,9 @@ bool DCR::write_block_to_device(bool final)
       ok = false;
       goto bail_out;   /* fatal error */
    }
-   if (dcr->despooling && dev->device->volume_encryption!=ET_NONE && dev->crypto_device_ctx!=NULL) {
-//      DEVICE *old = block->dev;
+   if (dcr->despooling && dev->device->volume_encryption != ET_NO
+         && dev->crypto_device_ctx!=NULL) {
       block->dev = dev;
-//      uint64_t checksum = ser_block_header(block, dev->do_checksum());
-//      block->dev = old;
    }
 
    Dmsg1(500, "Write block to dev=%p\n", dcr->dev);

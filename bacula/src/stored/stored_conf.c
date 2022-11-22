@@ -297,9 +297,9 @@ s_kw dev_types[] = {
  *   encryption type     encryption code = token
  */
 s_kw enc_types[] = {
-   {"None",          ET_NONE},
-   {"Enable",        ET_ENABLE},
-   {"Strong",        ET_STRONG},
+   {"No",          ET_NO},
+   {"Yes",         ET_YES},
+   {"Strong",      ET_STRONG},
    {NULL,            0}
 };
 
