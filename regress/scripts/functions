@@ -225,7 +225,7 @@ exec $bin/key-manager.py getkey \$VERBOSE \$OPTION --cipher AES_128_XTS
 EOF
       chmod a+x $bin/key-manager-cmd.sh
       $bperl -e "add_attribute('$conf/bacula-sd.conf', 'EncryptionCommand', '$ENC_COMMAND', 'Storage')"
-      $bperl -e "add_attribute('$conf/bacula-sd.conf', 'VolumeEncryption', 'enable', 'Device')"
+      $bperl -e "add_attribute('$conf/bacula-sd.conf', 'VolumeEncryption', 'yes', 'Device')"
       variant_name="${variant_name} VolEnc"
 
 #      $bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'no', 'Job')"
