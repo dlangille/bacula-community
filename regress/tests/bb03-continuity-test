@@ -1,0 +1,518 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test compatibility between BB02 and BB03 volumes and between
+# encrypted and not encrypted volumes
+#
+# XPARAM OPERATION=(append|recycle|10:generate)
+# - append try to append to all to old volumes and check that the ones
+#   that match the requirements have been used and not the other
+# - recycle test if volumes will be selected and recycled accordingly
+# - generate is used to generate the set of volume, it must be run 3 times
+#
+TestName="bb03-continuity-test"
+JobName=backup
+. scripts/functions
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+# this is where to store the volumes at generation time
+voldir_name=bb02bb03volumes
+temp_vol_dir=/tmp/$voldir_name
+# the directory where to download the volumes
+DEPKGS=${DEPKGS:-/tmp}
+# the file where to download the volumes
+archive="${DEPKGS}/${voldir_name}.tgz"
+# from where to get the volumes
+archive_url="https://baculasystems.com/ml/Eeg9haighuteeJ8/bb02bb03volumes.tgz"
+
+# build the key_dir directory for the key-manager 
+# ($sysconfdir is not "exported" yet, use $bin instead)
+key_dir="$sysconfdir"
+[ -z $key_dir ] && key_dir="$bin"
+key_dir=$key_dir/keydir
+
+#############################################################################
+#
+# This generate one volumes at a time.
+# To create all the volume you must run multiple time the script
+# with different setups, see below, don't enable any extra features
+#
+# TestVolume001 to get a BB02 volume run the script with version 14.0
+#               this is jobid=1
+# TestVolume002 to get an un-encrypted BB03 volume run the script with
+#               version >= 14.1 with FORCE_VOLENC=no
+#               this is jobid=2
+# TestVolume003 to get an encrypted BB03 volume run the script with
+#               version >= 14.1 with FORCE_VOLENC=yes
+#               this is jobid=3
+# when all the volumes are generated in $temp_vol_dir, the script archives
+# them into ${temp_vol_dir}.tgz (this include the encryption-key)
+#
+# you must run the script this way
+# OPERATION=generate REGRESS_DEBUG=1 tests/bb03-continuity-test
+#
+#############################################################################
+generate_volumes()
+{
+version=`$bin/bacula-dir -? 2>&1 | awk '/Version:/ { print $2 }'`
+major=`echo $version | cut -d. -f1`
+minor=`echo $version | cut -d. -f2`
+dummy_label="update volume=TestVolume001 volstatus=Used"
+dummy_run1="run job=Simple yes"
+dummy_run2="run job=Simple yes"
+if [ $major -lt 14 -o \( "$major.$minor" != "14.1" \) ] ; then
+   # version < 14.1 still using BB02
+   volname=TestVolume001
+   dummy_label=""
+   dummy_run1=""
+   dummy_run2=""
+else
+   if [ "$FORCE_VOLENC" = "yes" ] ; then
+      volname=TestVolume003
+   else
+      dummy_run2=""
+      volname=TestVolume002
+   fi
+fi
+
+# create 20MB of random files
+target=$tmp/files
+mkdir -p $target
+for n in {1..20}; do
+    dd if=/dev/urandom of=$target/file$n.bin bs=64k count=16
+done
+echo "${target}" >${tmp}/file-list
+
+start_test
+cat <<-END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label storage=File volume=TestVolumeDummy
+$dummy_run1
+wait
+$dummy_run2
+wait
+update volume=TestVolumeDummy volstatus=Used"
+label storage=File volume=$volname
+run job=Simple level=full yes
+wait
+messages
+list jobmedia
+quit
+END_OF_DATA
+
+run_bacula
+stop_bacula
+
+mkdir -p $temp_vol_dir
+cp $tmp/$volname $temp_vol_dir/$volname || die_early 1 "Volume not found: $tmp/$volname"
+echo "Volume has been updated $temp_vol_dir/$volname"
+if [ "$FORCE_VOLENC" = "yes" ] ; then
+   cp $key_dir/$volname $temp_vol_dir/$volname.key || die_early 1 "Volume key not found: $tmp/$volname"
+fi
+
+echo Volume $temp_vol_dir/$volname has been updated
+if [ -e $temp_vol_dir/TestVolume001 -a -e $temp_vol_dir/TestVolume002 -a -e $temp_vol_dir/TestVolume003 ] ; then
+   ( cd $temp_vol_dir ; tar cvzf ${temp_vol_dir}.tgz TestVolume001 TestVolume002 TestVolume003 TestVolume003.key )
+   die_early 0 "Volume archive ${temp_vol_dir}.tgz has been updated"
+else
+   die_early 2 "Volumes are missing to create archive ${temp_vol_dir}.tgz"
+fi
+end_test
+exit 9
+}
+
+#############################################################################
+#
+# import_volumes
+#
+#############################################################################
+import_volumes()
+{
+if [ ! -f $archive ] ; then
+   print_debug "Download volumes from $archive_url into $archive"
+   wget --quiet -O "$archive" "$archive_url"
+fi
+if [ ! -f $archive ] ; then
+   print_debug "ERROR: Cannot get archive $archive_url in $archive"
+   exit 9
+fi
+print_debug "Use volumes from $archive"
+
+#
+# bscan the olds volumes BB02 and BB03 encrypted and non encrypted volumes
+#
+(cd $tmp ; tar xzf ${archive} )
+mkdir -p $key_dir
+cp $tmp/TestVolume003.key $key_dir/TestVolume003
+for vol in tmp/TestVolume[0-9][0-9][0-9] ; do
+   volname=`basename $vol`
+   echo "volume=$volname" >> $tmp/bscan.bsr
+   size=`wc -c $vol | cut -d " " -f 1`
+   size=$((size / 1000000))
+   eval ${volname}_size_mb=$size
+   eval ${volname}_size_mb_plus_10=$((size + 10))
+done
+
+bscan_libdbi
+
+# If the database has a password pass it to bscan
+if test "x${db_password}" = "x"; then
+  PASSWD=
+else
+  PASSWD="-P ${db_password}"
+fi
+
+if test "$debug" -eq 1 ; then
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b $tmp/bscan.bsr -c $bin/bacula-sd.conf ${cwd}/tmp 2>&1 | tee $tmp/bscan.out
+else
+  $bin/bscan -w working $BSCANLIBDBI -u ${db_user} -n ${db_name} $PASSWD -m -s -v -b $tmp/bscan.bsr -c $bin/bacula-sd.conf ${cwd}/tmp > $tmp/bscan.out 2>&1
+fi
+
+if grep "Created JobMedia record JobId 3" $tmp/bscan.out > /dev/null ; then
+   new_jobid=4
+   if [ "$FORCE_VOLENC" != "yes" ] ; then
+      estat=1
+      print_debug "ERROR: TestVolume003 is expected to be encrypted and should not be readable by un-encrypted device!"
+   fi
+else
+   if [ "$FORCE_VOLENC" = "yes" ] ; then
+      estat=1
+      print_debug "ERROR: JobId 3 should be found in TestVolume003, it is not!"
+   fi
+   new_jobid=3
+fi
+}
+
+
+#############################################################################
+#
+# Test the RECYLING of volumes
+#
+# import the 3 volumes (BB02, BB03 & encrypted BB03)
+# do some check on the imported volume
+# mark the volumes used and recyclable
+# limit volume capacity to 10MB
+# label a 4th volume
+# run a backup and wait for a request for new volume
+# label a new volume
+# check that ALL the volumes have been used and are encrypted or not depending
+# $FORCE_VOLENC
+#
+#############################################################################
+test_recycle()
+{
+start_test
+
+import_volumes
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/impvolencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted!=0;
+
+@$out $tmp/impvolnotencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted=0;
+
+@$out $tmp/log1.out
+list media
+list jobs
+sql
+select VolumeName, VolEncrypted, VolType from media;
+
+@# move the volume from Archive to Used
+update volume=TestVolume001 volstatus=Used recycle=yes
+update volume=TestVolume002 volstatus=Used recycle=yes
+update volume=TestVolume003 volstatus=Used recycle=yes
+
+@# purge volumes for recycle
+purge volume=TestVolume001
+purge volume=TestVolume002
+purge volume=TestVolume003
+
+@# create a 4th volume to give the opportunity to start on this one (if there is a bug)
+label storage=File volume=TestVolume004
+update volume=TestVolume001 maxvolbytes=10M
+update volume=TestVolume002 maxvolbytes=10M
+update volume=TestVolume003 maxvolbytes=10M
+update volume=TestVolume004 maxvolbytes=10M
+umount storage=File
+
+setdebug level=4 storage=File
+setdebug level=1 client
+list media
+list jobs
+@#setdebug level=1000 dir
+run job=Simple yes level=full
+quit
+END_OF_DATA
+
+run_bacula
+
+# we should be out of space (only 4X10M)
+sleep 1
+counter=10
+found=0
+while [ $counter -ne 0 ] ; do
+   echo status dir | $bin/bconsole > $tmp/wait_mount
+   if grep "is waiting for an appendable Volume" $tmp/wait_mount >/dev/null ; then
+      found=1
+      break
+   fi
+   counter=`expr $counter - 1`
+   sleep 1
+done
+
+if [ $found != 1 ] ; then
+    die_test 1 "ERROR: Should wait for a new volume"
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log1.out
+label storage=File volume=TestVolume005
+wait
+messages
+@$out $tmp/volencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted!=0;
+
+@$out $tmp/volnotencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted=0;
+
+@$out $tmp/jobmedia.out
+list jobmedia jobid=$new_jobid
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+#
+# check that the 3 imported volumes had the right VolEncrypted state after import
+#
+if ! grep TestVolume001 $tmp/impvolnotencrypted.out >/dev/null ; then
+   estat=1
+   print_debug "ERROR: TestVolume001 is expected to be not encrypted see ${tmp}/impvolnotencrypted.out!"
+fi
+if ! grep TestVolume002 $tmp/impvolnotencrypted.out >/dev/null ; then
+   estat=1
+   print_debug "ERROR: TestVolume002 is expected to be not encrypted see ${tmp}/impvolnotencrypted.out!"
+fi
+if ! grep TestVolume003 $tmp/impvolencrypted.out >/dev/null ; then
+   estat=1
+   print_debug "ERROR: TestVolume003 is expected to be encrypted see ${tmp}/impvolencrypted.out!"
+fi
+
+#
+# check that the 3 imported volumes have been reused for $new_jobid after recycling
+#
+if ! grep TestVolume001 $tmp/jobmedia.out >/dev/null || \
+   ! grep TestVolume002 $tmp/jobmedia.out >/dev/null || \
+   ! grep TestVolume003 $tmp/jobmedia.out >/dev/null ; then
+   estat=1
+   print_debug "ERROR: The 3 imported tape should be used in job $new_jobid"
+fi
+
+volencrypted=`grep TestVolume0 $tmp/volencrypted.out | wc -l`
+volnotencrypted=`grep TestVolume0 $tmp/volnotencrypted.out | wc -l`
+
+if [ "$FORCE_VOLENC" = "yes" ] ; then
+   # all the volumes should be encrypted
+   if [ "$volencrypted" != "5" -o "$volnotencrypted" != "0" ] ; then
+      estat=1
+      print_debug "All volume should be encrypted in Job 4, volencrypted=$volencrypted, volnotencrypted=$volnotencrypted"
+   fi
+else
+   # none of the volumes should be encrypted
+   if [ "$volencrypted" != "0" -o "$volnotencrypted" != "5" ] ; then
+      estat=1
+      print_debug "None of the volume should be encrypted in JobId $new_jobid, volencrypted=$volencrypted, volnotencrypted=$volnotencrypted"
+   fi
+fi
+
+check_for_zombie_jobs storage=File
+stop_bacula
+check_two_logs
+end_test
+}
+
+#
+# Test APPENDING of imported volumes
+#
+# import the 3 volumes (, BB02, BB03 & encrypted BB03)
+# do some check on the imported volume
+# mark the volumes "APPEND"
+# limit volume capacity to 10MB
+# label a 4th volume
+# run a backup and wait for a request for new volume
+# label a new volume
+# check that the"right" volumes have been appended depending $FORCE_VOLENC
+#
+test_append()
+{
+start_test
+
+import_volumes
+
+if [ "$new_jobid" = 4 ] ; then
+   VERIFY_JOB_4="run job=VerifyData jobid=4 yes"
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/impvolencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted!=0;
+
+@$out $tmp/impvolnotencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted=0;
+
+@$out $tmp/log1.out
+list media
+list jobs
+sql
+select VolumeName, VolEncrypted, VolType from media;
+
+@# move the volume from Archive to Append and make some room for a limited append
+update volume=TestVolume001 volstatus=Append recycle=yes maxvolbytes=${TestVolume001_size_mb_plus_10}M
+update volume=TestVolume002 volstatus=Append recycle=yes maxvolbytes=${TestVolume002_size_mb_plus_10}M
+update volume=TestVolume003 volstatus=Append recycle=yes maxvolbytes=${TestVolume003_size_mb_plus_10}M
+
+@# create a 4th volume to give the opportunity to start on this one (if there is a bug)
+label storage=File volume=TestVolume004
+update volume=TestVolume004 maxvolbytes=10M
+umount storage=File
+
+setdebug level=4 storage=File
+setdebug level=1 client
+list media
+list jobs
+@#setdebug level=1000 dir
+run job=Simple yes level=full
+quit
+END_OF_DATA
+
+run_bacula
+
+# we should be out of space (only 4X10M)
+sleep 1
+counter=10
+found=0
+while [ $counter -ne 0 ] ; do
+   echo status dir | $bin/bconsole > $tmp/wait_mount
+   if grep "is waiting for an appendable Volume" $tmp/wait_mount >/dev/null ; then
+      found=1
+      break
+   fi
+   counter=`expr $counter - 1`
+   sleep 1
+done
+
+if [ $found != 1 ] ; then
+    die_test 1 "ERROR: Should wait for a new volume"
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/log1.out
+label storage=File volume=TestVolume005
+wait
+messages
+@$out $tmp/volencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted!=0;
+
+@$out $tmp/volnotencrypted.out
+sql
+select VolumeName, VolEncrypted from media where VolEncrypted=0;
+
+@$out $tmp/jobmedia.out
+list jobmedia jobid=$new_jobid
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+
+@$out $tmp/log3.out
+run job=VerifyData jobid=1 yes
+wait
+run job=VerifyData jobid=2 yes
+wait
+run job=VerifyData jobid=3 yes
+wait
+$VERIFY_JOB_4
+wait
+messages
+
+quit
+END_OF_DATA
+
+run_bconsole
+
+#
+# check which of the 3 imported volumes have been appended for JobId $new_jobid
+#
+if [ "$FORCE_VOLENC" = "yes" ] ; then
+   if grep TestVolume001 $tmp/jobmedia.out >/dev/null || \
+      grep TestVolume002 $tmp/jobmedia.out >/dev/null ; then
+      estat=1
+      print_debug "ERROR: TestVolume001 and TestVolume002 should not have been appended in job $new_jobid"
+   fi
+   if ! grep TestVolume003 $tmp/jobmedia.out >/dev/null ; then
+      estat=1
+      print_debug "ERROR: TestVolume003 should have been appended in job $new_jobid"
+   fi
+fi
+
+check_for_zombie_jobs storage=File
+stop_bacula
+check_two_logs
+
+nb=`grep "^  Termination: *Verify OK" tmp/log3.out | wc -l`
+if [ $nb -ne $new_jobid ]; then
+    vstat=2
+fi
+
+end_test
+}
+
+case X$OPERATION in
+   X | Xappend)
+      test_append
+      ;;
+   Xrecycle)
+      test_recycle
+      ;;
+   Xgenerate)
+      generate_volumes
+      exit 9
+      ;;
+   *)
+      echo Unknown operation $OPERATION
+      exit 1
+      ;;
+esac

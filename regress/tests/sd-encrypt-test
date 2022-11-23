@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2022-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build into encrypted volumes
+# verify that data aare at least encrypted and re obfuscated when using
+# the strong encryption.
+# this also can be used to test if data spooling is well handled by volume
+# encryption
+# One options allow to obfuscate some field in the label
+# XPARAM ENCRYPTION=(yes|2:strong|no)
+# if "strong", then obfuscate the field in the label, and verify obfuscation,
+# if "no" the test should detect that data are not encrypted
+# XPARAM SPOOL_DATA=(2:default|no|1:yes)
+# if "yes" then enable data spooling, "no" disable data spooling, "default"
+# don't change spooling configuration
+
+TestName="sd-encrypt-test"
+JobName=backup
+. scripts/functions
+if [ "$FORCE_VOLENC" != "yes" ] ; then
+  echo "Require FORCE_VOLENC"
+  exit 0
+fi
+
+scripts/cleanup
+scripts/copy-test-confs
+
+echo "${cwd}/build" >${cwd}/tmp/file-list
+#echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+start_test
+
+ENCRYPTION=${ENCRYPTION:-yes}
+if [ "$ENCRYPTION" = "yes" ] ; then
+   $bperl -e "add_attribute('$conf/bacula-sd.conf', 'VolumeEncryption', 'yes', 'Device')"
+elif [ "$ENCRYPTION" = "strong" ] ; then
+   $bperl -e "add_attribute('$conf/bacula-sd.conf', 'VolumeEncryption', 'strong', 'Device')"
+elif [ "$ENCRYPTION" = "no" ] ; then
+   $bperl -e "add_attribute('$conf/bacula-sd.conf', 'VolumeEncryption', 'no', 'Device')"
+else
+   echo "Invalid XPARAM ENCRYPTION=$ENCRYPTION" 1>&2
+   exit 1
+fi
+
+SPOOL_DATA=${SPOOL_DATA:-default}
+if [ "$SPOOL_DATA" = "yes" ] ; then
+   $bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'yes', 'Job')"
+elif [ "$SPOOL_DATA" = "no" ] ; then
+   $bperl -e "add_attribute('$conf/bacula-dir.conf', 'SpoolData', 'yes', 'Job')"
+elif [ "$SPOOL_DATA" = "default" ] ; then
+   /bin/true # don't set the SpoolData directive
+else
+   echo "Invalid XPARAM SPOOL_DATA=$SPOOL_DATA" 1>&2
+   exit 1
+fi
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=4 storage=File
+setdebug level=1 client
+label storage=File volume=TestVolume001
+run job=Simple yes
+wait
+messages
+run job=Simple level=full yes
+wait
+messages
+sql
+select * from jobmedia;
+
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out  
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+check_for_zombie_jobs storage=File
+stop_bacula
+check_two_logs
+
+check_restore_diff
+
+# check that volumes are well encrypted, search for well know pattern
+# like the "path" of the files that should be in the attributes
+cp ${cwd}/tmp/file-list $tmp/pattern
+# Also other well known pattern (more than 4 chars)
+cat > $tmp/pattern <<EOF
+Sibbald
+Network
+restore
+Solution
+include
+bstrerror
+M_FATAL
+Authorization
+command
+====
+EOF
+
+strings -n 4 $tmp/TestVolume001 > $tmp/strings
+
+grep -f $tmp/pattern $tmp/strings > $tmp/found_pattern 2> /dev/null
+
+if [ "$ENCRYPTION" != "no" -a $? != 1 ] ; then
+   print_debug "ERROR: Some patterns have been found in the volumes, maybe they are not encrypted"
+   print_debug "ERROR: see in file $tmp/found_pattern"
+   estat=1
+fi
+
+grep OBFUSCATED $tmp/strings > $tmp/found_obfuscated
+
+if [ "$ENCRYPTION" = "strong" -a $? != 0 ] ; then
+   print_debug "ERROR: Cannot find the word OBFUSCATED in the volumes"
+   print_debug "ERROR: It looks like data are not obfuscated in the volumes"
+   estat=1
+fi
+
+#debug
+echo "ENCRYPTION=$ENCRYPTION SPOOL_DATA=$SPOOL_DATA found_unencrypted=`wc -l < $tmp/found_pattern` found_obfuscated=`wc -l < $tmp/found_obfuscated`"
+
+end_test
