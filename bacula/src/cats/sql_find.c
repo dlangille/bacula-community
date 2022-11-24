@@ -405,6 +405,7 @@ bool BDB::bdb_find_last_jobid(JCR *jcr, const char *Name, JOB_DBR *jr)
  */
 int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
 {
+   POOL_MEM volencrypted(PM_FNAME);
    SQL_ROW row = NULL;
    int numrows;
    const char *order;
@@ -418,6 +419,10 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
 
    if (item == -1) {       /* find oldest volume */
       /* Find oldest volume */
+      if (mr->VolEncrypted != fnv_encrypted_any) {
+         /* we have a requirement on VolEncrypted */
+         Mmsg(volencrypted, "AND (VolStatus!='Append' OR VolEncrypted=%d) ", mr->VolEncrypted);
+      }
       Mmsg(cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,VolBlocks,"
          "VolBytes,VolMounts,VolErrors,VolWrites,MaxVolBytes,VolCapacityBytes,"
          "MediaType,VolStatus,PoolId,VolRetention,VolUseDuration,MaxVolJobs,"
@@ -430,15 +435,14 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          "FROM Media WHERE PoolId=%s AND MediaType='%s' "
          " AND (VolStatus IN ('Full', 'Append', 'Used') OR (VolStatus IN ('Recycle', 'Purged', 'Used') AND Recycle=1)) "
          " AND Enabled=1 "
-         " AND (VolStatus != 'Append' OR VolEncrypted=%d) "
+         "%s" /* volencrypted */
          "ORDER BY LastWritten LIMIT 1",
-         edit_int64(mr->PoolId, ed1), esc_type, mr->VolEncrypted);
+         edit_int64(mr->PoolId, ed1), esc_type, volencrypted.c_str());
      item = 1;
    } else {
       POOL_MEM changer(PM_FNAME);
       POOL_MEM voltype(PM_FNAME);
       POOL_MEM exclude(PM_FNAME);
-      POOL_MEM volencrypted(PM_FNAME);
       /* Find next available volume */
       /* ***FIXME***
        * replace switch with
@@ -470,7 +474,7 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          order = sql_media_order_most_recently_written[bdb_get_type_index()];    /* take most recently written */
       }
       if (strcmp(mr->VolStatus, "Append") == 0) {
-         Mmsg(volencrypted, " AND VolEncrypted=%d", mr->VolEncrypted);
+         Mmsg(volencrypted, "AND VolEncrypted=%d", mr->VolEncrypted);
       }
       if (mr->VolType == 0) {
          Mmsg(voltype, "");
@@ -493,10 +497,10 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          "VolEncrypted "
          "FROM Media WHERE PoolId=%s AND MediaType='%s' AND Enabled=1 "
          "AND VolStatus='%s' "
-         "%s "
-         "%s "
-         "%s "
-         "%s "
+         "%s " /* volencrypted */
+         "%s "  /* voltype */
+         "%s "  /* changer */
+         "%s "  /* exclude */
          "%s LIMIT %d",
          edit_int64(mr->PoolId, ed1), esc_type,
          esc_status, volencrypted.c_str(),

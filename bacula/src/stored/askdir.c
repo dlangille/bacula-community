@@ -343,7 +343,7 @@ bool dir_find_next_appendable_volume(DCR *dcr)
        bash_spaces(dcr->pool_name);
        dir->fsend(Find_media, jcr->JobId, vol_index, dcr->pool_name, dcr->media_type,
                   dcr->dev->dev_type, can_create, dcr->dev->use_protect(),
-                  dcr->dev->use_volume_encryption());
+                  dcr->dev->use_volume_encryption()?1:0);
        unbash_spaces(dcr->media_type);
        unbash_spaces(dcr->pool_name);
        Dmsg1(dbglvl, ">dird %s", dir->msg);

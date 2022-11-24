@@ -121,11 +121,7 @@ int find_next_volume_for_append(JCR *jcr, MEDIA_DBR *mr, int index,
    /* Make sure we don't send two times the same volume in the same session */
    set_volume_to_exclude_list(jcr, index, mr);
 
-   if (vol_encrypted == 1) {
-      mr->VolEncrypted = 1;
-   } else {
-      mr->VolEncrypted = 0;
-   }
+   mr->VolEncrypted = vol_encrypted; /* 0=no, 1=yes, -1=any */
 
    /*
     * Find the Next Volume for Append

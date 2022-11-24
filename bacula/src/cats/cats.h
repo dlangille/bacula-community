@@ -71,6 +71,17 @@ typedef enum {
 
 void append_filter(POOLMEM **buf, char *cond);
 
+/* Flags for find_next_volume_for_append() & sql_find */
+enum {
+  fnv_create_vol    = true,
+  fnv_no_create_vol = false,
+  fnv_prune         = true,
+  fnv_no_prune      = false,
+  fnv_not_encrypted = false,
+  fnv_encrypted     = true,
+  fnv_encrypted_any = -1 /* don't care if the volume is encrypted or not */
+};
+
 /* ==============================================================
  *
  *  What follows are definitions that are used "globally" for all
