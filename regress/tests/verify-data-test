@@ -32,7 +32,7 @@ find ${cwd}/build/src/filed -print >> ${files_listing}
 change_jobname NightlySave $JobName
 start_test
 
-if [ x$FORCE_SDENC = xyes ]; then
+if [ x$FORCE_VOLENC = xyes ]; then
    # force the encryption to be NULL make the sed works
    FORCE_CIPHER=NULL
    export FORCE_CIPHER
