@@ -32,8 +32,14 @@ find ${cwd}/build/src/filed -print >> ${files_listing}
 change_jobname NightlySave $JobName
 start_test
 
+# enable the Verified message in the console
+sed '/console =*/ s/, !verified//g' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+sed '/director =*/ s/, !verified//g' $conf/bacula-fd.conf > $tmp/1
+mv $tmp/1 $conf/bacula-fd.conf
+
 if [ x$FORCE_VOLENC = xyes ]; then
-   # force the encryption to be NULL make the sed works
+   # force the encryption to be NULL to make the "sed" of the data work
    FORCE_CIPHER=NULL
    export FORCE_CIPHER
 fi
@@ -88,15 +94,6 @@ END_OF_DATA
 run_bconsole
 
 stop_bacula
-
-while IFS= read -r line <&3; do
-   grep "Veryfying: ${line}" tmp/log2.out > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/log2.out"
-   fi
-done 3< ${files_listing}
 
 $bperl -e 'add_attribute("$conf/bacula-sd.conf", "BlockChecksum", "no", "Device")'
 
@@ -156,6 +153,14 @@ run_bacula
 check_for_zombie_jobs storage=File
 stop_bacula
 
+while IFS= read -r line <&3; do
+   grep "Veryfying: ${line}" tmp/log2.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/log2.out"
+   fi
+done 3< ${files_listing}
 
 while IFS= read -r line <&3; do
    grep "Veryfying: ${line}" tmp/log5.out > /dev/null

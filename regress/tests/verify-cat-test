@@ -22,6 +22,12 @@ echo "${cwd}/build" >${cwd}/tmp/file-list
 change_jobname NightlySave $JobName
 start_test
 
+# enable the Verified message in the console
+sed '/console =*/ s/, !verified//g' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+sed '/director =*/ s/, !verified//g' $conf/bacula-fd.conf > $tmp/1
+mv $tmp/1 $conf/bacula-fd.conf
+
 # Create list of files being backed up and verified to compare afterwards
 files_listing=${cwd}/tmp/files
 find ${cwd}/build -print > ${files_listing}
@@ -46,37 +52,13 @@ quit
 END_OF_DATA
 
 run_bacula
-
 sleep 2
 check_for_zombie_jobs storage=File
 stop_bacula
 
-while IFS= read -r line <&3; do
-   grep "Veryfying: ${line}" tmp/log1.out > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/log1.out"
-   fi
-   grep "Veryfying: ${line}" tmp/original > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_debug "Did not found ${line} file in verified files log!"
-      print_debug "see: ${cwd}/tmp/original"
-   fi
-done 3< ${files_listing}
-
-
-grep "^  Termination: *Verify OK" tmp/log1.out 2>&1 >/dev/null
-bstat=$?
-grep "^  Termination: *Verify OK" ${cwd}/tmp/original 2>&1 >/dev/null
-rstat=$?
-dstat=0
-
 # Turn off verbose file listing, rerun verify jobs and check if files are not listed as expected
 sed '/console =*/ s/$/, !verified/g' $conf/bacula-dir.conf > $tmp/1
 mv $tmp/1 $conf/bacula-dir.conf
-
 sed '/director =*/ s/$/, !verified/g' $conf/bacula-fd.conf > $tmp/1
 mv $tmp/1 $conf/bacula-fd.conf
 
@@ -100,17 +82,38 @@ check_for_zombie_jobs storage=File
 stop_bacula
 
 while IFS= read -r line <&3; do
+   grep "Veryfying: ${line}" tmp/log1.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/log1.out"
+   fi
+   grep "Veryfying: ${line}" tmp/original > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_debug "Did not found ${line} file in verified files log!"
+      print_debug "see: ${cwd}/tmp/original"
+   fi
+done 3< ${files_listing}
+
+
+grep "^  Termination: *Verify OK" tmp/log1.out 2>&1 >/dev/null
+bstat=$?
+grep "^  Termination: *Verify OK" ${cwd}/tmp/original 2>&1 >/dev/null
+rstat=$?
+
+while IFS= read -r line <&3; do
    grep "Veryfying: ${line}" tmp/log2.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
       print_debug "Found ${line} file in verified files log, no files should be listed now!"
       print_debug "see: ${cwd}/tmp/log2.out"
+   fi
    grep "Veryfying: ${line}" tmp/log3.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
       print_debug "Found ${line} file in verified files log, no files should be listed now!"
       print_debug "see: ${cwd}/tmp/log3.out"
-   fi
    fi
 done 3< ${files_listing}
 

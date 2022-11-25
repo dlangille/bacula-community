@@ -30,8 +30,11 @@ start_test
 files_listing=${cwd}/tmp/files
 find ${cwd}/build -print > ${files_listing}
 
-sed -i 's/, *!verified//g' bin/bacula-dir.conf
-sed -i 's/, *!verified//g' bin/bacula-fd.conf
+# enable the Verified message in the console
+sed '/console =*/ s/, !verified//g' $conf/bacula-dir.conf > $tmp/1
+mv $tmp/1 $conf/bacula-dir.conf
+sed '/director =*/ s/, !verified//g' $conf/bacula-fd.conf > $tmp/1
+mv $tmp/1 $conf/bacula-fd.conf
 
 cat <<END_OF_DATA >tmp/bconcmds
 @output /dev/null
@@ -87,49 +90,13 @@ print_info()
 
 run_bacula
 
-while IFS= read -r line <&3; do
-   grep "Veryfying: ${line}" tmp/log2.out > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_info "Did not found ${line} file in verified files log!"
-      print_info "see: ${cwd}/tmp/log2.out"
-   fi
-   grep "Veryfying: ${line}" tmp/log3.out > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_info "Did not found ${line} file in verified files log!"
-      print_info "see: ${cwd}/tmp/log3.out"
-   fi
-   grep "Veryfying: ${line}" tmp/log4.out > /dev/null
-   if [ $? -ne 0 ]; then
-      estat=1
-      print_info "Did not found ${line} file in verified files log!"
-      print_info "see: ${cwd}/tmp/log4.out"
-   fi
-done 3< ${files_listing}
 
 check_for_zombie_jobs storage=File
 stop_bacula
 
-grep "^  Termination: *Backup OK" tmp/log1.out 2>&1 >/dev/null
-bstat=$?
-grep "^  Termination: *Verify OK" tmp/log2.out 2>&1 >/dev/null
-rstat=$?
-if test $rstat=0; then
-   grep "^  Termination: *Verify OK" tmp/log3.out 2>&1 >/dev/null
-   rstat=$?
-fi
-grep "^  Termination: *Verify OK" tmp/log4.out 2>&1 >/dev/null
-if [ $? != 0 ]; then
-    print_info "ERROR: Verify job in error in $tmp/log4.out"
-    rstat=1
-fi
-dstat=0
-
 # Turn off verbose file listing, rerun verify jobs and check if files are not listed as expected
 sed '/console =*/ s/$/, !verified/g' $conf/bacula-dir.conf > $tmp/1
 mv $tmp/1 $conf/bacula-dir.conf
-
 sed '/director =*/ s/$/, !verified/g' $conf/bacula-fd.conf > $tmp/1
 mv $tmp/1 $conf/bacula-fd.conf
 
@@ -155,6 +122,41 @@ quit
 END_OF_DATA
 
 run_bacula
+
+while IFS= read -r line <&3; do
+   grep "Veryfying: ${line}" tmp/log2.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log2.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log3.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log3.out"
+   fi
+   grep "Veryfying: ${line}" tmp/log4.out > /dev/null
+   if [ $? -ne 0 ]; then
+      estat=1
+      print_info "Did not found ${line} file in verified files log!"
+      print_info "see: ${cwd}/tmp/log4.out"
+   fi
+done 3< ${files_listing}
+
+grep "^  Termination: *Backup OK" tmp/log1.out 2>&1 >/dev/null
+bstat=$?
+grep "^  Termination: *Verify OK" tmp/log2.out 2>&1 >/dev/null
+rstat=$?
+if test $rstat=0; then
+   grep "^  Termination: *Verify OK" tmp/log3.out 2>&1 >/dev/null
+   rstat=$?
+fi
+grep "^  Termination: *Verify OK" tmp/log4.out 2>&1 >/dev/null
+if [ $? != 0 ]; then
+    print_info "ERROR: Verify job in error in $tmp/log4.out"
+    rstat=1
+fi
 
 while IFS= read -r line <&3; do
    grep "Veryfying: ${line}" tmp/log5.out > /dev/null
