@@ -257,6 +257,7 @@ static inline bool pop_delayed_data_streams(r_ctx &rctx)
 {
    RESTORE_DATA_STREAM *rds;
    JCR *jcr = rctx.jcr;
+   char buf[80]; /* for asciidump() */
 
    /*
     * See if there is anything todo.
@@ -325,9 +326,10 @@ static inline bool pop_delayed_data_streams(r_ctx &rctx)
          }
          break;
       default:
-         Jmsg(jcr, M_WARNING, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
-              rds->stream);
-         Dmsg2(50, "Unknown stream=%d data=%s\n", rds->stream, rds->content);
+         Jmsg(jcr, M_WARNING, 0, _("Unexpected stream \"%s\" ignored. This shouldn't happen!\n"),
+               stream_to_ascii(rds->stream));
+         Dmsg2(50, "Unexpected stream=%d data=%s...\n", rds->stream,
+               asciidump(rds->content, rds->content_length, buf, sizeof(buf)));
          break;
       }
       if (rds->content) {
@@ -360,6 +362,7 @@ void do_restore(JCR *jcr)
    r_ctx rctx;
    ATTR *attr;
    int bget_ret = 0;
+   char buf[80];                       /* for asciidump() */
    /* ***FIXME*** make configurable */
    crypto_digest_t signing_algorithm = have_sha2 ?
                                        CRYPTO_DIGEST_SHA256 : CRYPTO_DIGEST_SHA1;
@@ -1104,9 +1107,10 @@ void do_restore(JCR *jcr)
          if (!close_previous_stream(rctx)) {
             goto get_out;
          }
-         Jmsg(jcr, M_WARNING, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
-              rctx.stream);
-         Dmsg2(50, "Unknown stream=%d data=%s\n", rctx.stream, bmsg->rbuf);
+         Jmsg(jcr, M_WARNING, 0, _("Unexpected stream=\"%s\" ignored. This shouldn't happen!\n"),
+               stream_to_ascii(rctx.stream));
+         Dmsg2(50, "Unexpected stream=%d data=%s\n", rctx.stream,
+               asciidump(bmsg->rbuf, bmsg->rbuflen, buf, sizeof(buf)));
          break;
       } /* end switch(stream) */
 

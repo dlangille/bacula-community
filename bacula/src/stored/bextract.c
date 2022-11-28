@@ -754,8 +754,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
          set_attributes(jcr, attr, &bfd);
          extract = false;
       }
-      Jmsg(jcr, M_ERROR, 0, _("Unknown stream=%d ignored. This shouldn't happen!\n"),
-         rec->Stream);
+      Jmsg(jcr, M_ERROR, 0, _("Unexpected stream=\"%s\" ignored. This shouldn't happen!\n"),
+            stream_to_ascii(rec->Stream));
       break;
 
    } /* end switch */

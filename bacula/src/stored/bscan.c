@@ -1065,7 +1065,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
       break;
 
    default:
-      Pmsg2(0, _("Unknown stream type!!! stream=%d len=%i\n"), rec->Stream, rec->data_len);
+      Pmsg2(0, _("Unexpected stream type!!! stream=\"%s\" len=%i\n"),
+            stream_to_ascii(rec->Stream), rec->data_len);
       break;
    }
    free_jcr(mjcr);                 /* got from get_jcr_by_session() above */
