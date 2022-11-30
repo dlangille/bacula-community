@@ -489,24 +489,12 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
    Id[BLKHDR_ID_LENGTH] = 0;
    block->CheckSum64 = CheckSumLo; /* only for BB01 & BB02 */
    block->blkh_options = BLKHOPT_NONE; /* only in BB03 */
-   if (Id[3] == '1') {
+   if (Id[3] == '1' && strncmp(Id, BLKHDR1_ID, BLKHDR_ID_LENGTH) == 0) {
       bhl = BLKHDR1_LENGTH;
       block->BlockVer = 1;
       block->bufp = block->buf + bhl;
       //Dmsg3(100, "Block=%p buf=%p bufp=%p\n", block, block->buf, block->bufp);
-      if (strncmp(Id, BLKHDR1_ID, BLKHDR_ID_LENGTH) != 0) {
-         dev->dev_errno = EIO;
-         Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
-               dev->get_hi_addr(block->BlockAddr),
-               dev->get_low_addr(block->BlockAddr),
-               BLKHDR1_ID, Id);
-         if (block->read_errors == 0 || verbose >= 2) {
-            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
-         }
-         block->read_errors++;
-         return false;
-      }
-   } else if (Id[3] == '2') {
+   } else if (Id[3] == '2' && strncmp(Id, BLKHDR2_ID, BLKHDR_ID_LENGTH) == 0) {
       unser_uint32(block->VolSessionId);
       unser_uint32(block->VolSessionTime);
       bhl = BLKHDR2_LENGTH;
@@ -514,19 +502,7 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
       block->bufp = block->buf + bhl;
       //Dmsg5(100, "Read-blkhdr Block=%p adata=%d buf=%p bufp=%p off=%d\n", block, block->adata,
       //   block->buf, block->bufp, block->bufp-block->buf);
-      if (strncmp(Id, BLKHDR2_ID, BLKHDR_ID_LENGTH) != 0) {
-         dev->dev_errno = EIO;
-         Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
-               dev->get_hi_addr(block->BlockAddr),
-               dev->get_low_addr(block->BlockAddr),
-               BLKHDR2_ID, Id);
-         if (block->read_errors == 0 || verbose >= 2) {
-            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
-         }
-         block->read_errors++;
-         return false;
-      }
-   } else if (Id[3] == '3') {
+   } else if (Id[3] == '3' && strncmp(Id, BLKHDR3_ID, BLKHDR_ID_LENGTH) == 0) {
       bhl = BLKHDR3_LENGTH;
       block->blkh_options = CheckSumLo; /* in BB03 blkh_options is stored at the checksum location */
       unser_uint32(block->VolSessionId);
@@ -546,24 +522,14 @@ bool unser_block_header(DCR *dcr, DEVICE *dev, DEV_BLOCK *block)
       block->bufp = block->buf + bhl;
       //Dmsg5(100, "Read-blkhdr Block=%p adata=%d buf=%p bufp=%p off=%d\n", block, block->adata,
       //   block->buf, block->bufp, block->bufp-block->buf);
-      if (strncmp(Id, BLKHDR3_ID, BLKHDR_ID_LENGTH) != 0) {
-         dev->dev_errno = EIO;
-         Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
-               dev->get_hi_addr(block->BlockAddr),
-               dev->get_low_addr(block->BlockAddr),
-               BLKHDR3_ID, Id);
-         if (block->read_errors == 0 || verbose >= 2) {
-            Jmsg(jcr, M_ERROR, 0, "%s", dev->errmsg);
-         }
-         block->read_errors++;
-         return false;
-      }
    } else {
+      /* unknown block header ID */
+      char asciibuf[80]; /* dump raw data */
       dev->dev_errno = EIO;
       Mmsg4(dev->errmsg, _("Volume data error at %u:%u! Wanted ID: \"%s\", got \"%s\". Buffer discarded.\n"),
             dev->get_hi_addr(block->BlockAddr),
             dev->get_low_addr(block->BlockAddr),
-            BLKHDR3_ID, Id);
+            BLKHDR3_ID, asciidump(Id, BLKHDR_ID_LENGTH, asciibuf, sizeof(asciibuf)));
       Dmsg1(50, "%s", dev->errmsg);
       if (block->read_errors == 0 || verbose >= 2) {
          Jmsg(jcr, M_FATAL, 0, "%s", dev->errmsg);
