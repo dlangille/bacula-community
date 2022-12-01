@@ -1183,6 +1183,7 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
       uint32_t *enc_cipher_key_size, unsigned char *enc_cipher_key,
       uint32_t *master_keyid_size, unsigned char *master_keyid)
 {
+   JCR *jcr = dcr->jcr;
    enum { op_none, op_label, op_read };
    bool ok = true; // No error
    Dmsg4(100, "load_encryption_key %s %s enc=%ld ver=%d\n", operation, volume_name, device->volume_encryption, VolHdr.BlockVer);
@@ -1195,10 +1196,14 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
    /* don't use encryption if volume encryption is not enable or we are reading
     * (aka not recycling) a BB02 volume */
    if (device->volume_encryption == ET_NO
+        && (op != op_label && (VolHdr.blkh_options & BLKHOPT_ENCRYPT_VOL))) {
+      /* we expect an error later */
+      Jmsg1(jcr, M_WARNING, 0, _("Trying to read encrypted volume \"%s\" on an un-encrypted device\n"), volume_name);
+   }
+   if (device->volume_encryption == ET_NO
         || (op != op_label && !(VolHdr.blkh_options & BLKHOPT_ENCRYPT_VOL))) {
       return ok;
    }
-   JCR *jcr = dcr->jcr;
    POOLMEM *encrypt_program = get_pool_memory(PM_FNAME);
    POOL_MEM results(PM_MESSAGE);
    POOL_MEM err_msg(PM_MESSAGE);
