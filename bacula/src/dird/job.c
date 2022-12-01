@@ -748,8 +748,8 @@ cancel_job(UAContext *ua, JCR *jcr, int wait,  bool cancel)
          break;
    }
 
-   /* If job has not been started at all, there is no need to stoping it,
-    * can be simply canceled and removed from the watiting queue*/
+   /* If job has not been started at all, there is no need to stop it,
+    * can be simply canceled and removed from the waiting queue*/
    if (cancel || not_running) {
       status = JS_Canceled;
       reason = _("canceled");

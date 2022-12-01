@@ -519,11 +519,10 @@ static int cancel_cmd(UAContext *ua, const char *cmd)
 {
    JCR    *jcr;
    bool    ret = true;
-   int     nb;
    bool    cancel = strcasecmp(commands[ua->cmd_index].key, "cancel") == 0;
    alist  *jcrs = New(alist(5, not_owned_by_alist));
 
-   /* If the user explicitely ask, we can send the cancel command to
+   /* If the user explicitly ask, we can send the cancel command to
     * the FD.
     */
    if (find_arg(ua, "inactive") > 0) {
@@ -531,13 +530,10 @@ static int cancel_cmd(UAContext *ua, const char *cmd)
       goto bail_out;
    }
 
-   nb = select_running_jobs(ua, jcrs, commands[ua->cmd_index].key);
+   select_running_jobs(ua, jcrs, commands[ua->cmd_index].key);
 
    foreach_alist(jcr, jcrs) {
-      /* Execute the cancel command only if we don't have an error */
-      if (nb != -1) {
-         ret &= cancel_job(ua, jcr, 60, cancel);
-      }
+      ret = cancel_job(ua, jcr, 60, cancel) && ret;
       free_jcr(jcr);
    }
 
