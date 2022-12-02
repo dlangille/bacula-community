@@ -67,6 +67,7 @@ ALTER TABLE Job ADD COLUMN Encrypted         int         default 0;
 
 ALTER TABLE Media ADD COLUMN Protected            smallint    default 0;
 ALTER TABLE Media ADD COLUMN UseProtect           smallint    default 0;
+ALTER TABLE Media ADD COLUMN VolEncrypted         smallint    default 0;
 
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
