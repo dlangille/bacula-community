@@ -24,6 +24,9 @@ alter database ${db_name} owner to ${db_user} ;
 grant CREATE on DATABASE ${db_name} to ${db_user};
 
 -- for tables
+grant all on MalwareMD5   to ${db_user};
+grant all on MalwareSHA256 to ${db_user};
+grant all on FileEvents   to ${db_user};
 grant all on MetaEmail    to ${db_user};
 grant all on MetaAttachment to ${db_user};
 grant all on TagJob       to ${db_user};
