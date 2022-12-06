@@ -317,8 +317,10 @@ void DEVICE::device_generic_init(JCR *jcr, DEVRES *device)
    dev->crypto_device_ctx = NULL;
    if (dev->is_tape()) { /* No parts on tapes */
       dev->max_part_size = 0;
+      dev->max_vol_parts_num = 0;
    } else {
       dev->max_part_size = device->max_part_size;
+      dev->max_vol_parts_num = device->max_vol_parts_num;
    }
 
 #ifndef DEVELOPER

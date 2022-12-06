@@ -207,6 +207,7 @@ struct Volume_Label {
 
   /* For Cloud */
   uint64_t  MaxPartSize;              /* Maximum Part Size */
+  uint64_t  MaxVolPartsNum;           /* Maximum Num of parts in a volume */
 
   /* For Volume encryption */
   bool is_vol_encrypted;

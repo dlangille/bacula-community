@@ -2309,6 +2309,15 @@ bool cloud_dev::do_size_checks(DCR *dcr, DEV_BLOCK *block)
          return false;
       }
 
+      /* switch volume when max_vol_parts_num is set and reached. Do it before next part is openned to avoid small orphean part at the end of volume */
+      if ((max_vol_parts_num) > 0 && (part >= max_vol_parts_num)) {
+         
+         Dmsg2(dbglvl, "max_vol_parts_num = %d exceeded by partidx= %d. Calling terminate_writing_volume\n", max_vol_parts_num, part);
+         terminate_writing_volume(dcr);
+         dev_errno = ENOSPC;
+         return false;
+      }
+
       if (!open_next_part(dcr)) {
          return false;
       }

@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#  Short elementary Volume span test case for debugging.
+#  Here we create at least two volumes and the data spans the volume.
+#
+
+TestName="cloud-maxvolpartnums-test"
+JobName=MaxVolPartNums
+. scripts/functions
+
+copy_test_confs
+
+FORCE_FILE_SET=${FORCE_FILE_SET:-"${cwd}/build"}
+echo "$FORCE_FILE_SET" >${cwd}/tmp/file-list
+
+MaximumVolumeParts=5
+MaximumPartSize=1000000
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumPartSize", "'$MaximumPartSize'", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumVolumeParts", "'$MaximumVolumeParts'", "Device")'
+#$bperl -e 'add_attribute("$conf/bacula-sd.conf", "TruncateCache", "AfterUpload", "Cloud")'
+
+cp ${cwd}/bin/bacula-dir.conf ${cwd}/tmp/1
+sed "s%# Simple Label Format%  Label Format%" ${cwd}/tmp/1 >${cwd}/bin/bacula-dir.conf
+
+change_jobname Simple $JobName
+start_test
+
+cat <<END_OF_SCRIPT >${cwd}/tmp/bconcmds
+@$out /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+status all
+list pools
+messages
+@#setdebug level=110 storage
+run job=$JobName level=Full storage=File yes
+wait
+list pools
+list volumes
+messages
+END_OF_SCRIPT
+
+run_bacula
+
+for v in ${tmp}/Backup-*; do
+   for p in ${v}/part.*; do
+      # check the part size (must be <= MaximumPartSize)
+      size=$(stat -c "%s" $p);
+      if [ "$size" -gt "$MaximumPartSize" ]; then
+         print_debug "ERROR: part $p is too big $size > $MaximumPartSize";
+         estat=1;
+      fi
+      # check the part index (must be <= MAX_PART)
+      extension="${p##*.}";
+      if [ "$extension" -gt "$MaximumVolumeParts" ]; then
+         print_debug "ERROR: part $p is out-of-range: $extension > $MaximumVolumeParts";
+         estat=2;
+      fi
+   done
+
+# Now truncate every volume from the cache
+volume=$(basename $v);
+
+cat <<END_OF_SCRIPT >${cwd}/tmp/bconcmds
+messages
+truncate cache volume=$volume storage=File
+wait
+messages
+END_OF_SCRIPT
+run_bconsole
+
+done # for each volume
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@# 
+@# now do a restore
+@#
+@$out ${cwd}/tmp/log2.out
+@#setdebug level=500 storage=File
+restore where=${cwd}/tmp/bacula-restores select storage=File
+unmark *
+mark *
+pwd
+done
+yes
+wait
+messages
+@$out $tmp/log31.out
+cloud list storage=File
+@$out $tmp/log3.out
+cloud list storage=File
+quit
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File
+stop_bacula
+
+check_two_logs
+# Check single file
+diff -ur ${cwd}/build/$file ${tmp}/bacula-restores${src}
+if test $? -ne 0; then
+   dstat=1
+fi
+#check_restore_diff
+end_test

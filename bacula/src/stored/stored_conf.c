@@ -191,6 +191,7 @@ static RES_ITEM dev_items[] = {
    {"MaximumJobSpoolSize",   store_size64, ITEM(res_dev.max_job_spool_size), 0, 0, 0},
    {"DriveIndex",            store_pint32, ITEM(res_dev.drive_index), 0, 0, 0},
    {"MaximumPartSize",       store_size64, ITEM(res_dev.max_part_size), 0, ITEM_DEFAULT, 0},
+   {"MaximumVolumeParts", store_size64, ITEM(res_dev.max_vol_parts_num), 0, ITEM_DEFAULT, 0},
    {"MountPoint",            store_strname,ITEM(res_dev.mount_point), 0, 0, 0},
    {"MountCommand",          store_strname,ITEM(res_dev.mount_command), 0, 0, 0},
    {"UnmountCommand",        store_strname,ITEM(res_dev.unmount_command), 0, 0, 0},

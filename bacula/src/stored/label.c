@@ -837,6 +837,7 @@ void create_volume_header(DEVICE *dev, const char *VolName,
       dev->VolHdr.VerNum = BaculaS3CloudVersion;
       dev->VolHdr.BlockSize = dev->max_block_size;
       dev->VolHdr.MaxPartSize = dev->max_part_size;
+      dev->VolHdr.MaxVolPartsNum = dev->max_vol_parts_num;
    } else {
       bstrncpy(dev->VolHdr.Id, BaculaId, sizeof(dev->VolHdr.Id));
       dev->VolHdr.VerNum = BaculaTapeVersion;
