@@ -1362,32 +1362,23 @@ bool BDB::bdb_get_media_record(JCR *jcr, MEDIA_DBR *mr)
       return true;
    }
    if (mr->MediaId != 0) {               /* find by id */
-      Mmsg(cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,"
-         "VolBlocks,VolBytes,VolABytes,VolHoleBytes,VolHoles,VolMounts,"
-         "VolErrors,VolWrites,MaxVolBytes,VolCapacityBytes,"
-         "MediaType,VolStatus,PoolId,VolRetention,VolUseDuration,MaxVolJobs,"
-         "MaxVolFiles,Recycle,Slot,FirstWritten,LastWritten,InChanger,"
-         "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
-         "LabelType,LabelDate,StorageId,"
-         "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,"
-         "CacheRetention,Pool.Name,Protected,UseProtect,VolEncrypted "
-         "FROM Media WHERE MediaId=%s",
-         edit_int64(mr->MediaId, ed1));
+      Mmsg(filter, "WHERE MediaId=%s", edit_int64(mr->MediaId, ed1));
    } else {                           /* find by name */
       bdb_escape_string(jcr, esc, mr->VolumeName, strlen(mr->VolumeName));
-      Mmsg(cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,"
-         "VolBlocks,VolBytes,VolABytes,VolHoleBytes,VolHoles,VolMounts,"
-         "VolErrors,VolWrites,MaxVolBytes,VolCapacityBytes,"
-         "MediaType,VolStatus,PoolId,VolRetention,VolUseDuration,MaxVolJobs,"
-         "MaxVolFiles,Recycle,Slot,FirstWritten,LastWritten,InChanger,"
-         "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
-         "LabelType,LabelDate,StorageId,"
-         "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,"
-         "CacheRetention,Pool.Name,Protected,UseProtect,VolEncrypted "
-         "FROM Media WHERE VolumeName='%s'", esc);
+      Mmsg(filter, "WHERE VolumeName='%s'", esc);
    }
+
+   Mmsg(cmd, "SELECT MediaId,VolumeName,VolJobs,VolFiles,"
+      "VolBlocks,VolBytes,VolABytes,VolHoleBytes,VolHoles,VolMounts,"
+      "VolErrors,VolWrites,MaxVolBytes,VolCapacityBytes,"
+      "MediaType,VolStatus,PoolId,VolRetention,VolUseDuration,MaxVolJobs,"
+      "MaxVolFiles,Recycle,Slot,FirstWritten,LastWritten,InChanger,"
+      "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
+      "LabelType,LabelDate,StorageId,"
+      "Enabled,LocationId,RecycleCount,InitialWrite,"
+      "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,"
+      "CacheRetention,Pool.Name,Protected,UseProtect,VolEncrypted "
+      "FROM Media JOIN Pool USING (PoolId) %s", filter.c_str());
 
    if (QueryDB(jcr, cmd)) {
       char ed1[50];
