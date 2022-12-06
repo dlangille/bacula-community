@@ -497,13 +497,6 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
          db_strerror(jcr->db));
    }
 
-   bstrncpy(mr.VolumeName, jcr->VolumeName, sizeof(mr.VolumeName));
-   if (!db_get_media_record(jcr, jcr->db, &mr)) {
-      Jmsg(jcr, M_WARNING, 0, _("Error getting Media record for Volume \"%s\": ERR=%s"),
-         mr.VolumeName, db_strerror(jcr->db));
-      jcr->setJobStatus(JS_ErrorTerminated);
-   }
-
    update_bootstrap_file(jcr);
 
    switch (jcr->JobStatus) {
@@ -535,7 +528,8 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
    bstrftimes(schedt, sizeof(schedt), jcr->jr.SchedTime);
    bstrftimes(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes(edt, sizeof(edt), jcr->jr.EndTime);
-   if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName)) {
+   if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName,
+         mr.VolumeName, sizeof(mr.VolumeName))) {
       /*
        * Note, if the job has erred, most likely it did not write any
        *  tape, so suppress this "error" message since in that case
@@ -546,6 +540,12 @@ void vbackup_cleanup(JCR *jcr, int TermCode)
          Jmsg(jcr, M_ERROR, 0, "%s", db_strerror(jcr->db));
       }
       jcr->VolumeName[0] = 0;         /* none */
+   } else {
+      if (!db_get_media_record(jcr, jcr->db, &mr)) {
+         Jmsg(jcr, M_WARNING, 0, _("Error getting Media record for Volume \"%s\": ERR=%s"),
+            mr.VolumeName, db_strerror(jcr->db));
+         jcr->setJobStatus(JS_ErrorTerminated);
+      }
    }
 
    jobstatus_to_ascii(jcr->SDJobStatus, sd_term_msg, sizeof(sd_term_msg));

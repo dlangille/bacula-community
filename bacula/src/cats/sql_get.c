@@ -363,7 +363,8 @@ bool BDB::bdb_get_job_record(JCR *jcr, JOB_DBR *jr)
  *
  *  Returns: number of volumes on success
  */
-int BDB::bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames)
+int BDB::bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames,
+      char *LastVolumeName, int maxlen)
 {
    SQL_ROW row;
    char ed1[50];
@@ -379,7 +380,10 @@ int BDB::bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames
         "ORDER BY 2 ASC", edit_int64(JobId,ed1));
 
    Dmsg1(130, "VolNam=%s\n", cmd);
-   *VolumeNames[0] = 0;
+   *VolumeNames[0] = '\0';
+   if (LastVolumeName != NULL && maxlen>0) {
+      LastVolumeName[0] = '\0';
+   }
    if (QueryDB(jcr, cmd)) {
       Dmsg1(130, "Num rows=%d\n", sql_num_rows());
       if (sql_num_rows() <= 0) {
@@ -399,6 +403,9 @@ int BDB::bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames
                }
                pm_strcat(VolumeNames, row[0]);
             }
+         }
+         if (LastVolumeName != NULL && stat > 0) {
+            bstrncat(LastVolumeName, row[0], maxlen); /* remember the last written volume */
          }
       }
       sql_free_result();

@@ -235,7 +235,8 @@ public:
    int bdb_get_client_record(JCR *jcr, CLIENT_DBR *cr);
    bool bdb_get_jobmedia_record(JCR *jcr, JOBMEDIA_DBR *jmr);
    bool bdb_get_job_record(JCR *jcr, JOB_DBR *jr);
-   int bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames);
+   int bdb_get_job_volume_names(JCR *jcr, JobId_t JobId, POOLMEM **VolumeNames,
+            char *LastVolumeName, int maxlen);
    bool bdb_get_file_attributes_record(JCR *jcr, char *fname, JOB_DBR *jr, FILE_DBR *fdbr);
    int bdb_get_fileset_record(JCR *jcr, FILESET_DBR *fsr);
    bool bdb_get_media_record(JCR *jcr, MEDIA_DBR *mr);

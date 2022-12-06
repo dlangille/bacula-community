@@ -1117,7 +1117,7 @@ void backup_cleanup(JCR *jcr, int TermCode)
    bstrftimes_na(schedt, sizeof(schedt), jcr->jr.SchedTime);
    bstrftimes_na(sdt, sizeof(sdt), jcr->jr.StartTime);
    bstrftimes_na(edt, sizeof(edt), jcr->jr.EndTime);
-   if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName)) {
+   if (!db_get_job_volume_names(jcr, jcr->db, jcr->jr.JobId, &jcr->VolumeName, NULL, 0)) {
       /*
        * Note, if the job has erred, most likely it did not write any
        *  tape, so suppress this "error" message since in that case

@@ -858,7 +858,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                continue;
             }
             VolumeName = get_pool_memory(PM_FNAME);
-            n = db_get_job_volume_names(ua->jcr, ua->db, jobid, &VolumeName);
+            n = db_get_job_volume_names(ua->jcr, ua->db, jobid, &VolumeName, NULL, 0);
             ua->send_msg(_("Jobid %d used %d Volume(s): %s\n"), jobid, n, VolumeName);
             free_pool_memory(VolumeName);
             done = true;

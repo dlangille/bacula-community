@@ -217,8 +217,8 @@ void bdb_free_restoreobject_record(JCR *jcr, ROBJECT_DBR *rr);
            mdb->bdb_get_jobmedia_record(jcr, jmr)
 #define db_get_job_record(jcr, mdb, jr) \
            mdb->bdb_get_job_record(jcr, jr)
-#define db_get_job_volume_names(jcr, mdb, JobId, VolumeNames) \
-           mdb->bdb_get_job_volume_names(jcr, JobId, VolumeNames)
+#define db_get_job_volume_names(jcr, mdb, JobId, VolumeNames, LastVolumeName, maxlen) \
+           mdb->bdb_get_job_volume_names(jcr, JobId, VolumeNames, LastVolumeName, maxlen)
 #define db_get_file_attributes_record(jcr, mdb, fname, jr, fdbr) \
            mdb->bdb_get_file_attributes_record(jcr, fname, jr, fdbr)
 #define db_get_fileset_record(jcr, mdb, fsr) \

@@ -887,7 +887,8 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
 
       update_bootstrap_file(wjcr);
 
-      if (!db_get_job_volume_names(wjcr, wjcr->db, wjcr->jr.JobId, &wjcr->VolumeName)) {
+      if (!db_get_job_volume_names(wjcr, wjcr->db, wjcr->jr.JobId, &wjcr->VolumeName,
+            mr.VolumeName, sizeof(mr.VolumeName))) {
          /*
           * Note, if the job has failed, most likely it did not write any
           *  tape, so suppress this "error" message since in that case
@@ -898,17 +899,8 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
             Jmsg(jcr, M_ERROR, 0, "%s", db_strerror(wjcr->db));
          }
          wjcr->VolumeName[0] = 0;         /* none */
-      }
-
-      if (wjcr->VolumeName[0]) {
-         /* Find last volume name. Multiple vols are separated by | */
-         char *p = strrchr(wjcr->VolumeName, '|');
-         if (p) {
-            p++;                         /* skip | */
-         } else {
-            p = wjcr->VolumeName;     /* no |, take full name */
-         }
-         bstrncpy(mr.VolumeName, p, sizeof(mr.VolumeName));
+      } else {
+         /* retrieve the last volume record for the "Last Volume Bytes" */
          if (!db_get_media_record(jcr, jcr->db, &mr)) {
             Jmsg(jcr, M_WARNING, 0, _("Error getting Media record for Volume \"%s\": ERR=%s"),
                mr.VolumeName, db_strerror(jcr->db));
