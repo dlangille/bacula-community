@@ -49,11 +49,11 @@
 /* Normally included in the base depkgs */
 #define LIBRSYNC_VERSION   "0.9.7b"
 #define LIBLZO_VERSION     "2.06"
-#define TOKYOCABINET_VERSION "1.4.48a"
-#define MSSQL_VERSION      "18Sep19"
-#define DOCKER_TAR_IMAGE   "19Aug19"
-#define KUBERNETES_IMAGE_VERSION "29Oct19"
-#define HADOOP_VERSION "07Feb20"
+#define TOKYOCABINET_VERSION "1.5.1"
+#define MSSQL_VERSION      "24Jun21"
+#define DOCKER_TAR_IMAGE   "07Dec22"
+#define KUBERNETES_IMAGE_VERSION "07Dec22"
+#define HADOOP_VERSION "15Dec21"
 
 /* Debug flags */
 #undef  DEBUG
