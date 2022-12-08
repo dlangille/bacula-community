@@ -336,20 +336,25 @@ class KubernetesPlugin(Plugin):
 
     def get_pods(self, namespace, estimate=False):
         pods = self.__execute(lambda: pods_list_namespaced(self.corev1api, namespace, estimate, self.config['labels']))
-        nrpods = len(pods)
-        logging.debug("get_pods[{}]:pods:{}".format(namespace, nrpods))
-        self.pods_counter += nrpods
+        if not isinstance(response, dict) or "error" not in response:
+            nrpods = len(pods)
+            logging.debug("get_pods[{}]:pods:{}".format(namespace, nrpods))
+            self.pods_counter += nrpods
         return pods
 
     def get_pvcs(self, namespace, estimate=False):
-        pvcs, totalsize = self.__execute(lambda: persistentvolumeclaims_list_namespaced(self.corev1api, namespace, estimate,
+        response = self.__execute(lambda: persistentvolumeclaims_list_namespaced(self.corev1api, namespace, estimate,
                                                                              self.config['labels']))
-        self.k8s['pvcs'] = pvcs
-        nrpvcs = len(pvcs)
-        logging.debug("get_pvcs[{}]:pvcs:{}".format(namespace, nrpvcs))
-        self.pvcs_counter += nrpvcs
-        self.pvcs_totalsize += totalsize
-        return pvcs
+        if isinstance(response, tuple) and len(response) == 2:
+            pvcs, totalsize = response
+            nrpvcs = len(pvcs)
+            self.pvcs_counter += nrpvcs
+            self.pvcs_totalsize += totalsize
+            self.k8s['pvcs'] = pvcs
+            logging.debug("get_pvcs[{}]:pvcs:{}".format(namespace, nrpvcs))
+            return pvcs
+        else:
+            return response # it should be a dictionary with an error
 
     def get_podtemplates(self, namespace, estimate=False):
         return self.__execute(lambda: podtemplates_list_namespaced(self.corev1api, namespace, estimate,
