@@ -16,6 +16,7 @@ Storage {
   WorkingDirectory = "@working_dir@"
   Pid Directory = "@piddir@"
   Subsys Directory = "@subsysdir@"
+  Encryption Command = "@scriptdir@/key-manager.py getkey"
 }
 
 #

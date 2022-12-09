@@ -21,6 +21,7 @@ Storage {                             # definition of myself
   Pid Directory = "@piddir@"
   Plugin Directory = "@plugindir@"
   Maximum Concurrent Jobs = 20
+  Encryption Command = "@scriptdir@/key-manager.py getkey"
 }
 
 #
