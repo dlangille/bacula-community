@@ -1199,7 +1199,7 @@ void DEVICE::dump_volume_label()
 "MediaType         : %s\n"
 "PoolType          : %s\n"
 "HostName          : %s\n"
-"BlockVer          : BB%02%d\n"
+"BlockVer          : BB%02d\n"
 "EncCypherKeySize  : %ld\n"
 "MasterKeyIdSize   : %ld\n"
 ""),
