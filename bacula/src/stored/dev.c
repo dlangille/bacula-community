@@ -1202,7 +1202,13 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
    }
    if (device->volume_encryption == ET_NO
         || (op != op_label && !(VolHdr.blkh_options & BLKHOPT_ENCRYPT_VOL))) {
-      return ok;
+      return true; /* No error */
+   }
+   if (me->encryption_command == NULL || me->encryption_command[0] == '\0') {
+      if (jcr == NULL || !jcr->is_job_canceled()) {
+         Jmsg0(jcr, M_FATAL, 0, _("The \"Encryption Command\" is empty, impossible to call the key-manager program\n"));
+      }
+      return false; /* error */
    }
    POOLMEM *encrypt_program = get_pool_memory(PM_FNAME);
    POOL_MEM results(PM_MESSAGE);

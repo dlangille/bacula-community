@@ -737,7 +737,10 @@ void edit_device_codes(DCR *dcr, POOLMEM **omsg, const char *imsg, const char *c
    const char *str;
    char add[20];
 
-   **omsg = 0;
+   **omsg = '\0';
+   if (imsg == NULL) {
+      return;
+   }
    Dmsg1(1800, "edit_device_codes: %s\n", imsg);
    for (p=imsg; *p; p++) {
       if (*p == '%') {
