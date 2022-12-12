@@ -1302,11 +1302,15 @@ static void list_running_jobs(UAContext *ua)
    char level[10];
    OutputWriter ow(ua->api_opts);
    JobId_t jid = 0;
+   char *client = NULL;
    POOL_MEM msg_buf;
    POOL_MEM emsg;
 
    if ((i = find_arg_with_value(ua, "jobid")) >= 0) {
       jid = str_to_int64(ua->argv[i]);
+   }
+   if ((i = find_arg_with_value(ua, "client")) >= 0) {
+      client = ua->argv[i];
    }
 
    Dmsg0(200, "enter list_run_jobs()\n");
@@ -1343,7 +1347,9 @@ static void list_running_jobs(UAContext *ua)
       if (jid > 0 && jcr->JobId != jid) {
          continue;
       }
-
+      if (client && jcr->client && fnmatch(client, jcr->client->hdr.name, 0) != 0) {
+         continue;
+      }
       if (++njobs == 1) {
          /* display the header for the first job */
          if (!ua->api) {
