@@ -329,6 +329,7 @@ CREATE TABLE fileset
     fileset	      text	  not null,
     md5 	      text	  not null,
     createtime	      timestamp without time zone not null,
+    content           text        default '',
     primary key (filesetid)
 );
 

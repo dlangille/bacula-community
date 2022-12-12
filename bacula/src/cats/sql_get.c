@@ -1087,13 +1087,13 @@ int BDB::bdb_get_fileset_record(JCR *jcr, FILESET_DBR *fsr)
    bdb_lock();
    if (fsr->FileSetId != 0) {               /* find by id */
       Mmsg(cmd,
-           "SELECT FileSetId,FileSet,MD5,CreateTime FROM FileSet "
+           "SELECT FileSetId,FileSet,MD5,CreateTime,Content FROM FileSet "
            "WHERE FileSetId=%s",
            edit_int64(fsr->FileSetId, ed1));
    } else {                           /* find by name */
       bdb_escape_string(jcr, esc, fsr->FileSet, strlen(fsr->FileSet));
       Mmsg(cmd,
-           "SELECT FileSetId,FileSet,MD5,CreateTime FROM FileSet "
+           "SELECT FileSetId,FileSet,MD5,CreateTime,Content FROM FileSet "
            "WHERE FileSet='%s' ORDER BY CreateTime DESC LIMIT 1", esc);
    }
 
@@ -1111,6 +1111,7 @@ int BDB::bdb_get_fileset_record(JCR *jcr, FILESET_DBR *fsr)
          bstrncpy(fsr->FileSet, row[1]!=NULL?row[1]:"", sizeof(fsr->FileSet));
          bstrncpy(fsr->MD5, row[2]!=NULL?row[2]:"", sizeof(fsr->MD5));
          bstrncpy(fsr->cCreateTime, row[3]!=NULL?row[3]:"", sizeof(fsr->cCreateTime));
+         bstrncpy(fsr->Content, row[4]!=NULL?row[4]:"", sizeof(fsr->Content));
          stat = fsr->FileSetId;
       }
       sql_free_result();

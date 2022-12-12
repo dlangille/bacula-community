@@ -536,6 +536,7 @@ struct FILESET_DBR {
    char FileSet[MAX_NAME_LENGTH];     /* FileSet name */
    char MD5[50];                      /* MD5 signature of include/exclude */
    time_t CreateTime;                 /* date created */
+   char Content[MAX_PLUGIN_LENGTH];   /* List of plugins in a fileset record */
    /*
     * This is where we return CreateTime
     */

@@ -718,6 +718,9 @@ ALTER TABLE Object
     MODIFY COLUMN ObjectCategory BLOB;
     MODIFY COLUMN ObjectUUID BLOB;
 
+ALTER TABLE FileSet
+    ADD COLUMN Content BLOB DEFAULT '';
+
 ALTER TABLE Job
     ADD COLUMN RealStartTime DATETIME,
     ADD COLUMN isVirtualFull     TINYINT    default 0,

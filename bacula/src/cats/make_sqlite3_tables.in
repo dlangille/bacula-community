@@ -342,6 +342,7 @@ CREATE TABLE FileSet (
    FileSet VARCHAR(128) NOT NULL,
    MD5 VARCHAR(25) NOT NULL,
    CreateTime DATETIME DEFAULT 0,
+   Content TEXT DEFAULT '',
    PRIMARY KEY(FileSetId)
    );
 

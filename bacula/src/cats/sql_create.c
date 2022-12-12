@@ -733,13 +733,15 @@ bool BDB::bdb_create_fileset_record(JCR *jcr, FILESET_DBR *fsr)
    struct tm tm;
    char esc_fs[MAX_ESCAPE_NAME_LENGTH];
    char esc_md5[MAX_ESCAPE_NAME_LENGTH];
+   char esc_content[MAX_ESCAPE_PLUGIN_LENGTH];
 
    /* TODO: Escape FileSet and MD5 */
    bdb_lock();
    fsr->created = false;
    bdb_escape_string(jcr, esc_fs, fsr->FileSet, strlen(fsr->FileSet));
    bdb_escape_string(jcr, esc_md5, fsr->MD5, strlen(fsr->MD5));
-   Mmsg(cmd, "SELECT FileSetId,CreateTime FROM FileSet WHERE "
+   bdb_escape_string(jcr, esc_content, fsr->Content, strlen(fsr->Content));
+   Mmsg(cmd, "SELECT FileSetId,CreateTime,Content FROM FileSet WHERE "
                   "FileSet='%s' AND MD5='%s'", esc_fs, esc_md5);
 
    fsr->FileSetId = 0;
@@ -762,6 +764,17 @@ bool BDB::bdb_create_fileset_record(JCR *jcr, FILESET_DBR *fsr)
          } else {
             bstrncpy(fsr->cCreateTime, row[1], sizeof(fsr->cCreateTime));
          }
+         if ((row[2] == NULL || strcmp(row[2], "") == 0) && esc_content[0]) {
+            Mmsg(cmd, "UPDATE FileSet SET Content='%s' WHERE FileSetId=%ld",
+                 esc_content, fsr->FileSetId);
+            if (!UpdateDB(jcr, cmd, false /* should match*/)) {
+               /* If we cannot update, this is not the end of the world, but we
+                * can display a message
+                */
+               Dmsg2(50, "Unable to update FileSet content field for %ld ERR=%s\n",
+                     fsr->FileSetId, sql_strerror());
+            }
+         }
          sql_free_result();
          bdb_unlock();
          return true;
@@ -776,8 +789,8 @@ bool BDB::bdb_create_fileset_record(JCR *jcr, FILESET_DBR *fsr)
    strftime(fsr->cCreateTime, sizeof(fsr->cCreateTime), "%Y-%m-%d %H:%M:%S", &tm);
 
    /* Must create it */
-      Mmsg(cmd, "INSERT INTO FileSet (FileSet,MD5,CreateTime) "
-"VALUES ('%s','%s','%s')", esc_fs, esc_md5, fsr->cCreateTime);
+      Mmsg(cmd, "INSERT INTO FileSet (FileSet,MD5,CreateTime,Content) "
+           "VALUES ('%s','%s','%s','%s')", esc_fs, esc_md5, fsr->cCreateTime, esc_content);
 
    if ((fsr->FileSetId = sql_insert_autokey_record(cmd, NT_("FileSet"))) == 0) {
       Mmsg2(&errmsg, _("Create DB FileSet record %s failed. ERR=%s\n"),

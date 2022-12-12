@@ -128,6 +128,7 @@ extern void set_jcr_defaults(JCR *jcr, JOB *job);
 extern void create_unique_job_name(JCR *jcr, const char *base_name);
 extern void update_job_end_record(JCR *jcr);
 extern bool get_or_create_client_record(JCR *jcr);
+extern void fileset_get_content(FILESET_DBR *fdbr, FILESET *fileset);
 extern bool get_or_create_fileset_record(JCR *jcr);
 extern DBId_t get_or_create_pool_record(JCR *jcr, char *pool_name);
 extern void apply_pool_overrides(JCR *jcr);

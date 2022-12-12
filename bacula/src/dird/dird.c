@@ -1757,6 +1757,37 @@ static bool check_catalog(cat_op mode)
             counter->CurrentValue = counter->MinValue;  /* default value */
          }
       }
+      /* Loop over all fileset, defining/updating them in each database */
+      FILESET *fs;
+      foreach_res(fs, R_FILESET) {
+         FILESET_DBR fsr;
+
+         bmemset(&fsr, 0, sizeof(FILESET_DBR));
+         bstrncpy(fsr.FileSet, fs->hdr.name, sizeof(fsr.FileSet));
+         if (fs->have_MD5) {
+            struct MD5Context md5c;
+            unsigned char digest[MD5HashSize];
+            memcpy(&md5c, &fs->md5c, sizeof(md5c));
+            MD5Final(digest, &md5c);
+            /*
+             * Keep the flag (last arg) set to false otherwise old FileSets will
+             * get new MD5 sums and the user will get Full backups on everything
+             */
+            bin_to_base64(fsr.MD5, sizeof(fsr.MD5), (char *)digest, MD5HashSize, false);
+            bstrncpy(fs->MD5, fsr.MD5, sizeof(fs->MD5));
+         }
+         /* Previously, the content of the fileset was not generated, so, if
+          * we have a fileset like that, we can update the record
+          */
+         if (!db_get_fileset_record(NULL, db, &fsr) || fsr.Content[0] == 0) {
+            fileset_get_content(&fsr, fs);
+            if (!db_create_fileset_record(NULL, db, &fsr)) {
+               Jmsg(NULL, M_FATAL, 0,
+                    _("Could not create FileSet \"%s\" record. ERR=%s\n"),
+                    fs->hdr.name, configfile);
+            }
+         }
+      }
       /* cleanup old job records */
       if (mode == UPDATE_AND_FIX) {
          alist events(100, not_owned_by_alist);

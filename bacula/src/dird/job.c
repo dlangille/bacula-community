@@ -1389,13 +1389,96 @@ bool get_or_create_client_record(JCR *jcr)
    return true;
 }
 
+struct name_item
+{
+   rblink link;
+   char val[1];
+};
+
+static int my_strcmp(void *a, void *b)
+{
+   struct name_item *a1 = (struct name_item*)a;
+   struct name_item *b1 = (struct name_item*)b;
+   return strcmp(a1->val, b1->val);
+}
+
+/* Get the content overview of a FileSet */
+void fileset_get_content(FILESET_DBR *fdbr, FILESET *fileset)
+{
+   POOL_MEM tmp;
+   struct name_item *el = NULL;
+   bool files = false, first=true;
+   rblist c(el, &el->link);
+   regex_t r1;
+   regmatch_t pmatch[6];
+   /* We are looking for the plugin name, so basically Plugin = "mysql: options"
+    * Some plugins like Exchange have the interesting part inside the second part
+    */
+   regcomp(&r1, "^ *([a-zA-Z0-9-]+) *(: */@([A-Za-z]+))?", REG_EXTENDED);
+   for (int i=0; i<fileset->num_includes; i++) {
+      INCEXE *ie = fileset->include_items[i];
+
+      if (ie->name_list.size() > 0) {
+         files = true;
+      }
+      for (int j=0; j < ie->plugin_list.size(); j++) {
+         char *item = (char *)ie->plugin_list.get(j);
+         if (regexec(&r1, item, 5, pmatch, 0) == 0 &&
+             pmatch[1].rm_so >= 0 &&
+             pmatch[1].rm_eo > 0)
+         {
+            int l = pmatch[1].rm_eo - pmatch[1].rm_so + 1;
+            tmp.check_size(l+1);
+            bstrncpy(tmp.c_str(),
+                     item + pmatch[1].rm_so,
+                     l);
+
+            /* Special case for VSS plugins, the exact module is found in the
+             * second part
+             */
+            if (strcasecmp(tmp.c_str(), "vss") == 0 &&
+                pmatch[3].rm_so >= 0 &&
+                pmatch[3].rm_eo > 0)
+            {
+               //  vss -   SYSTEMSTATE                         \0
+               l = l + 1 + pmatch[3].rm_eo - pmatch[3].rm_so;
+               tmp.check_size(l+1);
+               bstrncat(tmp.c_str(), "-", l);
+               bstrncat(tmp.c_str(), item + pmatch[3].rm_so, l);
+            }
+
+            struct name_item *el2;
+            el = (struct name_item *) malloc(sizeof(struct name_item) + l + 1);
+            bstrncpy(el->val, tmp.c_str(), l);
+            el2 = (struct name_item *)c.insert(el, my_strcmp);
+            if (el2 != el) {
+               free(el);     // not inserted
+            }
+         }
+      }
+   }
+   pm_strcpy(tmp, "");
+   if (files) {
+      pm_strcpy(tmp, "files");
+      first=false;
+   }
+   foreach_rblist(el, &c) {
+      if (!first) {
+         pm_strcat(tmp, ",");
+      }
+      pm_strcat(tmp, el->val);
+      first = false;
+   }
+   bstrncpy(fdbr->Content, tmp.c_str(), sizeof(fdbr->Content));
+   regfree(&r1);
+}
+
 /*
  * Get or Create FileSet record
  */
 bool get_or_create_fileset_record(JCR *jcr)
 {
    FILESET_DBR fsr;
-
    bmemset(&fsr, 0, sizeof(FILESET_DBR));
    bstrncpy(fsr.FileSet, jcr->fileset->hdr.name, sizeof(fsr.FileSet));
    if (jcr->fileset->have_MD5) {
@@ -1414,7 +1497,10 @@ bool get_or_create_fileset_record(JCR *jcr)
       Jmsg(jcr, M_WARNING, 0, _("FileSet MD5 digest not found.\n"));
    }
    if (!jcr->fileset->ignore_fs_changes ||
-       !db_get_fileset_record(jcr, jcr->db, &fsr)) {
+       !db_get_fileset_record(jcr, jcr->db, &fsr))
+   {
+      /* Now we create the fileset at reload/startup, it should not happen */
+      fileset_get_content(&fsr, jcr->fileset);
       if (!db_create_fileset_record(jcr, jcr->db, &fsr)) {
          Jmsg(jcr, M_ERROR, 0, _("Could not create FileSet \"%s\" record. ERR=%s\n"),
             fsr.FileSet, db_strerror(jcr->db));
