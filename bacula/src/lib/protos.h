@@ -113,6 +113,7 @@ int       pool_sprintf           (char *pool_buf, const char *fmt, ...);
 int       create_lock_file       (char *fname, const char *progname, const char *filetype, POOLMEM **errmsg, int *fd);
 void      create_pid_file        (char *dir, const char *progname, int port);
 int       delete_pid_file        (char *dir, const char *progname, int port);
+int       update_pid_file        (char *dir, const char *progname, int port);
 void      drop                   (char *uid, char *gid, bool keep_readall_caps);
 int reset_job_user();
 int change_job_user(char *uname, char *gname, char *errmsg, int errlen);

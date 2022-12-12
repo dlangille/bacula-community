@@ -809,6 +809,8 @@ bool reload_config(int sig, alist *msglist)
       events_send_msg(NULL, "DD0005",
                       EVENTS_TYPE_DAEMON, "*Director*",
                       (intptr_t)get_first_port_host_order(director->DIRaddrs), "Director configuration reloaded");
+      update_pid_file(director->pid_directory, "bacula-dir",
+                      get_first_port_host_order(director->DIRaddrs));
       ret = true;               // reload ok
    }
 

@@ -705,6 +705,29 @@ void create_pid_file(char *dir, const char *progname, int port)
 }
 
 /*
+ * Update a standard "Unix" pid file.
+ */
+int update_pid_file(char *dir, const char *progname, int port)
+{
+   POOLMEM *fname = get_pool_memory(PM_FNAME);
+   int ret = 0;
+   int pidfd;
+   
+   Mmsg(fname, "%s/%s.%d.pid", dir, progname, port);
+   if ((pidfd = open(fname, O_WRONLY|O_APPEND, 0640)) >= 0) {
+      btime_t now = time(NULL);
+      set_own_time(pidfd, fname, now, now);
+      // Update mtime
+      close(pidfd);
+   } else {
+      ret = -1;
+   }
+
+   free_pool_memory(fname);
+   return ret;
+}
+
+/*
  * Delete the pid file if we created it
  */
 int delete_pid_file(char *dir, const char *progname, int port)
