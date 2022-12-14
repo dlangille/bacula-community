@@ -502,6 +502,7 @@ static void list_devices(STATUS_PKT *sp, char *name)
       }
    }
    if (sp->api > 1) {
+      ow.get_output(OT_CLEAR, OT_END);
       ow.end_list();
       ow.get_output(OT_END_OBJ, OT_END);
       buf = ow.end_group();
