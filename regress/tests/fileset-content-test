@@ -1,0 +1,141 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Check the Content field of the fileset definition
+#
+TestName=fileset-content-test
+JobName=BackupJob
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build/po/fr.po" >${cwd}/tmp/file-list
+
+change_jobname NightlySave $JobName
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolData", "no", "Job")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "FileSet", "files", "Job", "BackupJob")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "AutoPrune", "No", "Director")'
+
+cat <<EOF >> $conf/bacula-dir.conf
+@$tmp/fileset.conf
+EOF
+
+cat <<EOF > $tmp/fileset.conf
+FileSet {
+  Name = files
+  Include {
+    File = $conf/bacula-dir.conf
+  }
+}
+FileSet {
+  Name = postgresql
+  Include {
+     Plugin = "postgresql: use_sudo"
+  }
+}
+FileSet {
+  Name = mysql_postgresql
+  Include {
+     Plugin = "mysql: use_sudo"
+     Plugin = "mysql"
+     Plugin = "postgresql: use_sudo"
+  }
+}
+
+FileSet {
+  Name = vss-EXCHANGE
+  Include {
+     Plugin = "vss:/@EXCHANGE/"
+  }
+}
+
+FileSet {
+  Name = vss-EXCHANGE_vss-SYSTEMSTATE
+  Include {
+     Plugin = "vss:/@EXCHANGE/"
+     Plugin = "vss :/@SYSTEMSTATE"
+  }
+}
+
+FileSet {
+  Name = netapp-hfc
+  Include {
+     Plugin = "netapp-hfc: test1 test2"
+  }
+}
+EOF
+
+start_test
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+sql
+select 'ERROR', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') <> Content;
+select 'OK', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') = Content;
+
+quit
+END_OF_DATA
+
+run_bacula
+
+cat <<EOF >> $tmp/fileset.conf
+FileSet {
+  Name = files-db2
+  Include {
+    File = /etc/passwd
+    Plugin = db2
+  }
+}
+EOF
+
+# We test the reload and the upgrade
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+reload
+@$out ${cwd}/tmp/log2.out
+sql
+select 'ERROR', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') <> Content;
+select 'OK', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') = Content;
+update FileSet SET Content = '';
+
+quit
+END_OF_DATA
+
+run_bconsole
+stop_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+@$out ${cwd}/tmp/log3.out
+sql
+select 'ERROR', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') <> Content;
+select 'OK', FileSet, Content FROM FileSet WHERE FileSet IN ('netapp-hfc', 'vss-EXCHANGE_vss-SYSTEMSTATE', 'mysql_postgresql', 'postgresql', 'files', 'files_db2') AND REPLACE(FileSet, '_', ',') = Content;
+
+quit
+END_OF_DATA
+
+run_bacula
+stop_bacula
+
+grep "| ERROR" $tmp/log*.out
+if [ $? = 0 ]; then
+    print_debug "ERROR: Found problem in $tmp/log*.out"
+    estat=1
+fi
+
+for i in 1 2 3
+do
+    grep "| OK" $tmp/log$i.out > /dev/null
+    if [ $? != 0 ]; then
+        print_debug "ERROR: Did not found good results in $tmp/log$i.out"
+        estat=1
+    fi
+done
+
+end_test
