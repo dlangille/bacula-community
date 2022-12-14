@@ -2518,8 +2518,10 @@ static void store_runscript_when(LEX *lc, RES_ITEM *item, int index, int pass)
       *(uint32_t *)(item->value) = SCRIPT_AtJobCompletion;
    } else if (strcasecmp(lc->str, "always") == 0) {
       *(uint32_t *)(item->value) = SCRIPT_Any;
+   } else if (strcasecmp(lc->str, "queued") == 0) {
+      *(uint32_t *)(item->value) = SCRIPT_Queued;
    } else {
-      scan_err2(lc, _("Expect %s, got: %s"), "Before, AtJobCompletion, After, AfterVSS or Always", lc->str);
+      scan_err2(lc, _("Expect %s, got: %s"), "Before, AtJobCompletion, After, AfterVSS, Queued or Always", lc->str);
    }
    scan_to_eol(lc);
 }
@@ -2653,6 +2655,16 @@ void store_runscript_bool(LEX *lc, RES_ITEM *item, int index, int pass)
    scan_to_eol(lc);
 }
 
+/* Store a int32 in a bit field without modifing res_all.hdr
+ * We can also add an option to store_bool to skip res_all.hdr
+ */
+void store_runscript_int(LEX *lc, RES_ITEM *item, int index, int pass)
+{
+   lex_get_token(lc, T_PINT32);
+   *(int *)(item->value) = lc->pint32_val;
+   scan_to_eol(lc);
+}
+
 /*
  * new RunScript items
  *   name     handler     value               code flags default_value
@@ -2667,6 +2679,7 @@ static RES_ITEM runscript_items[] = {
  {"abortjobonerror",store_runscript_bool, {(char **)&res_runscript.fail_on_error},0, 0, 0},
  {"runswhen",       store_runscript_when, {(char **)&res_runscript.when},      0,  0, 0},
  {"runsonclient",   store_runscript_target,{(char **)&res_runscript},          0,  0, 0}, /* TODO */
+ {"timeout",        store_runscript_int,{(char **)&res_runscript.wait_time},   0,  0, 0},
  {NULL, NULL, {0}, 0, 0, 0}
 };
 

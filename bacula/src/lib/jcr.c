@@ -85,7 +85,8 @@ const struct job_task job_task_map[] = {
    { JOB_TASK_ZERO, "" },
    { JOB_TASK_BEFORE_SCRIPT, _("executing Before Job Scripts") },
    { JOB_TASK_ENDJOB_SCRIPT, _("executing End Job Scripts") },
-   { JOB_TASK_AFTER_SCRIPT, _("executing After Job Scripts") }
+   { JOB_TASK_AFTER_SCRIPT, _("executing After Job Scripts") },
+   { JOB_TASK_QUEUED, _("executing Queued Job Scripts") }
 };
 
 const uint32_t job_task_map_size = sizeof(job_task_map) / sizeof(job_task);
@@ -840,6 +841,7 @@ static void update_wait_time(JCR *jcr, int newJobStatus)
    case JS_WaitClientRes:
    case JS_WaitMaxJobs:
    case JS_WaitPriority:
+   case JS_WaitUser:
       enter_in_waittime = true;
       break;
    default:
@@ -862,6 +864,7 @@ static void update_wait_time(JCR *jcr, int newJobStatus)
    case JS_WaitClientRes:
    case JS_WaitMaxJobs:
    case JS_WaitPriority:
+   case JS_WaitUser:
       if (!enter_in_waittime) { /* we get out the wait time */
          jcr->wait_time_sum += (time(NULL) - jcr->wait_time);
          jcr->wait_time = 0;

@@ -90,6 +90,7 @@
 #define JS_WaitStoreRes          's'  /* Waiting for storage resource */
 #define JS_WaitStartTime         't'  /* Waiting for start time */
 #define JS_CloudUpload           'u'  /* Cloud upload */
+#define JS_WaitUser              'v'  /* Waiting for User */
 #define JS_CloudDownload         'w'  /* Cloud download */
 
 /* Helper for more descriptive job status 
@@ -97,7 +98,8 @@
  */
 enum {
    JOB_TASK_ZERO = 0,
-   JOB_TASK_BEFORE_SCRIPT = 100,
+   JOB_TASK_QUEUED = 100,
+   JOB_TASK_BEFORE_SCRIPT,
    JOB_TASK_ENDJOB_SCRIPT,
    JOB_TASK_AFTER_SCRIPT
 };
@@ -397,6 +399,7 @@ public:
    volatile int32_t FDJobStatus;      /* File daemon Job Status */
    uint32_t ExpectedFiles;            /* Expected restore files */
    uint32_t MediaId;                  /* DB record IDs associated with this job */
+   btime_t  next_qrunscript_execution;/* Next time we can execute the Queued runscript */
    int32_t FileIndex;                 /* Last FileIndex processed */
    utime_t MaxRunSchedTime;           /* max run time in seconds from Initial Scheduled time */
    POOLMEM *fname;                    /* name to put into catalog */

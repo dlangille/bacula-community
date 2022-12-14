@@ -398,14 +398,14 @@ void *jobq_server(void *arg)
    bool work = true;
 
    set_jcr_in_tsd(INVALID_JCR);
-   Dmsg0(2300, "Start jobq_server\n");
+   Dmsg0(DT_SCHEDULER|50, "Start jobq_server\n");
    P(jq->mutex);
 
    for (;;) {
       struct timeval tv;
       struct timezone tz;
 
-      Dmsg0(2300, "Top of for loop\n");
+      Dmsg0(DT_SCHEDULER|50, "Top of for loop\n");
       if (!work && !jq->quit) {
          gettimeofday(&tv, &tz);
          timeout.tv_nsec = 0;
@@ -415,7 +415,7 @@ void *jobq_server(void *arg)
             /*
              * Wait 4 seconds, then if no more work, exit
              */
-            Dmsg0(2300, "pthread_cond_timedwait()\n");
+            Dmsg0(DT_SCHEDULER|50, "pthread_cond_timedwait()\n");
             stat = pthread_cond_timedwait(&jq->work, &jq->mutex, &timeout);
             if (stat == ETIMEDOUT) {
                Dmsg0(2300, "timedwait timedout.\n");
@@ -423,7 +423,7 @@ void *jobq_server(void *arg)
                break;
             } else if (stat != 0) {
                /* This shouldn't happen */
-               Dmsg0(2300, "This shouldn't happen\n");
+               Dmsg0(DT_SCHEDULER|50, "This shouldn't happen\n");
                jq->num_workers--;
                V(jq->mutex);
                return NULL;
@@ -434,14 +434,14 @@ void *jobq_server(void *arg)
       /*
        * If anything is in the ready queue, run it
        */
-      Dmsg0(2300, "Checking ready queue.\n");
+      Dmsg0(DT_SCHEDULER|50, "Checking ready queue.\n");
       while (!jq->ready_jobs->empty() && !jq->quit) {
          JCR *jcr;
          je = (jobq_item_t *)jq->ready_jobs->first();
          jcr = je->jcr;
          jq->ready_jobs->remove(je);
          if (!jq->ready_jobs->empty()) {
-            Dmsg0(2300, "ready queue not empty start server\n");
+            Dmsg0(DT_SCHEDULER|50, "ready queue not empty start server\n");
             if (start_server(jq) != 0) {
                jq->num_workers--;
                V(jq->mutex);
@@ -454,13 +454,13 @@ void *jobq_server(void *arg)
          jcr->my_thread_id = pthread_self();
          jcr->set_killable(true);
          set_jcr_in_tsd(jcr);
-         Dmsg1(2300, "Took jobid=%d from ready and appended to run\n", jcr->JobId);
+         Dmsg1(DT_SCHEDULER|50, "Took jobid=%d from ready and appended to run\n", jcr->JobId);
 
          /* Release job queue lock */
          V(jq->mutex);
 
          /* Call user's routine here */
-         Dmsg3(2300, "Calling user engine for jobid=%d use=%d stat=%c\n", jcr->JobId,
+         Dmsg3(DT_SCHEDULER|50, "Calling user engine for jobid=%d use=%d stat=%c\n", jcr->JobId,
             jcr->use_count(), jcr->JobStatus);
          jq->engine(je->jcr);
 
@@ -468,12 +468,12 @@ void *jobq_server(void *arg)
          remove_jcr_from_tsd(je->jcr);
          je->jcr->set_killable(false);
 
-         Dmsg2(2300, "Back from user engine jobid=%d use=%d.\n", jcr->JobId,
+         Dmsg2(DT_SCHEDULER|50, "Back from user engine jobid=%d use=%d.\n", jcr->JobId,
             jcr->use_count());
 
          /* Reacquire job queue lock */
          P(jq->mutex);
-         Dmsg0(200, "Done lock mutex after running job. Release locks.\n");
+         Dmsg0(DT_SCHEDULER|50, "Done lock mutex after running job. Release locks.\n");
          jq->running_jobs->remove(je);
          /*
           * Release locks if acquired. Note, they will not have
@@ -493,7 +493,7 @@ void *jobq_server(void *arg)
          }
 
          /* Clean up and release old jcr */
-         Dmsg2(2300, "====== Termination job=%d use_cnt=%d\n", jcr->JobId, jcr->use_count());
+         Dmsg2(DT_SCHEDULER|50, "====== Termination job=%d use_cnt=%d\n", jcr->JobId, jcr->use_count());
          jcr->SDJobStatus = 0;
          V(jq->mutex);                /* release internal lock */
          free_jcr(jcr);
@@ -504,7 +504,7 @@ void *jobq_server(void *arg)
        * If any job in the wait queue can be run,
        *  move it to the ready queue
        */
-      Dmsg0(2300, "Done check ready, now check wait queue.\n");
+      Dmsg0(DT_SCHEDULER|50, "Done check ready, now check wait queue.\n");
       if (!jq->waiting_jobs->empty() && !jq->quit) {
          int Priority;
          bool running_allow_mix = false;
@@ -512,11 +512,11 @@ void *jobq_server(void *arg)
          jobq_item_t *re = (jobq_item_t *)jq->running_jobs->first();
          if (re) {
             Priority = re->jcr->JobPriority;
-            Dmsg2(2300, "JobId %d is running. Look for pri=%d\n",
+            Dmsg2(DT_SCHEDULER|50, "JobId %d is running. Look for pri=%d\n",
                   re->jcr->JobId, Priority);
             running_allow_mix = true;
             for ( ; re; ) {
-               Dmsg2(2300, "JobId %d is also running with %s\n",
+               Dmsg2(DT_SCHEDULER|50, "JobId %d is also running with %s\n",
                      re->jcr->JobId,
                      re->jcr->job->allow_mixed_priority ? "mix" : "no mix");
                if (!re->jcr->job->allow_mixed_priority) {
@@ -525,11 +525,11 @@ void *jobq_server(void *arg)
                }
                re = (jobq_item_t *)jq->running_jobs->next(re);
             }
-            Dmsg1(2300, "The running job(s) %s mixing priorities.\n",
+            Dmsg1(DT_SCHEDULER|50, "The running job(s) %s mixing priorities.\n",
                   running_allow_mix ? "allow" : "don't allow");
          } else {
             Priority = je->jcr->JobPriority;
-            Dmsg1(2300, "No job running. Look for Job pri=%d\n", Priority);
+            Dmsg1(DT_SCHEDULER|50, "No job running. Look for Job pri=%d\n", Priority);
          }
          /*
           * Walk down the list of waiting jobs and attempt
@@ -539,8 +539,55 @@ void *jobq_server(void *arg)
             /* je is current job item on the queue, jn is the next one */
             JCR *jcr = je->jcr;
             jobq_item_t *jn = (jobq_item_t *)jq->waiting_jobs->next(je);
-
-            Dmsg4(2300, "Examining Job=%d JobPri=%d want Pri=%d (%s)\n",
+            btime_t now = time(NULL);
+            int interval = 90;
+            /* When we debug, we can spend less time to wait */
+            if (chk_dbglvl(DT_SCHEDULER)) {
+               interval = 10;
+            }
+            if (jcr->next_qrunscript_execution >= 0 && // first time
+                jcr->next_qrunscript_execution <= now)  // we test again after some time
+            {
+               /* We test every 90s */
+               jcr->next_qrunscript_execution = now + interval;
+               int runcode = run_scripts_get_code(jcr, jcr->job->RunScripts, NT_("Queued"));
+               /* We use the exit code of the runscripts to determine what to do now.
+                * we can wait, start the job, or do other things
+                */
+               switch (runcode) {
+               case -1:         // No script to run
+                  jcr->next_qrunscript_execution = -1;
+                  break;
+               case 0:
+                  Jmsg(jcr, M_INFO, 0, _("User defined resources are available.\n"));
+                  break;
+               case 1:
+                  if (jcr->getJobStatus() != JS_WaitUser) {
+                     Jmsg(jcr, M_INFO, 0, _("The Job will wait for user defined resources to be available.\n"));
+                  }
+                  jcr->setJobStatus(JS_WaitUser);
+                  if (!job_canceled(jcr)) {
+                     je = jn;            /* point to next waiting job */
+                     continue;
+                  }
+                  break;
+               case 2:          // skip priority checks
+                  jcr->JobPriority = 9999;
+                  Jmsg(jcr, M_INFO, 0, _("Job Priority adjusted.\n"));
+                  break;
+               default:         // Incorrect code, must review the script
+                  jcr->next_qrunscript_execution = -1;
+                  Jmsg(jcr, M_WARNING, 0, _("Incorrect return code %d for user defined resource checking script.\n"), runcode);
+                  break;
+               }
+            } else if (jcr->next_qrunscript_execution > 0) {
+               /* We have to wait, the job is not ready to be tested again */
+               if (!job_canceled(jcr)) {
+                  je = jn;            /* point to next waiting job */
+                  continue;
+               }               
+            }
+            Dmsg4(DT_SCHEDULER|50, "Examining Job=%d JobPri=%d want Pri=%d (%s)\n",
                   jcr->JobId, jcr->JobPriority, Priority,
                   jcr->job->allow_mixed_priority ? "mix" : "no mix");
 
@@ -568,33 +615,33 @@ void *jobq_server(void *arg)
              */
             jq->waiting_jobs->remove(je);
             jq->ready_jobs->append(je);
-            Dmsg1(2300, "moved JobId=%d from wait to ready queue\n", je->jcr->JobId);
+            Dmsg1(DT_SCHEDULER|50, "moved JobId=%d from wait to ready queue\n", je->jcr->JobId);
             je = jn;                  /* Point to next waiting job */
          } /* end for loop */
 
       } /* end if */
 
-      Dmsg0(2300, "Done checking wait queue.\n");
+      Dmsg0(DT_SCHEDULER|50, "Done checking wait queue.\n");
       /*
        * If no more ready work and we are asked to quit, then do it
        */
       if (jq->ready_jobs->empty() && jq->quit) {
          jq->num_workers--;
          if (jq->num_workers == 0) {
-            Dmsg0(2300, "Wake up destroy routine\n");
+            Dmsg0(DT_SCHEDULER|50, "Wake up destroy routine\n");
             /* Wake up destroy routine if he is waiting */
             pthread_cond_broadcast(&jq->work);
          }
          break;
       }
-      Dmsg0(2300, "Check for work request\n");
+      Dmsg0(DT_SCHEDULER|50, "Check for work request\n");
       /*
        * If no more work requests, and we waited long enough, quit
        */
-      Dmsg2(2300, "timedout=%d read empty=%d\n", timedout,
+      Dmsg2(DT_SCHEDULER|50, "timedout=%d read empty=%d\n", timedout,
          jq->ready_jobs->empty());
       if (jq->ready_jobs->empty() && timedout) {
-         Dmsg0(2300, "break big loop\n");
+         Dmsg0(DT_SCHEDULER|50, "break big loop\n");
          jq->num_workers--;
          break;
       }
@@ -613,12 +660,12 @@ void *jobq_server(void *arg)
          /* Recompute work as something may have changed in last 2 secs */
          work = !jq->ready_jobs->empty() || !jq->waiting_jobs->empty();
       }
-      Dmsg1(2300, "Loop again. work=%d\n", work);
+      Dmsg1(DT_SCHEDULER|50, "Loop again. work=%d\n", work);
    } /* end of big for loop */
 
-   Dmsg0(200, "unlock mutex\n");
+   Dmsg0(DT_SCHEDULER|50, "unlock mutex\n");
    V(jq->mutex);
-   Dmsg0(2300, "End jobq_server\n");
+   Dmsg0(DT_SCHEDULER|50, "End jobq_server\n");
    return NULL;
 }
 
@@ -661,7 +708,7 @@ static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
       jcr->sched_time = now + jcr->job->RescheduleInterval;
       bstrftime(dt, sizeof(dt), now);
       bstrftime(dt2, sizeof(dt2), jcr->sched_time);
-      Dmsg4(2300, "Rescheduled Job %s to re-run in %d seconds.(now=%u,then=%u)\n", jcr->Job,
+      Dmsg4(DT_SCHEDULER|50, "Rescheduled Job %s to re-run in %d seconds.(now=%u,then=%u)\n", jcr->Job,
             (int)jcr->job->RescheduleInterval, now, jcr->sched_time);
       Jmsg(jcr, M_INFO, 0, _("Rescheduled Job %s at %s to re-run in %d seconds (%s).\n"),
            jcr->Job, dt, (int)jcr->job->RescheduleInterval, dt2);
@@ -675,7 +722,7 @@ static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
       }
       /* Only jobs with no output or Incomplete jobs can run on same JCR */
       if (jcr->JobBytes == 0 || jcr->rerunning) {
-         Dmsg2(2300, "Requeue job=%d use=%d\n", jcr->JobId, jcr->use_count());
+         Dmsg2(DT_SCHEDULER|50, "Requeue job=%d use=%d\n", jcr->JobId, jcr->use_count());
          V(jq->mutex);
          /*
           * Special test here since a Virtual Full gets marked
@@ -758,12 +805,12 @@ static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
       njcr->messages = jcr->messages;
       njcr->spool_data = jcr->spool_data;
       njcr->write_part_after_job = jcr->write_part_after_job;
-      Dmsg0(2300, "Call to run new job\n");
+      Dmsg0(DT_SCHEDULER|50, "Call to run new job\n");
       V(jq->mutex);
       run_job(njcr);            /* This creates a "new" job */
       free_jcr(njcr);           /* release "new" jcr */
       P(jq->mutex);
-      Dmsg0(2300, "Back from running new job.\n");
+      Dmsg0(DT_SCHEDULER|50, "Back from running new job.\n");
    }
    return false;
 }

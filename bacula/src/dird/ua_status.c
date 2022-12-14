@@ -1412,6 +1412,9 @@ static void list_running_jobs(UAContext *ua)
          }
          msg = emsg.c_str();
          break;
+      case JS_WaitUser:
+         msg = _("is waiting on queued user defined script");
+         break;
       case JS_WaitStoreRes:
          msg = _("is waiting on max Storage jobs");
          break;

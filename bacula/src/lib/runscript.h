@@ -46,10 +46,11 @@
  */
 enum {
    SCRIPT_Never  = 0,
-   SCRIPT_After  = (1<<0),      /* AfterJob */
-   SCRIPT_Before = (1<<1),      /* BeforeJob */
-   SCRIPT_AfterVSS = (1<<2),    /* BeforeJob and After VSS */
-   SCRIPT_AtJobCompletion = (1<<3),  /* Before AfterJob on the Director, take status in account */
+   SCRIPT_After  = (1<<0),          /* AfterJob */
+   SCRIPT_Before = (1<<1),          /* BeforeJob */
+   SCRIPT_AfterVSS = (1<<2),        /* BeforeJob and After VSS */
+   SCRIPT_AtJobCompletion = (1<<3), /* Before AfterJob on the Director, take status in account */
+   SCRIPT_Queued = (1<<4),          /* When the job is inside the JobQ */
    SCRIPT_Any    = SCRIPT_Before | SCRIPT_After
 };
 
@@ -67,6 +68,7 @@ public:
    POOLMEM *target;             /* host target */
    int  when;                   /* SCRIPT_Before|Script_After BEFORE/AFTER JOB*/
    int  cmd_type;               /* Command type -- Shell, Console */
+   int  wait_time;              /* Seconds to wait for the execution */
    char level;                  /* Base|Full|Incr...|All (NYI) */
    bool on_success;             /* execute command on job success (After) */
    bool on_failure;             /* execute command on job failure (After) */
@@ -77,6 +79,7 @@ public:
                                 /* Optional callback function passed to edit_job_code */
    alist *commands;             /* Use during parsing */
    bool run(JCR *job, const char *name=""); /* name must contain "Before" or "After" keyword */
+   int run_get_code(JCR *job, const char *name=""); /* name must contain "Before" or "After" keyword */
    bool can_run_at_level(int JobLevel) { return true;};        /* TODO */
    void set_command(const char *cmd, int cmd_type = SHELL_CMD);
    void set_target(const char *client_name);
@@ -95,6 +98,9 @@ RUNSCRIPT *copy_runscript(RUNSCRIPT *src);
 
 /* launch each script from runscripts*/
 int run_scripts(JCR *jcr, alist *runscripts, const char *name);
+
+/* launch each script from runscripts, only for queued scripts */
+int run_scripts_get_code(JCR *jcr, alist *runscripts, const char *label);
 
 /* free RUNSCRIPT (and all POOLMEM) */
 void free_runscript(RUNSCRIPT *script);

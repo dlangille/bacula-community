@@ -61,6 +61,7 @@ void RUNSCRIPT::reset_default(bool free_strings)
    on_failure = false;
    fail_on_error = true;
    when = SCRIPT_Never;
+   wait_time = 0;            /* Infinite by default */
    old_proto = false;        /* TODO: drop this with bacula 1.42 */
    job_code_callback = NULL;
 }
@@ -109,6 +110,8 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
       when = SCRIPT_AfterVSS;
    } else if (bstrcmp(label, NT_("AtJobCompletion"))) {
       when = SCRIPT_AtJobCompletion;
+   } else if (bstrcmp(label, NT_("Queued"))) {
+      when = SCRIPT_Queued;
    } else {
       when = SCRIPT_After;
    }
@@ -203,6 +206,67 @@ int run_scripts(JCR *jcr, alist *runscripts, const char *label)
    return ret;
 }
 
+
+/* Function similar to run_scripts() but we report the exit status of the script
+ * -1: no script to run
+ *  0: ok
+ *  1-255: exit code from the script
+ */
+int run_scripts_get_code(JCR *jcr, alist *runscripts, const char *label)
+{
+   Dmsg2(200, "runscript: running all RUNSCRIPT object (%s) JobStatus=%c\n", label, jcr->JobStatus);
+
+   RUNSCRIPT *script;
+   bool runit;
+   int ret = -1; 
+   int when;
+
+   if (strstr(label, NT_("Queued"))) {
+      when = SCRIPT_Queued;
+   } else {
+      when = SCRIPT_Never;
+   }
+
+   if (runscripts == NULL) {
+      Dmsg0(100, "runscript: WARNING RUNSCRIPTS list is NULL\n");
+      return -1;
+   }
+
+   foreach_alist(script, runscripts) {
+      Dmsg2(200, "runscript: try to run %s:%s\n", NPRT(script->target), NPRT(script->command));
+      runit = false;
+
+      if ((script->when & SCRIPT_Queued) && (when & SCRIPT_Queued)) {
+         if (jcr->job_started == false) {
+            Dmsg4(200, "runscript: Run it because SCRIPT_Queued (%s,%i,%i,%c)\n",
+                  script->command, script->on_success, script->on_failure,
+                  jcr->JobStatus );
+            if (!script->wait_time) {
+               script->wait_time = 15; // Set a maximum of 15s to not block everything
+            }
+            /* Set job task code */
+            jcr->job_task = JOB_TASK_QUEUED;
+            runit = true;
+         }
+      }
+
+      if (!script->is_local()) {
+         runit = false;
+      }
+
+      /* we execute it */
+      if (runit) {
+         berrno be;
+         int aret = script->run_get_code(jcr, label);
+         ret = MAX(ret, be.code(aret));  // We return the one with the biggest return code
+      }
+   }
+
+   /* Script ended, reset operation code */
+   jcr->job_task = JOB_TASK_ZERO;
+   return ret;
+}
+
 bool RUNSCRIPT::is_local()
 {
    if (!target || (strcmp(target, "") == 0)) {
@@ -245,11 +309,15 @@ void RUNSCRIPT::set_target(const char *client_name)
    pm_strcpy(target, client_name);
 }
 
-bool RUNSCRIPT::run(JCR *jcr, const char *name)
+/*
+ * -1: execution problem 
+ *  0..255 excution done
+ */
+int RUNSCRIPT::run_get_code(JCR *jcr, const char *name)
 {
    Dmsg1(100, "runscript: running a RUNSCRIPT object type=%d\n", cmd_type);
    POOLMEM *ecmd = get_pool_memory(PM_FNAME);
-   int status;
+   int status = -1;
    BPIPE *bpipe;
    char line[MAXSTRING];
 
@@ -260,48 +328,46 @@ bool RUNSCRIPT::run(JCR *jcr, const char *name)
 
    switch (cmd_type) {
    case SHELL_CMD:
-      bpipe = open_bpipe(ecmd, 0, "r");
-      if (bpipe == NULL) {
-         berrno be;
-         Jmsg(jcr, M_ERROR, 0, _("Runscript: %s could not execute. ERR=%s\n"), name,
-            be.bstrerror());
-         goto bail_out;
-      }
-      while (fgets(line, sizeof(line), bpipe->rfd)) {
-         int len = strlen(line);
-         if (len > 0 && line[len-1] == '\n') {
-            line[len-1] = 0;
+      bpipe = open_bpipe(ecmd, wait_time, "r");
+      if (bpipe) {
+         while (fgets(line, sizeof(line), bpipe->rfd)) {
+            int len = strlen(line);
+            if (len > 0 && line[len-1] == '\n') {
+               line[len-1] = 0;
+            }
+            Jmsg(jcr, M_INFO, 0, _("%s: %s\n"), name, line);
          }
-         Jmsg(jcr, M_INFO, 0, _("%s: %s\n"), name, line);
+         status = close_bpipe(bpipe);
       }
-      status = close_bpipe(bpipe);
-      if (status != 0) {
-         berrno be;
-         Jmsg(jcr, M_ERROR, 0, _("Runscript: %s returned non-zero status=%d. ERR=%s\n"), name,
-            be.code(status), be.bstrerror(status));
-         goto bail_out;
-      }
-      Dmsg0(100, "runscript OK\n");
       break;
    case CONSOLE_CMD:
       if (console_command) {                 /* can we run console command? */
          if (!console_command(jcr, ecmd)) {  /* yes, do so */
-            goto bail_out;
+            status = 0;
+         } else {
+            status = 1;
          }
       }
       break;
    }
+   Dmsg1(100, "runscript status=%d\n", status);
    free_pool_memory(ecmd);
-   return true;
+   return status;
+}
 
-bail_out:
-   free_pool_memory(ecmd);
-   /* cancel running job properly */
-   if (fail_on_error) {
-      jcr->setJobStatus(JS_ErrorTerminated);
+bool RUNSCRIPT::run(JCR *jcr, const char *name)
+{
+   int code = run_get_code(jcr, name);
+   if (code != 0) {
+      berrno be;
+      Jmsg(jcr, M_ERROR, 0, _("Runscript: %s returned non-zero status=%d. ERR=%s\n"), name,
+           be.code(code), be.bstrerror(code));
+
+      if (fail_on_error) {
+         jcr->setJobStatus(JS_ErrorTerminated);
+      }
    }
-   Dmsg1(100, "runscript failed. fail_on_error=%d\n", fail_on_error);
-   return false;
+   return code == 0;
 }
 
 void free_runscripts(alist *runscripts)
@@ -326,6 +392,7 @@ void RUNSCRIPT::debug()
    Dmsg1(200,  _("  --> RunOnFailure=%u\n"),  on_failure);
    Dmsg1(200,  _("  --> FailJobOnError=%u\n"),  fail_on_error);
    Dmsg1(200,  _("  --> RunWhen=%u\n"),  when);
+   Dmsg1(200,  _("  --> Timeout=%u\n"),  wait_time);
 }
 
 void RUNSCRIPT::set_job_code_callback(job_code_callback_t arg_job_code_callback)
