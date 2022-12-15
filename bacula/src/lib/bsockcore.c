@@ -263,7 +263,7 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       bmicrosleep(retry_interval, 0);
       now = time(NULL);
       if (begin_time + max_retry_time <= now) {
-         Mmsg(errmsg, _("[%cE0064] Unable to connect to %s on %s:%d. ERR=%s\n"),
+         Mmsg(errmsg, _("[%cE0029] Unable to connect to %s on %s:%d. ERR=%s\n"),
               component_code, name, host, port, be.bstrerror());
          goto bail_out;
       }
