@@ -2152,3 +2152,29 @@ char *build_connecting_info_log(const char *daemon, const char *name, const char
    }
    return buf;
 }
+
+/****************************************************************
+ * Used to build generic error message
+ ****************************************************************/
+struct comp {
+   const char *name;
+   int code;
+};
+
+struct comp comp_codes[] = {
+   {"Director", 1},
+   {"FileDaemon", 2},
+   {"Client", 2},
+   {"Storage", 3},
+   {NULL, 0}
+};
+
+int get_component_statuscode(const char *component)
+{
+   for (int i=0; comp_codes[i].name ; i++) {
+      if (strcasecmp(comp_codes[i].name, component) == 0) {
+         return comp_codes[i].code;
+      }
+   }
+   return 4;                    // unknown component
+}

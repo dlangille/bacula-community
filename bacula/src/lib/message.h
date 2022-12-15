@@ -200,6 +200,7 @@ bool is_message_type_set(JCR *jcr, int type);
 void set_trace_for_tools(int new_trace_fd); // called by Bacula's tools only
 void update_trace_file_location(bool safe);
 char *build_connecting_info_log(const char *daemon, const char *name, const char *addr, int port, bool tls, POOLMEM *&buf);
+int get_component_statuscode(const char *component);
 
 class BDB;                                              /* define forward reference */
 typedef bool (*sql_insert_log)(JCR *jcr, JobId_t jobid, utime_t mtime, char *msg);
