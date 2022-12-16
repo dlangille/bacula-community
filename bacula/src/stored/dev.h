@@ -334,7 +334,7 @@ public:
    uint64_t adata_addr;               /* Next adata write address */
 
    uint64_t max_part_size;            /* max part size */
-   uint64_t max_vol_parts_num;        /* Max number of parts in a cloud volume */
+   uint32_t max_vol_parts_num;        /* Max number of parts in a cloud volume */
    uint64_t part_size;                /* current part size */
    uint32_t part;                     /* current part number (starts at 0) */
    /* state ST_FREESPACE_OK is set if free_space is valid */
