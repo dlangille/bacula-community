@@ -396,7 +396,7 @@ CREATE TABLE FileSet (
    FileSet TINYBLOB NOT NULL,
    MD5 TINYBLOB,
    CreateTime DATETIME,
-   Content BLOB DEFAULT '',
+   Content BLOB,
    PRIMARY KEY(FileSetId)
    );
 
