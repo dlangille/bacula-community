@@ -38,6 +38,7 @@ Job {
   Storage = vDisk1
   Pool = Default
   FileSet="Full Set"
+  ClientRunBeforeJob = "sleep 3"
 }
 Job {
   Name = "StoreGroupJob"
@@ -48,6 +49,7 @@ Job {
   Storage Group Policy = LeastUsed
   Pool = Default
   FileSet = "Full Set"
+  ClientRunBeforeJob = "sleep 3"
 }
 END_OF_DATA
 
@@ -65,20 +67,28 @@ label volume=TestVolume001 storage=File1 pool=Default slot=1 drive=0
 label volume=TestVolume002 storage=File2 pool=Default slot=1 drive=0
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
+.status dir running
 run job=StoreGroupJob level=Full yes
 @sleep 1
 list jobs
