@@ -386,7 +386,7 @@ bool do_mac(JCR *jcr)
    STORE *rstore = NULL;
    STORE *wstore = NULL;
    /* Keep original write storage source to set back during the cleanup */
-   POOL_MEM wsource_origin, rsource_origin;
+   POOL_MEM wsource_origin, rsource_origin, buf;
 
    /*
     * If wjcr is NULL, there is nothing to do for this job,
@@ -530,6 +530,14 @@ bool do_mac(JCR *jcr)
    }
    wsd = wjcr->store_bsock;
 
+   /* Print connection info only for real jobs */
+   build_connecting_info_log(_("Storage"), wjcr->store_mngr->get_wstore()->name(),
+                             get_storage_address(NULL, wjcr->store_mngr->get_wstore()),
+                             wjcr->store_mngr->get_wstore()->SDport,
+                             wjcr->store_bsock->tls ? true : false, buf.addr());
+   Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
+   
+   
    /* Send progress information for the Storage Daemon Job, will fill
     * information from "status dir"
     */
@@ -545,6 +553,13 @@ bool do_mac(JCR *jcr)
       goto bail_out;
    }
    sd = jcr->store_bsock;
+   
+   /* Print connection info only for real jobs */
+   build_connecting_info_log(_("Storage"), jcr->store_mngr->get_rstore()->name(),
+                             get_storage_address(NULL, jcr->store_mngr->get_rstore()),
+                             jcr->store_mngr->get_rstore()->SDport,
+                             jcr->store_bsock->tls ? true : false, buf.addr());
+   Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
    /* Send progress information for the Storage Daemon Job, will fill
     * information from "status dir"
