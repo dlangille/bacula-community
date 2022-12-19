@@ -732,6 +732,17 @@ ALTER TABLE Job
     ADD COLUMN WriteDevice       blob,
     ADD COLUMN Encrypted         int        default 0;
 
+ALTER TABLE JobHisto
+    ADD COLUMN RealStartTime DATETIME,
+    ADD COLUMN isVirtualFull     TINYINT    default 0,
+    ADD COLUMN CompressRatio     float      default 0,
+    ADD COLUMN Rate              float      default 0,
+    ADD COLUMN LastReadStorageId Integer    default 0,
+    ADD COLUMN LastReadDevice    blob,
+    ADD COLUMN WriteStorageId    integer    default 0,
+    ADD COLUMN WriteDevice       blob,
+    ADD COLUMN Encrypted         int        default 0;
+
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
   ('DU0001', 'catalog_update', NOW(), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
 UPDATE Version SET VersionId=1026;

@@ -65,6 +65,17 @@ ALTER TABLE Job ADD COLUMN WriteDevice       text        default '';
 ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
 ALTER TABLE Job ADD COLUMN Encrypted         int         default 0;
 
+ALTER TABLE JobHisto ADD COLUMN RealStartTime     timestamp   without time zone;
+ALTER TABLE JobHisto ADD COLUMN isVirtualFull     smallint    default 0;
+ALTER TABLE JobHisto ADD COLUMN CompressRatio     float       default 0;
+ALTER TABLE JobHisto ADD COLUMN Rate              float       default 0;
+ALTER TABLE JobHisto ADD COLUMN LastReadStorageId integer     default 0;
+ALTER TABLE JobHisto ADD COLUMN LastReadDevice    text        default '';
+ALTER TABLE JobHisto ADD COLUMN WriteStorageId    integer     default 0;
+ALTER TABLE JobHisto ADD COLUMN WriteDevice       text        default '';
+ALTER TABLE JobHisto ADD COLUMN StatusInfo        text        default '';
+ALTER TABLE JobHisto ADD COLUMN Encrypted         int         default 0;
+
 ALTER TABLE Media ADD COLUMN Protected            smallint    default 0;
 ALTER TABLE Media ADD COLUMN UseProtect           smallint    default 0;
 ALTER TABLE Media ADD COLUMN VolEncrypted         smallint    default 0;
