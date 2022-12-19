@@ -24,7 +24,7 @@ start_test
 
 # Number of times the code should be in the log
 nb_errors=7
-nbsd_errors=5
+nbsd_errors=7
 
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "FdConnectTimeout", "1", "Director")'
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SdConnectTimeout", "1", "Director")'
@@ -46,7 +46,7 @@ EOF
 # make a backup
 cp $conf/bacula-dir.conf $tmp/
 
-$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Password", "x", "Client", "127.0.0.1-fd")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "Password", "x", "Client", "$HOST-fd")'
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
@@ -54,19 +54,19 @@ messages
 label volume=xxx pool=Default storage=File
 setdebug level=200 trace=1 dir
 
-@$out $tmp/log-DE0018.out
-status client=127.0.0.1-fd
+@$out $tmp/log-DE0064.out
+status client=$HOST-fd
 run job=NightlySave yes
 wait
 messages
 llist jobid=1
-setdebug level=1 client=127.0.0.1-fd
-cancel inactive client=127.0.0.1-fd jobid=1
-.ls client=127.0.0.1-fd path=/
+setdebug level=1 client=$HOST-fd
+cancel inactive client=$HOST-fd jobid=1
+.ls client=$HOST-fd path=/
 snapshot sync
 1
 
-@$out $tmp/log-DE0009.out
+@$out $tmp/log-DE0049.out
 status client=127.0.0.12-fd
 run job=NightlySave client=127.0.0.12-fd yes
 wait
@@ -81,27 +81,27 @@ snapshot sync
 @$out $tmp/log3.out
 @exec "cp $tmp/bacula-dir.conf $conf/"
 reload
-status client=127.0.0.1-fd
+status client=$HOST-fd
 run job=NightlySave yes
 wait
 messages
-setdebug level=1 client=127.0.0.1-fd
-cancel inactive client=127.0.0.1-fd jobid=1
+setdebug level=1 client=$HOST-fd
+cancel inactive client=$HOST-fd jobid=1
 llist jobid=3
-.ls client=127.0.0.1-fd path=/
+.ls client=$HOST-fd path=/
 snapshot sync
 1
 
 @exec "$bin/bacula-ctl-sd stop"
-@$out $tmp/logsd-DE0009.out
+@$out $tmp/logsd-DE0049.out
 status storage
 setdebug level=1 storage
 run job=NightlySave yes
 wait
 messages
 llist jobid=4
-cancel inactive client=127.0.0.1-fd jobid=1
-restore client=127.0.0.1-fd select all done yes
+cancel inactive client=$HOST-fd jobid=1
+restore client=$HOST-fd select all done yes
 wait
 messages
 llist jobid=5
@@ -111,21 +111,21 @@ END_OF_DATA
 
 run_bacula
 
-sed -i s/127.0.0.1-dir/xxx/ $conf/bacula-fd.conf
+sed -i s/$HOST-dir/xxx/ $conf/bacula-fd.conf
 
 $bin/bacula-ctl-fd restart
 $bin/bacula-ctl-sd start
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
-@$out $tmp/log-DE0015.out
-status client=127.0.0.1-fd
+@$out $tmp/log-DE0065.out
+status client=$HOST-fd
 run job=NightlySave yes
 wait
 messages
 llist jobid=6
-setdebug level=1 client=127.0.0.1-fd
-cancel inactive client=127.0.0.1-fd jobid=1
-.ls client=127.0.0.1-fd path=/
+setdebug level=1 client=$HOST-fd
+cancel inactive client=$HOST-fd jobid=1
+.ls client=$HOST-fd path=/
 snapshot sync
 1
 
