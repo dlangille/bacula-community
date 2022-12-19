@@ -293,7 +293,7 @@ check_connection_tls_logs()
       tls_str="without encryption"
    fi
 
-   n=`cat $1 | grep ".*\-dir .* Connected to Storage .* ${tls_str}" | wc -l`
+   n=`cat $1 | grep -- "-dir .* Connected to Storage .* ${tls_str}" | wc -l`
    if [ $n -ne $3 ]; then
       estat=1
       print_debug "Wrong log lines regarding Director Connecting Storage ${tls_str}: ${n} in restore log, expected $3"
@@ -301,21 +301,21 @@ check_connection_tls_logs()
    fi
 
 
-   n=`cat $1 | grep ".*\-dir .* Connected to Client .* ${tls_str}" | wc -l`
+   n=`cat $1 | grep -- "-dir .* Connected to Client .* ${tls_str}" | wc -l`
    if [ $n -ne $4 ]; then
       estat=1
       print_debug "Wrong log lines regarding Director Connecting Client ${tls_str}: ${n} in restore log, expected $4"
       print_debug "see: $1"
    fi
 
-   n=`cat $1 | grep ".*\-sd .* Connected to Client .* ${tls_str}" | wc -l`
+   n=`cat $1 | grep -- "-sd .* Connected to Client .* ${tls_str}" | wc -l`
    if [ $n -ne $5 ]; then
       estat=1
       print_debug "Wrong log lines regarding Storage Connecting Client ${tls_str}: ${n} in restore log, expected $5"
       print_debug "see: $1"
    fi
 
-   n=`cat $1 | grep ".*\-fd .* Connected to Storage .* ${tls_str}" | wc -l`
+   n=`cat $1 | grep -- "-fd .* Connected to Storage .* ${tls_str}" | wc -l`
    if [ $n -ne $6 ]; then
       estat=1
       print_debug "Wrong log lines regarding Client Connecting Storage ${tls_str}: ${n} in restore log, expected $6"
