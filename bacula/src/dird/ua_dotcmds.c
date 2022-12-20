@@ -40,7 +40,6 @@ extern struct s_jt jobtypes[];
 /* Imported functions */
 extern void do_messages(UAContext *ua, const char *cmd);
 extern int quit_cmd(UAContext *ua, const char *cmd);
-extern int qhelp_cmd(UAContext *ua, const char *cmd);
 extern bool dot_status_cmd(UAContext *ua, const char *cmd);
 extern void bvfs_set_acl(UAContext *ua, Bvfs *bvfs);
 extern bool jlist_cmd(UAContext *ua, const char *cmd);
@@ -97,61 +96,72 @@ static bool dot_add_events(UAContext *ua, const char *cmd);
 static int one_handler(void *ctx, int num_field, char **row);
 static bool dot_search(UAContext *ua, const char *cmd);
 
-struct dcmd_struct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help;const bool use_in_rs;};
-static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript */
- { NT_(".api"),        api_cmd,                  NULL,       false},
- { NT_(".backups"),    backupscmd,               NULL,       false},
- { NT_(".clients"),    clientscmd,               NULL,       true},
- { NT_(".catalogs"),   catalogscmd,              NULL,       false},
- { NT_(".defaults"),   defaultscmd,              NULL,       false},
- { NT_(".die"),        admin_cmds,               NULL,       false},
- { NT_(".dump"),       admin_cmds,               NULL,       false},
- { NT_(".exit"),       admin_cmds,               NULL,       false},
- { NT_(".events"),     dot_add_events,           NULL,       false},
- { NT_(".filesets"),   filesetscmd,              NULL,       false},
- { NT_(".help"),       dot_help_cmd,             NULL,       false},
- { NT_(".jobs"),       jobscmd,                  NULL,       true},
- { NT_(".estimate"),   dotestimatecmd,           NULL,       false},
- { NT_(".jlist"),      jlist_cmd,                NULL,       false},
- { NT_(".levels"),     levelscmd,                NULL,       false},
- { NT_(".messages"),   getmsgscmd,               NULL,       false},
- { NT_(".msgs"),       msgscmd,                  NULL,       false},
- { NT_(".pools"),      poolscmd,                 NULL,       true},
- { NT_(".quit"),       dot_quit_cmd,             NULL,       false},
- { NT_(".putfile"),    putfile_cmd,              NULL,       false}, /* use @putfile */
- { NT_(".search"),     dot_search,               NULL,       false},
- { NT_(".schedule"),   schedulescmd,             NULL,       false},
- { NT_(".sql"),        sql_cmd,                  NULL,       false},
- { NT_(".status"),     dot_status_cmd,           NULL,       false},
- { NT_(".storage"),    storagecmd,               NULL,       true},
- { NT_(".volstatus"),  volstatuscmd,             NULL,       true},
- { NT_(".media"),      mediacmd,                 NULL,       true},
- { NT_(".mediatypes"), mediatypescmd,            NULL,       true},
- { NT_(".locations"),  locationscmd,             NULL,       true},
- { NT_(".actiononpurge"),aopcmd,                 NULL,       true},
- { NT_(".bvfs_lsdirs"), dot_bvfs_lsdirs,         NULL,       true},
- { NT_(".bvfs_lsfiles"),dot_bvfs_lsfiles,        NULL,       true},
- { NT_(".bvfs_get_volumes"),dot_bvfs_get_volumes,NULL,       true},
- { NT_(".bvfs_update"), dot_bvfs_update,         NULL,       true},
- { NT_(".bvfs_get_jobids"), dot_bvfs_get_jobids, NULL,       true},
- { NT_(".bvfs_get_jobs"), dot_bvfs_get_jobs,     NULL,       true},
- { NT_(".bvfs_get_bootstrap"), dot_bvfs_get_bootstrap,NULL,  true},
- { NT_(".bvfs_get_fileindex"), dot_bvfs_get_fileindex,NULL,  true},
- { NT_(".bvfs_versions"), dot_bvfs_versions,     NULL,       true},
- { NT_(".bvfs_get_delta"), dot_bvfs_get_delta,   NULL,       true},
- { NT_(".bvfs_restore"),  dot_bvfs_restore,      NULL,       true},
- { NT_(".bvfs_cleanup"),  dot_bvfs_cleanup,      NULL,       true},
- { NT_(".bvfs_decode_lstat"),dot_bvfs_decode_lstat,NULL,     true},
- { NT_(".bvfs_clear_cache"),dot_bvfs_clear_cache,NULL,       false},
- { NT_(".bvfs_update_fv"),dot_bvfs_update_fv,    NULL,       true},
- { NT_(".bvfs_delete_fileid"),dot_bvfs_delete_fileid,  NULL, false},
- { NT_(".setuid"), dot_setuid,                   NULL,       false},
- { NT_(".ls"), dot_ls_cmd,                       NULL,       false},
- { NT_(".types"),      typescmd,                 NULL,       false},
- { NT_(".query"),     dot_querycmd,              NULL,       false},
- { NT_(".tags"),      tagscmd,                   NULL,       false}
+struct cmdstruct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help; const char *usage;;const bool use_in_rs;};
+static struct cmdstruct commands[] = { /* help */  /* can be used in runscript */
+   { NT_(".api"),        api_cmd,        _("Set the API options"),  ".api 2\n.api 2 api_opts=j",             false},
+   { NT_(".backups"),    backupscmd,     _("Display the list of the authorized Backup Job resources"), NULL, false},
+   { NT_(".clients"),    clientscmd,     _("Display the list of the authorized Client resources"),     NULL, true},
+   { NT_(".catalogs"),   catalogscmd,    _("Display the list of the authorized Catalog resources"),    NULL, false},
+   { NT_(".defaults"),   defaultscmd,    _("Display default values for a Job/Pool/Storage/Client"),
+     ".defaults job=<job>\n"
+     "\t.defaults pool=<pool>\n"
+     "\t.defaults storage=<sto>\n"
+     "\t.defaults client=<cli>",                                    false},
+ { NT_(".die"),        admin_cmds,               NULL,                                                 NULL, false},
+ { NT_(".dump"),       admin_cmds,               NULL,                                                 NULL, false},
+ { NT_(".exit"),       admin_cmds,               _("Exit bconsole"),                                   NULL, false},
+ { NT_(".events"),     dot_add_events,           _("Send event from the console"),
+   ".events source=<txt> type=<type> text=<txt>",               false},
+ { NT_(".filesets"),   filesetscmd,              _("Display the list of the authorized FileSet resources"),      NULL, false},
+ { NT_(".help"),       dot_help_cmd,             _("Display help message on commands"),   ".help .status", false},
+ { NT_(".jobs"),       jobscmd,                  _("Display the list of the authorized Job resources"),          NULL, true},
+ { NT_(".estimate"),   dotestimatecmd,           NULL,                                                           NULL, false},
+ { NT_(".jlist"),      jlist_cmd,                _("JSON friendly version of the list command"),                 NULL, false},
+ { NT_(".levels"),     levelscmd,                _("Display the list of the Job Levels"),                        NULL, false},
+ { NT_(".messages"),   getmsgscmd,               NULL,       NULL, false},
+ { NT_(".msgs"),       msgscmd,                  NULL,       NULL, false},
+ { NT_(".pools"),      poolscmd,                 _("Display the list of the authorized Pool resources"),         NULL, true},
+ { NT_(".quit"),       dot_quit_cmd,             NULL,       NULL, false},
+ { NT_(".putfile"),    putfile_cmd,              NULL,       NULL, false}, /* use @putfile */
+ { NT_(".search"),     dot_search,               _("Search in the catalog"),
+   ".search text=xxx [category=(client|job|volume)]",           false},
+ { NT_(".schedule"),   schedulescmd,             _("Display the list of the authorized Schedule resources"),     NULL, false},
+ { NT_(".sql"),        sql_cmd,                  NULL,       NULL, false},
+ { NT_(".status"),     dot_status_cmd,           _("Query Bacula daemons"),
+   ".status dir [header|running [client=<cli>]|scheduled|terminated|statistics]\n"
+   "\t.status client=<cli> [header|running|terminated]\n"
+   "\t.status storage=<sto> [device=<dev>] [header|running|terminated|collector|devices]", false},
+ { NT_(".storage"),    storagecmd,               _("Display the list of Storage resource defined"),       NULL, true},
+ { NT_(".volstatus"),  volstatuscmd,             _("Display the list of the Volume statuses"),            NULL, true},
+ { NT_(".media"),      mediacmd,                 _("Display the list of the authorized Volumes"),         NULL, true},
+ { NT_(".mediatypes"), mediatypescmd,            _("Display the list of the defined MediaType"),          NULL, true},
+ { NT_(".locations"),  locationscmd,             _("Display the list of the defined Location"),           NULL, true},
+ { NT_(".actiononpurge"),aopcmd,                 _("Display the list of the possible values for ActionOnPurge"),       NULL, true},
+ { NT_(".bvfs_lsdirs"), dot_bvfs_lsdirs,         NULL,       NULL, true},
+ { NT_(".bvfs_lsfiles"),dot_bvfs_lsfiles,        NULL,       NULL, true},
+ { NT_(".bvfs_get_volumes"),dot_bvfs_get_volumes,NULL,       NULL, true},
+ { NT_(".bvfs_update"), dot_bvfs_update,         NULL,       NULL, true},
+ { NT_(".bvfs_get_jobids"), dot_bvfs_get_jobids, NULL,       NULL, true},
+ { NT_(".bvfs_get_jobs"), dot_bvfs_get_jobs,     NULL,       NULL, true},
+ { NT_(".bvfs_get_bootstrap"), dot_bvfs_get_bootstrap,NULL,  NULL, true},
+ { NT_(".bvfs_get_fileindex"), dot_bvfs_get_fileindex,NULL,  NULL, true},
+ { NT_(".bvfs_versions"), dot_bvfs_versions,     NULL,       NULL, true},
+ { NT_(".bvfs_get_delta"), dot_bvfs_get_delta,   NULL,       NULL, true},
+ { NT_(".bvfs_restore"),  dot_bvfs_restore,      NULL,       NULL, true},
+ { NT_(".bvfs_cleanup"),  dot_bvfs_cleanup,      NULL,       NULL, true},
+ { NT_(".bvfs_decode_lstat"),dot_bvfs_decode_lstat,NULL,     NULL, true},
+ { NT_(".bvfs_clear_cache"),dot_bvfs_clear_cache,NULL,       NULL, false},
+ { NT_(".bvfs_update_fv"),dot_bvfs_update_fv,    NULL,       NULL, true},
+ { NT_(".bvfs_delete_fileid"),dot_bvfs_delete_fileid,  NULL, NULL, false},
+ { NT_(".setuid"), dot_setuid,                   _("Set UID/GID for the current session"), ".setuid uid=<uid> gid=<gid>", false},
+ { NT_(".ls"), dot_ls_cmd,                       _("List files/directories on Client"),
+                                                   ".ls client=<cli> path=<str> [plugin=<str>]",       false},
+ { NT_(".types"),      typescmd,                 _("List Job Types defined"),        NULL, false},
+ { NT_(".query"),     dot_querycmd,              _("Query Plugin's Client"),
+   ".query client=<cli> plugin=<str> parameter=<str>", false},
+ { NT_(".tags"),      tagscmd,                   _("List debug tags defined"),       NULL, false}
 };
-#define comsize ((int)(sizeof(commands)/sizeof(struct dcmd_struct)))
+#define comsize ((int)(sizeof(commands)/sizeof(struct cmdstruct)))
 
 /*
  * Execute a command from the UA
@@ -210,7 +220,10 @@ bool do_a_dot_command(UAContext *ua)
    return ok;
 }
 
-/* Store the current uid/gid restriction */
+/*
+ * .setuid uid=<uid> gid=<gid>
+ * Store the current uid/gid restriction for the current bconsole session
+ */
 static bool dot_setuid(UAContext *ua, const char *cmd)
 {
    ua->uid = 0;
@@ -234,7 +247,8 @@ static bool dot_setuid(UAContext *ua, const char *cmd)
 }
 
 /*
- * Send ls to Client
+ * .ls client=<cli> [plugin=<plugin>|path=<path>]
+ * Send ls to Client to list files and directories
  */
 static bool dot_ls_cmd(UAContext *ua, const char *cmd)
 {
@@ -329,6 +343,10 @@ void bvfs_set_acl(UAContext *ua, Bvfs *bvfs)
 }
 #endif
 
+/*
+ * .bvfs_decode_lstat lstat="AAAA AAAA AAAA AAAA"
+ * Decode the Lstat database field
+ */
 static bool dot_bvfs_decode_lstat(UAContext *ua, const char *cmd)
 {
    int32_t LinkFI;
@@ -1730,7 +1748,38 @@ static bool dot_quit_cmd(UAContext *ua, const char *cmd)
 
 static bool dot_help_cmd(UAContext *ua, const char *cmd)
 {
-   qhelp_cmd(ua, cmd);
+   int i;
+   const char *msg="";
+   const char *kw = ua->argk[1];
+   if (ua->argc == 2) {
+      if (strcasecmp(ua->argk[0], NT_(".help")) == 0) {
+         kw = ua->argk[1];
+
+      } else {
+         kw = ua->argk[0];
+      }
+   }
+   ua->send_msg(_("  Command       Description\n  =======       ===========\n"));
+   for (i=0; i<comsize; i++) {
+      if (ua->argc == 2) {
+         if (!strcasecmp(kw, commands[i].key)) {
+            ua->send_msg(_("  %-13s %s\n\nArguments:\n\t%s\n"), commands[i].key,
+                         NPRTB(commands[i].help), NPRTB(commands[i].usage));
+            break;
+         }
+      } else {
+         if (acl_access_ok(ua, Command_ACL, commands[i].key, strlen(commands[i].key))) {
+            ua->send_msg(_(" %-13s %s\n"),
+                         NPRTB(commands[i].key), NPRTB(commands[i].help));
+         } else {
+            msg = _("Some commands are not available in this restricted console. ");
+         }
+      }
+   }
+   if (i == comsize && ua->argc == 2) {
+      ua->send_msg(_("\nCan't find %s command.\n\n"), kw);
+   }
+   ua->send_msg(_("\n%sWhen at a prompt, entering a period cancels the command.\n\n"), msg);
    return true;
 }
 
