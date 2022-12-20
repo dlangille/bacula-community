@@ -20,9 +20,8 @@ $bperl -e 'add_attribute("$conf/bacula-dir.conf", "Label Format", "Vol", "Pool",
 $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolData",    "no",  "Job")'
 
 $bperl -e 'add_virtual_changer("v1", 10)'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "Drive-8")'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "Drive-9")'
-$bperl -e 'add_attribute("$conf/bacula-sd.conf", "LabelMedia", "yes", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "v1-Drive-8")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "ReadOnly", "yes", "Device", "v1-Drive-9")'
 
 disable_plugins
 
@@ -63,15 +62,15 @@ stop_bacula
 check_two_logs
 #check_restore_diff
 
-grep 'Using Device "Drive-8" to read' $tmp/log2.out > /dev/null
+grep 'Using Device "v1-Drive-8" to read' $tmp/log2.out > /dev/null
 if [ $? != 0 ]; then
-    print_debug "ERROR: Should find Drive-8 in the restore job in $tmp/log2.out"
+    print_debug "ERROR: Should find v1-Drive-8 in the restore job in $tmp/log2.out"
     rstat=1
 fi
 
-grep 'Using Device "Drive-0" to write' $tmp/log1.out > /dev/null
+grep 'Using Device "v1-Drive-0" to write' $tmp/log1.out > /dev/null
 if [ $? != 0 ]; then
-    print_debug "ERROR: Should find Drive-0 in the backup job in $tmp/log1.out"
+    print_debug "ERROR: Should find v1-Drive-0 in the backup job in $tmp/log1.out"
     bstat=1
 fi
 
