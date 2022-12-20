@@ -96,6 +96,7 @@ bool do_verify(JCR *jcr)
    uint32_t store_port;
    const char *Name;
    STORE *rstore = jcr->store_mngr->get_rstore();
+   POOL_MEM buf, tmp;
 
    jcr->store_mngr->reset_wstorage();
 
@@ -182,7 +183,6 @@ bool do_verify(JCR *jcr)
           !jcr->previous_jr.PurgedFiles  &&
            jcr->job->CheckMalware)
       {
-         POOL_MEM buf;
          Jmsg(jcr, M_INFO, 0, _("[DI0002] Checking file metadata for Malwares\n"));
          edit_int64(jcr->previous_jr.JobId, ed1);
          if (check_malware(jcr, ed1, buf.handle()) != 0) {
@@ -277,13 +277,18 @@ bool do_verify(JCR *jcr)
          Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
          return false;
       }
+      sd = jcr->store_bsock;
+      build_connecting_info_log(_("Storage"), jcr->store_mngr->get_rstore()->name(),
+                                get_storage_address(jcr->client, jcr->store_mngr->get_rstore()),
+                                jcr->store_mngr->get_rstore()->SDport,
+                                jcr->store_bsock->tls ? true : false, buf.addr());
+      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
       /*
        * Now start a job with the Storage daemon
        */
       if (!start_storage_daemon_job(jcr, jcr->store_mngr->get_rstore_list(), NULL, true /* wait */)) {
          return false;
       }
-      sd = jcr->store_bsock;
       jcr->sd_calls_client = jcr->client->sd_calls_client;
       /*
        * Send the bootstrap file -- what Volumes/files to restore
@@ -311,14 +316,11 @@ bool do_verify(JCR *jcr)
    jcr->setJobStatus(JS_Running);
    fd = jcr->file_bsock;
 
-   {
-      POOL_MEM buf, tmp;
-      /* Print connection info only for real jobs */
-      build_connecting_info_log(_("Client"), jcr->client->name(),
-                                get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
-                                fd->tls ? true : false, buf.addr());
-      Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
-   }
+   /* Print connection info only for real jobs */
+   build_connecting_info_log(_("Client"), jcr->client->name(),
+                             get_client_address(jcr, jcr->client, tmp.addr()), jcr->client->FDport,
+                             fd->tls ? true : false, buf.addr());
+   Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
    Dmsg0(30, ">filed: Send include list\n");
    if (!send_include_list(jcr)) {

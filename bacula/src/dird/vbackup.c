@@ -122,7 +122,7 @@ bool do_vbackup(JCR *jcr)
    db_list_ctx jobids;
    UAContext *ua;
    bootstrap_info info;
-
+   POOL_MEM buf;
    Dmsg2(100, "rstorage=%p wstorage=%p\n", jcr->store_mngr->get_rstore_list(), jcr->store_mngr->get_wstore_list());
    Dmsg2(100, "Read store=%s, write store=%s\n",
       ((STORE *)jcr->store_mngr->get_rstore_list()->first())->name(),
@@ -346,6 +346,11 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       return false;
    }
    sd = jcr->store_bsock;
+   build_connecting_info_log(_("Storage"), jcr->store_mngr->get_rstore()->name(),
+                             get_storage_address(jcr->client, jcr->store_mngr->get_rstore()),
+                             jcr->store_mngr->get_rstore()->SDport,
+                             sd->tls ? true : false, buf.addr());
+   Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
    /*
     * Now start a job with the Storage daemon
