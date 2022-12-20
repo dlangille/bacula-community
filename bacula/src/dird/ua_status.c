@@ -698,7 +698,7 @@ static void do_client_status(UAContext *ua, CLIENT *client, char *cmd)
 static void prt_runhdr(UAContext *ua, OutputWriter *ow, int num, int limit)
 {
    if (!ua->api) {
-      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), limit>0 ? limit : num, num);
+      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), num, limit>0 ? limit : num);
       ua->send_msg(_("Level          Type     Pri  Scheduled          Job Name           Volume\n"));
       ua->send_msg(_("===================================================================================\n"));
 
@@ -711,7 +711,7 @@ static void prt_runhdr(UAContext *ua, OutputWriter *ow, int num, int limit)
 static void prt_lrunhdr(UAContext *ua, OutputWriter *ow, int num, int limit)
 {
    if (!ua->api) {
-      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), limit>0 ? limit : num, num);
+      ua->send_msg(_("\nScheduled Jobs (%d/%d):\n"), num, limit>0 ? limit : num);
       ua->send_msg(_("Level          Type     Pri  Scheduled          Job Name           Schedule\n"));
       ua->send_msg(_("=====================================================================================\n"));
 
