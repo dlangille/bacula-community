@@ -63,6 +63,7 @@ grant all on RestoreObject to ${db_user};
 grant all on Snapshot to ${db_user};
 -- for sequences on those tables
 
+grant select, update on fileevents_id_seq 	   to ${db_user};
 grant select, update on events_eventsid_seq 	   to ${db_user};
 grant select, update on path_pathid_seq 	   to ${db_user};
 grant select, update on fileset_filesetid_seq	   to ${db_user};
