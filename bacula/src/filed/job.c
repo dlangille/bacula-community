@@ -3653,19 +3653,28 @@ static int pluginoptions_cmd(JCR *jcr)
 {
    POOL_MEM buf(PM_MESSAGE);
    BSOCK *dir = jcr->dir_bsock;
+   bool ok = true;
    buf.check_size(dir->msglen+1);
    if (scan_string(dir->msg, "pluginoptions=%s", buf.c_str()) == 1) {
       unbash_spaces(buf.c_str());
       if (!jcr->plugin_options_list) {
          jcr->plugin_options_list = New(alist(5, owned_by_alist));
       }
-      jcr->plugin_options_list->append(bstrdup(buf.c_str()));
+      if (is_plugin_loaded(jcr, buf.c_str())) {
+         jcr->plugin_options_list->append(bstrdup(buf.c_str()));
+      } else {
+         ok = false;
+      }
 
    } else {
       dir->fsend(_("2992 Bad pluginoptions command\n"));
       return 0;
    }
    dir->fsend("2000 OK plugin options\n");
+   if (!ok) {
+      Jmsg1(jcr, M_FATAL, 0, "Command plugin \"%s\" requested, but is not loaded.\n",
+            buf.c_str());
+   }
    return 1;
 }
 

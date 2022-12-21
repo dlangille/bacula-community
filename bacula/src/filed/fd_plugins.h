@@ -503,7 +503,7 @@ int plugin_get_idx(JCR *jcr, char *plugin);
 bool plugin_send_restorefilelist(JCR *jcr, int plugin_index,
                                  char *path, char *lstat, char *checksum,
                                  int delta_seq);
-
+bool is_plugin_loaded(JCR *jcr, char *cmd);
 typedef struct {
    const char *plugin;
    const char *features;

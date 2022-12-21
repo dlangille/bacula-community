@@ -512,6 +512,39 @@ static void update_ff_pkt(FF_PKT *ff_pkt, struct save_pkt *sp)
    Dsm_check(999);
 }
 
+/* Look if a given plugin can be used */
+bool is_plugin_loaded(JCR *jcr, char *cmd)
+{
+   Plugin *plugin;
+   bool found=false;
+   int len;
+   int i=0;
+
+   bpContext *plugin_ctx_list = (bpContext *)jcr->plugin_ctx_list;
+   if (!b_plugin_list || !jcr->plugin_ctx_list || jcr->is_job_canceled()) {
+      goto bail_out;         /* Return if no plugins loaded */
+   }
+
+   if (!get_plugin_name(jcr, cmd, &len)) {
+      goto bail_out;
+   }
+
+   /* Note, we stop the loop on the first plugin that matches the name */
+   foreach_alist_index(i, plugin, b_plugin_list) {
+      Dmsg4(dbglvl, "plugin=%s plen=%d cmd=%s len=%d\n", plugin->file, plugin->file_len, cmd, len);
+      if (!for_this_plugin(plugin, cmd, len)) {
+         continue;
+      }
+      if (is_plugin_disabled(&plugin_ctx_list[i])) {
+         goto bail_out;
+      }
+      found=true;
+      goto bail_out;
+   } /* end foreach loop */
+bail_out:
+   return found;
+}
+
 /* Ask to a Option Plugin what to do with the current file */
 bRC plugin_option_handle_file(JCR *jcr, FF_PKT *ff_pkt, struct save_pkt *sp)
 {
