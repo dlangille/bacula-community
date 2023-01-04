@@ -346,9 +346,9 @@ _("This Job is not an Accurate backup so is not equivalent to a Full backup.\n")
       return false;
    }
    sd = jcr->store_bsock;
-   build_connecting_info_log(_("Storage"), jcr->store_mngr->get_rstore()->name(),
-                             get_storage_address(jcr->client, jcr->store_mngr->get_rstore()),
-                             jcr->store_mngr->get_rstore()->SDport,
+   build_connecting_info_log(_("Storage"), jcr->store_mngr->get_wstore()->name(),
+                             get_storage_address(jcr->client, jcr->store_mngr->get_wstore()),
+                             jcr->store_mngr->get_wstore()->SDport,
                              sd->tls ? true : false, buf.addr());
    Jmsg(jcr, M_INFO, 0, "%s", buf.c_str());
 
