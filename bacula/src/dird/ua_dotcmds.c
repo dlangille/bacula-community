@@ -43,6 +43,7 @@ extern int quit_cmd(UAContext *ua, const char *cmd);
 extern bool dot_status_cmd(UAContext *ua, const char *cmd);
 extern void bvfs_set_acl(UAContext *ua, Bvfs *bvfs);
 extern bool jlist_cmd(UAContext *ua, const char *cmd);
+extern int qhelp_cmd(UAContext *ua, const char *cmd);
 
 /* Forward referenced functions */
 static bool admin_cmds(UAContext *ua, const char *cmd);
@@ -1751,7 +1752,16 @@ static bool dot_help_cmd(UAContext *ua, const char *cmd)
    int i;
    const char *msg="";
    const char *kw = ua->argk[1];
+
    if (ua->argc == 2) {
+      /* Specific case for Tab completion */
+      if (strcasecmp(ua->argk[1], NT_("item")) == 0) {
+         return qhelp_cmd(ua, cmd);
+      }
+      /* Specific case for Tab completion */
+      if (strcasecmp(ua->argk[1], NT_("all")) == 0) {
+         return qhelp_cmd(ua, cmd);
+      }
       if (strcasecmp(ua->argk[0], NT_(".help")) == 0) {
          kw = ua->argk[1];
 
