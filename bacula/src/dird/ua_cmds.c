@@ -144,6 +144,7 @@ static struct cmdstruct commands[] = {                                      /* C
        "\t    minsize=<int> maxsize=<int> importance=<str> isread=<0|1> isdraft=<0|1> categories=<str>\n"
        "\t    conversationid=<str> hasattachment=<0|1> starttime=<time> endtime=<time>\n"
        "\t    emailid=<str> foldername=<str> isinline=<0|1> contenttype=<str>]\n"
+       "\tfileevents [jobid=<int> fileindex=<int> severity=<int> type=<code>]\n"
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),
