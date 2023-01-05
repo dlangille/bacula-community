@@ -733,13 +733,13 @@ class FILEEVENT_DBR: public SMARTALLOC
 {
 public:
    DBId_t FileIndex;            // FileIndex of the File
-   DBId_t JobId;                // JobId of the file
+   char *JobId;                // JobId of the file. For list only: can specify list or range of jobs
    DBId_t SourceJobId;          // Verify/Restore JobId
    char   Type;                 // antivirus, malware, lost file
    int    Severity;             // level of severity (0 OK, 100 Important)
    char   Description[MAX_NAME_LENGTH];
    char   Source[MAX_NAME_LENGTH];
-   FILEEVENT_DBR(): FileIndex(0), JobId(0), Type(0),
+   FILEEVENT_DBR(): FileIndex(0), JobId(NULL), Type(0),
                     Severity(0)
    {
       *Description = *Source = 0;
@@ -747,7 +747,7 @@ public:
    ~FILEEVENT_DBR() {};
 
    bool unpack(uint32_t stream, const char *data, int data_len) {
-      SourceJobId = JobId = FileIndex = 0;
+      SourceJobId = FileIndex = 0;
       if (scan_string(data, "%c %d %127s %127s 0", &Type, &Severity, Source, Description) == 4) {
          unbash_spaces(Source);
          unbash_spaces(Description);

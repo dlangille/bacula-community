@@ -132,12 +132,13 @@ static bool catreq_fileevent(JCR *jcr, DBId_t FileIndex, const char *p)
    FILEEVENT_DBR event;
    bool ok=false;
    uint32_t t1, t2, t3, t4;
+   char ed1[50];
    event.FileIndex = FileIndex;
 
    /* If the string is going through the attribute flow, we don't have the CatReq header */
    if (scan_string(p, FileEvent_add, &event.Type, &event.Severity, event.Source, event.Description) == 4)
    {
-      event.JobId = jcr->JobId; // Might need to look for previous jobid for example
+      event.JobId = edit_int64(jcr->JobId, ed1); // Might need to look for previous jobid for example
       event.FileIndex = FileIndex;
       ok = true;
 
@@ -145,7 +146,7 @@ static bool catreq_fileevent(JCR *jcr, DBId_t FileIndex, const char *p)
    } else if (scan_string(p, FileEvent_fd_add, &t1, &t2, &t3, &t4,
                           &event.Type, &event.Severity, event.Source, event.Description) == 8)
    {
-      event.JobId = jcr->previous_jr.JobId;
+      event.JobId = edit_int64(jcr->previous_jr.JobId, ed1);
       ok = true;
    }
    if (ok) {

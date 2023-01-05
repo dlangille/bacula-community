@@ -652,7 +652,7 @@ void BDB::bdb_list_fileevents_records(JCR *jcr, FILEEVENT_DBR *rec,
    POOL_MEM tmp, filter;
    char ed1[50];
 
-   Mmsg(filter, "FileEvents.JobId=%s ", edit_int64(rec->JobId, ed1));
+   Mmsg(filter, "FileEvents.JobId in (%s) ", rec->JobId);
 
    if (rec->FileIndex > 0) {
       Mmsg(tmp, "AND FileEvents.FileIndex=%s ", edit_int64(rec->FileIndex, ed1));

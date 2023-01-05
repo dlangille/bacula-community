@@ -1012,7 +1012,8 @@ static bool record_cb(DCR *dcr, DEV_RECORD *rec)
                rec->VolSessionId, rec->VolSessionTime);
          break;
       }
-      fevent.SourceJobId = fevent.JobId = mjcr->JobId;
+      fevent.SourceJobId = mjcr->JobId;
+      fevent.JobId = edit_int64(mjcr->JobId, ec1);
       fevent.FileIndex = mjcr->JobFiles;
       if (!db_create_fileevent_record(mjcr, mjcr->db, &fevent)) {
          Jmsg2(mjcr, M_ERROR, 0, _("Failed to insert FileEvent record for file: %d. err: %s\n"),

@@ -628,8 +628,8 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
       } else if (strcasecmp(ua->argk[i], NT_("fileevents")) == 0) {
          FILEEVENT_DBR event;
          for (j=i+1; j<ua->argc; j++) {
-            if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j]) {
-               event.JobId = str_to_int64(ua->argv[j]);
+            if (strcasecmp(ua->argk[j], NT_("jobid")) == 0 && ua->argv[j] && is_a_number_list(ua->argv[j])) {
+               event.JobId = ua->argv[j];
 
             } else if (strcasecmp(ua->argk[j], NT_("fileindex")) == 0 && ua->argv[j]) {
                event.FileIndex = str_to_int64(ua->argv[j]);
