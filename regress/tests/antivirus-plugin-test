@@ -89,6 +89,11 @@ wait
 messages
 @$out ${cwd}/tmp/log5.out
 list fileevents jobid=3
+@$out ${cwd}/tmp/log6.out
+list fileevents jobid=1,2,3
+@# list a range of jobids is not supported for now
+@$out ${cwd}/tmp/log7.out
+list fileevents jobid=1-3
 quit
 END_OF_DATA
 
@@ -111,6 +116,20 @@ if [ $nb != 1 ]; then
     print_debug "ERROR: Should find Eicar virus in $tmp/log5.out"
     estat=2
 fi
+
+nb=`grep "Eicar-Signature FOUND" $tmp/log6.out | wc -l`
+if [ $nb != 1 ]; then
+    print_debug "ERROR: Should find Eicar virus in $tmp/log6.out"
+    estat=2
+fi
+
+# range jobid is not working for the moment
+nb=`grep "Eicar-Signature FOUND" $tmp/log7.out | wc -l`
+if [ $nb != 0 ]; then
+    print_debug "ERROR: Should not find Eicar virus in $tmp/log7.out"
+    estat=2
+fi
+
 
 stop_bacula
 end_test
