@@ -883,7 +883,7 @@ bool despool_attributes_from_file(JCR *jcr, const char *file)
    POOLMEM *msg = get_pool_memory(PM_MESSAGE);
    FILE *spool_fd=NULL;
 
-   Dmsg1(100, "Begin despool_attributes_from_file\n", file);
+   Dmsg1(100, "Begin despool_attributes_from_file %s\n", file);
 
    if (jcr->is_job_canceled() || !jcr->pool->catalog_files || !jcr->db) {
       goto bail_out;                  /* user disabled cataloging */
