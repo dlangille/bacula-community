@@ -214,7 +214,7 @@ struct Volume_Label {
   bool is_vol_encrypted;
   uint32_t EncCypherKeySize;
   uint32_t MasterKeyIdSize;
-  unsigned char EncCypherKey[MAX_BLOCK_CIPHER_KEY_LEN]; /* The encryption key
+  unsigned char EncCypherKey[MAX_ENC_CIPHER_KEY_LEN]; /* The encryption key
                                                  encrypted with the MasterKey */
   unsigned char MasterKeyId[MAX_MASTERKEY_ID_LEN]; /* the ID of the MasterKey */
   /* For Volume Signature (not yet implemented) */

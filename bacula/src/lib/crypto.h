@@ -118,7 +118,8 @@ typedef enum
 } block_cipher_type;
 
 #define MAX_BLOCK_CIPHER_KEY_LEN      64 /* for BLOCK_CIPHER_AES_256_XTS */
-#define MAX_MASTERKEY_ID_LEN          20 /* this is the 40 hexa fingerprint */
+#define MAX_ENC_CIPHER_KEY_LEN      2048 /* for encoded cipher key */
+#define MAX_MASTERKEY_ID_LEN          80 /* this is the > usual 40 hexa fingerprint */
 
 typedef struct block_cipher_context BLOCK_CIPHER_CONTEXT;
 

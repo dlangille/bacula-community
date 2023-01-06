@@ -1222,7 +1222,7 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
    Mmsg(envv, "VOLUME_NAME=%s", volume_name);
    envp[1] = bstrdup(envv.c_str());
    if (op == op_read && enc_cipher_key != NULL && *enc_cipher_key_size > 0) {
-      char buf[2*MAX_BLOCK_CIPHER_KEY_LEN]; // for the base64 encoded enc_cipherkey
+      char buf[2*MAX_ENC_CIPHER_KEY_LEN]; // for the base64 encoded enc_cipherkey
       bin_to_base64_pad(buf, sizeof(buf), (char *)enc_cipher_key, *enc_cipher_key_size);
       Mmsg(envv, "ENC_CIPHER_KEY=%s", buf);
    } else {
@@ -1363,9 +1363,6 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
       if (err_msg.c_str()[0] == '\0' && in_enc_cipher_key != NULL) {
          /* no error, check that we can decode the key */
          in_enc_cipher_key_size = base64_to_bin(enckeybuf, sizeof(enckeybuf), in_enc_cipher_key, strlen(in_enc_cipher_key));
-         if (cipher_key_size != in_enc_cipher_key_size) {
-            Mmsg(err_msg, "Wrong cipher key size for \"%s\" expect %d, got %d", cipher_name, cipher_key_size, in_cipher_key_size);
-         }
       }
       if (err_msg.c_str()[0] == '\0' && in_master_keyid != NULL) {
          /* no error, check that we can decode the  master_keyid*/
@@ -1375,14 +1372,15 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
       /* status != 0 the script returned an error code */
       berrno be;
       be.set_errno(status);
-      Mmsg(err_msg, "encryption script returned an error, code=%d ERR=%s", status, be.bstrerror());
+      Mmsg(err_msg, "the key-manager returned an error see in key-manager log file, code=%d ERR=%s", status, be.bstrerror());
    }
+
    if (crypto_device_ctx != NULL) {
       block_cipher_context_free(crypto_device_ctx);
       crypto_device_ctx = NULL;
    }
    if (err_msg.c_str()[0] == '\0' && in_enc_cipher_key_size > 0) {
-      if (in_enc_cipher_key_size > MAX_BLOCK_CIPHER_KEY_LEN) {
+      if (in_enc_cipher_key_size > MAX_ENC_CIPHER_KEY_LEN) {
          Mmsg(err_msg, "encrypted key is too large");
       } else {
          *enc_cipher_key_size = in_enc_cipher_key_size;
