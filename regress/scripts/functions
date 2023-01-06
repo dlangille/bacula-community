@@ -220,7 +220,7 @@ EOF
 # --log "$working/key-manager.log"
 VERBOSE=-v
 #VERBOSE=
-OPTION=-m
+OPTION=
 exec $bin/key-manager.py getkey \$VERBOSE \$OPTION --cipher AES_128_XTS
 EOF
       chmod a+x $bin/key-manager-cmd.sh
