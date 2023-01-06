@@ -54,7 +54,7 @@ fi
 
 #rsync -av ${BACULA_SOURCE}/ build/ --exclude examples/ --exclude patches/ --exclude src/win32 || die "rsync failed"
 echo rsyncing ...
-rsync -av --stats --exclude core --exclude .gdb_history --exclude examples/ --exclude patches/ --exclude src/win32 --exclude src/config.h --exclude src/hosts.h --exclude src/version.h --include '*/' --include "*.c" --include "*.cc" --include '*.cpp' --include '*.h' --exclude '*' ${BACULA_SOURCE}/ build/ 2>&1 || die "rsync failed"
+rsync -av --stats --exclude core --exclude .gdb_history --exclude examples/ --exclude patches/ --exclude src/win32 --exclude src/config.h --exclude src/hosts.h --exclude src/version.h --include '*/' --include "*.c" --include "*.cc" --include '*.cpp' --include '*.h' --include '*.in' --exclude '*' ${BACULA_SOURCE}/ build/ 2>&1 || die "rsync failed"
 
 if grep "Number of files transferred: 0" tmp/rsync.log > /dev/null && check_bin bin; then
    echo "No Changes in sources"
