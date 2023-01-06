@@ -1411,8 +1411,10 @@ bool DEVICE::load_encryption_key(DCR *dcr, const char *operation,
    }
    if (err_msg.c_str()[0] != '\0') {
       Dmsg2(10, "load encryption key for volume %s Err=%s\n", dcr->VolumeName, err_msg.c_str());
+#if 0
       Jmsg(jcr, M_FATAL, 0, _("3992 Bad LoadEncryptionKey %s Volume \"%s\": "
            "ERR=%s\n"), operation, dcr->VolumeName, err_msg.c_str());
+#endif
       if (jcr != NULL) {
          Mmsg(jcr->errmsg, _("3992 Bad LoadEncryptionKey %s Volume \"%s\": "
                "ERR=%s\n"), operation, dcr->VolumeName, err_msg.c_str());
