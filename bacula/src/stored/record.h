@@ -39,7 +39,8 @@ enum {
    VOL_VERSION_ERROR = 7,                 /* Bacula version error */
    VOL_LABEL_ERROR   = 8,                 /* Bad label type */
    VOL_NO_MEDIA      = 9,                 /* Hard error -- no media present */
-   VOL_TYPE_ERROR    = 10                 /* Volume type (aligned/non-aligned) error */
+   VOL_TYPE_ERROR    = 10,                /* Volume type (aligned/non-aligned) error */
+   VOL_ENC_ERROR     = 11                 /* something wrong with the encryption key */
 };
 
 enum rec_state {

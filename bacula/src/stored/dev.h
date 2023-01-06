@@ -898,6 +898,7 @@ public:
    void mark_volume_in_error();
    void mark_volume_read_only();
    void mark_volume_not_inchanger();
+   void volume_is_unavailable();
    int try_autolabel(bool opened);
    bool find_a_volume();
    bool is_suitable_volume_mounted();

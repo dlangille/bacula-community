@@ -541,6 +541,10 @@ int DCR::check_volume_label(bool &ask, bool &autochanger)
          break;
       }
       /* NOTE! Fall-through wanted. */
+   case VOL_ENC_ERROR:
+      volume_is_unavailable();
+      goto check_next_volume;
+      break;
    case VOL_NO_MEDIA:
    default:
       Dmsg0(200, "VOL_NO_MEDIA or default.\n");
@@ -569,6 +573,7 @@ check_next_volume:
    return check_next_vol;
 
 check_bail_out:
+   volume_unused(this);
    Leave(200);
    return check_error;
 
@@ -738,6 +743,17 @@ int DCR::try_autolabel(bool opened)
    return try_default;
 }
 
+/*
+ * The volume is unavailable (temporarily?) don't used it this time
+ */
+void DCR::volume_is_unavailable()
+{
+   Jmsg(jcr, M_INFO, 0, _("The Volume \"%s\" in unavailable now.\n"),
+        VolumeName);
+   volume_unused(this);
+   Dmsg0(50, "set_unload\n");
+   dev->set_unload();                 /* must get a new volume */
+}
 
 /*
  * Mark volume in error in catalog

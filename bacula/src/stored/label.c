@@ -280,6 +280,11 @@ int DEVICE::read_dev_volume_label(DCR *dcr)
       }
    }
 
+   if (!load_encryption_key(dcr, "READ", VolHdr.VolumeName, &VolHdr.EncCypherKeySize, VolHdr.EncCypherKey, &VolHdr.MasterKeyIdSize, VolHdr.MasterKeyId)) {
+      stat = VOL_ENC_ERROR;
+      goto bail_out; /* a message is already loaded into jcr->errmsg */
+   }
+
    Dmsg1(100, "Call reserve_volume=%s\n", VolHdr.VolumeName);
    if (reserve_volume(dcr, VolHdr.VolumeName) == NULL) {
       if (!jcr->errmsg[0]) {
@@ -289,11 +294,6 @@ int DEVICE::read_dev_volume_label(DCR *dcr)
       Dmsg2(dbglvl, "Could not reserve volume %s on %s\n", VolHdr.VolumeName, print_name());
       stat = VOL_NAME_ERROR;
       goto bail_out;
-   }
-
-   if (!load_encryption_key(dcr, "READ", VolHdr.VolumeName, &VolHdr.EncCypherKeySize, VolHdr.EncCypherKey, &VolHdr.MasterKeyIdSize, VolHdr.MasterKeyId)) {
-      stat = VOL_LABEL_ERROR;
-      goto bail_out; /* a message is already loaded into jcr->errmsg */
    }
 
    if (dcr->is_writing()) {
