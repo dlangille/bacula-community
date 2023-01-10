@@ -21,10 +21,10 @@ fi
 # Zap out any schedule in default conf file so that
 #  it doesn't start during our test
 #
-outf="$tmp/sed_tmp"
-echo "s%  Schedule =%# Schedule =%g" >${outf}
-cp $scripts/bacula-dir.conf $tmp/1
-sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+#outf="$tmp/sed_tmp"
+#echo "s%  Schedule =%# Schedule =%g" >${outf}
+#cp $scripts/bacula-dir.conf $tmp/1
+#sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
 
 change_jobname BackupClient1 $JobName
 start_test
@@ -116,7 +116,7 @@ if [ $? -ne 0 ]; then
     estat=1
 fi
 
-grep "Scheduled Jobs:" $tmp/log3.out > /dev/null
+grep "Scheduled Jobs" $tmp/log3.out > /dev/null
 if [ $? -ne 0 ]; then
     print_debug "ERROR: should find 'Scheduled Jobs' in $tmp/log3.out"
     estat=1
