@@ -79,8 +79,7 @@ install: installdirs
 	  $(MV) -f ${DESTDIR}${scriptdir}/key-manager.py ${DESTDIR}${scriptdir}/key-manager.py.old; \
 	fi
 	$(INSTALL_SCRIPT) key-manager.py $(DESTDIR)$(scriptdir)/key-manager.py
- 
-
+	$(INSTALL_SCRIPT) install-key-manager.sh $(DESTDIR)$(scriptdir)/install-key-manager.sh
 
 
 uninstall:
@@ -104,6 +103,8 @@ uninstall:
 	(cd $(DESTDIR)$(sbindir);   $(RMF) btraceback)
 	(cd $(DESTDIR)$(sbindir);   $(RMF) generic_cloud_driver)
 	(cd $(DESTDIR)$(sbindir);   $(RMF) aws_cloud_driver)
+	(cd $(DESTDIR)$(scriptdir); $(RMF) key-manager.py)
+	(cd $(DESTDIR)$(scriptdir); $(RMF) install-key-manager.sh)
 
 
 aws_cloud_driver.C: aws_cloud_driver
@@ -128,6 +129,7 @@ Makefile: Makefile.in
 	chmod 755 bacula btraceback
 	chmod 755 bacula-ctl-dir bacula-ctl-fd bacula-ctl-sd bacula_config
 	chmod 755 disk-changer mtx-changer bconsole tapealert
+	chmod 755 key-manager.py install-key-manager.sh
 
 Makefiles:
 	$(SHELL) config.status

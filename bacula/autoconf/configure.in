@@ -4124,6 +4124,14 @@ if test "x${subsysdir}" = "x${sbindir}" ; then
    exit 1
 fi
 
+if test -f src/plugins/fd/kubernetes-backend/Makefile.in; then
+    PFILES="${PFILES}  src/plugins/fd/kubernetes-backend/Makefile"
+fi
+
+if test -f src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py.in; then
+   PFILES="${PFILES} src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py"
+fi
+
 AC_CONFIG_FILES([
    autoconf/Make.common \
    Makefile \
@@ -4141,6 +4149,7 @@ AC_CONFIG_FILES([
    scripts/mtx-changer \
    scripts/disk-changer \
    scripts/key-manager.py \
+   scripts/install-key-manager.sh \
    scripts/logwatch/Makefile \
    scripts/logwatch/logfile.bacula.conf \
    scripts/bat.desktop \
@@ -4287,7 +4296,8 @@ cd ${BUILD_DIR}
 
 cd scripts
 chmod 755 bacula btraceback mtx-changer
-chmod 755 bconsole disk-changer devel_bacula logrotate key-manager.py
+chmod 755 bconsole disk-changer devel_bacula logrotate
+chmod 755 key-manager.py install-key-manager.sh
 cd ..
 
 c=updatedb

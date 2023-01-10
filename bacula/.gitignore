@@ -185,6 +185,8 @@ scripts/wxconsole.console_apps
 scripts/wxconsole.desktop.consolehelper
 scripts/wxconsole.desktop.xsu
 scripts/disk-changer
+scripts/key-manager.py
+scripts/install-key-manager.sh
 scripts/bacula-tray-monitor.desktop
 scripts/bacula-tray-monior.desktop
 scripts/.xvpics
