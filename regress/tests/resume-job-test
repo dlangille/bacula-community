@@ -37,6 +37,13 @@ Pool {
 }
 EOF
 
+cat <<EOF > $tmp/updatepo
+#!/bin/sh
+touch $cwd/build/po/*.po
+EOF
+
+chmod +x $tmp/updatepo
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
@@ -48,7 +55,7 @@ wait
 resume incomplete jobid=1
 wait
 messages
-@exec "sh -c 'touch $cwd/build/po/*.po'"
+@exec "$tmp/updatepo"
 setdebug level=0 trace=0 hangup=5 client
 run job=$JobName level=Incremental yes pool=PoolA
 wait

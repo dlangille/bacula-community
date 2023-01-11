@@ -81,7 +81,7 @@ run_bacula
 check_for_zombie_jobs storage=File
 stop_bacula
 
-while IFS= read -r line <&3; do
+while IFS= read line ; do
    grep "Veryfying: ${line}" tmp/log1.out > /dev/null
    if [ $? -ne 0 ]; then
       estat=1
@@ -94,7 +94,7 @@ while IFS= read -r line <&3; do
       print_debug "Did not found ${line} file in verified files log!"
       print_debug "see: ${cwd}/tmp/original"
    fi
-done 3< ${files_listing}
+done < ${files_listing}
 
 
 grep "^  Termination: *Verify OK" tmp/log1.out 2>&1 >/dev/null
@@ -102,7 +102,7 @@ bstat=$?
 grep "^  Termination: *Verify OK" ${cwd}/tmp/original 2>&1 >/dev/null
 rstat=$?
 
-while IFS= read -r line <&3; do
+while IFS= read line ; do
    grep "Veryfying: ${line}" tmp/log2.out > /dev/null
    if [ $? -eq 0 ]; then
       estat=1
@@ -115,6 +115,6 @@ while IFS= read -r line <&3; do
       print_debug "Found ${line} file in verified files log, no files should be listed now!"
       print_debug "see: ${cwd}/tmp/log3.out"
    fi
-done 3< ${files_listing}
+done < ${files_listing}
 
 end_test
