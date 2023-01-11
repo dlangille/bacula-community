@@ -47,6 +47,7 @@ extern s_kw upload_opts[];
 extern s_kw proto_opts[];
 extern s_kw uri_opts[];
 extern s_kw restore_prio_opts[];
+extern s_kw objects_default_tiers[];
 
 extern RES_TABLE resources[];
 
@@ -356,6 +357,18 @@ static void display_transfer_priority(HPKT &hpkt)
    }
 }
 
+static void display_objects_default_tier(HPKT &hpkt)
+{
+   int i;
+   for (i=0; objects_default_tiers[i].name; i++) {
+      if (*(int32_t *)(hpkt.ritem->value) == objects_default_tiers[i].token) {
+         hpkt.sendit(hpkt, "\n    \"%s\": \"%s\"", hpkt.ritem->name,
+                objects_default_tiers[i].name);
+         return;
+      }
+   }
+}
+
 /*
  * Dump out all resources in json format.
  * Note!!!! This routine must be in this file rather
@@ -512,6 +525,8 @@ static void dump_json(display_filter *filter)
                   display_collector_types(hpkt);
                } else if (items[item].handler == store_transfer_priority) {
                   display_transfer_priority(hpkt);
+               } else if (items[item].handler == store_objects_default_tier) {
+                  display_objects_default_tier(hpkt);
                } else {
                   printf("\n      \"%s\": \"null\"", items[item].name);
                }
