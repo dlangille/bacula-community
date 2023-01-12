@@ -23,6 +23,7 @@ rm -rf ${tmp}disk-changer
 rm -f ${cwd}/bin/plugins/test-plugin-fd.so
 rm -rf ${cwd}/mnt
 rm -rf ${bin}/keydir
+rm -rf ${bin}/gnupg
 find . -name "gigaslam.gif" -exec rm -f {} \;
 
 
