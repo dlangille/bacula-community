@@ -63,7 +63,7 @@ LIBBAC_SRCS = attr.c base64.c base32.c berrno.c bsys.c binflate.c bget_msg.c \
       worker.c flist.c bcollector.c collect.c \
       address_conf.c breg.c htable.c lockmgr.c devlock.c output.c bwlimit.c \
       bsock_meeting.c bcrc32.c events.c ilist.c cJSON.c cJSON_Utils.c \
-      xxhash.c xxh_x86dispatch.c $(EXTRA_SRCS)
+      xxhash.c $(EXTRA_SRCS)
 
 LIBBAC_OBJS_TMP = $(LIBBAC_SRCS:.c=.o)
 LIBBAC_OBJS = $(LIBBAC_OBJS_TMP:.cc=.o)
