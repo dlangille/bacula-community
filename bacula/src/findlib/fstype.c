@@ -527,8 +527,12 @@ bool fstype(FF_PKT *ff_pkt, char *fs, int fslen)
 /* Read mtab entries  */
 bool read_mtab(mtab_handler_t *mtab_handler, void *user_ctx)
 {
+#ifdef HAVE_AIX_OS
+   return false;
+#else
 /* Debian stretch GNU/KFreeBSD has both getmntinfo and getmntent, but
-   only the first seems to work, so we skip over getmntent in this case */
+ *   only the first seems to work, so we skip over getmntent in this case
+ */
 #ifndef HAVE_KFREEBSD_OS
 #ifdef HAVE_GETMNTENT
    FILE *mntfp;
@@ -621,6 +625,7 @@ bool read_mtab(mtab_handler_t *mtab_handler, void *user_ctx)
    V(mutex);
 #endif /* HAVE_GETMNTINFO */
    return true;
+#endif  // HAVE_AIX_OS
 } 
 
 /*
