@@ -3,7 +3,6 @@
 #
 #   Bacula(R) - The Network Backup Solution
 #
-# License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # This script is a simple key-manager for the Volume Encryption done by the
 # Storage Daemon
@@ -114,6 +113,7 @@ else:
 LOG_FILE="@working_dir@/key-manager.log"
 KEY_DIR="@sysconfdir@/keydir"
 CONFIG_FILE="@sysconfdir@/key-manager.conf"
+GNUPGHOME="@sysconfdir@/gnupg"
 
 # trick to use the .in as a python script
 if LOG_FILE.startswith('@'):
@@ -122,6 +122,8 @@ if KEY_DIR.startswith('@'):
     KEY_DIR=os.path.join(tempfile.gettempdir(), 'keydir')
 if CONFIG_FILE.startswith('@'):
     CONFIG_FILE=os.path.join(tempfile.gettempdir(), 'key-manager.conf')
+if GNUPGHOME.startswith('@'):
+    GNUPGHOME=os.path.join(tempfile.gettempdir(), 'gnupg')
 
 MASTER_KEYID_SIZE=20
 want_to_have_all_the_same_keys=False
@@ -270,6 +272,12 @@ def get_crypto_ctx_from_config(args, volume_name, master_keyid=None):
         crypto_ctx=CryptoCtx()
         crypto_ctx.master_key_id=the_section
         try:
+            crypto_ctx.gnupghome=config.get(the_section, 'gnupghome')
+            if crypto_ctx.gnupghome.startswith('"') and crypto_ctx.gnupghome.endswith('"'):
+                crypto_ctx.gnupghome=crypto_ctx.gnupghome[1:-1]
+        except configparser.NoOptionError:
+            crypto_ctx.cipher=GNUPGHOME
+        try:
             crypto_ctx.cipher=config.get(the_section, 'cipher')
         except configparser.NoOptionError:
             crypto_ctx.cipher=args.cipher
@@ -294,6 +302,7 @@ def generate_key(crypto_ctx, volume_name):
         key_size=16
     else:
         logging.error('unknown cipher %s', crypto_ctx.cipher)
+        print('error: unknown cipher %s'.format(crypto_ctx.cipher))
         return None # unknown cipher
     urandom=open('/dev/urandom', 'rb')
     key=urandom.read(key_size)
@@ -307,11 +316,12 @@ def generate_key(crypto_ctx, volume_name):
     if crypto_ctx.master_key_id:
         try:
             import gnupg
-        except ImportError:
+            gnupg.GPG   # check that we have the module and not the GnuPG directory
+        except (ImportError, AttributeError):
             logging.error('module gnupg is not installed')
-            print('python module gnupg is not installed')
+            print('error: python module gnupg is not installed')
             return None
-        gpg=gnupg.GPG()
+        gpg=gnupg.GPG(gnupghome=crypto_ctx.gnupghome)
         master_keyid_base64=codecs.decode(base64.b64encode(codecs.encode(crypto_ctx.master_key_id)))
         r['master_keyid']=master_keyid_base64
         enc_key=gpg.encrypt(key, crypto_ctx.master_key_id, armor=False)
@@ -322,20 +332,21 @@ def generate_key(crypto_ctx, volume_name):
 def decrypt_key(crypto_ctx, volume_name, enc_cipher_key):
     try:
         import gnupg
-    except ImportError:
+        gnupg.GPG   # check that we have the module and not the GnuPG directory
+    except (ImportError, AttributeError):
         logging.error('module gnupg is not installed')
-        print('python module gnupg is not installed')
+        print('error: python module gnupg is not installed')
         return None
     r=dict()
     r['cipher']=crypto_ctx.cipher
-    gpg=gnupg.GPG()
+    gpg=gnupg.GPG(gnupghome=crypto_ctx.gnupghome)
     master_keyid_base64=codecs.decode(base64.b64encode(codecs.encode(crypto_ctx.master_key_id)))
     r['master_keyid']=master_keyid_base64
     passphrase=crypto_ctx.passphrase
     cipher_key=gpg.decrypt(enc_cipher_key, passphrase=passphrase)
     if cipher_key.ok==False:
         logging.error('decryption error for volume "{}":'.format(volume_name, cipher_key.status))
-        print('decryption error for volume "{}":'.format(volume_name, cipher_key.status))
+        print('error: decryption error for volume "{}":'.format(volume_name, cipher_key.status))
         return None
     cipher_key_base64=codecs.decode(base64.b64encode(cipher_key.data))
     r['cipher_key']=cipher_key_base64
@@ -376,7 +387,7 @@ def getkey0(args):
 
     enc_cipher_key=os.getenv('ENC_CIPHER_KEY')
     master_keyid=os.getenv('MASTER_KEYID')
-    logging.info('getkey op=%s volume=%s enckey=%s masterkey=%s', operation, volume_name, enc_cipher_key if enc_cipher_key else "<NONE>", master_keyid if master_keyid else "<NONE>")
+    logging.info('getkey OPERATION="%s" VOLUME_NAME="%s"%s%s', operation, volume_name, ' ENC_CIPHER_KEY="{}"'.format(enc_cipher_key) if enc_cipher_key else "", ' MASTER_KEYID="{}"'.format(master_keyid) if master_keyid else "")
     key_filename=os.path.join(args.key_dir, escape_volume_name(volume_name))
     if operation=='LABEL':
         crypto_ctx=get_crypto_ctx_from_config(args, volume_name)
@@ -466,7 +477,6 @@ args=mainparser.parse_args()
 args._parser=mainparser
 
 setup_logging(getattr(args, 'debug', None), getattr(args, 'verbose', None), getattr(args, 'log', None))
-logging.error('OPERATION=%s VOLUME=%s', os.getenv("OPERATION"), os.getenv("VOLUME_NAME"))
 
 # check for the key_dir directory
 if hasattr(args, 'key_dir'):
