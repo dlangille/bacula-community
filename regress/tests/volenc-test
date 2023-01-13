@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory with volume encryption enable
+# Uncomment some commented lines to test error conditions
+#
+
+TestName="volenc-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+echo "${cwd}/build" >${cwd}/tmp/file-list
+
+start_test
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=4 storage=File
+setdebug level=1 client
+label storage=File volume=TestVolume001
+label storage=File volume=TestVolume002
+label storage=File volume=TestVolume003
+run job=Simple yes
+wait
+messages
+status storage
+### corrupte TestVolume1
+#@exec wait=0 cmd="dd if=/dev/zero of=$tmp/TestVolume001 bs=16 count=1 conv=notrunc"
+#@exec "hexdump -C -n 64 $tmp/TestVolume001
+### swap TestVolume1 & 3
+#@exec "mv $tmp/TestVolume001 $tmp/TestVolume001.save"
+#@exec "mv $tmp/TestVolume003 $tmp/TestVolume001"
+#@exec "mv $tmp/TestVolume001.save $tmp/TestVolume003"
+### delete the TestVolume1 key
+#@exec "rm $bin/keydir/TestVolume001"
+#@exec "touch ${cwd}/build/foobar"
+run job=Simple yes
+wait
+messages
+status storage
+@# 
+@# now do a restore
+@#
+@$out $tmp/log2.out  
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+
+#rm $bin/keydir/TestVolume001
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log2.out
+setdebug level=4 storage=File
+restore where=$tmp/bacula-restores select all done
+yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File
+stop_bacula
+check_two_logs
+end_test
