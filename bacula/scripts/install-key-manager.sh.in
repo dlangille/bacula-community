@@ -39,15 +39,23 @@ check_gnupg()
 
 #############################################################################
 #
-# check_gnupg
+# check
 #
 #############################################################################
-check_gnupg()
+check_python_gnupg()
 {
-   # Check if GnuPG is installed
-   GNUPGBIN=`which gpg`
-   if [ -z "$GNUPGBIN" ] ; then
-      echo "GnuPG is not found or not installed" >&2
+   # Check if the python3 API is installed for GnuPG
+   PYTHON3=`which python3`
+   if [ -z "$PYTHON3" ] ; then
+      echo "python3 is not found or not installed" >&2
+      exit 1
+   fi
+   OUT=`mktemp`
+   $PYTHON3 -c 'import gnupg;print("OK" if gnupg.GPG else "KO")' >$OUT 2>/dev/null
+   out=`cat $OUT`
+   if [ "$out" != "OK" ] ; then
+      echo "python3 gnupg module is not found" >&2
+      echo "try: pip3 install gnupg" >&2
       exit 1
    fi
 }
@@ -60,14 +68,14 @@ check_gnupg()
 check()
 {
    check_gnupg
+   check_python_gnupg
 
    if [ -e $GNUPGHOME ] ; then
       echo "Directory \"$GNUPGHOME\" exists"
-      exit 0
    else
-      echo "Directory \"$GNUPGHOME\" don't exist"
-      exit 1
+      echo "Directory \"$GNUPGHOME\" doesn't exist"
    fi
+   exit 0
 }
 
 #############################################################################

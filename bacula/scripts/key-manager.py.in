@@ -230,8 +230,7 @@ def get_crypto_ctx_from_config(args, volume_name, master_keyid=None):
             None : for error
             MasterKey object : the master-key
     """
-    crypto_ctx=CryptoCtx()
-    crypto_ctx.cipher=args.cipher
+
     if args.config:
         try:
             config=configparser.ConfigParser()
@@ -265,31 +264,35 @@ def get_crypto_ctx_from_config(args, volume_name, master_keyid=None):
                 if match:
                     the_section=section
                     break
-            if  not the_section:
-                logging.error("no master-key defined for volume \"%s\"", volume_name)
-                print("error: no master-key define for volume \"{}\"".format(volume_name))
-                return None
+            if not the_section:
+                logging.debug("no master-key defined for volume \"%s\"", volume_name)
+
         crypto_ctx=CryptoCtx()
-        crypto_ctx.master_key_id=the_section
-        try:
-            crypto_ctx.gnupghome=config.get(the_section, 'gnupghome')
-            if crypto_ctx.gnupghome.startswith('"') and crypto_ctx.gnupghome.endswith('"'):
-                crypto_ctx.gnupghome=crypto_ctx.gnupghome[1:-1]
-        except configparser.NoOptionError:
-            crypto_ctx.cipher=GNUPGHOME
-        try:
-            crypto_ctx.cipher=config.get(the_section, 'cipher')
-        except configparser.NoOptionError:
+        if the_section==None:
+            # no master key
+            crypto_ctx.master_key_id=None
             crypto_ctx.cipher=args.cipher
-        try:
-            crypto_ctx.stealth=config.getboolean(the_section, 'stealth')
-        except configparser.NoOptionError:
-            pass
-        try:
-            crypto_ctx.passphrase=config.get(the_section, 'passphrase')
-        except configparser.NoOptionError:
-            pass
-        logging.info("use masterkey %r and cipher \"%s\" for volume \"%s\"", crypto_ctx.master_key_id, crypto_ctx.cipher, volume_name)
+        else:
+            crypto_ctx.master_key_id=the_section
+            try:
+                crypto_ctx.gnupghome=config.get(the_section, 'gnupghome')
+                if crypto_ctx.gnupghome.startswith('"') and crypto_ctx.gnupghome.endswith('"'):
+                    crypto_ctx.gnupghome=crypto_ctx.gnupghome[1:-1]
+            except configparser.NoOptionError:
+                crypto_ctx.gnupghome=GNUPGHOME
+            try:
+                crypto_ctx.cipher=config.get(the_section, 'cipher')
+            except configparser.NoOptionError:
+                crypto_ctx.cipher=args.cipher
+            try:
+                crypto_ctx.stealth=config.getboolean(the_section, 'stealth')
+            except configparser.NoOptionError:
+                pass
+            try:
+                crypto_ctx.passphrase=config.get(the_section, 'passphrase')
+            except configparser.NoOptionError:
+                pass
+            logging.info("use masterkey %r and cipher \"%s\" for volume \"%s\"", crypto_ctx.master_key_id, crypto_ctx.cipher, volume_name)
 
     return crypto_ctx
 
