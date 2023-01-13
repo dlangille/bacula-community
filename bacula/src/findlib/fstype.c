@@ -23,7 +23,6 @@
  *   Updated by Kern Sibbald, April MMXV
  */
 
-
 #ifndef TEST_PROGRAM
 
 #include "bacula.h"
@@ -186,9 +185,16 @@ bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
 
 #elif defined(HAVE_HPUX_OS)                     \
    || defined(HAVE_IRIX_OS)
+   || defined(HAVE_AIX_OS)
 
 #include <sys/types.h>
 #include <sys/statvfs.h>
+   
+#ifdef HAVE_AIX_OS
+ #ifndef NAME_MAX
+  #define NAME_MAX 2048
+ #endif
+#endif
 
 /*
  * TODO: RPK: is HP-UX version really working as I cannot find required API in HP-UX docs.
@@ -522,6 +528,12 @@ bool fstype(FF_PKT *ff_pkt, char *fs, int fslen)
    Dmsg0(10, "!!! fstype() not implemented for this OS. !!!\n");
    return false;
 }
+bool fstype(char *fname, FF_PKT *ff_pkt, char *fs, int fslen)
+{
+   Dmsg0(10, "!!! fstype() not implemented for this OS. !!!\n");
+   return false;
+}
+
 #endif
 
 /* Read mtab entries  */
