@@ -21,8 +21,12 @@ make -C $cwd/build/src/plugins/fd install-test-plugin
 
 echo "${cwd}/build" >${cwd}/tmp/file-list
 change_jobname NightlySave $JobName
-sed 's/migrate/copy/g' ${cwd}/bin/bacula-dir.conf > ${cwd}/tmp/1
-sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > ${cwd}/bin/bacula-dir.conf
+sed 's/migrate/copy/g' $conf/bacula-dir.conf > ${cwd}/tmp/1
+sed 's/Migrate/Copy/g' ${cwd}/tmp/1 > $conf/bacula-dir.conf
+
+$bperl -e "extract_resource('$conf/bacula-dir.conf', 'Client', '$HOST-fd')" > $tmp/1
+
+sed "s/$HOST-fd/xxxxx-fd/" $tmp/1 >> $conf/bacula-dir.conf
 
 cat <<EOF >> $conf/bacula-dir.conf
 FileSet {
@@ -52,7 +56,7 @@ label storage=File volume=FileVolume001 Pool=Default
 label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
 label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
 @# run two jobs (both will be copied)
-status client
+status client=$HOST-fd
 run job=$JobName fileset=Plugins yes
 wait
 messages
@@ -75,6 +79,10 @@ messages
 @#purge volume=FileVolume001
 list jobs 
 list volumes
+@output $tmp/log-client.out
+.jlist restoreobjects client=$HOST-fd
+@output $tmp/log-client2.out
+.jlist restoreobjects client=xxxxx-fd
 @output $tmp/log-ro1-after.out
 .jlist restoreobjects jobid=1
 @output $tmp/log-meta1-after.out
@@ -97,7 +105,7 @@ list volumes
 @#setdebug level=150 storage=DiskChanger
 @# Note, here we are restoring from the original backup,
 @#  so if you specify storage=DiskChanger the restore will fail
-restore where=${cwd}/tmp/bacula-restores fileset=Plugins jobid=3 select
+restore where=${cwd}/tmp/bacula-restores fileset=Plugins jobid=3 select client=$HOST-fd
 unmark *
 mark *
 done
@@ -139,5 +147,18 @@ done
 #    bstat=2
 #    print_debug "The incremental job must use copied jobs"
 #fi
+
+
+grep '{' $tmp/log-client.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l); exit (scalar(@{$j->{data}}) == 2);'
+if [ $? != 1 ]; then
+    estat=2
+    print_debug "ERROR: Should find 2 RestoreObject records for client $HOST-fd in $tmp/log-client.out"
+fi
+
+grep '{' $tmp/log-client2.out | perl -MJSON -e '$l = <>; $j = JSON::decode_json($l); exit (scalar(@{$j->{data}}) == 0);'
+if [ $? != 1 ]; then
+    estat=2
+    print_debug "ERROR: Should find 0 RestoreObject records for client xxxxx-fd in $tmp/log-client2.out"
+fi
 
 end_test
