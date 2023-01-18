@@ -52,7 +52,8 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_openfile check_cloud_hash check_bscan add_log_message compare_backup_content
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
-                  check_storage_selection check_json get_perm check_protect
+                 check_storage_selection check_json get_perm check_protect
+                 get_running_jobs
 );
 
 
@@ -2621,4 +2622,34 @@ sub check_protect
     }
     close(FP);
 }
+
+sub get_running_jobs
+{
+    my ($client, $status) = @_;
+    my $count = 0;
+    my $tempfile = "$tmp/running_jobs.$$";
+    eval 'use JSON qw/decode_json/;';
+    if ($@) {
+        print "INFO: JSON validation is disabled ERR=$@\n";
+    }
+    open(FP, "|$bin/bconsole -c $conf/bconsole.conf >$tempfile");
+    print FP ".api 2 api_opts=j\n";
+    print FP ".status dir running client=$client\n";
+    close(FP);
+    open(FP, $tempfile);
+    <FP>; # Connecting to Director 127.0.0.1:8101
+    <FP>; # 1000 OK: 10002 127.0.0.1-dir Version: 16.0.1 (03 February 2023)
+    <FP>; # Enter a period to cancel a command.
+    <FP>; # .api 2 api_opts=j
+    <FP>; # .status dir running client=127.0.0.1-fd
+    my $data = decode_json(<FP>);
+    close(FP);
+    if ($status) {
+        $count = scalar(grep { $_->{status} eq $status } @{ $data->{running} });
+    } else {
+        $count = scalar( @{ $data->{running} });
+    }
+    print "$count\n";
+}
+
 1;

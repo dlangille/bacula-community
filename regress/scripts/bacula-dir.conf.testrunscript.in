@@ -238,6 +238,42 @@ Job {
   }
 }
 
+Job {
+  Name = "RUN_WAITQ_CMD"
+  FileSet = FS_TESTJOB  
+  JobDefs = DefaultJob
+  Maximum Concurrent Jobs = 1
+  RunScript {
+    RunsWhen = Queued
+    Command = "@tmpdir@/queue.sh %i"
+    failjobonerror = no
+    runsonclient = no
+  }
+  RunScript {
+    RunsWhen = After
+    Command = "sleep 5"
+    runsonclient = yes
+  }
+}
+
+Job {
+  Name = "RUN_WAITQ_ASLEEP"
+  FileSet = FS_TESTJOB  
+  JobDefs = DefaultJob
+  Maximum Concurrent Jobs = 10
+  RunScript {
+    RunsWhen = Queued
+    Command = "@tmpdir@/asleep.sh %c %n"
+    failjobonerror = no
+    runsonclient = no
+  }
+  RunScript {
+    RunsWhen = After
+    Command = "sleep 15"
+    runsonclient = yes
+  }
+}
+
 Job { 
   Name = "Restore" 
   Type = Restore 

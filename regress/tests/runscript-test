@@ -12,22 +12,40 @@ JobName=backup
 . scripts/functions
 copy_test_confs
 
-rm -f bin/bacula-dir.conf
+rm -f $conf/bacula-dir.conf
 rm -f ${cwd}/tmp/RUN*log
 rm -f ${cwd}/tmp/RUN_FD_FAILED
 
 touch ${cwd}/tmp/log1.out
-/bin/cp -f scripts/bacula-dir.conf.testrunscript bin/bacula-dir.conf
+cp -f scripts/bacula-dir.conf.testrunscript $conf/bacula-dir.conf
 
 echo "${cwd}/build/po" >${cwd}/tmp/file-list
 
 start_test
 
+cat <<EOF > $tmp/asleep.sh
+#!/bin/sh
+
+client=\$1
+job=\$2
+sleep 5
+nb=\`$bperl -e 'get_running_jobs("$HOST-fd", "R")'\`
+if [ "\$nb" -ge 1 ]; then
+   echo Found \$nb running jobs...
+   exit 1
+else
+   echo Found 0 job...
+   exit 0
+fi
+EOF
+
+chmod +x $tmp/asleep.sh
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
 label volume=TestVolume001 pool=Scratch
-setdebug dir level=200
+setdebug dir level=200 tags=scheduler trace=1
 @$out ${cwd}/tmp/RUN_FD_WARNING.log
 run job=RUN_FD_WARNING yes
 wait
@@ -62,7 +80,31 @@ st dir
 run job=RUN_JOBDEFS yes
 wait
 messages
+@$out $tmp/RUN_WAITQ_ASLEEP.log
+run job=RUN_WAITQ_ASLEEP yes
 @sleep 1
+run job=RUN_WAITQ_ASLEEP yes
+@sleep 1
+run job=RUN_WAITQ_ASLEEP yes
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+@sleep 2
+.status dir running
+wait
+messages
+.jlist jobid=8
+.jlist jobid=9
+.jlist jobid=10
 quit
 END_OF_DATA
 
@@ -160,7 +202,7 @@ if [ $a = 0 -a $b != 0 -a $c = 0 ]
 then
    [ "$debug" = 1 ] && echo RUN_FD_WARNING ok
 else
-   echo "RUN_FD_WARNING in error"
+   echo "RUN_FD_WARNING in error a=$a b=$b c=$c"
    bstat=1
 fi
 
@@ -180,5 +222,26 @@ else
    rstat=1
 fi
 
+grep '{' $tmp/RUN_WAITQ_ASLEEP.log | perl -MJSON -e '
+$j1 = decode_json(<>);
+$j2 = decode_json(<>);
+$j3 = decode_json(<>);
+
+@js = sort { $a->{data}->[0]->{starttime} cmp $b->{data}->[0]->{starttime} } ($j1, $j2, $j3);
+unless ($js[0]->{data}->[0]->{endtime} lt $js[1]->{data}->[0]->{starttime}) {
+       print "1 $js[0]->{data}->[0]->{endtime} lt $js[1]->{data}->[0]->{starttime}\n";
+  exit 1;
+}
+unless ($js[1]->{data}->[0]->{endtime} lt $js[2]->{data}->[0]->{starttime}) {
+       print "2 $js[1]->{data}->[0]->{endtime} lt $js[2]->{data}->[0]->{starttime}\n";
+  exit 1;
+}
+exit 0;
+'
+
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Incorrect job order reported in $tmp/RUN_WAITQ_ASLEEP.log"
+    estat=1
+fi
 
 end_test
