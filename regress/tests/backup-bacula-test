@@ -70,6 +70,12 @@ restore where=$tmp/bacula-restores select all done
 yes
 wait
 messages
+@output $tmp/log31.out
+.jlist jobs reviewed=1
+@output $tmp/log32.out
+update jobid=1 reviewed=1
+@output $tmp/log33.out
+.jlist jobs reviewed=1
 quit
 END_OF_DATA
 
@@ -83,6 +89,18 @@ echo "test test" > ${cwd}/build/src/dird/xxx
 run_bacula
 check_for_zombie_jobs storage=File1
 stop_bacula
+
+grep '{' $tmp/log31.out | perl -MJSON -e '$l = <>; $obj = JSON::decode_json($l); exit (scalar(@{ $obj->{data} }) == 0);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 0 job reviewed in $tmp/log/31.out"
+    estat=1
+fi
+
+grep '{' $tmp/log33.out | perl -MJSON -e '$l = <>; $obj = JSON::decode_json($l); exit (scalar(@{ $obj->{data} }) == 1);'
+if [ $? != 1 ]; then
+    print_debug "ERROR: Should find 1 job reviewed in $tmp/log33.out"
+    estat=1
+fi
 
 check_two_logs
 check_restore_diff
