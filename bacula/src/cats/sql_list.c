@@ -949,8 +949,9 @@ alist *BDB::bdb_list_job_records(JCR *jcr, JOB_DBR *jr, DB_LIST_HANDLER *sendit,
       Mmsg(tmp, " Job.Job='%s' ", esc);
       append_filter(&where, tmp);
 
+   /* 1 => 0, 2 => 1, 0 => not used */
    } else if (jr->Reviewed > 0) {
-      Mmsg(tmp, " Job.Reviewed = %d ", jr->Reviewed);
+      Mmsg(tmp, " Job.Reviewed = %d ", jr->Reviewed - 1);
       append_filter(&where, tmp);
 
    } else if (jr->isVirtualFull > 0) {

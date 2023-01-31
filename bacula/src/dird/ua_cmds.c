@@ -148,7 +148,7 @@ static struct cmdstruct commands[] = {                                      /* C
       ), false},
 
  { NT_("llist"),      llist_cmd,     _("Full or long list like list command"),
-   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name> [tag=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [order=<asc/desc>] [limit=<n>]|\n"
+   NT_("jobs [client=<cli>] [jobid=<nn>] [ujobid=<name> [tag=<name>] [job=<name>] [joberrors] [jobstatus=<s>] [level=<l>] [jobtype=<t>] [reviewed=<0|1>] [order=<asc/desc>] [limit=<n>]|\n"
        "\tjobtotals | pools | volume | media <pool=pool-name> | files jobid=<nn> | copies jobid=<nn> |\n"
        "\tjoblog jobid=<nn> | pluginrestoreconf jobid=<nn> restoreobjectid=<nn> | snapshot |\n"
        "\tfilemedia jobid=<nn> fileindex=<mm> | clients\n"

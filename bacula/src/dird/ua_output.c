@@ -449,6 +449,9 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
       } else if (strcasecmp(ua->argk[j], NT_("limit")) == 0) {
          jr.limit = atoi(ua->argv[j]);
 
+      } else if (strcasecmp(ua->argk[j], NT_("reviewed")) == 0) {
+         jr.Reviewed = atoi(ua->argv[j]) + 1;
+
       } else if (strcasecmp(ua->argk[j], NT_("jobstatus")) == 0) {
          if (B_ISALPHA(ua->argv[j][0])) {
             jr.JobStatus = ua->argv[j][0]; /* TODO: Check if the code is correct */
@@ -1136,6 +1139,7 @@ static int do_list_cmd(UAContext *ua, const char *cmd, e_list_type llist)
                  || strcasecmp(ua->argk[i], NT_("code")) == 0
                  || strcasecmp(ua->argk[i], NT_("offset")) == 0
                  || strcasecmp(ua->argk[i], NT_("pattern")) == 0
+                 || strcasecmp(ua->argk[i], NT_("reviewed")) == 0
          ) {
          /* Ignore it */
       } else if (strcasecmp(ua->argk[i], NT_("snapshot")) == 0 ||
