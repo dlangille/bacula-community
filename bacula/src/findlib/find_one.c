@@ -823,7 +823,7 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        *    before traversing it.
        */
       rtn_stat = 1;
-      while (!job_canceled(jcr)) {
+      while (!job_canceled(jcr) && rtn_stat == 1) {
          char *p, *q, *s;
          int l;
          int i;
@@ -857,12 +857,11 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
          }
          *q = *s = 0;
          if (!file_is_excluded(ff_pkt, link)) {
-            rtn_stat = find_one_file(jcr, ff_pkt, handle_file, link, snap_link, our_device, false);
+            rtn_stat = find_one_file(jcr, ff_pkt, handle_file, link, snap_link, our_device, false); /* TODO: and error here is ignored */
             if (ff_pkt->linked) {
                ff_pkt->linked->FileIndex = ff_pkt->FileIndex;
             }
          }
-
       }
       closedir(directory);
       free(link);

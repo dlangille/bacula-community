@@ -181,6 +181,7 @@ static char restoreobjcmd1[] = "restoreobject JobId=%u %d,%d,%d,%d,%d,%d\n";
 static char endrestoreobjectcmd[] = "restoreobject end\n";
 static char verifycmd[]   = "verify level=%30s";
 static char estimatecmd[] = "estimate listing=%d";
+static char estimatecmd2[] = "estimate listing=%d limit=%d";
 static char runbefore[]   = "RunBeforeJob %s";
 static char runafter[]    = "RunAfterJob %s";
 static char runscript[]   = "Run OnSuccess=%d OnFailure=%d AbortOnError=%d When=%d Command=%s";
@@ -2496,12 +2497,15 @@ static int estimate_cmd(JCR *jcr)
 {
    BSOCK *dir = jcr->dir_bsock;
    char ed1[50], ed2[50];
+   jcr->estimate_limit=-1;
 
-   if (sscanf(dir->msg, estimatecmd, &jcr->listing) != 1) {
-      pm_strcpy(jcr->errmsg, dir->msg);
-      Jmsg(jcr, M_FATAL, 0, _("Bad estimate command: %s"), jcr->errmsg);
-      dir->fsend(_("2992 Bad estimate command.\n"));
-      return 0;
+   if (sscanf(dir->msg, estimatecmd2, &jcr->listing, &jcr->estimate_limit) != 2) {
+      if (sscanf(dir->msg, estimatecmd, &jcr->listing) != 1) {
+         pm_strcpy(jcr->errmsg, dir->msg);
+         Jmsg(jcr, M_FATAL, 0, _("Bad estimate command: %s"), jcr->errmsg);
+         dir->fsend(_("2992 Bad estimate command.\n"));
+         return 0;
+      }
    }
 
    setup_find_files(jcr, jcr->director);

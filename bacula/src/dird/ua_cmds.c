@@ -119,7 +119,7 @@ static struct cmdstruct commands[] = {                                      /* C
  { NT_("disable"),    disable_cmd,   _("Disable a job, attributes batch process"), NT_("job=<name> | jobs all | client=<name> | schedule=<name> | storage=<name> | batch"),  true},
  { NT_("enable"),     enable_cmd,    _("Enable a job, attributes batch process"), NT_("job=<name> | client=<name> | schedule=<name> | storage=<name> | batch"),   true},
  { NT_("estimate"),   estimate_cmd,  _("Performs FileSet estimate, listing gives full listing"),
-   NT_("fileset=<fs> client=<cli> level=<level> accurate=<yes/no> job=<job> listing"), true},
+   NT_("fileset=<fs> client=<cli> level=<level> accurate=<yes/no> job=<job> limit=<int> listing"), true},
 
  { NT_("exit"),       quit_cmd,      _("Terminate Bconsole session"), NT_(""),         false},
  { NT_("gui"),        gui_cmd,       _("Non-interactive gui mode"),   NT_("on | off"), false},
@@ -1410,6 +1410,7 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
    FILESET *fileset = NULL;
    POOL_MEM buf;
    int listing = 0;
+   int limit = 0;
    char since[MAXSTRING];
    JCR *jcr = ua->jcr;
    int accurate=-1;
@@ -1501,6 +1502,21 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
             return 1;
          }
       }
+      if (strcasecmp(ua->argk[i], NT_("limit")) == 0) {
+         if (ua->argv[i]) {
+            if (!is_a_number(ua->argv[i])) {
+               ua->error_msg(_("Invalid value for limit. "
+                               "It must be a positive number\n"));
+               return 1;
+            }
+            limit = str_to_int64(ua->argv[i]);
+            continue;
+         } else {
+            ua->error_msg(_("Limit value missing.\n"));
+            return 1;
+         }
+      }
+
    }
    if (!job && !(client && fileset)) {
       if (!(job = select_job_resource(ua))) {
@@ -1589,12 +1605,12 @@ static int estimate_cmd(UAContext *ua, const char *cmd)
     * If the job is in accurate mode, we send the list of
     * all files to FD.
     */
-   Dmsg1(40, "estimate accurate=%d\n", jcr->accurate);
+   Dmsg2(40, "estimate accurate=%d limit=%d\n", jcr->accurate, limit);
    if (!send_accurate_current_files(jcr)) {
       goto bail_out;
    }
 
-   jcr->file_bsock->fsend("estimate listing=%d\n", listing);
+   jcr->file_bsock->fsend("estimate listing=%d limit=%d\n", listing, limit);
    while (jcr->file_bsock->recv() >= 0) {
       ua->send_msg("%s", jcr->file_bsock->msg);
    }

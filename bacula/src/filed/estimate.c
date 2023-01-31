@@ -112,6 +112,15 @@ static int tally_file(JCR *jcr, FF_PKT *ff_pkt, bool top_level)
       attr.olname = (POOLMEM *)ff_pkt->link;
       print_ls_output(jcr, &attr, M_INFO);
    }
+
+   /* Stop very long estimate commands */
+   if (jcr->estimate_limit > 0 &&
+       jcr->num_files_examined > (uint32_t)jcr->estimate_limit)
+   {
+      Dmsg1(50, "Stop estimate after %d files\n", jcr->estimate_limit);
+      return 0;
+   }
+
    /* TODO: Add loop over jcr->file_list to get Accurate deleted files*/
    return 1;
 }

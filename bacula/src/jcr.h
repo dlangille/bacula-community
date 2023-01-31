@@ -475,6 +475,7 @@ public:
    int incremental;                   /* set if incremental for SINCE */
    utime_t mtime;                     /* begin time for SINCE */
    int listing;                       /* job listing in estimate */
+   int estimate_limit;                /* Number of files to display in estimate */
    long Ticket;                       /* Ticket */
    char *big_buf;                     /* I/O buffer */
    POOLMEM *compress_buf;             /* Compression buffer */
