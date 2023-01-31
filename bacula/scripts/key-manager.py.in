@@ -225,15 +225,15 @@ def check_force_cipher_env(cipher):
     return os.getenv('FORCE_CIPHER', cipher)
 
 def get_crypto_ctx_from_config(args, volume_name, master_keyid=None):
-    """ retrieve the master-key defined in the config file
+    """ retrieve the master-key defined in the config file or a default CTX
      return
             None : for error
-            MasterKey object : the master-key
+            MasterKey object : the master-key or a default context if no config
     """
 
     if args.config:
+        config=configparser.ConfigParser()
         try:
-            config=configparser.ConfigParser()
             config.read(args.config)
         except configparser.ParsingError as exc:
             logging.error("parsing configuration file \"%s\": %s", args.config, str(exc))
@@ -293,6 +293,9 @@ def get_crypto_ctx_from_config(args, volume_name, master_keyid=None):
             except configparser.NoOptionError:
                 pass
             logging.info("use masterkey %r and cipher \"%s\" for volume \"%s\"", crypto_ctx.master_key_id, crypto_ctx.cipher, volume_name)
+    else:
+        crypto_ctx=CryptoCtx()
+        crypto_ctx.cipher=args.cipher
 
     return crypto_ctx
 
