@@ -115,16 +115,16 @@ static void JmsgVssApiStatus(JCR *jcr, int msg_status, HRESULT hr, const char *a
    case E_ACCESSDENIED:
       errmsg = "The caller does not have sufficient backup privileges or is not an administrator.";
       break;
-   case VSS_E_INVALID_XML_DOCUMENT:
+   case ((HRESULT)VSS_E_INVALID_XML_DOCUMENT):
       errmsg = "The XML document is not valid.";
       break;
-   case VSS_E_OBJECT_NOT_FOUND:
+   case ((HRESULT)VSS_E_OBJECT_NOT_FOUND):
       errmsg = "The specified file does not exist.";
       break;
-   case VSS_E_BAD_STATE:
+   case ((HRESULT)VSS_E_BAD_STATE):
       errmsg = "Object is not initialized; called during restore or not called in correct sequence.";
       break;
-   case VSS_E_WRITER_INFRASTRUCTURE:
+   case ((HRESULT)VSS_E_WRITER_INFRASTRUCTURE):
       errmsg = "The writer infrastructure is not operating properly. Check that the Event Service and VSS have been started, and check for errors associated with those services in the error log.";
       break;
    case VSS_S_ASYNC_CANCELLED:
