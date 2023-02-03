@@ -90,6 +90,13 @@ bdirjson: Makefile $(JSONOBJS) ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) ../lib/libba
 	      -lbaccfg -lbac -lm $(DLIB) $(DB_LIBS) $(LIBS) \
 	      $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS)
 
+store_mngr_test: Makefile ../lib/libbac$(DEFAULT_ARCHIVE_TYPE) dird.c store_mngr.c 
+	$(RMF) store_mngr.o
+	$(CXX) -DTEST_PROGRAM $(DEFS) $(DEBUG) -c $(CPPFLAGS) -I$(srcdir) -I$(basedir) $(DINCLUDE) $(CFLAGS) store_mngr.c
+	$(LIBTOOL_LINK) $(CXX) $(WLDFLAGS) $(LDFLAGS) -L../lib -L../cats -L../findlib -o $@ $(SVROBJS) $(ZLIBS) \
+	      -lbacfind -lbacsql -lbaccats -lbaccfg -lbac -lm $(DLIB) $(DB_LIBS) $(LIBS) \
+	      $(WRAPLIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS) $(CAP_LIBS)
+	
 Makefile: $(srcdir)/Makefile.in $(topdir)/config.status
 	cd $(topdir) \
 	  && CONFIG_FILES=$(thisdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status

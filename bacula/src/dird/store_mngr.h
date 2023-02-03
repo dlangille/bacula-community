@@ -127,8 +127,8 @@ class StorageManager : public SMARTALLOC {
       virtual void apply_policy(bool write_store) = 0;
 
    public:
-      virtual void apply_write_policy() = 0;
-      virtual void apply_read_policy() = 0;
+      virtual void apply_write_policy(JCR*) = 0;
+      virtual void apply_read_policy(JCR*) = 0;
 
       virtual ~StorageManager() {
          reset_rwstorage();
@@ -212,8 +212,8 @@ class LeastUsedStore : public StorageManager {
    private:
       void apply_policy(bool write_store);
    public:
-      void apply_write_policy();
-      void apply_read_policy();
+      void apply_write_policy(JCR*);
+      void apply_read_policy(JCR*);
 
    LeastUsedStore() : StorageManager("LeastUsed") {
    }
@@ -231,10 +231,10 @@ class ListedOrderStore : public StorageManager {
          /* Do nothing for now */
       }
    public:
-      void apply_write_policy() {
+      void apply_write_policy(JCR*) {
          return apply_policy(true);
       }
-      void apply_read_policy() {
+      void apply_read_policy(JCR*) {
          return apply_policy(false);
       }
 
@@ -242,6 +242,20 @@ class ListedOrderStore : public StorageManager {
    }
 
    ~ListedOrderStore() {
+   }
+};
+
+class LastBackupedToStore : public StorageManager {
+   private:
+      void apply_policy(bool write_store);
+   public:
+      void apply_write_policy(JCR* jcr);
+      void apply_read_policy(JCR* jcr);
+
+   LastBackupedToStore() : StorageManager("LastBackupedTo") {
+   }
+
+   ~LastBackupedToStore() {
    }
 };
 
@@ -272,7 +286,7 @@ class QueryStore : public StorageManager {
       virtual void reorder_list(alist *list, dlist *d_list) = 0;
 
    public:
-      void apply_policy(bool write_store);
+      virtual void apply_policy(bool write_store);
 
    QueryStore (const char *policy="VirtualPolicy_QueryStore"): StorageManager(policy)  {
    }
@@ -293,8 +307,6 @@ class FreeSpaceStore : public QueryStore {
          dlink link;
       };
 
-      bool query(BSOCK *sd, dlist *d_list, sm_ctx *context);
-
       /* Comparator for easy list ordering */
       static int cmp(void *item1, void *item2) {
          sm_ctx *ctx1 = (sm_ctx *) item1;
@@ -311,21 +323,44 @@ class FreeSpaceStore : public QueryStore {
          }
       }
 
-      void reorder_list(alist *list, dlist *d_list);
+   protected:
+      bool query(BSOCK *sd, dlist *d_list, sm_ctx *context);
+
+      virtual void reorder_list(alist *list, dlist *d_list);
 
    public:
-      void apply_write_policy() {
+      void apply_write_policy(JCR*) {
          return apply_policy(true);
       }
-      void apply_read_policy() {
+      void apply_read_policy(JCR*) {
          return apply_policy(false);
       }
 
    FreeSpaceStore(): QueryStore("FreeSpace") {
    }
 
-   ~FreeSpaceStore() {
+   FreeSpaceStore(const char *policy): QueryStore("policy") {
+   }
+
+   virtual ~FreeSpaceStore() {
    }
 };
+
+class FreeSpaceLeastUsedStore : public FreeSpaceStore {
+   private:
+      uint64_t threshold;
+
+   protected:
+      virtual void reorder_list(alist *list, dlist *d_list);
+
+   public:
+      FreeSpaceLeastUsedStore(uint64_t thres=0): FreeSpaceStore("FreeSpaceLeastUsed") {
+         threshold = thres;
+      }
+
+      virtual ~FreeSpaceLeastUsedStore() {
+      }
+};
+
 
 #endif // STORE_MNGR_H

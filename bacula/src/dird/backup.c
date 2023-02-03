@@ -536,7 +536,7 @@ bool do_backup(JCR *jcr)
       wstore_group = true;
 
       /* Apply policy for the write storage list */
-      jcr->store_mngr->apply_write_policy();
+      jcr->store_mngr->apply_write_policy(jcr);
       Dmsg2(100, "Configured storages: %s, source: %s\n",
            jcr->store_mngr->print_origin_wlist(), jcr->store_mngr->get_wsource());
       Dmsg2(100, "Possible storage choices after applying \"%s\" policy: %s\n",

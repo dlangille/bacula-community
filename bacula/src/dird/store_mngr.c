@@ -457,6 +457,20 @@ bail_out:
    return ret;
 }
 
+static void swapit(uint32_t *v1, uint32_t *v2)
+{
+   uint32_t temp = *v1;
+   *v1 = *v2;
+   *v2 = temp;
+}
+
+static void swapit(int64_t *v1, int64_t *v2)
+{
+   int64_t temp = *v1;
+   *v1 = *v2;
+   *v2 = temp;
+}
+
 void LeastUsedStore::apply_policy(bool write_store) {
    alist *store = write_store ? wstore.get_list() : rstore.get_list();
    alist tmp_list(10, not_owned_by_alist);
@@ -498,12 +512,78 @@ void LeastUsedStore::apply_policy(bool write_store) {
    free(idx_arr);
 }
 
-void LeastUsedStore::apply_write_policy() {
+void LeastUsedStore::apply_write_policy(JCR*) {
    return apply_policy(true);
 }
 
-void LeastUsedStore::apply_read_policy() {
+void LeastUsedStore::apply_read_policy(JCR*) {
    return apply_policy(false);
+}
+
+void LastBackupedToStore::apply_policy(bool) {
+   /* Do nothing for now */
+}
+
+void LastBackupedToStore::apply_write_policy(JCR *jcr)
+{
+   if (jcr)
+   {
+      alist *store = wstore.get_list();
+      alist tmp_list(10, not_owned_by_alist);
+      uint32_t store_count = store->size();
+      uint32_t i, j;
+
+      utime_t *conc_arr = (utime_t *)malloc((store_count + 1) * sizeof(utime_t));
+      uint32_t *idx_arr = (uint32_t *)malloc((store_count + 1) * sizeof(uint32_t));
+
+      for (uint32_t i = 0; i < store_count; i++)
+      {
+         tmp_list.append(store->get(i));
+      }
+
+      /* Reset list */
+      store->destroy();
+      store->init(10, not_owned_by_alist);
+
+      STORE *storage;
+      POOL_MEM buf;
+      foreach_alist_index(i, storage, &tmp_list)
+      {
+         db_int64_ctx nb;
+         Mmsg(buf, "SELECT Job.JobTDate FROM Job JOIN Storage on (WriteStorageId = StorageId) WHERE Job.Name='%s' AND Job.Level = '%c' AND Storage.Name = '%s' ORDER BY (Job.JobTDate) DESC LIMIT 1;",
+              jcr->job->name(),
+              jcr->getJobLevel(),
+              storage->name());
+         db_sql_query(jcr->db, buf.c_str(), db_int64_handler, &nb);
+
+         idx_arr[i] = i;
+         conc_arr[i] = nb.value;
+      }
+
+      /* Simple sort */
+      for (i = 0; i < store_count - 1; i++)
+      {
+         for (j = 0; j < store_count - i - 1; j++)
+         {
+            if (conc_arr[j] > conc_arr[j + 1])
+            {
+               swapit(&conc_arr[j], &conc_arr[j + 1]);
+               swapit(&idx_arr[j], &idx_arr[j + 1]);
+            }
+         }
+      }
+      for (i = 0; i < store_count; i++)
+      {
+         storage = (STORE *)tmp_list.get(idx_arr[i]);
+         store->append(storage);
+      }
+      free(conc_arr);
+      free(idx_arr);
+   }
+}
+
+void LastBackupedToStore::apply_read_policy(JCR *) {
+   apply_policy(false);
 }
 
 StorageManager::StorageManager(const char *policy) {
@@ -624,3 +704,172 @@ void StorageManager::dec_curr_wstore() {
 void StorageManager::dec_unused_wstores() {
    wstore.dec_unused_stores();
 }
+
+/* FreeSpaceLeastUsedStore::query orders d_list by size */
+/* Now, FreeSpaceLeastUsedStore::reorder_list will apply concurrent job criteria */
+void FreeSpaceLeastUsedStore::reorder_list(alist *list, dlist *d_list) {
+   
+   sm_ctx *ctx, *ctx2;
+
+   list->destroy();
+   list->init(10, not_owned_by_alist);
+
+   Dmsg0(dbglvl, "FreeSpaceLeastUsedStore. Sorted on store size\n");
+   int count = 0;
+   foreach_dlist(ctx, d_list)
+   {
+
+      Dmsg3(dbglvl, "list[%d] size=%d num=%d\n", count, ctx->number, ctx->store->getNumConcurrentJobs());
+      count++;
+   }
+   
+
+   if ( d_list && d_list->first() )
+   {
+      ctx = (sm_ctx *)d_list->first();
+      uint64_t max_size = ctx->number - threshold;
+      Dmsg2(dbglvl, "FreeSpaceLeastUsedStore. max_size=%d threshold=%d\n", max_size, threshold);
+      /* count number of nodes to sort */
+      int free_store_count = 1;
+      foreach_dlist(ctx, d_list)
+      {
+         if (ctx->number < max_size)
+         {
+            break;
+         }
+         free_store_count++;
+      }
+
+      Dmsg1(dbglvl, "FreeSpaceLeastUsedStore. free_store_count=%d\n", free_store_count);
+
+      for (int i=0; i<free_store_count-1; ++i)
+      {
+         ctx = (sm_ctx *)d_list->first();
+         ctx2 = (sm_ctx *)d_list->next(ctx);
+         for (int j=0; j<free_store_count-i-1 && ctx && ctx2; j++) {
+            if (ctx->store->getNumConcurrentJobs() > ctx2->store->getNumConcurrentJobs()) {
+               /* swap : detach ctx*/
+               d_list->remove(ctx);
+               /* re-attach after */
+               d_list->insert_after(ctx,ctx2);
+               /* ctx has implicitely move forward, update only ctx2 */
+            } else {
+               /* move forward ctx and ctx2 */
+               ctx = (sm_ctx *)d_list->next(ctx);
+            }
+            ctx2 = (sm_ctx *)d_list->next(ctx);
+         }
+      }
+   }
+
+   Dmsg0(dbglvl, "FreeSpaceLeastUsedStore. Sorted on store size AND number concurrent jobs\n");
+   count = 0;
+   foreach_dlist(ctx, d_list)
+   {
+
+      Dmsg3(dbglvl, "list[%d] size=%d num=%d\n", count, ctx->number, ctx->store->getNumConcurrentJobs());
+      count++;
+   }
+   
+
+
+   foreach_dlist(ctx, d_list) {
+      list->append((STORE *)ctx->store);
+   }
+}
+
+
+#ifdef TEST_PROGRAM
+
+int main()
+{
+   int nbtests = 100;
+   for (int t=0; t< nbtests; ++t) {
+
+
+      FreeSpaceLeastUsedStore *fslus = New(FreeSpaceLeastUsedStore(10000000));
+      alist *list = New(alist(10, not_owned_by_alist));
+
+      sm_ctx *context = 0;
+      dlist *d_list = New(dlist(context, &context->link));
+
+      /* random number of ctx between 10 and 100 */
+      srand(time(0));
+      int nbctx = rand() % (91) + 10;
+      int n=0;
+      for (; n<nbctx; ++n) {
+         STORE_GLOBALS *globals = new STORE_GLOBALS();
+         globals->NumConcurrentJobs = rand() % (10);
+         STORE *s = new STORE();
+         s->globals = globals;
+         context = New(sm_ctx(s));
+         int num = rand() % (10000000);
+         context->number = num;
+         d_list->prepend(context);
+      }
+      {
+      Pmsg0(0, " ORIGINAL\n");
+      sm_ctx * h = (sm_ctx *)d_list->first();
+      int count = 0;
+      while (h) {
+         Pmsg3(0, "   array[%d] = %d %d\n", count, h->number, h->store->getNumConcurrentJobs());
+         h =  (sm_ctx *)d_list->next(h);
+         count++;
+      }
+      }
+
+      fslus->reorder_list(list, d_list);
+      
+      // sm_ctx *ctx, *ctx2;
+
+      // if ( d_list && d_list->first() )
+      // {
+      //    //int free_store_count = 7;
+      //    int free_store_count = d_list->size();
+      //    for (int i=0; i<free_store_count-1; ++i)
+      //    {
+      //       ctx = (sm_ctx *)d_list->first();
+      //       ctx2 = (sm_ctx *)d_list->next(ctx);
+      //       int count=0;
+      //       for (int j=0; j<free_store_count-i-1 && ctx && ctx2; j++) {
+      //          if (ctx->number > ctx2->number) {
+      //             /* swap : detach ctx*/
+      //             d_list->remove(ctx);
+      //             /* re-attach after */
+      //             d_list->insert_after(ctx,ctx2);
+      //             /* ctx has implicitely move forward, update only ctx2 */
+      //          } else {
+      //             /* move forward ctx and ctx2 */
+      //             ctx = (sm_ctx *)d_list->next(ctx);
+      //          }
+      //          ctx2 = (sm_ctx *)d_list->next(ctx);
+      //          count++;
+      //       }
+      //       Pmsg1(0, " count %d \n", count);
+
+      //       Pmsg1(0, " interation %d \n", i);
+      //       sm_ctx * h = (sm_ctx *)d_list->first();
+      //       for (int k=0; k<free_store_count; ++k) {
+      //          Pmsg3(0, "   array[%d] = %d %c\n", count, h->number, h->tag);
+      //          h =  (sm_ctx *)d_list->next(h);
+      //       }
+      //    }
+
+      // }
+      {
+      Pmsg0(0, " FINAL\n");
+      sm_ctx * h = (sm_ctx *)d_list->first();
+      int count = 0;
+      while (h) {
+         Pmsg3(0, "   array[%d] = %d %d\n", count, h->number, h->store->getNumConcurrentJobs());
+         h =  (sm_ctx *)d_list->next(h);
+         count++;
+      }
+      }
+
+      if (d_list) {
+         delete d_list;
+      }
+   }
+}
+#endif

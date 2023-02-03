@@ -487,6 +487,7 @@ public:
    FILESET   *fileset;                /* What to backup -- Fileset */
    alist     *storage;                /* Where is device -- list of Storage to be used */
    char      *storage_policy;         /* Storage policy (e.g. listed order, least used...) */
+   uint64_t storage_policy_threshold; /* Storage policy threshold size value (optionnal) */
    POOL      *pool;                   /* Where is media -- Media Pool */
    POOL      *next_pool;              /* Next Pool for Copy/Migrate/VirtualFull */
    POOL      *full_pool;              /* Pool for Full backups */
@@ -699,6 +700,7 @@ public:
    POOL  *NextPool;                   /* Next pool for migration */
    alist *storage;                    /* Where is device -- list of Storage to be used */
    char  *storage_policy;             /* Storage policy (e.g. listed order, least used...) */
+   uint64_t storage_policy_threshold; /* Storage policy threshold size value (optionnal) */
    bool  use_catalog;                 /* maintain catalog for media */
    bool  catalog_files;               /* maintain file entries in catalog */
    bool  use_volume_once;             /* write on volume only once */

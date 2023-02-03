@@ -35,7 +35,7 @@ static bool job_check_maxwaittime(JCR *jcr);
 static bool job_check_maxruntime(JCR *jcr);
 static bool job_check_maxrunschedtime(JCR *jcr);
 static void set_jcr_default_store(JCR *jcr, JOB *job);
-static void init_store_manager(JCR *jcr, const char *policy);
+static void init_store_manager(JCR *jcr, const char *policy, int64_t policy_threshold=0);
 static const int dbglvl_store_mngr = 200;
 
 /* Imported subroutines and variables */
@@ -689,7 +689,7 @@ int cancel_inactive_job(UAContext *ua)
       goto bail_out;
    }
 
-   init_store_manager(jcr, StorageManager::get_default_policy());
+   init_store_manager(jcr, StorageManager::get_default_policy(), 0);
    jcr->store_mngr->set_wstorage(store.store, store.store_source);
    if (!cancel_sd_job(ua, "cancel", jcr)) {
       ua->error_msg(_("Failed to cancel storage dameon job for JobId=%d\n"), jcr->JobId);
@@ -1761,7 +1761,7 @@ void get_job_storage(USTORE *store, JOB *job, RUN *run)
 }
 
 /* Init storage manager with specified storage group policy */
-static void init_store_manager(JCR *jcr, const char *policy)
+static void init_store_manager(JCR *jcr, const char *policy, int64_t policy_threshold)
 {
    if (jcr->store_mngr) {
       if (strcmp(jcr->store_mngr->get_policy_name(), policy) == 0) {
@@ -1783,6 +1783,12 @@ static void init_store_manager(JCR *jcr, const char *policy)
       } else if (strcmp(policy, "FreeSpace") == 0) {
          Dmsg1(dbglvl_store_mngr, "Setting FreeSpace storage group policy for JobId: %d\n", jcr->JobId);
          jcr->store_mngr = New(FreeSpaceStore());
+      } else if (strcmp(policy, "LastBackupedTo") == 0) {
+         Dmsg1(dbglvl_store_mngr, "Setting LastBackupedTo storage group policy for JobId: %d\n", jcr->JobId);
+         jcr->store_mngr = New(LastBackupedToStore());
+      } else if (strcmp(policy, "FreeSpaceLeastUsed") == 0) {
+         Dmsg1(dbglvl_store_mngr, "Setting FreeSpaceLeastUsed storage group policy for JobId: %d\n", jcr->JobId);
+         jcr->store_mngr = New(FreeSpaceLeastUsedStore(policy_threshold));
       } else {
          Dmsg1(dbglvl_store_mngr, "Invalid policy for JobId: %d, setting default (ListedOrder)\n", jcr->JobId);
          jcr->store_mngr = New(ListedOrderStore());
@@ -1802,16 +1808,19 @@ static void set_jcr_default_store(JCR *jcr, JOB *job)
     * If no policy defined, used the default one.
     */
    const char *store_policy = StorageManager::get_default_policy();
+   uint64_t store_policy_threshold = 0;
 
    if (job->pool->storage_policy) {
       Dmsg1(dbglvl_store_mngr, "Using Storage Group Policy from the Pool resource for JobId: %d\n", jcr->JobId);
       store_policy = job->pool->storage_policy;
+      store_policy_threshold = job->pool->storage_policy_threshold;
    } else if (job->storage_policy) {
       Dmsg1(dbglvl_store_mngr, "Using Storage Group Policy from the Job resource for JobId: %d\n", jcr->JobId);
       store_policy = job->storage_policy;
+      store_policy_threshold = job->storage_policy_threshold;
    }
 
-   init_store_manager(jcr, store_policy);
+   init_store_manager(jcr, store_policy, store_policy_threshold);
 
    /* Use storage definition from proper resource */
    if (job->pool->storage) {

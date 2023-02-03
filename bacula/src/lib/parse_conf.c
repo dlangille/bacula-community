@@ -1018,6 +1018,8 @@ static char const *storage_mngmt_policy[] = {
    "LeastUsed",
    "ListedOrder",
    "FreeSpace",
+   "LastBackupedTo",
+   "FreeSpaceLeastUsed",
    NULL
 };
 

@@ -1,0 +1,534 @@
+#!/bin/bash
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2022 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Simple test for the 'FreeSpace' storage policy.
+# We create 3 devices, each of different size and assing them to storage group.
+# During first backup, Disk3 device should be used since it's the biggest one.
+# Later we use some more space on Disk2 and Disk3 so that Disk1 has the biggest free space amount
+# and it should be used during second backup.
+#
+
+TestName="store-mngr-freespace-test"
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+# Cleanup of mounted dirs
+trap mount_cleanup err exit
+
+function mount_cleanup() {
+   sudo umount -ql $tmp/dev*
+}
+
+function largest_free_drive() {
+  local -n largest=$1
+  a=($(df --output=avail $tmp/dev* | sed 1d))
+  echo ${a[@]}
+  max=0
+  max_idx=0
+  idx=0
+
+  for avail in ${a[@]}; do
+    if [[ $avail -gt $max ]]; then
+      max=$avail
+      max_idx=$idx
+    fi
+    idx=$((idx+1))
+  done
+
+  largest=$((max_idx+1))
+  return 0
+}
+
+PATH=${PATH}":/sbin"
+
+dev1="${tmp}/dev1"
+dev2="${tmp}/dev2"
+dev3="${tmp}/dev3"
+dev4="${tmp}/dev4"
+dev5="${tmp}/dev5"
+dev6="${tmp}/dev6"
+dev7="${tmp}/dev7"
+dev8="${tmp}/dev8"
+
+dd if=/dev/zero of=$tmp/disk1 bs=1M count=400 > /dev/null
+dd if=/dev/zero of=$tmp/disk2 bs=1M count=800 > /dev/null
+dd if=/dev/zero of=$tmp/disk3 bs=1M count=1000 > /dev/null
+dd if=/dev/zero of=$tmp/disk4 bs=1M count=400 > /dev/null
+dd if=/dev/zero of=$tmp/disk5 bs=1M count=800 > /dev/null
+dd if=/dev/zero of=$tmp/disk6 bs=1M count=1000 > /dev/null
+dd if=/dev/zero of=$tmp/disk7 bs=1M count=400 > /dev/null
+dd if=/dev/zero of=$tmp/disk8 bs=1M count=800 > /dev/null
+
+
+mkfs.ext4 -F $tmp/disk1 > /dev/null
+mkfs.ext4 -F $tmp/disk2 > /dev/null
+mkfs.ext4 -F $tmp/disk3 > /dev/null
+mkfs.ext4 -F $tmp/disk4 > /dev/null
+mkfs.ext4 -F $tmp/disk5 > /dev/null
+mkfs.ext4 -F $tmp/disk6 > /dev/null
+mkfs.ext4 -F $tmp/disk7 > /dev/null
+mkfs.ext4 -F $tmp/disk8 > /dev/null
+
+mkdir -p $dev1
+mkdir -p $dev2
+mkdir -p $dev3
+mkdir -p $dev4
+mkdir -p $dev5
+mkdir -p $dev6
+mkdir -p $dev7
+mkdir -p $dev8
+
+user=`whoami`
+
+sudo mount -o loop $tmp/disk1 $dev1
+sudo mount -o loop $tmp/disk2 $dev2
+sudo mount -o loop $tmp/disk3 $dev3
+sudo mount -o loop $tmp/disk4 $dev4
+sudo mount -o loop $tmp/disk5 $dev5
+sudo mount -o loop $tmp/disk6 $dev6
+sudo mount -o loop $tmp/disk7 $dev7
+sudo mount -o loop $tmp/disk8 $dev8
+#TODO add some err handling here
+
+sudo chown -R $user:$user $dev1
+sudo chown -R $user:$user $dev2
+sudo chown -R $user:$user $dev3
+sudo chown -R $user:$user $dev4
+sudo chown -R $user:$user $dev5
+sudo chown -R $user:$user $dev6
+sudo chown -R $user:$user $dev7
+sudo chown -R $user:$user $dev8
+
+# Fill devices 5->8
+
+dd if=/dev/urandom of=$dev5/data bs=1M count=600
+dd if=/dev/urandom of=$dev6/data bs=1M count=500
+dd if=/dev/urandom of=$dev7/data bs=1M count=200
+dd if=/dev/urandom of=$dev8/data bs=1M count=600
+
+# ... So dev 1-> 4 should mostly be used
+
+
+# Get SD password
+sd_pass=`grep -i password ${bin}/bacula-sd.conf | head -n 1`
+
+# Add simple job with store group
+cat <<END_OF_DATA >> $bin/bacula-dir.conf
+Pool {
+  Name = FreeSpacePool
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 50G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+  Storage = Disk1, Disk2, Disk3, Disk4, Disk5, Disk6, Disk7, Disk8
+  Label Format = "Pool1-"
+  Storage Group Policy = Free Space Least Used
+  StorageGroupPolicyThreshold = 250 MB
+}
+
+  Pool {
+  Name = Disk2Pool
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365 days         # one year
+  Maximum Volume Bytes = 50G          # Limit Volume size to something reasonable
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+  Storage = Disk2
+  Label Format = "Pool2-"
+}
+
+Job {
+  Name = "FreeSpaceJob"
+  Type = Backup
+  Messages = Standard
+  JobDefs = DefaultJob
+  FileSet = "Full Set"
+  Pool = FreeSpacePool
+  Maximum Concurrent Jobs = 10
+}
+
+Job {
+  Name = "Disk2Job"
+  Type = Backup
+  Messages = Standard
+  JobDefs = DefaultJob
+  FileSet = "Full Set"
+  Pool = Disk2Pool
+  Maximum Concurrent Jobs = 10
+  MaximumBandwidth = 700kB
+}
+
+Autochanger {
+  Name = Disk1
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk1
+  Media Type = Disk1
+  Autochanger = Disk1                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk2
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk2
+  Media Type = Disk2
+  Autochanger = Disk2                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk3
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk3
+  Media Type = Disk3
+  Autochanger = Disk3                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk4
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk4
+  Media Type = Disk4
+  Autochanger = Disk4                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk5
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk5
+  Media Type = Disk5
+  Autochanger = Disk5                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk6
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk6
+  Media Type = Disk6
+  Autochanger = Disk6                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk7
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk7
+  Media Type = Disk7
+  Autochanger = Disk7                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+
+Autochanger {
+  Name = Disk8
+  Address = stretch                # N.B. Use a fully qualified name here
+  SDPort = 8103
+${sd_pass}
+  Device = Disk8
+  Media Type = Disk8
+  Autochanger = Disk8                # point to ourself
+  Maximum Concurrent Jobs = 10        # run up to 10 jobs a the same time
+}
+END_OF_DATA
+
+cat <<END_OF_DATA >> $bin/bacula-sd.conf
+Autochanger {
+  Name = Disk1
+  Device = Disk1-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk1-Dev
+  Media Type = Disk1
+  Archive Device = ${dev1}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk2
+  Device = Disk2-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk2-Dev
+  Media Type = Disk2
+  Archive Device = ${dev2}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk3
+  Device = Disk3-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk3-Dev
+  Media Type = Disk3
+  Archive Device = ${dev3}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk4
+  Device = Disk4-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk4-Dev
+  Media Type = Disk4
+  Archive Device = ${dev4}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk5
+  Device = Disk5-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk5-Dev
+  Media Type = Disk5
+  Archive Device = ${dev5}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk6
+  Device = Disk6-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk6-Dev
+  Media Type = Disk6
+  Archive Device = ${dev6}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk7
+  Device = Disk7-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk7-Dev
+  Media Type = Disk7
+  Archive Device = ${dev7}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+
+Autochanger {
+  Name = Disk8
+  Device = Disk8-Dev
+  Changer Command = ""
+  Changer Device = /dev/null
+}
+
+Device {
+  Name = Disk8-Dev
+  Media Type = Disk8
+  Archive Device = ${dev8}
+  LabelMedia = yes;                   # lets Bacula label unlabeled media
+  Random Access = Yes;
+  AutomaticMount = yes;               # when device opened, read it
+  RemovableMedia = no;
+  AlwaysOpen = no;
+  Maximum Concurrent Jobs = 10
+}
+END_OF_DATA
+
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumConcurrentJobs", "20", "Client")'
+
+touch ${cwd}/tmp/bconcmds
+
+start_test
+
+run_bacula
+
+# one by one, the numJob per drive is not relevant
+
+l=0
+largest_free_drive l
+echo "LARGEST drive is Disk$l"
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log1.out
+setdebug level=200 trace=1 director
+run job=FreeSpaceJob level=Full yes
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+n_disk=`cat ${cwd}/tmp/log1.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk$l\"" | wc -l`
+if [ $n_disk -ne 1 ]; then
+  estat=1
+  echo "ERROR: Disk$l Storage should have been used for backup, see: ${tmp}/log$j.out"
+fi
+
+l=0
+largest_free_drive l
+echo "LARGEST drive is Disk$l"
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log2.out
+run job=FreeSpaceJob level=Full yes
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+n_disk=`cat ${cwd}/tmp/log2.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk$l\"" | wc -l`
+if [ $n_disk -ne 1 ]; then
+  estat=1
+  echo "ERROR: Disk$l Storage should have been used for backup, see: ${tmp}/log$j.out"
+fi
+
+l=0
+largest_free_drive l
+echo "LARGEST drive is Disk$l"
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log3.out
+run job=FreeSpaceJob level=Full yes
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+n_disk=`cat ${cwd}/tmp/log3.out | grep "Storage:" | tr -s ' ' | grep "Storage: \"Disk$l\"" | wc -l`
+if [ $n_disk -ne 1 ]; then
+  estat=1
+  echo "ERROR: Disk$l Storage should have been used for backup, see: ${tmp}/log3.out"
+fi
+
+#spawn jobs 4-7 on 1 particular drive (Disk2)
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+messages
+setdebug level=200 trace=1 director
+run job=Disk2Job level=Full yes
+run job=Disk2Job level=Full yes
+run job=Disk2Job level=Full yes
+run job=Disk2Job level=Full yes
+END_OF_DATA
+run_bconsole
+
+# spawn more jobs 8-11 none should run on Disk2
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+setdebug level=200 trace=1 director
+run job=FreeSpaceJob level=Full yes
+run job=FreeSpaceJob level=Full yes
+run job=FreeSpaceJob level=Full yes
+run job=FreeSpaceJob level=Full yes
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log47.out
+setdebug level=200 trace=1 director
+llist jobid=4
+llist jobid=5
+llist jobid=6
+llist jobid=7
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+n_disk=`cat ${cwd}/tmp/log47.out | grep "writestorage:" | tr -s ' ' | grep "Disk2" | wc -l`
+if [ $n_disk -ne 4 ]; then
+  estat=1
+  echo "ERROR: Disk2 Storage should have been used for backup, see: ${tmp}/log47.out"
+fi
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@$out ${cwd}/tmp/log811.out
+setdebug level=200 trace=1 director
+llist jobid=8
+llist jobid=9
+llist jobid=10
+llist jobid=11
+wait
+messages
+END_OF_DATA
+run_bconsole
+
+n_disk=`cat ${cwd}/tmp/log811.out | grep "writestorage:" | tr -s ' ' | grep "Disk2" | wc -l`
+if [ $n_disk -ne 0 ]; then
+  estat=1
+  echo "ERROR: Disk2 Storage should not have been used for backup, see: ${tmp}/log811.out"
+fi
+
+stop_bacula
+end_test
