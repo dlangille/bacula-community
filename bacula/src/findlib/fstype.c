@@ -639,6 +639,12 @@ bool read_mtab(mtab_handler_t *mtab_handler, void *user_ctx)
    return true;
 #endif  // HAVE_AIX_OS
 } 
+ 
+#ifdef HAVE_AIX_OS
+ #ifndef NAME_MAX
+  #define NAME_MAX 2048
+ #endif
+#endif
 
 /*
  * compares current fstype from FF_PKT for required fstype_name
