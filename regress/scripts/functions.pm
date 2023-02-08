@@ -2259,11 +2259,18 @@ sub compare_backup_content
         if (exists $content{$f}) {
             $content{$f} = 0;
         } else {
-            print "ERROR: [$f] not found in job log\n";
-            $estat=1;
-            $nb++;
+            if ($f =~ m=C:/ProgramData/Microsoft/Search/Data/Applications/Windows=i) {
+                # the files in thes directories looks to be reparse point and
+                # don't show up in snapshot
+                print "WARNING: [$f] not found in job log but ignored\n";
+            } else {
+                print "ERROR: [$f] not found in job log\n";
+                $estat=1;
+                $nb++;
+            }
         }
     }
+    $nb=0;
     foreach my $f (keys %content) {
         next if ($f =~ /pagefile.sys/); # Skip swap file, not always in estimate...
         last if ($nb > 10);
