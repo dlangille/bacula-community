@@ -652,6 +652,25 @@ wchar_win32_path(const char *name, wchar_t *win32_name)
 }
 #endif
 
+/* simply replace any '\\' into '/' */
+void win32_to_unix_slash(char *name)
+{
+   for(char *p = name; *p ; p++) {
+      if (*p == '\\') {
+         *p = '/';
+      }
+   }
+}
+
+/* remove the trailing slashes if any */
+void remove_win32_trailing_slash(char *name)
+{
+   int l = strlen(name);
+   while (l > 0 && (name[l-1] == '/' || name[l-1] == '\\')) {
+      name[--l]='\0';
+   }
+}
+
 /*
  * Convert a WUTF8 path into a normalized wchar windows path
  * Get the result from cache

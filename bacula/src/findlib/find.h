@@ -223,6 +223,8 @@ typedef void (mtab_handler_t)(void *user_ctx, struct stat *st,
                const char *fstype, const char *mountpoint,
                const char *mntopts, const char *fsname);
 bool read_mtab(mtab_handler_t *mtab_handler, void *user_ctx);
+void dump_name_list(const char* file, int lineno, int lvl, const char *prefix,
+      findFILESET *fileset);
 
 #include "protos.h"
 

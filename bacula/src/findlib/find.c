@@ -572,3 +572,17 @@ term_find_files(FF_PKT *ff)
    free(ff);
    return hard_links;
 }
+
+/* dump the name_list of every include inside a FileSet */
+void dump_name_list(const char* file, int lineno, int lvl, const char *prefix,
+      findFILESET *fileset)
+{
+   for (int i=0; i<fileset->include_list.size(); i++) {
+      findINCEXE *incexe = (findINCEXE *)fileset->include_list.get(i);
+      dlistString *node;
+      foreach_dlist(node, &incexe->name_list) {
+         Dmsg1(DT_VOLUME|50, "name_list = %s\n", node->c_str());
+         if (chk_dbglvl(lvl)) d_msg(file, lineno, lvl, "%s INC[%d] name = %s\n", prefix, i, node->c_str());
+      }
+   }
+}
