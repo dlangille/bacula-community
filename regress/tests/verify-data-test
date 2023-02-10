@@ -114,7 +114,7 @@ cat <<END_OF_DATA >tmp/bconcmds
 @# now do a verify volume with errors
 @#
 @$out ${cwd}/tmp/log3.out
-setdebug level=10 client
+setdebug level=10 client trace=1
 run job=VerifyData jobid=1 yes
 run job=VerifyData jobid=2 yes
 run job=VerifyData jobid=3 yes
