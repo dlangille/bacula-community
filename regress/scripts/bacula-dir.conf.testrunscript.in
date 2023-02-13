@@ -274,6 +274,24 @@ Job {
   }
 }
 
+Job {
+  Name = "RUN_WAITQ_EXIT"
+  FileSet = FS_TESTJOB  
+  JobDefs = DefaultJob
+  Maximum Concurrent Jobs = 10
+  RunScript {
+    RunsWhen = Queued
+    Command = "@tmpdir@/exit.sh"
+    failjobonerror = no
+    runsonclient = no
+  }
+  RunScript {
+    RunsWhen = After
+    Command = "sleep 15"
+    runsonclient = yes
+  }
+}
+
 Job { 
   Name = "Restore" 
   Type = Restore 

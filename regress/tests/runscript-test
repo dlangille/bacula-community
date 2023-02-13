@@ -41,6 +41,13 @@ EOF
 
 chmod +x $tmp/asleep.sh
 
+cat <<EOF > $tmp/exit.sh
+#!/bin/sh
+exit 2
+EOF
+
+chmod +x $tmp/exit.sh
+
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
 messages
@@ -105,6 +112,11 @@ messages
 .jlist jobid=8
 .jlist jobid=9
 .jlist jobid=10
+@$out $tmp/RUN_WAITQ_EXIT.log
+run job=RUN_WAITQ_EXIT yes
+wait
+messages
+.jlist jobid=11
 quit
 END_OF_DATA
 
@@ -241,6 +253,15 @@ exit 0;
 
 if [ $? -ne 0 ]; then
     print_debug "ERROR: Incorrect job order reported in $tmp/RUN_WAITQ_ASLEEP.log"
+    estat=1
+fi
+
+grep '{' $tmp/RUN_WAITQ_EXIT.log | perl -MJSON -e '
+$j1 = decode_json(<>);
+exit ($j1->{data}->[0]->{jobstatus} eq "A");
+'
+if [ $? -ne 1 ]; then
+    print_debug "ERROR: Incorrect job status reported in $tmp/RUN_WAITQ_EXIT.log"
     estat=1
 fi
 
