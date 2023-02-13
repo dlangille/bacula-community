@@ -572,6 +572,10 @@ void *jobq_server(void *arg)
                   }
                   break;
                case 2:          // skip priority checks
+                  jcr->setJobStatus(JS_Canceled);
+                  Jmsg(jcr, M_FATAL, 0, _("Job canceled from Runscript\n"));
+                  break;
+               case 3:          // skip priority checks
                   jcr->JobPriority = 9999;
                   Jmsg(jcr, M_INFO, 0, _("Job Priority adjusted.\n"));
                   break;
@@ -824,6 +828,10 @@ static bool reschedule_job(JCR *jcr, jobq_t *jq, jobq_item_t *je)
 static bool acquire_resources(JCR *jcr)
 {
    bool skip_this_jcr = false;
+
+   if (jcr->is_canceled()) {
+      return false;
+   }
 
    jcr->acquired_resource_locks = false;
 /*
