@@ -417,7 +417,7 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        return handle_file(jcr, ff_pkt, top_level);
    }
 
-   Dmsg1(300, "File ----: %s\n", fname);
+   Dmsg2(300, "File ----: %s snap=%s\n", fname, snap_fname);
 
    /* Save current times of this directory in case we need to
     * reset them because the user doesn't want them changed.

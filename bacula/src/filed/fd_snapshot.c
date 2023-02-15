@@ -1819,6 +1819,7 @@ bool snapshot_convert_path(JCR *jcr, FF_PKT *ff, dlist *filelist, dlistString *n
    make_win32_path_UTF8_2_wchar(&wpath.addr(), ff->top_fname);
    wchar_t *p = (wchar_t *)wpath.c_str();
    Dmsg2(10, "ASX Convert wchart %s => %ls\n", ff->top_fname, p);
+   /* ff->top_fname = "C:/" => p = "\\?\C:\" */
    DWORD len = wcslen(p);
 #if 0
    // remove any trailing '/' or '\\'

@@ -66,7 +66,7 @@ match_files(JCR *jcr, FF_PKT *ff, int file_save(JCR *, FF_PKT *ff_pkt, bool))
       bstrncat(ff->VerifyOpts, inc->VerifyOpts, sizeof(ff->VerifyOpts));
       Dmsg1(100, "find_files: file=%s\n", inc->fname);
       if (!file_is_excluded(ff, inc->fname)) {
-         if (find_one_file(jcr, ff, file_save, inc->fname, inc->fname, (dev_t)-1, 1) ==0) {
+         if (find_one_file(jcr, ff, file_save, inc->fname, inc->fname, (dev_t)-1, true) ==0) {
             return 0;                  /* error return */
          }
       }

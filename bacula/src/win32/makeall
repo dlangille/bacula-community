@@ -1,4 +1,7 @@
 #!/bin/sh
+# use option "bat=no" to disable BAT  
+# use option "winfiled" to only build the bacula-fd.exe without the installer
+set -e
 make clean
 # Build win32 Bacula
 make bat=no
