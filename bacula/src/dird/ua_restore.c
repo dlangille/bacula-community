@@ -1102,9 +1102,9 @@ static bool insert_file_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *f
          rx->query, db_strerror(ua->db));
    }
    if (!rx->found) {
-      ua->error_msg(_("No database record found for: %s\n"), file);
+      ua->error_msg(_("No database record found\n"));
 //    ua->error_msg("Query=%s\n", rx->query);
-      return true;
+      return false;
    }
    return true;
 }
@@ -1131,8 +1131,8 @@ static bool insert_dir_into_findex_list(UAContext *ua, RESTORE_CTX *rx, char *di
          rx->query, db_strerror(ua->db));
    }
    if (!rx->found) {
-      ua->error_msg(_("No database record found for: %s\n"), dir);
-      return true;
+      ua->error_msg(_("No database record found\n"));
+      return false;
    }
    return true;
 }
