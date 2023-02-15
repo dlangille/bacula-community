@@ -1,0 +1,117 @@
+#!/usr/bin/perl -w
+# Copyright (C) 2000-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+
+use strict;
+
+################################################################
+# Installation
+################################################################
+#
+# Copy the script into /opt/bacula/scripts
+# - Configure the variables at the top of the script (bconsole, limits)
+# - Use the following runscript
+# Job {
+#   RunScript {
+#     RunsWhen = Queued
+#     Command = "/opt/bacula/scripts/MaximumConcurrentJobPerLevel '%c' %l"
+#     Fail On Error = no
+#     RunsOnClient = no
+#   }
+#  ...
+# }
+
+
+################################################################
+# Custom
+my $bconsole = "/tmp/regress/bin/bconsole -u10";
+my $client = shift or usage();
+my $level = shift or usage();
+my $verbose = $ENV{VERBOSE} || 0;
+
+my %MaximumConcurrentJob = (
+    'Full' => 1,
+    'Differental' => 1,
+    'Incremental' => 1
+    );
+
+################################################################
+# The Job intend to use a separate file-daemon for each of our clusters.
+# The schedule calls for Full, Incremental, and Differential backups to
+# occasionally run simultaneously but I want to make sure that a slot is always
+# open for one job of each level to run against the cluster.  
+
+# The behavior might be summarized by:
+# Maximum Concurrent Full Jobs = 1
+# Maximum Concurrent Differential Jobs = 1
+# Maximum Concurrent Incremental Jobs = 1
+
+sub usage
+{
+    print "ERROR: Incorrect usage: $0 client level\n";
+    exit -1;
+}
+
+use File::Temp;
+# The JSON package must be installed libjson-perl or perl-JSON
+eval "use JSON;";
+if ($@) {
+    print "ERROR: Perl JSON module not found. Job control disabled.\n$@";
+    exit -1;
+}
+
+my $l;
+# Get the list of running jobs for the same level and the same client
+if ($level =~ /^([FDI])/) {
+    $l = $1;
+} else {
+    print "Level $level not handled by Job control procedure\n";
+    exit -1;
+}
+
+my ($fh, $filename) = File::Temp::tempfile();
+if (!open(FP, "|$bconsole> $filename")) {
+    print "ERROR: Unable to execute bconsole. Job control disabled.\n$!";
+    unlink($filename);
+    exit -1;
+}
+
+print FP ".api 2 api_opts=j\n";
+print FP ".status dir running client=\"$client\"\nquit\n";
+close(FP);
+unlink($filename);
+
+my $running;
+while (my $line = <$fh>) {
+    if ($verbose) {
+        print "DEBUG: $line";
+    }
+    if ($line =~ /^\{/) {
+        $running = $line;
+        last;
+    } 
+}
+
+if (!$running) {
+    print "ERROR: Unable to get running job list. Job control disabled.\n";
+    exit -1;
+}
+
+my $json = JSON::decode_json($running);
+if (!$json) {
+    print "ERROR: Unable to decode JSON output from Director. Job control disabled.\n";
+    exit -1;
+}
+
+my @jobs = grep {
+    $_->{level} eq $l && $_->{jobstatus} eq 'R'
+   } @{ $json->{running} };
+
+my $nb = scalar(@jobs);
+print "Found $nb Job(s) running at level $level for $client\n";
+if ($nb <= $MaximumConcurrentJob{$level}) {
+    exit 0;
+} else {
+    exit 1;
+}
+
