@@ -387,8 +387,8 @@ DCR *acquire_device_for_append(DCR *dcr)
    if (dev->can_read()) {
       Mmsg2(jcr->errmsg, "Want to append but %s device %s is busy reading.\n",
          dev->print_type(), dev->print_name());
-      Jmsg(jcr, M_FATAL, 0, jcr->errmsg);
-      Dmsg0(50, jcr->errmsg);
+      Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
+      Dmsg1(50, "%s", jcr->errmsg);
       goto get_out;
    }
 
@@ -422,8 +422,8 @@ DCR *acquire_device_for_append(DCR *dcr)
             /* Reduce "noise" -- don't print if job canceled */
             Mmsg2(jcr->errmsg, _("Could not ready %s device %s for append.\n"),
                dev->print_type(), dev->print_name());
-            Jmsg(jcr, M_FATAL, 0, jcr->errmsg);
-            Dmsg0(50, jcr->errmsg);
+            Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
+            Dmsg1(50, "%s", jcr->errmsg);
          }
          dev->Lock();
          unblock_device(dev);
@@ -436,8 +436,8 @@ DCR *acquire_device_for_append(DCR *dcr)
 
    if (generate_plugin_event(jcr, bsdEventDeviceOpen, dcr) != bRC_OK) {
       Mmsg0(jcr->errmsg,  _("generate_plugin_event(bsdEventDeviceOpen) Failed\n"));
-      Jmsg(jcr, M_FATAL, 0, jcr->errmsg);
-      Dmsg0(50, jcr->errmsg);
+      Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
+      Dmsg1(50, "%s", jcr->errmsg);
       goto get_out;
    }
 

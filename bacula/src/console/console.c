@@ -1693,7 +1693,7 @@ static int encodecmd(FILE *input, BSOCK *UA_sock)
          if (strcmp(argk[1], "string") == 0) {
             str = argv[1];
          } else {
-            senditf("Unable to encode the given string \"%s\". Try to use @encode string=\"yourstring\"\n", argk[1]);
+            senditf("Unable to encode the given string. Try to use @encode string=\"yourstring\"\n");
             return 1;
          }
       }

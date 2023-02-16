@@ -479,8 +479,8 @@ bool file_dev::is_eod_valid(DCR *dcr)
               dcr->VolumeName,
               edit_uint64_with_commas(size, ed1),
               edit_uint64_with_commas(VolCatInfo.VolCatBytes, ed2));
-         Jmsg(jcr, M_ERROR, 0, jcr->errmsg);
-         Dmsg0(100, jcr->errmsg);
+         Jmsg(jcr, M_ERROR, 0, "%s", jcr->errmsg);
+         Dmsg1(100, "%s", jcr->errmsg);
          dcr->mark_volume_in_error();
          return false;
       }
