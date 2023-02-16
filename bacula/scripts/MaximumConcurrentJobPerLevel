@@ -24,7 +24,7 @@ use strict;
 
 ################################################################
 # Custom
-my $bconsole = "/tmp/regress/bin/bconsole -u10";
+my $bconsole = "bconsole -u10";
 my $client = shift or usage();
 my $level = shift or usage();
 my $verbose = $ENV{VERBOSE} || 0;
