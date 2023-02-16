@@ -74,25 +74,25 @@ private:
     virtual void QuerySnapshotSet(GUID snapshotSetID) = 0;
 
 protected:
-    JCR       *m_jcr;
+    JCR       *m_jcr = NULL;
 
-    DWORD      m_dwContext;
+    DWORD      m_dwContext = 0;
 
-    IUnknown*  m_pVssObject;
-    GUID       m_uidCurrentSnapshotSet;
+    IUnknown*  m_pVssObject = NULL;
+    GUID       m_uidCurrentSnapshotSet = GUID_NULL;
 
-    MTab      *m_VolumeList;
+    MTab      *m_VolumeList = NULL;
 
-    alist     *m_pAlistWriterState;
-    alist     *m_pAlistWriterInfoText;
+    alist     *m_pAlistWriterState = NULL;
+    alist     *m_pAlistWriterInfoText = NULL;
 
-    bool       m_bCoInitializeCalled;
-    bool       m_bCoInitializeSecurityCalled;
-    bool       m_bDuringRestore;  /* true if we are doing a restore */
-    bool       m_bBackupIsInitialized;
-    bool       m_bWriterStatusCurrent;
+    bool       m_bCoInitializeCalled = false;
+    bool       m_bCoInitializeSecurityCalled = false;
+    bool       m_bDuringRestore = false;  /* true if we are doing a restore */
+    bool       m_bBackupIsInitialized = false;
+    bool       m_bWriterStatusCurrent = false;
 
-    WCHAR     *m_metadata;
+    WCHAR     *m_metadata = NULL;
 
     void       CreateVSSVolumeList();
     void       DeleteVSSVolumeList();

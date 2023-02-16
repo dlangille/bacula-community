@@ -164,7 +164,6 @@ VSSPathConvertW(const wchar_t *szFilePath, wchar_t *szShadowPath, int nBuflen)
 // Constructor
 VSSClient::VSSClient()
 {
-    memset(this, 0, sizeof(VSSClient));
     m_pAlistWriterState = New(alist(10, not_owned_by_alist));
     m_pAlistWriterInfoText = New(alist(10, owned_by_alist));
     m_uidCurrentSnapshotSet = GUID_NULL;
