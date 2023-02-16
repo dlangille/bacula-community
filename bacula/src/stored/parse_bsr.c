@@ -1061,12 +1061,12 @@ static void s_err(const char *file, int line, LEX *lc, const char *msg, ...)
 
    if (jcr) {
       Jmsg(jcr, M_FATAL, 0, _("Bootstrap file error: %s\n"
-"            : Line %d, col %d of file %s\n%s\n"),
-         buf, lc->line_no, lc->col_no, lc->fname, lc->line);
+"            : Line %d, col %d of file %s\n"),
+         buf, lc->line_no, lc->col_no, lc->fname);
    } else {
       e_msg(file, line, M_FATAL, 0, _("Bootstrap file error: %s\n"
-"            : Line %d, col %d of file %s\n%s\n"),
-         buf, lc->line_no, lc->col_no, lc->fname, lc->line);
+"            : Line %d, col %d of file %s\n"),
+         buf, lc->line_no, lc->col_no, lc->fname);
    }
 
    lc->last_result = -1;

@@ -238,15 +238,12 @@ void do_client_commands(JCR *jcr)
                if (!job_canceled(jcr) && !jcr->is_incomplete()) {
                   strip_trailing_junk(fd->msg);
                   char buf[64];
-                  if (jcr->errmsg[0]) {
-                     strip_trailing_junk(jcr->errmsg);
-                     Jmsg2(jcr, M_FATAL, 0, _("Command error with FD msg=\"%s\", SD hanging up. ERR=%s\n"),
-                           asciidump(fd->msg, fd->msglen, buf, sizeof(buf)),
-                           jcr->errmsg);
-                  } else {
-                     Jmsg1(jcr, M_FATAL, 0, _("Command error with FD msg=\"%s\", SD hanging up.\n"),
-                           asciidump(fd->msg, fd->msglen, buf, sizeof(buf)));
-                  }
+                  strip_trailing_junk(jcr->errmsg);
+                  Dmsg2(50, _("Command error with FD msg=\"%s\", SD hanging up. ERR=%s\n"),
+                        asciidump(fd->msg, fd->msglen, buf, sizeof(buf)),
+                        jcr->errmsg);
+                  Jmsg1(jcr, M_FATAL, 0, _("Command error with FD, SD hanging up. ERR=%s\n"),
+                        jcr->errmsg);
                   jcr->setJobStatus(JS_ErrorTerminated);
                }
                quit = true;
@@ -256,7 +253,7 @@ void do_client_commands(JCR *jcr)
       }
       if (!found) {                   /* command not found */
          if (!job_canceled(jcr)) {
-            Jmsg1(jcr, M_FATAL, 0, _("FD command not found: %s\n"), fd->msg);
+            Jmsg0(jcr, M_FATAL, 0, _("FD command not found\n"));
             Dmsg1(110, "<filed: Command not found: %s\n", fd->msg);
          }
          fd->fsend(ferrmsg);

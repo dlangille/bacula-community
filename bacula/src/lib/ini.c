@@ -97,14 +97,14 @@ static void s_err(const char *file, int line, LEX *lc, const char *msg, ...)
 
    if (ini->jcr) {              /* called from core */
       Jmsg(ini->jcr, M_ERROR, 0, _("Config file error: %s\n"
-                              "            : Line %d, col %d of file %s\n%s\n"),
-         buf, lc->line_no, lc->col_no, lc->fname, lc->line);
+                              "            : Line %d, col %d of file %s\n"),
+         buf, lc->line_no, lc->col_no, lc->fname);
 
 //   } else if (ini->ctx) {       /* called from plugin */
 //      ini->bfuncs->JobMessage(ini->ctx, __FILE__, __LINE__, M_FATAL, 0,
 //                    _("Config file error: %s\n"
-//                      "            : Line %d, col %d of file %s\n%s\n"),
-//                            buf, lc->line_no, lc->col_no, lc->fname, lc->line);
+//                      "            : Line %d, col %d of file %s\n"),
+//                            buf, lc->line_no, lc->col_no, lc->fname);
 //
    } else {                     /* called from ??? */
       e_msg(file, line, M_ERROR, 0,
