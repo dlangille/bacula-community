@@ -107,6 +107,7 @@ MTab::MTab() {
     lasterror = ERROR_SUCCESS;
     lasterror_str = "";
     nb_in_SnapshotSet = 0;
+    nb_in_SuitableForSnapshot = 0;
     entries = New(rblist(elt, &elt->link));
 }
 
@@ -120,21 +121,30 @@ MTab::~MTab() {
    }
 }
 
+/* we are looking for DRIVE_FIXED drive */
 UINT MTabEntry::getDriveType()
 {
    WCHAR *root = first();
 
    // Make sure to discard CD-ROM and network drives
    if (!root) {
-      return 0;
+      return DRIVE_UNKNOWN; /* zero */
    }
 
    driveType = GetDriveTypeW(root);
    return driveType;
 }
 
-/* Return true if the current volume can be snapshoted (ie not CDROM or fat32) */
+/* Return true if the current volume can be snapshoted:
+ * if it is a FIXED disk with a Filesystem that support snapshot
+ * (ie not CDROM or fat32)
+ */
 bool MTabEntry::isSuitableForSnapshot()
+{
+   return can_Snapshot;
+}
+
+bool MTabEntry::initIsSuitableForSnapshot()
 {
    DWORD componentlength, fsflags;
    WCHAR fstype[50];
@@ -178,7 +188,9 @@ bail_out:
    return can_Snapshot;
 }
 
-/* Find a volume for a specific path */
+/* Find a volume for a specific path
+ *  "C:\\" or "c:\\mnt\\" -> \\?\Volume{086fc09e-7781-4076-9b2e-a4ff5c6b52c7}\
+ */
 MTabEntry *MTab::search(char *p)
 {
    wstring volume;
@@ -209,11 +221,38 @@ bool MTab::addInSnapshotSet(char *p)
          elt->setInSnapshotSet();
       }
    }
-   return nb_in_SnapshotSet == entries->size();
+   return nb_in_SnapshotSet == nb_in_SuitableForSnapshot;
+}
+void MTab::dump(const char* file, int lineno, int lvl, const char *prefix)
+{
+   MTabEntry *elt;
+   WCHAR mountPaths[MAX_PATH];
+   if (chk_dbglvl(lvl)) d_msg(file, lineno, lvl, "%s suitable for snapshot %d/%d/%d\n", prefix, nb_in_SnapshotSet, nb_in_SuitableForSnapshot, entries->size());
+   foreach_rblist(elt, entries) {
+      // replace intermediat L'\0' in mountPaths by '+' for display
+      mountPaths[0]=L'\0';
+      if (elt->mountPaths != NULL) {
+         WCHAR *s = elt->mountPaths;
+         WCHAR *d = mountPaths;
+         while (*s != L'\0' && d-mountPaths<(int)sizeof(mountPaths)) {
+            *d++ = *s++;
+            if (*s == L'\0' && s[1] != L'\0') {
+               *d++ = L'+';
+               s++;
+            }
+         }
+         *d = L'\0';
+      }
+      if (chk_dbglvl(lvl)) d_msg(file, lineno, lvl, "%s Vol=%ls dev=%ls mounts=%ls snap=%ls active=%c\n", prefix, elt->volumeName, elt->deviceName, mountPaths, elt->shadowCopyName, elt->in_SnapshotSet?'Y':'N');
+   }
 }
 
-/* Initialize the "entries" list will all existing volumes */
-bool MTab::get()
+/* Load the list volumes that exists on the Windows host
+ * with tuples like :
+ *    VolumeName='\\\\?\\Volume{086fc09e-7781-4076-9b2e-a4ff5c6b52c7}\\'
+ *    DeviceName='\\Device\\HarddiskVolume2'
+ */
+bool MTab::load_volumes()
 {
    DWORD  count                = 0;
    WCHAR  DeviceName[MAX_PATH] = L"";
@@ -268,8 +307,10 @@ bool MTab::get()
       // VolumeName='\\\\?\\Volume{086fc09e-7781-4076-9b2e-a4ff5c6b52c7}\\'
       // DeviceName='\\Device\\HarddiskVolume2'
       MTabEntry *entry = New(MTabEntry(DeviceName, VolumeName));
+      if (entry->initIsSuitableForSnapshot()) {
+         nb_in_SuitableForSnapshot++;
+      }
       entries->insert(entry, volume_cmp);
-
       //
       //  Move on to the next volume.
       Success = FindNextVolumeW(FindHandle, VolumeName, ARRAYSIZE(VolumeName));

@@ -287,7 +287,7 @@ bool VSSClientGeneric::Initialize(DWORD dwContext, bool bDuringRestore)
    }
 
    m_VolumeList = New(MTab());  // TODO: See if we do this part only in backup
-   if (!m_VolumeList->get()) {
+   if (!m_VolumeList->load_volumes()) {
       Jmsg(m_jcr, M_ERROR, 0, "Unable to list devices and volumes.\n");
       return false;
    }
@@ -490,7 +490,8 @@ bool VSSClientGeneric::CreateSnapshots(alist *mount_points)
          MTabEntry *elt = (MTabEntry*)m_VolumeList->entries->search(p, volume_cmp);
          ASSERT2(elt, "Should find the volume in the list");
          Jmsg(m_jcr, M_INFO, 0, "    Snapshot mount point: %ls\n", elt->first());
-         Dmsg1(50, "AddToSnapshot OK for Vol: %ls\n", p);
+         Dmsg2(50, "AddToSnapshot OK for %ls vol=%ls\n", elt->first(), p);
+         /* Here the snapshot don't exist yet, elt->shadowCopyName == NULL */
       } else {
          //Dmsg1(50, "AddToSnapshot() failed for Vol: %ls\n", (LPWSTR)volume.c_str());
          Dmsg2(50, "AddToSnapshot() failed for path: %ls hresult=0x%x\n", p, hresult);

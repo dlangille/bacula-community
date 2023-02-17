@@ -2132,7 +2132,21 @@ static int set_options(findFOPTS *fo, const char *opts)
 #ifdef HAVE_WIN32
 
 /* TODO: merge find.c ? */
-static bool is_excluded(findFILESET *fileset, char *path)
+/* Check if path is excluded by the exclude list of the fileset
+ * path is checked using Bacula's fnmatch() (in win32)
+ * and then compared char by char with some flexibility with the ending '/'
+ * or '\\' on the FileSet side
+ * File=C:/mnt/ in the FileSet will match C:/mnt and C:/mnt/
+ * If you know that the path is a directory, th'n you can set is_path_a_dir
+ * and then
+ * File=C:/mnt in the FileSet will match C:/mnt and C:/mnt/
+ * Notice that
+ * File=C:/mnt/+ (with a * and not a +) don't match C:/mnt nor C:/mnt/
+ *
+ * This function is only used when "building" the FileSet, it is not "yet" used
+ * when walking the tree during the backup
+ */
+static bool is_excluded(findFILESET *fileset, char *path, bool is_path_a_dir)
 {
    int fnm_flags=FNM_CASEFOLD;  /* FIXME: Not exactly accurate, the IGNORECASE option is not available... */
    int fnmode=0;
@@ -2169,10 +2183,14 @@ static bool is_excluded(findFILESET *fileset, char *path)
          }
 
          /* Looks to be the same string, but with a trailing slash */
-         if (fname[0] && IsPathSeparator(fname[0]) && fname[1] == '\0'
-             && p[0] == '\0')
-         {
+         if (IsPathSeparator(fname[0]) && fname[1] == '\0' && p[0] == '\0') {
             Dmsg1(DT_VOLUME|50, "Reject: %s\n", path);
+            return true;
+         }
+         /* if path is a directory, try stripping the final '/' in path */
+         if (is_path_a_dir && IsPathSeparator(p[0]) && p[1] == '\0'
+               && fname[0] == '\0') {
+            Dmsg1(DT_VOLUME|50, "Reject dir: %s\n", path);
             return true;
          }
       }
@@ -2229,7 +2247,7 @@ static findINCEXE *is_included(findFILESET *fileset, char *path)
 }
 
 /* Here we include all drives that are listed in your mtab structure
- * "/" backs up everyting with a drive letter.
+ * "/" backs up everything with a drive letter.
  * "OneFS = No" would then go down mounted file systems.
  */
 static void list_drives(findFILESET *fileset, dlist *name_list, MTab *mtab)
@@ -2247,27 +2265,23 @@ static void list_drives(findFILESET *fileset, dlist *name_list, MTab *mtab)
       }
 
       WCHAR *dir;
-      /* We determine the drive letter of the volume if any */
+      /* We determine a path that is not excluded FileSet */
       for (dir = elt->first(); dir ; dir = elt->next(dir)) {
-         if (wcslen(dir) == 3 && dir[1] == L':') {
-            break;
+         if (wcslen(dir) != 3 || dir[1] != L':') {
+            continue; /* Exclude path that are not Drive Letter */
          }
-      }
-      if (dir && wchar_path_2_wutf8(&buf, dir) > 0) {
-
-         /* Path from MTAb are using \ and the catalog
-          * contains c:\subdir\path/ instead of c:/subdir/path/
-          * so we do a quick fix...
-          */
-         for(char *p = buf; *p ; p++) {
-            if (*p == '\\') {
-               *p = '/';
-            }
+         if (wchar_path_2_wutf8(&buf, dir) <= 0) {
+            continue; /* something wrong with the name, skip */
          }
-         if (!is_excluded(fileset, buf)) {
-            Dmsg1(DT_VOLUME|50,"Adding drive in include list %s\n",buf);
-            name_list->append(new_dlistString(buf));
+         win32_to_unix_slash(buf);
+         if (is_excluded(fileset, buf, true)) {
+            continue; /* the name is in the exclude list */
          }
+         remove_win32_trailing_slash(buf);
+         /* add the name without the ending '/' */
+         Dmsg1(DT_VOLUME|50,"Adding drive in include list %s\n",buf);
+         name_list->append(new_dlistString(buf));
+         break; /* adding a Volume once is enough */
       }
    }
    free_pool_memory(buf);
@@ -2279,6 +2293,8 @@ static void list_drives(findFILESET *fileset, dlist *name_list, MTab *mtab)
  * are used, because we create a snapshot of all used
  * drives before operation
  *
+ * szDrives : is a list of the drives where we must active the snapshot
+ *   this is used by some plugins like cdp & delta
  */
 static int
 get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
@@ -2286,7 +2302,8 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
    int nCount = 0;
 #ifdef HAVE_WIN32
    findFILESET *fileset = ff->fileset;
-   findINCEXE *alldrives = NULL, *inc = NULL;
+   findINCEXE *alldrives = NULL; /* the fileset that holds "File = /" if any */
+   findINCEXE *inc = NULL;
    uint64_t    flags = 0;
    char drive[4];
 
@@ -2294,8 +2311,10 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
    MTab *mtab = (MTab*) mtab_def;
    if (!mtab_def) {
       mtab = New(MTab());
-      mtab->get();
+      mtab->load_volumes();
    }
+
+   dump_name_list(__FILE__, __LINE__, DT_VOLUME|50, "NameList in", fileset);
 
    /* We check if we need to complete the fileset with File=/ */
    if (fileset) {
@@ -2322,7 +2341,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
          drive[0] = szDrives[i];
          if (mtab->addInSnapshotSet(drive)) { /* When all volumes are selected, we can stop */
             Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
-            goto all_included;
+            goto all_included;  // TODO ASX I don't like this goto, I would prefer a break
          }
       }
    }
@@ -2330,7 +2349,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
    if (fileset) {
 
       /* Writer dictates the snapshot included components
-       * but we still give the chanche to include extra files to
+       * but we still give the chance to include extra files to
        * the snapshot set via fileset include_list
        */
       dlistString *node;
@@ -2344,94 +2363,117 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
             if (mtab->addInSnapshotSet(fname)) {
                /* When all volumes are selected, we can stop */
                Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
-               goto all_included;
+               goto all_included;  // TODO ASX I don't like this goto, I would prefer a break
             }
          }
       }
+
+      dump_name_list(__FILE__, __LINE__, DT_VOLUME|50, "NameList intermediate", fileset);
 
       /* TODO: it needs to be done Include by Include, but in the worst case,
        * we take too much snapshots...
        */
       if (flags & FO_MULTIFS) {
-         /* Need to add subdirectories */
+         /* Need to add subdirectories that are mount points
+          * The idea is that the FD will not cross directories that are mount
+          * points, but instead, we add the directory to the Include list.
+          */
          POOLMEM   *fn = get_pool_memory(PM_FNAME);
          MTabEntry *elt, *elt2;
          int len;
 
          Dmsg0(DT_VOLUME|50, "OneFS is set, looking for remaining volumes\n");
+         mtab->dump(__FILE__, __LINE__, DT_VOLUME|50, "ASX mtab: ");
 
          foreach_rblist(elt, mtab->entries) {
             if (elt->in_SnapshotSet) {
-               continue;         /* Already in */
+               Dmsg1(DT_VOLUME|50, "Skip volume that is already in the snapshot list: %ls\n", elt->first());
+               continue;         /* Was already selected in the Include list */
+               /* ASX We should not do that
+                * imaginons qu'un volume soit monté sur C:/mnt et F:/ en meme temps
+                * et qu'on a File=C:/, dans ce cas C:/ et c/mnt sont backupé
+                * plus tard l'utilisateur ajoute File=F:/toto
+                * ce dernier va forcer le snapshot sur le volume en question
+                * et du coups C:/mnt ne sera plus considéré et donc non backupé
+                * si on inclu aussi C:/mnt, on aura 2x toto
+                * on devrait pas faire un continue ici
+                */
             }
             /* A volume can have multiple mount points */
             for (wchar_t *p = elt->first() ; p && *p ; p = elt->next(p)) {
                wchar_path_2_wutf8(&fn, p);
+               win32_to_unix_slash(fn);
+               /* Notice that fn is ended with a '/' */
 
                Dmsg1(DT_VOLUME|50, "Looking for path %s\n", fn);
 
-               /* First case, root drive (c:/, e:/, d:/), not a submount point */
+               /* Bacula don't consider drive letter (X:/), as submount point
+                * Notice that when "File=/" is used, the drive letters have
+                * been already added above
+                */
                len = strlen(fn);
                if (len <= 3) {
-                  Dmsg1(DT_VOLUME|50, "Skiping %s\n", fn);
-                  continue;
+                  Dmsg1(DT_VOLUME|50, "Skipping drive letter: %s\n", fn);
+                  continue; /* we are looking for mount point */
                }
 
                /* First thing is to look in the exclude list to see if this directory
                 * is explicitly excluded
                 */
-               if (!is_excluded(fileset, fn)) {
-                  elt->setInSnapshotSet();
-               } else {
+               if (is_excluded(fileset, fn, true)) {
                   Dmsg1(DT_VOLUME|50, "Looks to be excluded %s\n", fn);
-                  continue;
+                  continue; /* try another path for the volume if any */
                }
-
-               /* c:/vol/vol2/vol3
-               * will look c:/, then c:/vol/, then c:/vol2/ and if one of them
-               * is selected, the sub volume will be directly marked.
+               /* In the case of a FO_MULTIFS
+                * If X:/ is Included in the fileset, then every volumes mounted
+                * below X:/, let say X:/mnt must also be Included and the
+                * snapshot activated.
+                *
+                * Say differently, looking from the list of mount points,
+                * if X:/mnt is a mount point and X:/ is included, then X:/mnt
+                * must be included.
+                * In the case of "c:/vol/vol2/vol3/"  (notice the ending '/')
+                * we will look for c:, c:/vol, c:/vol/vol2 and c:/vol/vol2/vol3
+                * if one is included then we add c:/vol/vol2/vol3
                */
-               for (char *p1 = fn ; *p1 && !elt->in_SnapshotSet ; p1++) {
-                  if (IsPathSeparator(*p1)) {
-                     bool to_add=false; /* Add this volume to the FileSet ? */
-                     char c = *(p1 + 1);
-                     *(p1 + 1) = 0;
+               for (char *p1 = fn; *p1 != '\0'; p1++) {
+                  if (!IsPathSeparator(*p1)) {
+                     continue;
+                  }
+                  *p1 = '\0'; // replace the '/' with a '\0'
 
-                     /* We look for the previous directory, and if marked, we mark
-                     * the current one as well
-                     */
-                     Dmsg1(DT_VOLUME|50, "Looking for %s\n", fn);
-                     elt2 = mtab->search(fn);
-                     if (elt2 && elt2->in_SnapshotSet) {
-                        Dmsg0(DT_VOLUME|50, "Put volume in SnapshotSet\n");
-                        elt->setInSnapshotSet();
-                        to_add = true;
-                     }
+                  /* We look for the previous directory, and if marked, we mark
+                  * the current one as well
+                  */
+                  Dmsg1(DT_VOLUME|50, "Looking for %s\n", fn);
+                  elt2 = mtab->search(fn);
+                  if (elt2 == NULL || !elt2->in_SnapshotSet) {
+                     /* fn is not in a volume that is snapshoted */
+                     *p1 = '/'; /* restore path separator */
+                     continue;
+                  }
 
-                     /* Find where to add the new volume, normally near the
-                     * root volume, or if we are using /
-                     */
-                     if (alldrives) {
-                        inc = alldrives;
-                     } else {
-                        inc = is_included(fileset, fn);
-                        Dmsg2(DT_VOLUME|50, "Adding volume in fileset 0x%p %s\n", inc, fn);
-                     }
+                  /* Find where to add the new volume, normally near the
+                  * root volume, or if we are using /
+                  */
+                  if (alldrives) {
+                     inc = alldrives;
+                  } else {
+                     inc = is_included(fileset, fn);
+                     Dmsg2(DT_VOLUME|50, "Adding volume in fileset 0x%p %s\n", inc, fn);
+                  }
 
-                     *(p1 + 1) = c; /* restore path separator */
+                  *p1 = '/'; /* restore path separator */
 
-                     /* We can add the current volume to the FileSet */
-                     if (to_add && inc != NULL) {
-                        /* Convert the path to /xxx/xxx */
-                        dlistString *tmp = new_dlistString(fn);
-                        for(char *p = tmp->c_str(); *p ; p++) {
-                           if (*p == '\\') {
-                              *p = '/';
-                           }
-                        }
-                        inc->name_list.append(tmp);
-                        Dmsg1(DT_VOLUME|50,"Adding volume in file list %s\n",tmp->c_str());
-                     }
+                  /* We can add the current volume to the FileSet */
+                  if (inc != NULL) {
+                     dlistString *tmp = new_dlistString(fn);
+                     remove_win32_trailing_slash(tmp->c_str()); /* remove the trailing slash */
+                     inc->name_list.append(tmp);
+                     Dmsg1(DT_VOLUME|50,"Adding volume in file list %s\n", fn);
+                     elt->setInSnapshotSet();
+                     Dmsg1(DT_VOLUME|50, "Put volume in SnapshotSet: %s\n", fn);
+                     break;
                   }
                }
             }
@@ -2439,6 +2481,8 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
          free_pool_memory(fn);
       }
 all_included:
+      dump_name_list(__FILE__, __LINE__, DT_VOLUME|50, "NameList out", fileset);
+
       /* Now, we look the volume list to know which one to include */
       MTabEntry *elt;
       foreach_rblist(elt, mtab->entries) {
@@ -3015,6 +3059,7 @@ static int backup_cmd(JCR *jcr)
       jcr->pVSSClient = VSSInit();
       if (jcr->pVSSClient->InitializeForBackup(jcr)) {
          MTab *tab = jcr->pVSSClient->GetVolumeList();
+         tab->dump(__FILE__, __LINE__, DT_VOLUME|50, "mtab: ");
          generate_plugin_event(jcr, bEventVssBackupAddComponents, tab);
          /* tell vss which drives to snapshot */
          char szWinDriveLetters[27];
@@ -3040,6 +3085,7 @@ static int backup_cmd(JCR *jcr)
          } else {
             Jmsg(jcr, M_WARNING, 0, _("No drive letters found for generating VSS snapshots.\n"));
          }
+         tab->dump(__FILE__, __LINE__, DT_VOLUME|50, "mtab: ");
       } else {
          berrno be;
          Jmsg(jcr, M_FATAL, 0, _("VSS was not initialized properly. ERR=%s\n"),

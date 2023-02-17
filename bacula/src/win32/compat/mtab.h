@@ -30,10 +30,12 @@
  */
 class MTabEntry: public SMARTALLOC {
 public:
-   WCHAR *volumeName;         // Name of the current volume
-   WCHAR *mountPaths;         // List of mount paths
-   WCHAR *deviceName;
-   WCHAR *shadowCopyName;
+   WCHAR *volumeName;       // The uuid of the volume
+                            // "\\?\Volume{086fc09e-7781-4076-9b2e-a4ff5c6b52c7}\"
+   WCHAR *mountPaths;       // list of mount point (if any) separated by zero
+                            // "C:\\\0C:\\mnt\\\0\0"
+   WCHAR *deviceName;       // \\Device\\HarddiskVolume2
+   WCHAR *shadowCopyName;   // \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy216
    bool   in_SnapshotSet;
    bool   can_Snapshot;
    UINT   driveType;
@@ -82,6 +84,9 @@ public:
    /* Return  the drive type (cdrom, fixed, network, ...) */
    UINT getDriveType();
 
+   /* Check if the current volume can be snapshoted and initialize "can_Snapshot" */
+   bool initIsSuitableForSnapshot();
+
    /* Return true if the current volume can be snapshoted (ie not CDROM or fat32) */
    bool isSuitableForSnapshot();
 
@@ -101,7 +106,7 @@ public:
       }
    };
 
-   /* Compute the path list assiciated with the current volume */
+   /* Compute the path list associated with the current volume */
    bool get_paths() {
       DWORD  count = MAX_PATH + 1;
       bool   ret = false;
@@ -157,6 +162,7 @@ public:
    const char *lasterror_str;
    rblist     *entries;         /* MTabEntry */
    int         nb_in_SnapshotSet;
+   int         nb_in_SuitableForSnapshot;
 
    MTab();
    ~MTab(); 
@@ -167,8 +173,12 @@ public:
    /* Try to add a volume to the current snapshotset */
    bool addInSnapshotSet(char *file);
 
-   /* Fill the "entries" list will all detected volumes of the system*/
-   bool get();
+   /* Fill the "entries" list will all detected volumes of the system */
+   bool load_volumes();
+
+   /* Dump for debugging at the given debug level */
+   void dump(const char* file, int lineno, int level, const char* prefix);
+
 };
 
 #endif /* BEE_MTAB_ENTRY_H */
