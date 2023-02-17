@@ -2277,7 +2277,7 @@ static void list_drives(findFILESET *fileset, dlist *name_list, MTab *mtab)
          if (is_excluded(fileset, buf, true)) {
             continue; /* the name is in the exclude list */
          }
-         remove_win32_trailing_slash(buf);
+         strip_trailing_slashes(buf);
          /* add the name without the ending '/' */
          Dmsg1(DT_VOLUME|50,"Adding drive in include list %s\n",buf);
          name_list->append(new_dlistString(buf));
@@ -2341,7 +2341,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
          drive[0] = szDrives[i];
          if (mtab->addInSnapshotSet(drive)) { /* When all volumes are selected, we can stop */
             Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
-            goto all_included;  // TODO ASX I don't like this goto, I would prefer a break
+            goto all_included;
          }
       }
    }
@@ -2363,7 +2363,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
             if (mtab->addInSnapshotSet(fname)) {
                /* When all volumes are selected, we can stop */
                Dmsg0(DT_VOLUME|50, "All Volumes are marked, stopping the loop here\n");
-               goto all_included;  // TODO ASX I don't like this goto, I would prefer a break
+               goto all_included;
             }
          }
       }
@@ -2383,21 +2383,12 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
          int len;
 
          Dmsg0(DT_VOLUME|50, "OneFS is set, looking for remaining volumes\n");
-         mtab->dump(__FILE__, __LINE__, DT_VOLUME|50, "ASX mtab: ");
+         mtab->dump(__FILE__, __LINE__, DT_VOLUME|50, "mtab: ");
 
          foreach_rblist(elt, mtab->entries) {
             if (elt->in_SnapshotSet) {
                Dmsg1(DT_VOLUME|50, "Skip volume that is already in the snapshot list: %ls\n", elt->first());
                continue;         /* Was already selected in the Include list */
-               /* ASX We should not do that
-                * imaginons qu'un volume soit monté sur C:/mnt et F:/ en meme temps
-                * et qu'on a File=C:/, dans ce cas C:/ et c/mnt sont backupé
-                * plus tard l'utilisateur ajoute File=F:/toto
-                * ce dernier va forcer le snapshot sur le volume en question
-                * et du coups C:/mnt ne sera plus considéré et donc non backupé
-                * si on inclu aussi C:/mnt, on aura 2x toto
-                * on devrait pas faire un continue ici
-                */
             }
             /* A volume can have multiple mount points */
             for (wchar_t *p = elt->first() ; p && *p ; p = elt->next(p)) {
@@ -2468,7 +2459,7 @@ get_win32_driveletters(JCR *jcr, FF_PKT *ff, char* szDrives, void* mtab_def)
                   /* We can add the current volume to the FileSet */
                   if (inc != NULL) {
                      dlistString *tmp = new_dlistString(fn);
-                     remove_win32_trailing_slash(tmp->c_str()); /* remove the trailing slash */
+                     strip_trailing_slashes(tmp->c_str());
                      inc->name_list.append(tmp);
                      Dmsg1(DT_VOLUME|50,"Adding volume in file list %s\n", fn);
                      elt->setInSnapshotSet();

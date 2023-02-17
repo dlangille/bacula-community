@@ -74,6 +74,8 @@ private:
     virtual void QuerySnapshotSet(GUID snapshotSetID) = 0;
 
 protected:
+    /* On windows, we control the Compiler version and we can use C++11
+       in-member class initializers */
     JCR       *m_jcr = NULL;
 
     DWORD      m_dwContext = 0;

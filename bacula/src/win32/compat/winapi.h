@@ -55,7 +55,6 @@ int wutf8_path_2_wchar(POOLMEM **ppszUCS, const char *pszUTF);
 int UTF8_2_wchar(POOLMEM **pszUCS, const char *pszUTF);
 int make_win32_path_UTF8_2_wchar(POOLMEM **pszUCS, const char *pszUTF, BOOL* pBIsRawPath = NULL);
 void win32_to_unix_slash(char *name);
-void remove_win32_trailing_slash(char *name);
 
 // init with win9x, but maybe set to NT in InitWinAPI
 extern DWORD DLL_IMP_EXP g_platform_id;
