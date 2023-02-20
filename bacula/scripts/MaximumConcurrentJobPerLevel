@@ -3,24 +3,29 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 
 use strict;
+my $VERSION = 1;
 
 ################################################################
 # Installation
 ################################################################
 #
-# Copy the script into /opt/bacula/scripts
-# - Configure the variables at the top of the script (bconsole, limits)
-# - Use the following runscript
+# - Install the perl extension JSON (perl-JSON or libjson-perl)
+# 
+# - Copy the script into /opt/bacula/scripts
+#   - Configure the variables at the top of the script (bconsole, limits)
+#   - Use the following runscript
 # Job {
 #   RunScript {
 #     RunsWhen = Queued
 #     Command = "/opt/bacula/scripts/MaximumConcurrentJobPerLevel '%c' %l"
-#     Fail On Error = no
+#     Abort Job On Error = no
 #     RunsOnClient = no
 #   }
 #  ...
 # }
-
+#
+# Can be executed manually, and the VERBOSE=1 environnement variable
+# might help to diagnose problems.
 
 ################################################################
 # Custom
@@ -98,17 +103,18 @@ if (!$running) {
 }
 
 my $json = JSON::decode_json($running);
-if (!$json) {
+if (!$json || !$json->{running}) {
     print "ERROR: Unable to decode JSON output from Director. Job control disabled.\n";
     exit -1;
 }
 
 my @jobs = grep {
-    $_->{level} eq $l && $_->{jobstatus} eq 'R'
+    $_->{level} eq $l && $_->{status} eq 'R'
    } @{ $json->{running} };
 
 my $nb = scalar(@jobs);
 print "Found $nb Job(s) running at level $level for $client\n";
+
 if ($nb <= $MaximumConcurrentJob{$level}) {
     exit 0;
 } else {
