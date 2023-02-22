@@ -97,8 +97,8 @@ static bool dot_add_events(UAContext *ua, const char *cmd);
 static int one_handler(void *ctx, int num_field, char **row);
 static bool dot_search(UAContext *ua, const char *cmd);
 
-struct cmdstruct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help; const char *usage;;const bool use_in_rs;};
-static struct cmdstruct commands[] = { /* help */  /* can be used in runscript */
+struct dcmd_struct { const char *key; bool (*func)(UAContext *ua, const char *cmd); const char *help; const char *usage;const bool use_in_rs;};
+static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript */
    { NT_(".api"),        api_cmd,        _("Set the API options"),  ".api 2\n.api 2 api_opts=j",             false},
    { NT_(".backups"),    backupscmd,     _("Display the list of the authorized Backup Job resources"), NULL, false},
    { NT_(".clients"),    clientscmd,     _("Display the list of the authorized Client resources"),     NULL, true},
@@ -162,7 +162,7 @@ static struct cmdstruct commands[] = { /* help */  /* can be used in runscript *
    ".query client=<cli> plugin=<str> parameter=<str>", false},
  { NT_(".tags"),      tagscmd,                   _("List debug tags defined"),       NULL, false}
 };
-#define comsize ((int)(sizeof(commands)/sizeof(struct cmdstruct)))
+#define comsize ((int)(sizeof(commands)/sizeof(struct dcmd_struct)))
 
 /*
  * Execute a command from the UA
