@@ -53,7 +53,7 @@ our @EXPORT = qw(update_some_files create_many_files check_multiple_copies
                   check_tls_traces println add_virtual_changer check_events check_events_json
                   create_many_hardlinks check_dot_status parse_fuse_trace generate_random_seek
                  check_storage_selection check_json get_perm check_protect
-                 get_running_jobs
+                 get_running_jobs get_client_name
 );
 
 
@@ -2657,6 +2657,19 @@ sub get_running_jobs
         $count = scalar( @{ $data->{running} });
     }
     print "$count\n";
+}
+
+sub get_client_name
+{
+    my $line = `$bin/bdirjson -r client -l Name -D`;
+    my $test_json;
+    eval 'use JSON qw/decode_json/; $test_json = JSON->new;';
+    if ($@) {
+        print "ERROR: json test skipped\n";
+        return;
+    }
+    my $r = $test_json->decode($line);
+    print "$r->[0]->{Name}\n";
 }
 
 1;
