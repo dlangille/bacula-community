@@ -1,0 +1,281 @@
+#!/bin/sh
+#
+# Copyright (C) 2023-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+#  Test RunScript
+#
+
+TestName="runscript-console-test"
+JobName=backup
+
+. scripts/functions
+copy_test_confs
+
+echo "${cwd}/build/po" >${cwd}/tmp/file-list
+
+$bperl -e "set_global_maximum_concurrent_jobs(500)"
+
+start_test
+
+cat <<EOF >> $conf/bacula-dir.conf
+Job {
+  Name = "RunScript"
+  Type = Backup
+  Client=$HOST-fd 
+  FileSet="Full Set"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+  RunScript {
+   RunsWhen = Before
+   RunsOnClient = no
+   Console = ".status dir running"
+   Console = ".status dir header"
+   Command = "echo toto"
+   Console = ".status client=$HOST-fd header"
+   Console = ".status client=$HOST-fd running"
+   Console = "tag add name=#test jobid=%i"
+   Console = "cloud upload storage=File allpools"
+  }
+  RunScript {
+   RunsWhen = After
+   RunsOnClient = no
+   Console = ".status dir running"
+   Console = ".status dir header"
+   Command = "echo toto"
+   Console = ".status client=$HOST-fd header"
+   Console = ".status client=$HOST-fd running"
+   Console = "prune volume all yes"
+   Console = ".jlist jobid=1"
+   Console = "cloud upload storage=File allpools"
+  }
+}
+EOF
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 pool=Scratch storage=File
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+sleep 1
+run job=RunScript yes
+run job=RunScript yes
+run job=NightlySave yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+run job=RunScript yes
+wait
+messages
+quit
+END_OF_DATA
+
+run_bacula
+stop_bacula
+
+end_test
