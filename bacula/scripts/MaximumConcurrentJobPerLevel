@@ -3,7 +3,7 @@
 # License: BSD 2-Clause; see file LICENSE-FOSS
 
 use strict;
-my $VERSION = 1;
+my $VERSION = 1.1;
 
 ################################################################
 # Installation
@@ -26,13 +26,21 @@ my $VERSION = 1;
 #
 # Can be executed manually, and the VERBOSE=1 environnement variable
 # might help to diagnose problems.
+#
+# We use a file per client and level to avoid concurrency issues
+# the location of the file is controlled by the $working variable. 
 
 ################################################################
-# Custom
-my $bconsole = "bconsole -u10";
+# Arguments
 my $client = shift or usage();
 my $level = shift or usage();
 my $verbose = $ENV{VERBOSE} || 0;
+
+################################################################
+# Custom
+my $bconsole = "/opt/bacula/bin/bconsole -u10";
+my $working = "/opt/bacula/working/mcjpl";
+my $conflict_time = 5;
 
 my %MaximumConcurrentJob = (
     'Full' => 1,
@@ -41,10 +49,10 @@ my %MaximumConcurrentJob = (
     );
 
 ################################################################
-# The Job intend to use a separate file-daemon for each of our clusters.
-# The schedule calls for Full, Incremental, and Differential backups to
+# The Job intend to use a separate file-daemon for each of our clusters.  The
+# schedule calls for Full, Incremental, and Differential backups to
 # occasionally run simultaneously but I want to make sure that a slot is always
-# open for one job of each level to run against the cluster.  
+# open for one job of each level to run against the cluster.
 
 # The behavior might be summarized by:
 # Maximum Concurrent Full Jobs = 1
@@ -65,6 +73,11 @@ if ($@) {
     exit -1;
 }
 
+# We store some information in our $working directory
+if (! -d $working) {
+    mkdir($working);
+}
+
 my $l;
 # Get the list of running jobs for the same level and the same client
 if ($level =~ /^([FDI])/) {
@@ -74,6 +87,23 @@ if ($level =~ /^([FDI])/) {
     exit -1;
 }
 
+# We escape the client name to avoid issues with unexpected characters
+my $client_esc = $client;
+$client_esc =~ s/[^a-z0-9.-_]/_/gi;
+
+# The file in our working directory is used to avoid concurrent conflicts
+# If the same level for the given client was authorized few seconds ago,
+# we can delay our test to the next loop.
+my @attrs = stat("$working/${client_esc}_${l}");
+if (@attrs) {
+    # attrs[9] is the mtime
+    if ($attrs[9] > scalar(time() - $conflict_time)) {
+        print "Job started recently with the same level, testing the next time\n";
+        exit 1;
+    }
+}
+
+# We put our bconsole commands output into a temp file
 my ($fh, $filename) = File::Temp::tempfile();
 if (!open(FP, "|$bconsole> $filename")) {
     print "ERROR: Unable to execute bconsole. Job control disabled.\n$!";
@@ -84,13 +114,14 @@ if (!open(FP, "|$bconsole> $filename")) {
 print FP ".api 2 api_opts=j\n";
 print FP ".status dir running client=\"$client\"\nquit\n";
 close(FP);
-unlink($filename);
+unlink($filename);              # The file is still open via tempfile()
 
 my $running;
 while (my $line = <$fh>) {
     if ($verbose) {
         print "DEBUG: $line";
     }
+    # {"running":[{"jobid":3,"level":"F","type":"B","status":"a","status_desc":"SD despooling Attributes","comment":"","jobbytes":0,"jobfiles":0,"job":"BackupClient1.2023-03-01_13.46.46_03","name":"BackupClient1","clientname":"zog8-fd","fileset":"Full Set","storage":"File1","rstorage":"","schedtime_epoch":1677674805,"schedtime":"2023-03-01 13:46:45","starttime_epoch":1677674808,"starttime":"2023-03-01 13:46:48","priority":10,"errors":0}],"error":0,"errmsg":""}
     if ($line =~ /^\{/) {
         $running = $line;
         last;
@@ -102,22 +133,34 @@ if (!$running) {
     exit -1;
 }
 
+# We have a JSON string that we can decode and analyze. All parameters
+# can be used in our decision to run or not
 my $json = JSON::decode_json($running);
 if (!$json || !$json->{running}) {
     print "ERROR: Unable to decode JSON output from Director. Job control disabled.\n";
     exit -1;
 }
 
+# In this example, we filter the job list by level and by status
 my @jobs = grep {
     $_->{level} eq $l && $_->{status} eq 'R'
    } @{ $json->{running} };
 
+
+# @jobs contains the list of running jobs with the given level
 my $nb = scalar(@jobs);
 print "Found $nb Job(s) running at level $level for $client\n";
 
-if ($nb <= $MaximumConcurrentJob{$level}) {
+# We do a simple check on the number of jobs running for the client at a certain level
+if ($nb < $MaximumConcurrentJob{$level}) {
+    if (open(FP, ">$working/${client_esc}_${l}")) {
+        close(FP);
+    }
+    # OK, let it go!
     exit 0;
+
 } else {
+    # Need to wait for the next time
     exit 1;
 }
 
