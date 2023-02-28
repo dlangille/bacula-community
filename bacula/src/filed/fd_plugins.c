@@ -1585,6 +1585,7 @@ bool plugin_query_parameter(JCR *jcr, char *param, char *command, void sendit(JC
    bRC rc;
    int len;
    int i;
+   int found=0;
 
    Dmsg0(dbglvl, "plugin_query\n");
 
@@ -1629,9 +1630,16 @@ bool plugin_query_parameter(JCR *jcr, char *param, char *command, void sendit(JC
       /* check out status */
       if (rc != bRC_OK){
          Dmsg0(dbglvl, "plugin->queryParameter returned error\n");
-         return false;
+         OutputWriter ow;// TODO: pass api_opts
+         sendit(jcr, ow.get_output(OT_STRING, "error", "plugin protocol error", OT_END));
+         goto bail_out;
       }
+      found=1;
       break;
+   }
+   if (!found) {
+      OutputWriter ow;        // TODO: pass api_opts
+      sendit(jcr, ow.get_output(OT_STRING, "error", "plugin not found", OT_END));
    }
 bail_out:
    jcr->plugin_ctx = NULL;
