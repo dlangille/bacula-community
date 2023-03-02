@@ -73,6 +73,9 @@ static void close_plugin(Plugin *plugin)
    if (plugin->file) {
       free(plugin->file);
    }
+   if (plugin->name) {
+      free(plugin->name);
+   }
    free(plugin);
 }
 
