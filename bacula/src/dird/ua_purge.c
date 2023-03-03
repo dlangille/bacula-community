@@ -373,10 +373,6 @@ void purge_files_from_jobs(UAContext *ua, char *jobs)
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete MetaAttachment sql=%s\n", query.c_str());
 
-   Mmsg(query, "DELETE FROM TagJob WHERE JobId IN (%s)", jobs);
-   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
-   Dmsg1(050, "Delete TagJob sql=%s\n", query.c_str());
-
    Mmsg(query, "DELETE FROM File WHERE JobId IN (%s)", jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete File sql=%s\n", query.c_str());
@@ -392,6 +388,14 @@ void purge_files_from_jobs(UAContext *ua, char *jobs)
    Mmsg(query, "DELETE FROM PathVisibility WHERE JobId IN (%s)", jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete PathVisibility sql=%s\n", query.c_str());
+
+   Mmsg(query, "DELETE FROM Object WHERE JobId IN (%s)", jobs);
+   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
+   Dmsg1(050, "Delete Object sql=%s\n", query.c_str());
+
+   Mmsg(query, "DELETE FROM FileMedia WHERE JobId IN (%s)", jobs);
+   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
+   Dmsg1(050, "Delete JobMedia sql=%s\n", query.c_str());
 
    /*
     * Now mark Job as having files purged. This is necessary to
@@ -534,21 +538,17 @@ void purge_jobs_from_catalog(UAContext *ua, char *jobs)
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete JobMedia sql=%s\n", query.c_str());
 
-   Mmsg(query, "DELETE FROM FileMedia WHERE JobId IN (%s)", jobs);
-   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
-   Dmsg1(050, "Delete JobMedia sql=%s\n", query.c_str());
-
    Mmsg(query, "DELETE FROM Log WHERE JobId IN (%s)", jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete Log sql=%s\n", query.c_str());
 
-   Mmsg(query, "DELETE FROM Object WHERE JobId IN (%s)", jobs);
-   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
-   Dmsg1(050, "Delete Object sql=%s\n", query.c_str());
-
    Mmsg(query, "DELETE FROM RestoreObject WHERE JobId IN (%s)", jobs);
    db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
    Dmsg1(050, "Delete RestoreObject sql=%s\n", query.c_str());
+
+   Mmsg(query, "DELETE FROM TagJob WHERE JobId IN (%s)", jobs);
+   db_sql_query(ua->db, query.c_str(), NULL, (void *)NULL);
+   Dmsg1(050, "Delete TagJob sql=%s\n", query.c_str());
 
    /* The JobId of the Snapshot record is no longer usable
     * TODO: Migth want to use a copy for the jobid?
