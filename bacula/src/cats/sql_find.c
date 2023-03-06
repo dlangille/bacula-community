@@ -430,7 +430,7 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
          "EndFile,EndBlock,VolType,VolParts,VolCloudParts,LastPartBytes,"
          "LabelType,LabelDate,StorageId,"
          "Enabled,LocationId,RecycleCount,InitialWrite,"
-         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention "
+         "ScratchPoolId,RecyclePoolId,VolReadTime,VolWriteTime,ActionOnPurge,CacheRetention, "
          "VolEncrypted "
          "FROM Media WHERE PoolId=%s AND MediaType='%s' "
          " AND (VolStatus IN ('Full', 'Append', 'Used') OR (VolStatus IN ('Recycle', 'Purged', 'Used') AND Recycle=1)) "
