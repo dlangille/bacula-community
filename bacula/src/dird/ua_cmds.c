@@ -776,7 +776,8 @@ static int setbwlimit_client(UAContext *ua, CLIENT *client, char *Job, int64_t l
       } else {
           Mmsg(buf, _("Bandwidth set to unlimited"));
       }
-      ua->info_msg(_("2000 %s %s\n"), buf.c_str(), _("on running and future jobs"));
+      ua->info_msg(_("2000 %s %s\n"), buf.c_str(),
+                   *Job ? _("on running Job") : _("on running and future jobs"));
    }
 
    ua->jcr->file_bsock->signal(BNET_TERMINATE);
