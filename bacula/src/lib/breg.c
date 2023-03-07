@@ -251,8 +251,7 @@ char *BREGEXP::replace(const char *fname, struct stat *sp)
 
 char *BREGEXP::return_fname(const char *fname, int len)
 {
-   result = check_pool_memory_size(result, len+1);
-   strcpy(result,fname);
+   pm_strcpy(result, fname);
    return result;
 }
 
