@@ -577,6 +577,10 @@ term_find_files(FF_PKT *ff)
 void dump_name_list(const char* file, int lineno, int lvl, const char *prefix,
       findFILESET *fileset)
 {
+   if (fileset == NULL) {
+      d_msg(file, lineno, lvl, "%s Fileset is NULL\n", prefix);
+      return;
+   }
    for (int i=0; i<fileset->include_list.size(); i++) {
       findINCEXE *incexe = (findINCEXE *)fileset->include_list.get(i);
       dlistString *node;
