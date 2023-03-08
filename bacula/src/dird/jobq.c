@@ -561,16 +561,6 @@ void *jobq_server(void *arg)
                case 0:
                   Jmsg(jcr, M_INFO, 0, _("User defined resources are available.\n"));
                   break;
-               case 1:
-                  if (jcr->getJobStatus() != JS_WaitUser) {
-                     Jmsg(jcr, M_INFO, 0, _("The Job will wait for user defined resources to be available.\n"));
-                  }
-                  jcr->setJobStatus(JS_WaitUser);
-                  if (!job_canceled(jcr)) {
-                     je = jn;            /* point to next waiting job */
-                     continue;
-                  }
-                  break;
                case 2:          // skip priority checks
                   jcr->setJobStatus(JS_Canceled);
                   Jmsg(jcr, M_FATAL, 0, _("Job canceled from Runscript\n"));
@@ -579,9 +569,20 @@ void *jobq_server(void *arg)
                   jcr->JobPriority = 9999;
                   Jmsg(jcr, M_INFO, 0, _("Job Priority adjusted.\n"));
                   break;
-               default:         // Incorrect code, must review the script
-                  jcr->next_qrunscript_execution = -1;
-                  Jmsg(jcr, M_WARNING, 0, _("Incorrect return code %d for user defined resource checking script.\n"), runcode);
+               case 1:          // wait code
+               default:         // Incorrect code, must review the script or maybe it's a timer issue
+                  if (runcode != 1) {
+                     Dmsg1(DT_SCHEDULER, "Incorrect return code %d for user defined resource checking script.\n",
+                           runcode);
+                  }
+                  if (jcr->getJobStatus() != JS_WaitUser) {
+                     Jmsg(jcr, M_INFO, 0, _("The Job will wait for user defined resources to be available.\n"));
+                  }
+                  jcr->setJobStatus(JS_WaitUser);
+                  if (!job_canceled(jcr)) {
+                     je = jn;            /* point to next waiting job */
+                     continue;
+                  }
                   break;
                }
             } else if (jcr->next_qrunscript_execution > 0) {
