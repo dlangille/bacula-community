@@ -44,7 +44,7 @@ my $conflict_time = 5;
 
 my %MaximumConcurrentJob = (
     'Full' => 1,
-    'Differental' => 1,
+    'Differential' => 1,
     'Incremental' => 1
     );
 
