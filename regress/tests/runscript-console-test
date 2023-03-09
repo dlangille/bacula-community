@@ -20,6 +20,38 @@ start_test
 
 cat <<EOF >> $conf/bacula-dir.conf
 Job {
+  Name = "Adm1"
+  Type = Admin
+  Client=$HOST-fd 
+  FileSet="Full Set"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+  RunScript {
+   RunsWhen = Before
+   RunsOnClient = no
+   Console = "prune expired volume yes"
+  }
+}
+
+Job {
+  Name = "Adm2"
+  Type = Admin
+  Client=$HOST-fd 
+  FileSet="Full Set"
+  Storage = File
+  Messages = Standard
+  Pool = Default
+  Maximum Concurrent Jobs = 10
+  RunScript {
+   RunsWhen = Before
+   RunsOnClient = no
+   Console = ".status dir blabla"
+  }
+}
+
+Job {
   Name = "RunScript"
   Type = Backup
   Client=$HOST-fd 
@@ -51,6 +83,11 @@ Job {
    Console = ".jlist jobid=1"
    Console = "cloud upload storage=File allpools"
   }
+  RunScript {
+   RunsWhen = After
+   RunsOnClient = no
+   Console = "prune expired volume yes"
+  }
 }
 EOF
 
@@ -59,6 +96,15 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @$out $tmp/log1.out
 label volume=TestVolume001 pool=Scratch storage=File
+@$out $tmp/logAdm1.out
+run job=Adm1 yes
+wait
+messages
+@$out $tmp/logAdm2.out
+run job=Adm2 yes
+wait
+messages
+@$out $tmp/log1.out
 run job=RunScript yes
 run job=RunScript yes
 run job=NightlySave yes
