@@ -335,14 +335,21 @@ class KubernetesPlugin(Plugin):
                                                                 self.config['labels']))
 
     def get_pods(self, namespace, estimate=False):
-        pods = self.__execute(lambda: pods_list_namespaced(self.corev1api, namespace, estimate, self.config['labels']))
-        if not isinstance(response, dict) or "error" not in response:
+        # the __execute() wrapper intercept exceptions and return and error dict()
+        # instead of the expected response
+        response = self.__execute(lambda: pods_list_namespaced(self.corev1api, namespace, estimate, self.config['labels']))
+        if not isinstance(response, dict) or not "error" in response:
+            pods = reponse
             nrpods = len(pods)
             logging.debug("get_pods[{}]:pods:{}".format(namespace, nrpods))
             self.pods_counter += nrpods
-        return pods
+            return pods
+        else:
+            return response # it is a dictionary with an error
 
     def get_pvcs(self, namespace, estimate=False):
+        # the __execute() wrapper intercept exceptions and return and error dict()
+        # instead of the expected response
         response = self.__execute(lambda: persistentvolumeclaims_list_namespaced(self.corev1api, namespace, estimate,
                                                                              self.config['labels']))
         if isinstance(response, tuple) and len(response) == 2:
