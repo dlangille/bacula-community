@@ -732,13 +732,19 @@ bool send_ls_plugin_fileset(JCR *jcr, const char *plugin, const char *path)
 /*
  * Send a include list with only one directory and recurse=no
  */
-bool send_ls_fileset(JCR *jcr, const char *path)
+bool send_ls_fileset(JCR *jcr, const char *path, bool dironly)
 {
    BSOCK *fd = jcr->file_bsock;
    fd->fsend(filesetcmd, "" /* no vss */, "" /* no snapshot */);
 
    fd->fsend("I\n");
-   fd->fsend("O h\n");         /* Limit recursion to one directory */
+   if (dironly) {              /* Display only directories */
+      fd->fsend("O eh\n");         /* Limit recursion to one directory */
+      fd->fsend("WF *\n");
+
+   } else {
+      fd->fsend("O h\n");         /* Limit recursion to one directory */
+   }
    fd->fsend("N\n");
    fd->fsend("F %s\n", path);
    fd->fsend("N\n");

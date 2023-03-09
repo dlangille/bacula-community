@@ -156,7 +156,7 @@ static struct dcmd_struct commands[] = { /* help */  /* can be used in runscript
  { NT_(".bvfs_delete_fileid"),dot_bvfs_delete_fileid,  NULL, NULL, false},
  { NT_(".setuid"), dot_setuid,                   _("Set UID/GID for the current session"), ".setuid uid=<uid> gid=<gid>", false},
  { NT_(".ls"), dot_ls_cmd,                       _("List files/directories on Client"),
-                                                   ".ls client=<cli> path=<str> [plugin=<str>]",       false},
+                                                   ".ls client=<cli> path=<str> [dironly] [plugin=<str>]",       false},
  { NT_(".types"),      typescmd,                 _("List Job Types defined"),        NULL, false},
  { NT_(".query"),     dot_querycmd,              _("Query Plugin's Client"),
    ".query client=<cli> plugin=<str> parameter=<str>", false},
@@ -260,6 +260,7 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
    JCR *jcr = ua->jcr;
    int i;
    bool ret = false;
+   bool dironly = false;
 
    jcr->setJobLevel(L_FULL);
    i = find_arg_with_value(ua, NT_("client"));
@@ -286,6 +287,11 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
    } else {
       ua->error_msg(_("path name missing.\n"));
       return false;
+   }
+
+   i = find_arg(ua, NT_("dironly"));
+   if (i > 0) {
+      dironly = true;
    }
 
    /* optional plugin=... parameter */
@@ -316,7 +322,7 @@ static bool dot_ls_cmd(UAContext *ua, const char *cmd)
          goto bail_out;
       }
    } else {
-      if (!send_ls_fileset(jcr, path)) {
+      if (!send_ls_fileset(jcr, path, dironly)) {
          ua->error_msg(_("Failed to send command to Client.\n"));
          goto bail_out;
       }
