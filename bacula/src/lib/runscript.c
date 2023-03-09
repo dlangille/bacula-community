@@ -343,9 +343,9 @@ int RUNSCRIPT::run_get_code(JCR *jcr, const char *name)
    case CONSOLE_CMD:
       if (console_command) {                 /* can we run console command? */
          if (!console_command(jcr, ecmd)) {  /* yes, do so */
-            status = 0;
-         } else {
             status = 1;
+         } else {
+            status = 0;
          }
       }
       break;
