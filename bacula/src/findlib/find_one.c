@@ -823,11 +823,15 @@ find_one_file(JCR *jcr, FF_PKT *ff_pkt,
        *    before traversing it.
        */
       rtn_stat = 1;
-      while (!job_canceled(jcr) && rtn_stat == 1) {
+      while (!job_canceled(jcr)) {
          char *p, *q, *s;
          int l;
          int i;
 
+         if (jcr->estimate_limit > 0 && jcr->JobFiles >= jcr->estimate_limit) {
+            Dmsg0(10, "We have reached the number of items to display in estimate\n");
+            break;
+         }
          status = breaddir(directory, dname.addr());
          if (status != 0) {
             /* error or end of directory */

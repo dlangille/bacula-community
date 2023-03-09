@@ -362,6 +362,7 @@ public:
    char StatusInfo[MAX_NAME_LENGTH];  /* Additionnal information about the error status */
    time_t last_stat_time;             /* Last time stats sent to Dir */
    time_t stat_interval;              /* Stats send interval default 30s, set to -1 to disable */
+   uint32_t estimate_limit;                /* Number of files to display in estimate */
    uint32_t getErrors() { return JobErrors + SDErrors; }; /* Get error count */
    bool sendProgressStatus();         /* Send the progress status to the dir (SD/FD) */
 
@@ -475,7 +476,6 @@ public:
    int incremental;                   /* set if incremental for SINCE */
    utime_t mtime;                     /* begin time for SINCE */
    int listing;                       /* job listing in estimate */
-   int estimate_limit;                /* Number of files to display in estimate */
    long Ticket;                       /* Ticket */
    char *big_buf;                     /* I/O buffer */
    POOLMEM *compress_buf;             /* Compression buffer */
