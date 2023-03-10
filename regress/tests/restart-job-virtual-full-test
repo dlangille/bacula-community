@@ -63,7 +63,7 @@ setdebug level=0 trace=0 hangup=-15000 client
 wait
 messages
 list jobs
-@exec "touch $cwd/build/po/*.po"
+@exec "sh -c 'touch $cwd/build/po/*.po'"
 run job=$JobName yes
 wait
 messages
