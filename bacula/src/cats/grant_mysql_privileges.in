@@ -20,6 +20,8 @@ fi
 if $bindir/mysql $* -u root -f 2>/dev/null 1>/dev/null  <<EOD
 use mysql;
 create user ${db_user} ${pass};
+create user ${db_user}@"%" ${pass};
+create user ${db_user}@localhost ${pass};
 EOD
 then
   echo "Created MySQL database user: ${db_user}"
@@ -28,7 +30,7 @@ fi
 if $bindir/mysql $* -u root -f <<END-OF-DATA
 use mysql
 grant all privileges on ${db_name}.* to ${db_user}@"%" ${ssl_options};
-grant process on *.* to %{db_user}@"%" ${ssl_options};
+grant process on *.* to ${db_user}@"%" ${ssl_options};
 select * from user;
 flush privileges;
 END-OF-DATA
