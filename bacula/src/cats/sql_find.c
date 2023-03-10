@@ -473,7 +473,7 @@ int BDB::bdb_find_next_volume(JCR *jcr, int item, bool InChanger, MEDIA_DBR *mr)
       } else {
          order = sql_media_order_most_recently_written[bdb_get_type_index()];    /* take most recently written */
       }
-      if (strcmp(mr->VolStatus, "Append") == 0) {
+      if (strcmp(mr->VolStatus, "Append") == 0 && mr->VolEncrypted != fnv_encrypted_any) {
          Mmsg(volencrypted, "AND VolEncrypted=%d", mr->VolEncrypted);
       }
       if (mr->VolType == 0) {
