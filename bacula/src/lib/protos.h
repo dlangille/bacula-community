@@ -167,7 +167,12 @@ int        set_socket_errno(int sockstat);
 int      bget_msg(BSOCK *sock);
 
 /* bpipe.c */
+#ifdef HAVE_WIN32
+/* cmd_string_opt adds /s option to cmd invocation (win32 only)*/
+BPIPE *          open_bpipe(char *prog, int wait, const char *mode, char *envp[]=NULL, bool cmd_string_opt = false);
+#else
 BPIPE *          open_bpipe(char *prog, int wait, const char *mode, char *envp[]=NULL);
+#endif
 int              close_wpipe(BPIPE *bpipe);
 int              close_epipe(BPIPE *bpipe);
 int              close_bpipe(BPIPE *bpipe);
@@ -432,7 +437,7 @@ void             jobstatus_to_ascii      (int JobStatus, char *msg, int maxlen);
 void             jobstatus_to_ascii_gui  (int JobStatus, char *msg, int maxlen);
 int              run_program             (char *prog, int wait, POOLMEM *&results);
 int              run_program_full_output (char *prog, int wait, POOLMEM *&results, char *env[]=NULL);
-int              run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, POOLMEM *&errors, char *env[]=NULL);
+int              run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, POOLMEM *&errors, char *env[]=NULL, bool cmd_string_opt=false);
 char *           action_on_purge_to_string(int aop, POOL_MEM &ret);
 const char *     job_type_to_str         (int type);
 const char *     job_status_to_str       (int stat, int errors);

@@ -2640,7 +2640,7 @@ CreateChildProcessA(const char *comspec, char *cmdLine,
  */
 HANDLE
 CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err,
-                    char * envp[] = NULL)
+                    char * envp[] = NULL, bool cmd_string_opt = false)
 {
    static const char *comspec = NULL;
    PROCESS_INFORMATION piProcInfo;
@@ -2676,7 +2676,18 @@ CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err,
    }
 
    POOL_MEM cmdLine(PM_FNAME);
-   Mmsg(cmdLine, "%s /c \"%s\"%s", comspec, exeFile, argStart);
+   if (cmd_string_opt) {
+      /* For working around multiple double quotes in the exe and arguments, we use the /s cmd option */
+      /* /s skips the parsing rules of /c and only strips the first and last quote so:
+      /*  cmd.exe /s /c ""C:\program files\myexe.exe" -file "C:\program files\args.txt"" will respect both */
+      /* "C:\program files\myexe.exe" and "C:\program files\args.txt" quotes */
+      Mmsg(cmdLine, "%s /s /c \"\"%s\"%s\"", comspec, exeFile, argStart);
+   } else { 
+      /* regular cmd call: cmd.exe /c "C:\program files\myexe.exe" -args C:\PROGR~1\args.txt */
+      /* arguments should not contain double quotes */
+      Mmsg(cmdLine, "%s /c \"%s\"%s", comspec, exeFile, argStart);
+   }
+   
 
    free(exeFile);
 
@@ -2737,7 +2748,7 @@ CloseHandleIfValid(HANDLE handle)
 #define MODE_NOSTDERR 16
 
 BPIPE *
-open_bpipe(char *prog, int wait, const char *mode, char *envp[])
+open_bpipe(char *prog, int wait, const char *mode, char *envp[], bool cmd_string_opt)
 {
     HANDLE hChildStdinRd, hChildStdinWr, hChildStdinWrDup,
         hChildStdoutRd, hChildStdoutWr, hChildStdoutRdDup,
@@ -2850,7 +2861,8 @@ open_bpipe(char *prog, int wait, const char *mode, char *envp[])
                            hChildStdoutWr,   // stdout HANDLE
                            (mode_map & MODE_STDERR || mode_map & MODE_NOSTDERR)
                                ? hChildStderrWr:hChildStdoutWr,   // stderr HANDLE
-                           envp); // envp  environment variables are added to the current process env var set.
+                           envp,
+                           cmd_string_opt); // envp  environment variables are added to the current process env var set.
 
     if ((HANDLE) bpipe->worker_pid == INVALID_HANDLE_VALUE) {
        ErrorExit("CreateChildProcess failed");

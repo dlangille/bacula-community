@@ -512,7 +512,7 @@ int run_program(char *prog, int wait, POOLMEM *&results)
  *           non-zero on error == berrno status
  *
  */
-int run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, POOLMEM *&errors, char *env[])
+int run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, POOLMEM *&errors, char *env[], bool cmd_string_opt)
 {
    BPIPE *bpipe;
    int stat1=0, stat2=0, stat3=0;
@@ -536,7 +536,12 @@ int run_program_full_output_and_error(char *prog, int wait, POOLMEM *&results, P
       mode = (char *)"re";
    }
 
+#ifdef HAVE_WIN32
+   bpipe = open_bpipe(prog, wait, mode, env, cmd_string_opt);
+#else
+   (void) cmd_string_opt;
    bpipe = open_bpipe(prog, wait, mode, env);
+#endif
    if (!bpipe) {
       stat1 = ENOENT;
       goto bail_out;
@@ -635,7 +640,7 @@ bail_out:
 int run_program_full_output(char *prog, int wait, POOLMEM *&results, char *env[])
 {
    char *errors = NULL;
-   return run_program_full_output_and_error(prog, wait, results, errors, env);
+   return run_program_full_output_and_error(prog, wait, results, errors, env, false);
 }
 
 /*
