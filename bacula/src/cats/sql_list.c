@@ -557,25 +557,30 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
 {
    POOL_MEM where2;
    bdb_lock();
+   const char *where_and = "WHERE";
+
    /* Get some extra SQL parameters if needed */
    const char *where = get_acls(DB_ACL_BIT(DB_ACL_JOB)     |
                                 DB_ACL_BIT(DB_ACL_FILESET) |
-                                DB_ACL_BIT(DB_ACL_CLIENT), (JobId == 0 || volume != NULL));
+                                DB_ACL_BIT(DB_ACL_CLIENT), true);
 
    const char *join = *where ? get_acl_join_filter(DB_ACL_BIT(DB_ACL_JOB)     |
                                                    DB_ACL_BIT(DB_ACL_FILESET) |
                                                    DB_ACL_BIT(DB_ACL_CLIENT)) : "";
 
-   if (JobId) {
-      Mmsg(where2, " WHERE JobMedia.JobId=%lu ", JobId);
+   if (*where) {
+      where_and = "AND";
    }
-   
+   if (JobId) {
+      Mmsg(where2, " %s JobMedia.JobId=%lu ", where_and, JobId);
+      where_and = "AND";
+   }
    if (volume) {
       POOL_MEM tmp, tmp2;
       int len = strlen(volume);
       tmp.check_size(len*2+1);
       db_escape_string(jcr, this, tmp.c_str(), volume, len);
-      Mmsg(tmp2, " %s Media.VolumeName = '%s' ", JobId == 0 ?"WHERE": "AND", tmp.c_str());
+      Mmsg(tmp2, " %s Media.VolumeName = '%s' ", where_and, tmp.c_str());
       pm_strcat(where2, tmp2.c_str());
    }
 
@@ -586,15 +591,15 @@ void BDB::bdb_list_jobmedia_records(JCR *jcr, uint32_t JobId, char *volume,
            "FROM JobMedia JOIN Media USING (MediaId) %s "
            "%s %s ORDER BY JobMediaId ASC",
            join,
-           where2.c_str(),
-           where);
+           where,
+           where2.c_str());
 
    } else {
       Mmsg(cmd, "SELECT JobId,Media.VolumeName,FirstIndex,LastIndex "
            "FROM JobMedia JOIN Media USING (MediaId) %s %s %s ORDER BY JobMediaId ASC",
            join,
-           where2.c_str(),
-           where);
+           where,
+           where2.c_str());
    }
    Dmsg1(DT_SQL|50, "q=%s\n", cmd);
 
