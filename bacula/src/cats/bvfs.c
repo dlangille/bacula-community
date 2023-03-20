@@ -1048,8 +1048,8 @@ void Bvfs::get_volumes(FileId_t fileid)
    POOL_MEM query;
 
    Mmsg(query,
-//                                   7                8
-"SELECT DISTINCT 'L',0,0,0,0,0,0, Media.VolumeName, Media.InChanger "
+//                                   7                8                  9
+"SELECT DISTINCT 'L',0,0,0,0,0,0, Media.VolumeName, Media.InChanger, Media.VolType "
 "FROM File JOIN JobMedia USING (JobId) JOIN Media USING (MediaId) "
 "WHERE File.FileId = %s "
   "AND File.FileIndex >= JobMedia.FirstIndex "
