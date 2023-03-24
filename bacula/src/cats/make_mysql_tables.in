@@ -348,6 +348,7 @@ CREATE TABLE JobHisto (
    StartTime DATETIME,
    EndTime DATETIME,
    RealEndTime DATETIME,
+   RealStartTime DATETIME,                           -- Time of the job for Virtual Full
    JobTDate BIGINT UNSIGNED DEFAULT 0,
    VolSessionId INTEGER UNSIGNED DEFAULT 0,
    VolSessionTime INTEGER UNSIGNED DEFAULT 0,
@@ -366,6 +367,15 @@ CREATE TABLE JobHisto (
    Reviewed TINYINT DEFAULT 0,
    Comment BLOB,
    FileTable CHAR(20) DEFAULT 'File',
+   isVirtualFull     TINYINT    default 0,   -- Result of a VirtualFull?
+   CompressRatio     float      default 0,   -- Compression Ratio
+   Rate              float      default 0,   -- Job Rate B/s
+   LastReadStorageId integer    default 0,   -- Id of the last Storage used to Read
+   LastReadDevice    blob,                   -- Name of the last Read Device
+   WriteStorageId    integer    default 0,   -- Id of the Storage used to Write
+   WriteDevice       blob,                   -- Name of the Write Device
+   StatusInfo        blob,                   -- Info to determine the error status
+   Encrypted         int        default 0,   -- 0 n/a, 1 no, 2 fd side, 4 sd side, 6 both
    INDEX (JobId),
    INDEX (StartTime),
    INDEX (JobTDate)
