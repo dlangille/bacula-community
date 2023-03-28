@@ -1783,7 +1783,7 @@ static void init_store_manager(JCR *jcr, const char *policy, int64_t policy_thre
       } else if (strcmp(policy, "FreeSpace") == 0) {
          Dmsg1(dbglvl_store_mngr, "Setting FreeSpace storage group policy for JobId: %d\n", jcr->JobId);
          jcr->store_mngr = New(FreeSpaceStore());
-      } else if (strcmp(policy, "LastBackupedTo") == 0) {
+      } else if (strcmp(policy, "LastBackedUpTo") == 0) {
          Dmsg1(dbglvl_store_mngr, "Setting LastBackupedTo storage group policy for JobId: %d\n", jcr->JobId);
          jcr->store_mngr = New(LastBackupedToStore());
       } else if (strcmp(policy, "FreeSpaceLeastUsed") == 0) {
