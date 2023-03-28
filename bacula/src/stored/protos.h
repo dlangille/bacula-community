@@ -275,6 +275,7 @@ void    _dbg_list_one_device(DEVICE *dev, const char *f, int l);
         _dbg_list_one_device(dev, __FILE__, __LINE__)
 
 /* From vol_mgr.c */
+bool is_writing_volume(const char *VolumeName);
 void    init_vol_list_lock();
 void    term_vol_list_lock();
 VOLRES *reserve_volume(DCR *dcr, const char *VolumeName);
@@ -286,7 +287,6 @@ bool    volume_unused(DCR *dcr);
 void    create_volume_lists();
 void    free_volume_lists();
 void    list_volumes(void sendit(const char *msg, int len, void *sarg), void *arg);
-bool    is_volume_in_use(DCR *dcr);
 extern  int vol_list_lock_count;
 void    add_read_volume(JCR *jcr, const char *VolumeName);
 void    remove_read_volume(JCR *jcr, const char *VolumeName);

@@ -1349,6 +1349,10 @@ static bool volumeprotect_cmd(JCR *jcr)
       unbash_spaces(mediatype);
       unbash_spaces(device.c_str());
       unbash_spaces(volume);
+      if (is_writing_volume(volume)) {
+        dir->fsend(_("3900 Unable to set immutable flag on %s, volume still in use\n"), volume);
+        return true;
+      }
       DCR *dcr = find_any_device(jcr, device, mediatype, drive);
       if (dcr) {
          DEVICE *dev = dcr->dev;

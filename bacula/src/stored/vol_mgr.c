@@ -169,6 +169,20 @@ bool is_read_volume(JCR *jcr, const char *VolumeName)
 }
 
 /*
+ * Check if volume name is in the read list.
+ */
+bool is_writing_volume(const char *VolumeName)
+{
+   VOLRES vol, *fvol;
+   lock_volumes();
+   vol.vol_name = bstrdup(VolumeName);
+   fvol = (VOLRES *)vol_list->binary_search(&vol, name_compare);
+   free(vol.vol_name);
+   unlock_volumes();
+   return fvol && fvol->is_writing();
+}
+
+/*
  * Remove a given volume name from the read list.
  */
 void remove_read_volume(JCR *jcr, const char *VolumeName)
