@@ -15,7 +15,11 @@ JobName=backup
 scripts/cleanup
 scripts/copy-confs
 
-#
+
+# TODO: Run the command with jobid=%j in a runscript
+# TODO: Run the command with concurrent jobs and MaximumVolumeJobs = 1
+# TODO: Check how the immutable flag is removed
+
 # Zap out any schedule in default conf file so that
 #  it doesn't start during our test
 #
@@ -30,6 +34,31 @@ $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeJobs', '1', 'Poo
 
 cat <<EOF >> $conf/bacula-dir.conf
 Job {
+  Name = acljob
+  Jobdefs = DefaultJob
+  ClientRunBeforeJob = "sleep 5"
+  RunScript {
+    Console = "update volumeprotect jobid=%i"
+    RunsOnClient = no
+    RunsWhen = After
+  }
+}
+Console {   
+  Name = restricted-job
+  Password = xxx
+  JobAcl    =  acljob
+  ClientAcl = $HOST-fd
+  PoolAcl   = File
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = File1
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = *all*
+}
+
+Job {
   Name = adm-update-protected
   Type = Admin
   Runscript {
@@ -38,6 +67,19 @@ Job {
    RunsWhen = Before
   }
   JobDefs = DefaultJob
+}
+EOF
+
+cat <<EOF > $tmp/bconsole.conf.job
+Console {
+  Name = restricted-job
+  Password = xxx
+}
+Director {
+  Name = $HOST-dir
+  DIRport = $BASEPORT
+  address = localhost
+  Password = xxx
 }
 EOF
 
@@ -99,6 +141,23 @@ wait
 messages
 @output $tmp/vol5.out
 llist volume=Vol-0014
+@$out $tmp/vol6.out
+run job=acljob yes
+wait
+messages
+@output $tmp/vol6.out
+llist volume=Vol-0010
+llist volume=Vol-0011
+@$out $tmp/vol7.out
+run job=acljob level=full yes
+@sleep 3
+setbandwidth
+1
+5MB/s
+yes
+run job=acljob level=full yes
+wait
+messages
 quit
 END_OF_DATA
 
@@ -149,6 +208,14 @@ if [ $? != 0 ]; then
 fi
 
 $bperl -e 'check_protect("$tmp/log1.out", "Vol-0014", "Used", 0, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0011", "Used", 1, 1)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0010", "Used", 1, 1)'
 if [ $? != 0 ]; then
     estat=1
 fi
