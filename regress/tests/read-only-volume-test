@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Copyright (C) 2000-2021 Kern Sibbald
-# Copyright (C) 2021-2022 Bacula Systems SA
+# Copyright (C) 2021-2023 Bacula Systems SA
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # Run a simple backup of the Bacula build directory
@@ -29,8 +29,12 @@ cp $scripts/bacula-dir.conf $tmp/1
 sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
 
 $bperl -e "add_attribute('$conf/bacula-sd.conf', 'SetVolumeReadOnly', 'yes', 'Device')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MinimumVolumeProtectionTime', '10s', 'Device', 'FileChgr2-Dev1')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MinimumVolumeProtectionTime', '10s', 'Device', 'FileChgr2-Dev2')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '50MB', 'Pool')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeJobs', '1', 'Pool')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'VolumeRetention', '20s', 'Pool', 'Default')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'LabelFormat', 'Default', 'Pool', 'Default')"
 
 cat <<EOF >> $conf/bacula-dir.conf
 Job {
@@ -158,6 +162,12 @@ yes
 run job=acljob level=full yes
 wait
 messages
+@$out $tmp/vol8.out
+run job=$JobName level=Full storage=File2 pool=Default yes
+wait
+messages
+llist volumes
+@exec "stat $tmp/Vol-0002"
 quit
 END_OF_DATA
 
