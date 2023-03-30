@@ -668,6 +668,9 @@ static bool display_runscript(HPKT &hpkt)
 
       } else if (script->when == SCRIPT_AfterVSS) {
          hpkt.sendit(hpkt, "        \"RunsWhen\": \"AfterVSS\",\n");
+
+      } else if (script->when == SCRIPT_AtJobCompletion) {
+         hpkt.sendit(hpkt, "        \"RunsWhen\": \"AtJobCompletion\",\n");
       }
 
       if (script->fail_on_error != def->fail_on_error) {
