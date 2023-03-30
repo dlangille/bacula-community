@@ -116,6 +116,7 @@ dd if=/dev/urandom of=$dev8/data bs=1M count=600
 
 # Get SD password
 sd_pass=`grep -i password ${bin}/bacula-sd.conf | head -n 1`
+SDPORT=`expr $BASEPORT + 2`
 
 # Add simple job with store group
 cat <<END_OF_DATA >> $bin/bacula-dir.conf
@@ -168,8 +169,8 @@ Job {
 
 Autochanger {
   Name = Disk1
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk1
   Media Type = Disk1
@@ -179,8 +180,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk2
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk2
   Media Type = Disk2
@@ -190,8 +191,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk3
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk3
   Media Type = Disk3
@@ -201,8 +202,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk4
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk4
   Media Type = Disk4
@@ -212,8 +213,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk5
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk5
   Media Type = Disk5
@@ -223,8 +224,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk6
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk6
   Media Type = Disk6
@@ -234,8 +235,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk7
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk7
   Media Type = Disk7
@@ -245,8 +246,8 @@ ${sd_pass}
 
 Autochanger {
   Name = Disk8
-  Address = stretch                # N.B. Use a fully qualified name here
-  SDPort = 8103
+  Address = localhost                # N.B. Use a fully qualified name here
+  SDPort = $SDPORT
 ${sd_pass}
   Device = Disk8
   Media Type = Disk8
