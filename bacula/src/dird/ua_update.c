@@ -1116,6 +1116,7 @@ struct media_protect {
    char volname[MAX_NAME_LENGTH];
    char storage[MAX_NAME_LENGTH];
    char mediatype[MAX_NAME_LENGTH];
+   uint32_t retention;
 };
 
 /* 
@@ -1125,12 +1126,13 @@ static int media_protect_list_handler(void *ctx, int num_fields, char **row)
 { 
    alist *val = (alist *)ctx; 
  
-   if (row[0] && row[1] && row[2] && row[3]) {
+   if (row[0] && row[1] && row[2] && row[3] && row[4]) {
       struct media_protect *a = (struct media_protect *)malloc(sizeof(struct media_protect));
       a->id = str_to_uint64(row[0]);
       bstrncpy(a->mediatype, row[1], sizeof(a->mediatype));
       bstrncpy(a->volname, row[2], sizeof(a->volname));
       bstrncpy(a->storage, row[3], sizeof(a->storage));
+      a->retention = str_to_uint64(row[4]);
       val->append(a); 
    }
  
@@ -1194,10 +1196,14 @@ static int update_volumeprotect_cmd(UAContext *ua)
       return 0;
    }
 
-   Mmsg(tmp, "SELECT Media.MediaId, Media.MediaType, Media.VolumeName, Storage.Name "
-               "FROM Media JOIN Storage USING (StorageId) JOIN Pool USING (PoolId) "
-              "WHERE UseProtect=1 AND Protected=0 AND VolStatus IN ('Used', 'Full') %s "
-           "ORDER BY Storage.Name", filter.c_str());
+   db_lock(ua->db);
+   const char *where_pool = ua->db->get_acls(DB_ACL_BIT(DB_ACL_POOL), false);
+   /* We use DISTINCT because when looking with JobId, we can get multiple time the same record */
+   Mmsg(tmp, "SELECT DISTINCT Media.MediaId, Media.MediaType, Media.VolumeName, Storage.Name, Media.VolRetention "
+               "FROM Media JOIN Storage USING (StorageId) JOIN Pool USING (PoolId) %s "
+              "WHERE UseProtect=1 AND Protected=0 AND VolStatus IN ('Used', 'Full') %s %s "
+           "ORDER BY Storage.Name", join_job, filter.c_str(), where_pool);
+   db_unlock(ua->db);
 
    db_sql_query(ua->db, tmp.c_str(),
                 media_protect_list_handler, &list);
@@ -1254,8 +1260,8 @@ static int update_volumeprotect_cmd(UAContext *ua)
       bash_spaces(selected_dev_name);
       bash_spaces(elt->volname);
 
-      sd->fsend("volumeprotect mediatype=%s device=%s volume=%s drive=%d\n",
-                elt->mediatype, selected_dev_name, elt->volname, drive);
+      sd->fsend("volumeprotect mediatype=%s device=%s volume=%s drive=%d retention=%u\n",
+                elt->mediatype, selected_dev_name, elt->volname, drive, elt->retention);
 
       unbash_spaces(elt->mediatype);
       unbash_spaces(selected_dev_name);

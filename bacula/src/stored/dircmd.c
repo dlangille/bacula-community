@@ -1340,11 +1340,12 @@ static bool volumeprotect_cmd(JCR *jcr)
    char mediatype[MAX_NAME_LENGTH];
    char volume[MAX_NAME_LENGTH];
    POOL_MEM device, tmp;
+   uint32_t retention;
    int32_t drive;
    bool ok;
 
-   ok = sscanf(dir->msg, "volumeprotect mediatype=%127s device=%127s volume=%127s drive=%d",
-               mediatype, device.c_str(), volume, &drive) == 4;
+   ok = sscanf(dir->msg, "volumeprotect mediatype=%127s device=%127s volume=%127s drive=%d retention=%u",
+               mediatype, device.c_str(), volume, &drive, &retention) == 5;
    if (ok) {
       unbash_spaces(mediatype);
       unbash_spaces(device.c_str());
@@ -1374,7 +1375,8 @@ static bool volumeprotect_cmd(JCR *jcr)
          } else if (dev->device->set_vol_read_only) {
             /* Set volume as immutable/read only */
             pm_strcpy(tmp, "");
-            if (dev->set_atime(-1, volume, time(NULL) + dev->device->min_volume_protection_time) < 0) {
+            uint32_t when = MAX(dev->device->min_volume_protection_time, retention);
+            if (dev->set_atime(-1, volume, time(NULL) + when) < 0) {
                berrno be;
                Mmsg(tmp, _(" Failed to set the volume %s on device %s in atime retention, ERR=%s.\n"),
                     volume, dev->print_name(), be.bstrerror());
@@ -1385,9 +1387,11 @@ static bool volumeprotect_cmd(JCR *jcr)
                dir->fsend(_("3900 Failed to set the volume %s on device %s in read-only, ERR=%s.%s\n"),
                           volume, dev->print_name(), be.bstrerror(), tmp.c_str());
             } else {
-               dir->fsend(_("3000 Marking volume \"%s\" as read-only.\n"), volume);
+               char buf[128];
+               dir->fsend(_("3000 Marking volume \"%s\" as read-only. Retention set to %s.\n"),
+                          volume, edit_utime(when, buf, sizeof(buf)));
                events_send_msg(jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)jcr,
-                               "Mark volume \"%s\" as read-only", volume);
+                               "Mark volume \"%s\" as read-only, retention %s", volume, buf);
             }
          } else {
             dir->fsend(_("3900 Device %s not configured for ReadOnly or Immutable\n"), dev->device->hdr.name);

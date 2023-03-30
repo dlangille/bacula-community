@@ -215,7 +215,8 @@ struct VOLUME_CAT_INFO {
    uint32_t VolCatRecycles;           /* Number of recycles this volume */
    uint32_t EndFile;                  /* Last file number */
    uint32_t EndBlock;                 /* Last block number */
-
+   uint32_t VolRetention;             /* Volume Retention */
+   
    int32_t  LabelType;                /* Bacula/ANSI/IBM */
    int32_t  Slot;                     /* >0=Slot loaded, 0=nothing, -1=unknown */
    uint32_t VolCatMaxJobs;            /* Maximum Jobs to write to volume */

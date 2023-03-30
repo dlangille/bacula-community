@@ -51,7 +51,7 @@ static char OK_media[] = "1000 OK VolName=%127s VolJobs=%u VolFiles=%lu"
    " VolReadTime=%lld VolWriteTime=%lld EndFile=%lu EndBlock=%lu"
    " VolType=%lu LabelType=%ld MediaId=%lld ScratchPoolId=%lld"
    " VolParts=%d VolCloudParts=%d LastPartBytes=%lld Enabled=%d MaxPoolBytes=%lld PoolBytes=%lld Recycle=%d"
-   " Protected=%d UseProtect=%d VolEncrypted=%d\n";
+   " Protected=%d UseProtect=%d VolEncrypted=%d VolRetention=%u\n";
 
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
@@ -223,9 +223,9 @@ static bool do_get_volume_info(DCR *dcr)
                &vol.LabelType, &vol.VolMediaId, &vol.VolScratchPoolId,
                &vol.VolCatParts, &vol.VolCatCloudParts,
                &vol.VolLastPartBytes, &Enabled, &vol.MaxPoolBytes,
-               &vol.PoolBytes, &Recycle, &Protected, &UseProtect, &VolEncrypted);
+               &vol.PoolBytes, &Recycle, &Protected, &UseProtect, &VolEncrypted, &vol.VolRetention);
     Dmsg2(dbglvl, "<dird n=%d %s", n, dir->msg);
-    if (n != 36) {
+    if (n != 37) {
        Dmsg1(dbglvl, "get_volume_info failed: ERR=%s", dir->msg);
        /*
         * Note, we can get an error here either because there is

@@ -68,7 +68,7 @@ static char OK_media[] = "1000 OK VolName=%s VolJobs=%u VolFiles=%u"
    " VolWriteTime=%s EndFile=%u EndBlock=%u VolType=%u LabelType=%d"
    " MediaId=%s ScratchPoolId=%s VolParts=%d VolCloudParts=%d"
    " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d"
-   " Protected=%d UseProtect=%d VolEncrypted=%d\n";
+   " Protected=%d UseProtect=%d VolEncrypted=%d VolRetention=%u\n";
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
 
@@ -121,7 +121,7 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
       mr->Enabled,
       edit_uint64(pr.MaxPoolBytes, ed11),
       edit_uint64(pr.PoolBytes, ed12),
-      mr->Recycle, mr->Protected, mr->UseProtect, mr->VolEncrypted);
+      mr->Recycle, mr->Protected, mr->UseProtect, mr->VolEncrypted, mr->VolRetention);
    unbash_spaces(mr->VolumeName);
    Dmsg2(100, "Vol Info for %s: %s", jcr->Job, sd->msg);
    return stat;
