@@ -1376,7 +1376,8 @@ static bool volumeprotect_cmd(JCR *jcr)
             /* Set volume as immutable/read only */
             pm_strcpy(tmp, "");
             uint32_t when = MAX(dev->device->min_volume_protection_time, retention);
-            if (dev->set_atime(-1, volume, time(NULL) + when) < 0) {
+            btime_t now = time(NULL);
+            if (dev->set_atime(-1, volume, now + when) < 0) {
                berrno be;
                Mmsg(tmp, _(" Failed to set the volume %s on device %s in atime retention, ERR=%s.\n"),
                     volume, dev->print_name(), be.bstrerror());
@@ -1387,11 +1388,13 @@ static bool volumeprotect_cmd(JCR *jcr)
                dir->fsend(_("3900 Failed to set the volume %s on device %s in read-only, ERR=%s.%s\n"),
                           volume, dev->print_name(), be.bstrerror(), tmp.c_str());
             } else {
-               char buf[128];
-               dir->fsend(_("3000 Marking volume \"%s\" as read-only. Retention set to %s.\n"),
-                          volume, edit_utime(when, buf, sizeof(buf)));
+               char buf[128], buf2[128];
+               dir->fsend(_("3000 Marking volume \"%s\" as read-only. Retention set to %s (%s).\n"),
+                          volume,
+                          bstrftime(buf2, sizeof(buf2), now+when),
+                          strip_trailing_junk(edit_utime(when, buf, sizeof(buf))));
                events_send_msg(jcr, "SJ0003", EVENTS_TYPE_VOLUME, me->hdr.name, (intptr_t)jcr,
-                               "Mark volume \"%s\" as read-only, retention %s", volume, buf);
+                               "Mark volume \"%s\" as read-only, retention %s (%s)", volume, buf2, buf);
             }
          } else {
             dir->fsend(_("3900 Device %s not configured for ReadOnly or Immutable\n"), dev->device->hdr.name);
