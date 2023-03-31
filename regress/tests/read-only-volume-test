@@ -37,6 +37,18 @@ $bperl -e "add_attribute('$conf/bacula-dir.conf', 'VolumeRetention', '20s', 'Poo
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'LabelFormat', 'Default', 'Pool', 'Default')"
 
 cat <<EOF >> $conf/bacula-dir.conf
+Pool {
+  Name = Test1
+  Pool Type = Backup 
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = no                     # Prune expired volumes
+  Volume Retention = 5s
+  Maximum Volumes = 100               # Limit number of Volumes in Pool
+  MaximumVolumeBytes = 50MB
+  MaximumVolumeJobs = 1
+  LabelFormat = Test1
+}
+
 Job {
   Name = acljob
   Jobdefs = DefaultJob
@@ -166,8 +178,16 @@ messages
 run job=$JobName level=Full storage=File2 pool=Default yes
 wait
 messages
-llist volumes
-@exec "stat $tmp/Vol-0002"
+@output $tmp/vol8.out
+@# Check the small retention
+llist volume=Default0016
+llist volume=Default0017
+@exec "stat $tmp/Default0016"
+@exec "stat $tmp/Default0017"
+@$out $tmp/vol9.out
+run job=$JobName level=Full storage=File2 pool=Test1 yes
+wait
+messages
 quit
 END_OF_DATA
 
@@ -187,12 +207,12 @@ if [ $? != 0 ]; then
     estat=1
 fi
 
-$bperl -e 'check_protect("$tmp/log4.out", "Vol-0002", "Used", 1, 1)'
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0002", "Used", 1, 1, 365*24*60*60)'
 if [ $? != 0 ]; then
     estat=1
 fi
 
-$bperl -e 'check_protect("$tmp/log4.out", "Vol-0004", "Used", 1, 1)'
+$bperl -e 'check_protect("$tmp/log4.out", "Vol-0004", "Used", 1, 1, 365*24*60*60)'
 if [ $? != 0 ]; then
     estat=1
 fi
@@ -212,7 +232,7 @@ if [ $? != 0 ]; then
     estat=1
 fi
 
-$bperl -e 'check_protect("$tmp/log5.out", "Vol-0014", "Used", 1, 1)'
+$bperl -e 'check_protect("$tmp/log5.out", "Vol-0014", "Used", 1, 1, 365*24*60*60)'
 if [ $? != 0 ]; then
     estat=1
 fi
@@ -221,11 +241,21 @@ $bperl -e 'check_protect("$tmp/log1.out", "Vol-0014", "Used", 0, 1)'
 if [ $? != 0 ]; then
     estat=1
 fi
-$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0011", "Used", 1, 1)'
+$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0011", "Used", 1, 1, 365*24*60*60)'
 if [ $? != 0 ]; then
     estat=1
 fi
-$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0010", "Used", 1, 1)'
+$bperl -e 'check_protect("$tmp/vol6.out", "Vol-0010", "Used", 1, 1, 365*24*60*60)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+# We test the atime value in addition
+$bperl -e 'check_protect("$tmp/vol8.out", "Default0016", "Used", 1, 1, 20)'
+if [ $? != 0 ]; then
+    estat=1
+fi
+# Here, the pool has 5s and the  device 10s, it should be 10s
+$bperl -e 'check_protect("$tmp/vol8.out", "Test10018", "Used", 1, 1, 10)'
 if [ $? != 0 ]; then
     estat=1
 fi
