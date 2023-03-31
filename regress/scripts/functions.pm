@@ -2597,7 +2597,20 @@ sub get_perm
 # Parse the output of llist volume to check the protection parameters
 sub check_protect
 {
-    my ($file, $name, $status, $protect, $useprotect) = @_;
+    my ($file, $name, $status, $protect, $useprotect, $atime) = @_;
+
+    if ($atime) {
+        my @attr = stat("$tmp/$name") or die "Unable to find $tmp/$name";
+        if ($attr[8] > ($attr[9] + $atime + 2) || $attr[8] < ($attr[9] + $atime - 2)) {
+            print "ERROR: the atime value is not correct fname=$tmp/$name atime=$attr[8] mtime=$attr[9] diff=$atime\n";
+            exit 1;
+        }
+        if ($protect && ($attr[2] & 07777) != 0400) {
+            print "ERROR: $tmp/$name is not protected mode=", $attr[2] & 07777, "\n";
+            exit 1;
+        }
+    }
+
     open(FP, $file) or die "Unable to open $file. $!";
     my $found=0;
     while (my $line = <FP>) {
