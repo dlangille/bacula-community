@@ -35,6 +35,7 @@ $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '50MB', 
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeJobs', '1', 'Pool')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'VolumeRetention', '20s', 'Pool', 'Default')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'LabelFormat', 'Default', 'Pool', 'Default')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'ActionOnPurge', 'Truncate', 'Pool')"
 
 cat <<EOF >> $conf/bacula-dir.conf
 Pool {
@@ -47,6 +48,7 @@ Pool {
   MaximumVolumeBytes = 50MB
   MaximumVolumeJobs = 1
   LabelFormat = Test1
+  ActionOnPurge = Truncate
 }
 
 Job {
@@ -186,14 +188,10 @@ llist volume=Default0017
 @exec "stat $tmp/Default0017"
 @$out $tmp/vol9.out
 run job=$JobName level=Full storage=File2 pool=Test1 yes
-wait
-messages
 quit
 END_OF_DATA
 
 run_bacula
-check_for_zombie_jobs storage=File1
-stop_bacula
 
 $bperl -e 'my @r = stat("$tmp/Vol-0001"); exit (($r[2] & 07777 & 0400) && $r[8] > $r[9] && $r[7] > 1000*1000*49);'
 if [ $? -ne 1 ]; then
@@ -259,6 +257,28 @@ $bperl -e 'check_protect("$tmp/vol8.out", "Test10018", "Used", 1, 1, 10)'
 if [ $? != 0 ]; then
     estat=1
 fi
+
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out $tmp/vol9.out
+wait
+messages
+time
+@exec "stat $tmp/Test10018"
+purge volume=Test10018 yes
+truncate volume=Test10018 storage=File2 yes
+@sleep 11
+truncate volume=Test10018 storage=File2 yes
+messages
+quit
+END_OF_DATA
+
+run_bconsole
+
+check_for_zombie_jobs storage=File1
+
+stop_bacula
+
 check_two_logs
 check_restore_diff
 end_test
