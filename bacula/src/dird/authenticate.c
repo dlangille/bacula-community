@@ -140,7 +140,8 @@ bool DIRAuthenticateSD::authenticate_storage_daemon(STORE *store)
       sd->clear_compress();
       Dmsg0(050, "*** No Dir compression to SD\n");
    }
-   if (jcr->SDVersion < SD_VERSION) {
+   // workaround with 30008 can be removed in 18.0.0
+   if (jcr->SDVersion < SD_VERSION && !(jcr->SDVersion == 30007 && SD_VERSION == 30008)) {
       status = M_FATAL;
       Mmsg(errmsg, _("[DE0031] Older Storage daemon at \"%s:%d\" incompatible with this Director.\n"),
            sd->host(), sd->port());

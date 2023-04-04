@@ -59,16 +59,21 @@ static char Create_jobmedia[] = "CatReq JobId=%ld CreateJobMedia\n";
 static char Create_filemedia[] = "CatReq JobId=%ld CreateFileMedia\n";
 static char OK_create_filemedia[] = "1000 OK CreateFileMedia\n";
 
+/* To be removed in 18.0.0 */
 /* Responses  sent to Storage daemon */
-static char OK_media[] = "1000 OK VolName=%s VolJobs=%u VolFiles=%u"
-   " VolBlocks=%u VolBytes=%s VolABytes=%s VolHoleBytes=%s VolHoles=%u"
-   " VolMounts=%u VolErrors=%u VolWrites=%s"
-   " MaxVolBytes=%s VolCapacityBytes=%s VolStatus=%s Slot=%d"
-   " MaxVolJobs=%u MaxVolFiles=%u InChanger=%d VolReadTime=%s"
-   " VolWriteTime=%s EndFile=%u EndBlock=%u VolType=%u LabelType=%d"
-   " MediaId=%s ScratchPoolId=%s VolParts=%d VolCloudParts=%d"
-   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d"
-   " Protected=%d UseProtect=%d VolEncrypted=%d VolRetention=%u\n";
+#define OK_media_base "1000 OK VolName=%s VolJobs=%u VolFiles=%u"           \
+   " VolBlocks=%u VolBytes=%s VolABytes=%s VolHoleBytes=%s VolHoles=%u"     \
+   " VolMounts=%u VolErrors=%u VolWrites=%s"                                \
+   " MaxVolBytes=%s VolCapacityBytes=%s VolStatus=%s Slot=%d"               \
+   " MaxVolJobs=%u MaxVolFiles=%u InChanger=%d VolReadTime=%s"              \
+   " VolWriteTime=%s EndFile=%u EndBlock=%u VolType=%u LabelType=%d"        \
+   " MediaId=%s ScratchPoolId=%s VolParts=%d VolCloudParts=%d"              \
+   " LastPartBytes=%lld Enabled=%d MaxPoolBytes=%s PoolBytes=%s Recycle=%d" \
+   " Protected=%d UseProtect=%d VolEncrypted=%d"
+
+static char OK_media[] = OK_media_base " VolRetention=%u\n";
+
+static char OK_media_old[] = OK_media_base "\n";
 
 static char OK_create[] = "1000 OK CreateJobMedia\n";
 
@@ -91,6 +96,14 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
    char ed1[50], ed2[50], ed3[50], ed4[50], ed5[50], ed6[50], ed7[50], ed8[50],
       ed9[50], ed10[50], ed11[50], ed12[50];
 
+   /* 30008 is a change inside 16.0.x branch, we can simplify the code in 18.0 */
+   char *protocol;
+   if (jcr->SDVersion < 30008) {
+      protocol = OK_media_old;
+   } else {
+      protocol = OK_media;
+   }
+
    POOL_DBR pr;
    pr.PoolId = mr->PoolId;
    has_quota_reached(jcr, &pr); /* Fill MaxPoolBytes and PoolBytes if needed */
@@ -98,7 +111,9 @@ static int send_volume_info_to_storage_daemon(JCR *jcr, BSOCK *sd, MEDIA_DBR *mr
    jcr->MediaId = mr->MediaId;
    pm_strcpy(jcr->VolumeName, mr->VolumeName);
    bash_spaces(mr->VolumeName);
-   stat = sd->fsend(OK_media, mr->VolumeName, mr->VolJobs,
+
+   stat = sd->fsend(protocol,
+      mr->VolumeName, mr->VolJobs,
       mr->VolFiles, mr->VolBlocks, edit_uint64(mr->VolBytes, ed1),
       edit_uint64(mr->VolABytes, ed2),
       edit_uint64(mr->VolHoleBytes, ed3),

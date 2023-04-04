@@ -171,18 +171,20 @@
  *  30005 04Jun15 - Added JobMedia queueing
  *  30006 11Apr17 - Added PoolBytes, MaxPoolBytes and Recycle
  *  30007 06Feb20 - Added can_create to the Find media request
+ *  30008 04Apr23 - Added VolumeRetention to Find_Media
  *
  * Community:
  *    305 04Jun15 - Added JobMedia queueing
  *    306 20Mar15 - Added comm line compression
  *    307 06Feb20 - Added can_create to the Find media request
  *  30007 02Dec20 - Sync with Enterprise
+ *  30008 04Apr23 - Added VolumeRetention to Find_Media
  */
 
 #ifdef COMMUNITY
-#define SD_VERSION 30007   /* Community SD version */
+#define SD_VERSION 30008   /* Community SD version */
 #else
-#define SD_VERSION 30007   /* Enterprise SD version */
+#define SD_VERSION 30008   /* Enterprise SD version */
 #endif
 
 /* FD_VERSION history Enterprise
