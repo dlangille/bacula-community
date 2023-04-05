@@ -1301,7 +1301,15 @@ void gdb_print_local(int level) {}
 
 int fs_get_free_space(const char *path, int64_t *freeval, int64_t *totalval)
 {
-#if defined(HAVE_SYS_STATVFS_H) || !defined(HAVE_WIN32)
+#if defined(HAVE_WIN32)
+   BOOL ret = GetDiskFreeSpaceExA(path, NULL, (PULARGE_INTEGER)totalval, (PULARGE_INTEGER)freeval);
+   if (ret) {
+      return 0;
+   } else {
+      return -1;
+   }
+
+#elif defined(HAVE_SYS_STATVFS_H) || !defined(HAVE_WIN32)
    struct statvfs st;
 
    if (statvfs(path, &st) == 0) {
