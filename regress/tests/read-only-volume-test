@@ -28,14 +28,17 @@ echo "s%  Schedule =%# Schedule =%g" >${outf}
 cp $scripts/bacula-dir.conf $tmp/1
 sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
 
+mkdir -p $tmp/add
+
 $bperl -e "add_attribute('$conf/bacula-sd.conf', 'SetVolumeReadOnly', 'yes', 'Device')"
 $bperl -e "add_attribute('$conf/bacula-sd.conf', 'MinimumVolumeProtectionTime', '10s', 'Device', 'FileChgr2-Dev1')"
 $bperl -e "add_attribute('$conf/bacula-sd.conf', 'MinimumVolumeProtectionTime', '10s', 'Device', 'FileChgr2-Dev2')"
-$bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '50MB', 'Pool')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '70MB', 'Pool')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeJobs', '1', 'Pool')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'VolumeRetention', '20s', 'Pool', 'Default')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'LabelFormat', 'Default', 'Pool', 'Default')"
 $bperl -e "add_attribute('$conf/bacula-dir.conf', 'ActionOnPurge', 'Truncate', 'Pool')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'AlignedDevice', '$tmp/add', 'Device')"
 
 cat <<EOF >> $conf/bacula-dir.conf
 Pool {
@@ -188,6 +191,9 @@ llist volume=Default0017
 @exec "stat $tmp/Default0017"
 @$out $tmp/vol9.out
 run job=$JobName level=Full storage=File2 pool=Test1 yes
+wait
+messages
+llist volume=Test10018
 quit
 END_OF_DATA
 
@@ -252,22 +258,21 @@ $bperl -e 'check_protect("$tmp/vol8.out", "Default0016", "Used", 1, 1, 20)'
 if [ $? != 0 ]; then
     estat=1
 fi
+
 # Here, the pool has 5s and the  device 10s, it should be 10s
-$bperl -e 'check_protect("$tmp/vol8.out", "Test10018", "Used", 1, 1, 10)'
+$bperl -e 'check_protect("$tmp/vol9.out", "Test10018", "Used", 1, 1, 10)'
 if [ $? != 0 ]; then
     estat=1
 fi
 
-
 cat <<END_OF_DATA >$tmp/bconcmds
 @$out $tmp/vol9.out
-wait
-messages
 time
 @exec "stat $tmp/Test10018"
 purge volume=Test10018 yes
 truncate volume=Test10018 storage=File2 yes
 @sleep 11
+time
 truncate volume=Test10018 storage=File2 yes
 messages
 quit
