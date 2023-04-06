@@ -2678,7 +2678,7 @@ CreateChildProcess(const char *cmdline, HANDLE in, HANDLE out, HANDLE err,
    POOL_MEM cmdLine(PM_FNAME);
    if (cmd_string_opt) {
       /* For working around multiple double quotes in the exe and arguments, we use the /s cmd option */
-      /* /s skips the parsing rules of /c and only strips the first and last quote so:
+      /* /s skips the parsing rules of /c and only strips the first and last quote so: */
       /*  cmd.exe /s /c ""C:\program files\myexe.exe" -file "C:\program files\args.txt"" will respect both */
       /* "C:\program files\myexe.exe" and "C:\program files\args.txt" quotes */
       Mmsg(cmdLine, "%s /s /c \"\"%s\"%s\"", comspec, exeFile, argStart);
