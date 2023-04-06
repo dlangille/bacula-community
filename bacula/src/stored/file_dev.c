@@ -216,7 +216,7 @@ bool file_dev::open_device(DCR *dcr, int omode)
                if (immutable && clear_immutable(getVolCatName(), &errmsg)) {
                   tryopen = true;
                }
-               if (readonly && set_writable(-1, getVolCatName())) {
+               if (readonly && set_writable(-1, getVolCatName()) == 0) {
                   tryopen = true;
                }
                if (tryopen) { /* It should be now possible to open the device with desired mode */
@@ -639,15 +639,12 @@ bool file_dev::is_attribute_supported(int attr)
 void file_dev::get_volume_fpath(const char *vol_name, POOLMEM **fname)
 {
    pm_strcpy(fname, dev_name);
+
    if (!IsPathSeparator((*fname)[strlen(*fname)-1])) {
       pm_strcat(fname, "/");
    }
 
    pm_strcat(fname, vol_name);
-
-   if (is_adata()) {
-      pm_strcat(fname, ADATA_EXTENSION);
-   }
 
    Dmsg1(DT_VOLUME|250, "Full volume path built: %s\n", *fname);
 }

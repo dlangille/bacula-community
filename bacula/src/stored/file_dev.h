@@ -25,13 +25,15 @@
 
 class file_dev : public DEVICE {
 private:
-   void get_volume_fpath(const char *vol_name, POOLMEM **buf);
    bool modify_fattr(const char *vol_name, int attr, bool set, POOLMEM **error);
    bool check_for_attr(const char *vol_name, int attr);
    bool set_fattr(const char *vol_name, int attr, POOLMEM **error);
    bool clear_fattr(const char *vol_name, int attr, POOLMEM **error);
    bool append_open_needed(const char *vol_name);
    bool is_attribute_supported(int attr);
+
+protected:
+   virtual void get_volume_fpath(const char *vol_name, POOLMEM **buf);
 
 public:
 
