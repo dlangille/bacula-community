@@ -27,6 +27,8 @@ User=@fd_user@
 Group=@fd_group@
 ExecStart=@sbindir@/bacula-fd -fP -c @sysconfdir@/bacula-fd.conf
 SuccessExitStatus=15
+StandardOutput=journal
+StandardError=journal
 
 [Install]
 WantedBy=multi-user.target

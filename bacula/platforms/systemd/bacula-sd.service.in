@@ -29,7 +29,8 @@ Environment="LD_LIBRARY_PATH=@libdir@"
 # comment out to get traces working at startup using -T and -d options
 #WorkingDirectory=@working_dir@
 ExecStart=@sbindir@/bacula-sd -dt -c @sysconfdir@/bacula-sd.conf
-StandardError=syslog
+StandardOutput=journal
+StandardError=journal
 TimeoutStopSec=3min
 LimitMEMLOCK=infinity
 LimitNOFILE=10000
