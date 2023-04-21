@@ -32,17 +32,22 @@
 typedef struct {
 #ifdef HAVE_WIN32
    HANDLE    fd;
+   mode_t    mode;
+   int       connected;
 #else
    char     *name;
    int       fd;
 #endif
    int       ifd;
+   int       use_msg;
 } NamedPipe;
 
 
 void namedpipe_init(NamedPipe *self);
 void namedpipe_free(NamedPipe *self);
 int namedpipe_create(NamedPipe *self, const char *path, mode_t mode);
-int namedpipe_open(NamedPipe *self, const char *path, mode_t mode);
+void namedpipe_use_messages(NamedPipe *self);
+intptr_t namedpipe_open(NamedPipe *self, const char *path, mode_t mode);
+int namedpipe_get_fd(NamedPipe *self);
 
 #endif

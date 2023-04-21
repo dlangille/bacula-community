@@ -17,11 +17,12 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 
+/* Written by Eric Bollengier */
 #ifdef HAVE_WIN32
-
 # include <windows.h> 
 # include <conio.h>
 # include <stdbool.h>
+# include <io.h>
 
 #else  /* !HAVE_WIN32 */
 
@@ -44,12 +45,18 @@
 # define Dmsg(level, ...) printf(__VA_ARGS__ ) 
 #endif
 
+void namedpipe_use_messages(NamedPipe *self)
+{
+   self->use_msg = true;
+}
+
 #ifdef HAVE_WIN32
 
 void namedpipe_init(NamedPipe *self)
 {
    self->fd   = INVALID_HANDLE_VALUE;
    self->ifd  = -1;
+   self->use_msg = false;
 }
 
 void namedpipe_free(NamedPipe *self)
@@ -58,17 +65,21 @@ void namedpipe_free(NamedPipe *self)
       CloseHandle(self->fd);
       self->fd = INVALID_HANDLE_VALUE;
       self->ifd = -1;
+      self->use_msg = false;
    }
 }
 #define BUFSIZE 8192
 int namedpipe_create(NamedPipe *self, const char *path, mode_t mode)
 {
+   DWORD flag = 0;
+   if (self->use_msg) {
+      flag  = PIPE_READMODE_MESSAGE | PIPE_TYPE_MESSAGE;       // message type pipe 
+   }
    /* On windows,  */
    self->fd = CreateNamedPipeA( 
       path,                     // pipe name 
       PIPE_ACCESS_DUPLEX,       // read/write access 
-      PIPE_TYPE_MESSAGE |       // message type pipe 
-      PIPE_READMODE_MESSAGE |   // message-read mode 
+      flag |
       PIPE_WAIT,                // blocking mode 
       PIPE_UNLIMITED_INSTANCES, // max. instances  
       BUFSIZE,                  // output buffer size 
@@ -84,14 +95,15 @@ int namedpipe_create(NamedPipe *self, const char *path, mode_t mode)
    return 0;
 }
 
-int namedpipe_open(NamedPipe *self, const char *path, mode_t mode)
+intptr_t namedpipe_open(NamedPipe *self, const char *path, mode_t mode)
 {
-   bool fConnected=false;
    int  retry = 30;
+   self->connected = false;
+   self->mode = mode;
 
    if (self->fd != INVALID_HANDLE_VALUE) { /* server mode */
 
-      fConnected = ConnectNamedPipe(self->fd, NULL) ? 
+      self->connected = ConnectNamedPipe(self->fd, NULL) ? 
          TRUE : (GetLastError() == ERROR_PIPE_CONNECTED); 
 
    } else {                               /* client mode */
@@ -136,40 +148,55 @@ int namedpipe_open(NamedPipe *self, const char *path, mode_t mode)
       } 
    }
 
-   DWORD dwMode = PIPE_READMODE_MESSAGE; 
+   DWORD dwMode = 0;
+   if (self->use_msg) {
+      dwMode = PIPE_READMODE_MESSAGE;
+   }
    
-   fConnected = SetNamedPipeHandleState( 
+   self->connected = SetNamedPipeHandleState( 
       self->fd, // pipe handle 
       &dwMode,  // new pipe mode 
       NULL,     // don't set maximum bytes 
       NULL);    // don't set maximum time 
 
-   if (!fConnected) {
+   if (!self->connected) {
       Dmsg(10, "SetNamedPipeHandleState failed, ERR=%d.\n", 
            (int)GetLastError()); 
    }
 
-   if (fConnected) {
-      int m = 0;
-      if (mode & O_WRONLY || mode & O_APPEND) {
+   return (intptr_t)self->fd;
+}
+
+int namedpipe_get_fd(NamedPipe *self)
+{
+   if (self->fd == INVALID_HANDLE_VALUE) {
+      return -1;
+   }
+   if (self->connected) {
+      if (self->mode & O_WRONLY || self->mode & O_APPEND) {
          m |= O_APPEND;
-         
-      } else if (mode & O_RDONLY) {
+      
+      } else if (self->mode & O_RDONLY) {
          m |= O_RDONLY;
       }
       self->ifd = _open_osfhandle((intptr_t)self->fd, m);
+      self->fd = INVALID_HANDLE_VALUE;
    }
-
    return self->ifd;
 }
 
-
 #else  /* !HAVE_WIN32 */
+
+int namedpipe_get_fd(NamedPipe *self)
+{
+   return self->ifd;
+}
 
 void namedpipe_init(NamedPipe *self)
 {
    self->fd   = -1;
    self->ifd  = -1;
+   self->use_msg = 0;
    self->name = NULL;
 }
 
@@ -179,6 +206,7 @@ void namedpipe_free(NamedPipe *self)
       close(self->fd);
       self->fd  = -1;
       self->ifd = -1;
+      self->use_msg = 0;
    }
    if (self->name) {
       unlink(self->name);
@@ -199,10 +227,10 @@ int namedpipe_create(NamedPipe *self, const char *path, mode_t mode)
    return 0;
 }
 
-int namedpipe_open(NamedPipe *self, const char *path, mode_t mode)
+intptr_t namedpipe_open(NamedPipe *self, const char *path, mode_t mode)
 {
    self->ifd = self->fd = open(path, mode);
-   return self->fd;
+   return (intptr_t)self->fd;
 }
 
 #endif  /* HAVE_WIN32 */

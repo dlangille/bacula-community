@@ -2137,7 +2137,8 @@ void *th1(void *a)
       namedpipe_free(&p);
       exit(2);
    }
-   fd = namedpipe_open(&p, buf, O_RDONLY);
+   namedpipe_open(&p, buf, O_RDONLY);
+   fd = namedpipe_get_fd(&p);
    if (fd < 0) {
       berrno be;
       Dmsg2(0, "R: Unable to open the fifo %s. ERR=%s\n", buf, be.bstrerror());
@@ -2192,7 +2193,8 @@ void *th2(void *a)
       exit(2);
    }
 
-   fd = namedpipe_open(&p, buf, O_WRONLY);
+   namedpipe_open(&p, buf, O_WRONLY);
+   fd = namedpipe_get_fd(&p);
    if (fd < 0) {
       berrno be;
       Dmsg2(0, "W: Unable to open the fifo %s. ERR=%s\n", buf, be.bstrerror());
