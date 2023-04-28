@@ -1391,7 +1391,7 @@ static int var_cmd(UAContext *ua, const char *cmd)
    if (!open_client_db(ua)) {
       return 1;
    }
-   for (var=ua->cmd; *var != ' '; ) {    /* skip command */
+   for (var=ua->cmd; *var && *var != ' '; ) {    /* skip command */
       var++;
    }
    while (*var == ' ') {                 /* skip spaces */
