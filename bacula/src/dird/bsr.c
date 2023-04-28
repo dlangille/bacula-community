@@ -856,6 +856,11 @@ struct bsr_vol_list {
  * seen for the last time (the job_num) and to know if a volume matter
  * we compare it with the last_split_job_num that is the first job_num
  * in the new list
+ *
+ * Since #10086 the code also detect when the BSR is going backward in the same volume
+ * This can happens when two incremental jobs run in //
+ * As the BSR is written job by job the split is enough, no need to reorganize
+ * the BSR an move all the parts of the first job before the second one.
  */
 bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
 {
@@ -869,6 +874,8 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
 
    uint32_t VolSessionId, VolSessionTime;
    uint32_t prevVolSessionId = 0, prevVolSessionTime = 0;
+   uint64_t VolAddrStart, VolAddrEnd;
+   uint64_t prevVolAddrStart = 0, prevVolAddrEnd = 0;
 
    boffset_t start_section_offset; // the offset of the beginning of the section
    boffset_t start_job_off; // the offset of the first section of the job
@@ -894,8 +901,9 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
          if (first) {
             first = false;
          } else {
-            // This was the last part or we have reached the end of the file
-            if (strcmp(last_volume.c_str(), volume.c_str()) != 0) {
+            /* We have reached the end of a part or the end of the BSR file */
+            bool same_volume = (strcmp(last_volume.c_str(), volume.c_str()) == 0);
+            if (!same_volume) {
                /* look if the volume has already been used before */
                bsr_vol_list *item = (bsr_vol_list *)volumes.lookup(volume.c_str());
                if (item == NULL) {
@@ -906,9 +914,9 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
                   volumes.insert(item->volume, item);
 
                } else {
-                  /* we already know about this volume, but is it used in current part ? */
+                  /* we already know about this volume, but is it used in the current part of the BSR? */
                   if (item->job_num >= last_split_job_num) {
-                     /* the volume is used in this part, we need to split */
+                     /* the volume is used in this part, we need to split the BSR into a new part */
                      boffset_t *p = (boffset_t *)malloc(sizeof(boffset_t));
                      *p = start_job_off;
                      info.split_list->append(p);
@@ -917,14 +925,35 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
                   item->job_num = job_num; /* remember when the volume was used */
                }
             }
-            last_volume.strcpy(volume.c_str());
-            if (prevVolSessionTime != VolSessionTime || prevVolSessionId != VolSessionId) {
+            bool is_new_job = (prevVolSessionTime != VolSessionTime || prevVolSessionId != VolSessionId);
+            /* check if we are going backward on the same volume */
+            if (same_volume && VolAddrStart < prevVolAddrEnd) {
+               if (is_new_job) {
+                  /* this is a new job, then we expect that 2 jobs (probably 2 incremental ones)
+                   * ran at the same time on the same Device and wrote on the same volume
+                   * The user should avoid that!
+                   */
+               } else {
+                  /* This is unexpected */
+                  Dmsg3(0, "Error BSR going backward on the Volume=%s on the Session=%lu:%lu\n", volume.c_str(), VolSessionTime, VolSessionId);
+               }
+               /* we need to split the BSR into a new part */
+               boffset_t *p = (boffset_t *)malloc(sizeof(boffset_t));
+               *p = start_job_off;
+               info.split_list->append(p);
+               last_split_job_num = job_num; /* ignore volumes too old */
+            }
+            if (is_new_job) {
                /* This is a new job */
                job_num++;
                start_job_off = start_section_offset;
                prevVolSessionId = VolSessionId;
                prevVolSessionTime = VolSessionTime;
             }
+            last_volume.strcpy(volume.c_str());
+            prevVolAddrStart = VolAddrStart;
+            prevVolAddrEnd = VolAddrEnd;
+            (void) prevVolAddrStart; // not used
             start_section_offset = cur_off;
          }
          if (after_eof) {
@@ -940,6 +969,22 @@ bool split_bsr_loop(JCR *jcr, bootstrap_info &info)
       }
       if (strcasecmp(ua->argk[0], "VolSessionTime") == 0) {
          VolSessionTime = str_to_uint64(ua->argv[0]);
+      }
+      if (strcasecmp(ua->argk[0], "VolAddr") == 0) {
+         /* parse something like this: VolAddr=18773542405-24142224724 */
+         char *p = strchr(ua->argv[0], '-');
+         if (p == NULL) {
+            /* error */
+            Dmsg1(0, "Error VolAddr is expected to be a range: \"%s\"\n", ua->argv[0]);
+            VolAddrStart = str_to_uint64(ua->argv[0]);
+            VolAddrEnd = VolAddrStart;
+         } else {
+            char save = *p;
+            *p = '\0';
+            VolAddrStart = str_to_uint64(ua->argv[0]);
+            VolAddrEnd = str_to_uint64(p+1);
+            *p = save;
+         }
       }
    }
    fseeko(bs, 0, SEEK_SET);
