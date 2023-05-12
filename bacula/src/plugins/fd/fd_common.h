@@ -312,7 +312,6 @@ static pthread_mutex_t joblist_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 bool joblist::find_job(const char *name, POOLMEM **data)
 {
-   BFILE fp;
    FILE *f;
    POOLMEM *tmp;
    POOLMEM *buf;
@@ -328,9 +327,6 @@ bool joblist::find_job(const char *name, POOLMEM **data)
    job_time = 0;
    *rootdiff = 0;
 
-   binit(&fp);
-   set_portable_backup(&fp);
-
    tmp = get_pool_memory(PM_FNAME);
    buf = get_pool_memory(PM_FNAME);
    curkey = get_pool_memory(PM_FNAME);
@@ -341,14 +337,7 @@ bool joblist::find_job(const char *name, POOLMEM **data)
    Mmsg(tmp, "%s/%s", working, base);
 
    P(joblist_mutex);
-   if (bopen(&fp, tmp, O_RDONLY, 0) < 0) {
-      berrno be;
-      Jmsg(ctx, M_ERROR, "Unable to open job database %s for reading. ERR=%s\n",
-           tmp, be.bstrerror(errno));
-      goto bail_out;
-   }
-
-   f = fdopen(fp.fid, "r");
+   f = fopen(tmp, "r");
    if (!f) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to open job database. ERR=%s\n",
@@ -413,7 +402,6 @@ bail_out:
 /* Find the root job for the current job */
 bool joblist::find_root_job()
 {
-   BFILE fp;
    FILE *f;
    POOLMEM *tmp;
    POOLMEM *buf;
@@ -439,22 +427,12 @@ bool joblist::find_root_job()
    prevjob = get_pool_memory(PM_FNAME);
    rootjob = get_pool_memory(PM_FNAME);
 
-   binit(&fp);
-   set_portable_backup(&fp);
 
    tmp = get_pool_memory(PM_FNAME);
    Mmsg(tmp, "%s/%s", working, base);
 
    P(joblist_mutex);
-   if (bopen(&fp, tmp, O_RDONLY, 0) < 0) {
-      berrno be;
-      Jmsg(ctx, M_ERROR, "Unable to prune previous jobs. "
-           "Can't open %s for reading ERR=%s\n",
-           tmp, be.bstrerror(errno));
-      goto bail_out;
-   }
-
-   f = fdopen(fp.fid, "r");
+   f = fopen(tmp, "r");
    if (!f) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to prune previous jobs. ERR=%s\n",
@@ -517,7 +495,7 @@ bail_out:
 /* Store the current job in the jobs.dat for a specific data list */
 bool joblist::store_job(char *data)
 {
-   BFILE fp;
+   FILE *fp;
    int l;
    POOLMEM *tmp = NULL;
    btime_t now;
@@ -531,14 +509,12 @@ bool joblist::store_job(char *data)
 
    find_root_job();
 
-   binit(&fp);
-   set_portable_backup(&fp);
-
    P(joblist_mutex);
 
    tmp = get_pool_memory(PM_FNAME);
    Mmsg(tmp, "%s/%s", working, base);
-   if (bopen(&fp, tmp, O_WRONLY|O_CREAT|O_APPEND, 0600) < 0) {
+   fp = fopen(tmp, "a+");
+   if (!fp) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to update the job history. ERR=%s\n",
            be.bstrerror(errno));
@@ -551,24 +527,24 @@ bool joblist::store_job(char *data)
    bash_spaces(data);
 
    if (level == 'F') {
-      l = Mmsg(tmp, "time=%lld level=%c key=%s name=%s vollen=%d vol=%s\n", 
+      l = fprintf(fp, "time=%lld level=%c key=%s name=%s vollen=%d vol=%s\n", 
                now, level, key, name, strlen(data), data);
 
    } else {
-      l = Mmsg(tmp, "time=%lld level=%c key=%s name=%s root=%s prev=%s vollen=%d vol=%s\n",
+      l = fprintf(fp, "time=%lld level=%c key=%s name=%s root=%s prev=%s vollen=%d vol=%s\n",
                now, level, key, name, root, prev, strlen(data), data);
    }
 
    unbash_spaces(data);
 
-   if (bwrite(&fp, tmp, l) != l) {
+   if (l < 0) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to update the job history. ERR=%s\n",
            be.bstrerror(errno));
       ret = false;
    }
 
-   if (bclose(&fp)) {
+   if (fclose(fp) != 0) {
       ret = false;
    }
 
@@ -584,7 +560,7 @@ bail_out:
 void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char *job), 
                          void *arg, alist *jobs)
 {
-   BFILE fp, fpout;
+   FILE *fout;
    FILE *f=NULL;
    POOLMEM *tmp;
    POOLMEM *tmpout;
@@ -608,12 +584,6 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
 
    find_root_job();
 
-   binit(&fp);
-   set_portable_backup(&fp);
-
-   binit(&fpout);
-   set_portable_backup(&fpout);
-
    tmp = get_pool_memory(PM_FNAME);
    Mmsg(tmp, "%s/%s", working, base);
 
@@ -630,14 +600,8 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
    *curkey = *curjobname = *prevjob = *rootjob = *buf = *data = 0;
 
    P(joblist_mutex);
-   if (bopen(&fp, tmp, O_RDONLY, 0) < 0) {
-      berrno be;
-      Jmsg(ctx, M_ERROR, "Unable to prune previous jobs. "
-           "Can't open %s for reading ERR=%s\n",
-           tmp, be.bstrerror(errno));
-      goto bail_out;
-   }
-   if (bopen(&fpout, tmpout, O_CREAT|O_WRONLY, 0600) < 0) {
+   fout = fopen(tmpout, "w");
+   if (!fout) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to prune previous jobs. "
            "Can't open %s for writing ERR=%s\n",
@@ -645,7 +609,7 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
       goto bail_out;
    }
 
-   f = fdopen(fp.fid, "r");     /* we use fgets from open() */
+   f = fopen(tmp, "r");
    if (!f) {
       berrno be;
       Jmsg(ctx, M_ERROR, "Unable to prune previous jobs. ERR=%s\n",
@@ -702,7 +666,7 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
       } 
       
       if (keep) {
-         if (bwrite(&fpout, buf, len) < 0) {
+         if (fprintf(fout, "%s", buf) < 0) {
             berrno be;
             Jmsg(ctx, M_ERROR, "Unable to update the job history. ERR=%s\n",
                  be.bstrerror(errno));
@@ -738,8 +702,8 @@ bail_out:
    if (f) {
       fclose(f);
    }
-   if (is_bopen(&fpout)) {
-      bclose(&fpout);
+   if (fout) {
+      fclose(fout);
    }
 
    /* We can switch the file */
