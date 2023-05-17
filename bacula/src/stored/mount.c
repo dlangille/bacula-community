@@ -524,6 +524,10 @@ int DCR::check_volume_label(bool &ask, bool &autochanger)
          goto check_next_volume;
       }
       break;                /* got a Volume */
+   case VOL_ENC_ERROR:
+      volume_is_unavailable();
+      goto check_next_volume;
+      break;
    /*
     * At this point, we assume we have a blank tape mounted.
     */
@@ -541,10 +545,6 @@ int DCR::check_volume_label(bool &ask, bool &autochanger)
          break;
       }
       /* NOTE! Fall-through wanted. */
-   case VOL_ENC_ERROR:
-      volume_is_unavailable();
-      goto check_next_volume;
-      break;
    case VOL_NO_MEDIA:
    default:
       Dmsg0(200, "VOL_NO_MEDIA or default.\n");
