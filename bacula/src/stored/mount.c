@@ -748,7 +748,7 @@ int DCR::try_autolabel(bool opened)
  */
 void DCR::volume_is_unavailable()
 {
-   Jmsg(jcr, M_INFO, 0, _("The Volume \"%s\" in unavailable now.\n"),
+   Jmsg(jcr, M_INFO, 0, _("The Volume \"%s\" is unavailable now.\n"),
         VolumeName);
    volume_unused(this);
    Dmsg0(50, "set_unload\n");
