@@ -36,8 +36,10 @@ RETRY_DOWNLOAD = 0x0D
 def vol_ls():
    try:
       logging.info("enter vol_ls")
-      proc = Popen(["aws", "s3", "ls", 
-         cloud_path], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "ls", cloud_path]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("vol_ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
@@ -63,8 +65,10 @@ def vol_ls():
 def ls():
    try:
       logging.info("enter ls")
-      proc = Popen(["aws", "s3", "ls",
-         os.path.join(cloud_path, volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "ls", os.path.join(cloud_path, volume, part)]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
@@ -97,8 +101,10 @@ def ls():
 def download():
    try:
       logging.info("enter download")
-      proc = Popen(["aws", "s3", "cp",
-            os.path.join(cloud_path, volume, part), "-", "--only-show-errors"], stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "cp", os.path.join(cloud_path, volume, part), "-", "--only-show-errors"]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("download proc communicate output:{0} , err:{1}".format(output,err))
       if err and err.find("An error occurred (InvalidObjectState) when calling the GetObject operation") != -1:
@@ -114,8 +120,10 @@ def download():
 def delete():
    try:
       logging.info("enter delete")
-      proc = Popen(["aws", "s3", "rm",
-         os.path.join(cloud_path, volume, part), "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "rm", os.path.join(cloud_path, volume, part), "--only-show-errors"]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("delete proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr (yuck!)
@@ -135,16 +143,20 @@ def delete():
 def upload():
    try:
       logging.info("enter upload")
-      proc = Popen(["aws", "s3", "cp",
-         "-", os.path.join(cloud_path, volume, part),
-         "--storage-class", objects_default_tier, "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "cp", "-", os.path.join(cloud_path, volume, part),
+         "--storage-class", objects_default_tier, "--only-show-errors"]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("upload proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr (yuck!)
       if err:
          sys.stderr.write(err)
-      proc = Popen(["aws", "s3", "ls",
-         os.path.join(cloud_path, volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+      cmd = ["aws", "s3", "ls", os.path.join(cloud_path, volume, part)]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("ls proc communicate output:{0} , err:{1}".format(output,err))
       # sort out only exception errors since progress is reported into stderr
@@ -174,9 +186,12 @@ def upload():
 def move():
    try:
       logging.info("enter move from {0} to {1}".format(os.path.join(cloud_path, volume, part), os.path.join(cloud_path, volume, local_part)))
-      proc = Popen(["aws", "s3", "mv",
+      cmd = ["aws", "s3", "mv",
          os.path.join(cloud_path, volume, part),
-         os.path.join(cloud_path, volume, local_part), "--only-show-errors"], stdout=PIPE, stderr=PIPE, universal_newlines=True)
+         os.path.join(cloud_path, volume, local_part), "--only-show-errors"]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True)
       output,err = proc.communicate()
       logging.debug("move proc communicate output:{0} , err:{1}".format(output,err))
       ret = proc.returncode
@@ -198,10 +213,13 @@ def move():
 def restore():
    try:
       logging.info("enter restore {0}".format(os.path.join(cloud_path, volume, part)))
-      proc = Popen(["aws", "s3api", "restore-object", 
-                    "--restore-request", "{{\"Days\": {0}, \"GlacierJobParameters\" : {{\"Tier\" : \"{1}\"}}}}".format(transfer_retention_days,transfer_priority),
-                    "--bucket", bucket,
-                    "--key", os.path.join(volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True) 
+      cmd = ["aws", "s3api", "restore-object", 
+         "--restore-request", "{{\"Days\": {0}, \"GlacierJobParameters\" : {{\"Tier\" : \"{1}\"}}}}".format(transfer_retention_days,transfer_priority),
+         "--bucket", bucket,
+         "--key", os.path.join(volume, part)]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True) 
       output,err = proc.communicate()
       logging.debug("restore proc communicate output:{0} , err:{1}".format(output,err))
       if err:
@@ -220,9 +238,12 @@ def restore():
 def wait_on_restore():
    try:
       logging.info("enter wait_on_restore {0}".format(os.path.join(cloud_path, volume, part)))
-      proc = Popen(["aws", "s3api", "head-object", 
-                    "--bucket", bucket,
-                    "--key", os.path.join(volume, part)], stdout=PIPE, stderr=PIPE, universal_newlines=True) 
+      cmd = ["aws", "s3api", "head-object", 
+         "--bucket", bucket,
+         "--key", os.path.join(volume, part)]
+      if endpoint_url:
+         cmd += ["--endpoint-url", endpoint_url]
+      proc = Popen( cmd, stdout=PIPE, stderr=PIPE, universal_newlines=True) 
       output,err = proc.communicate()
       logging.debug("wait_on_restore proc communicate output:{0} , err:{1}".format(output,err))
       if err:
@@ -280,6 +301,8 @@ if __name__ == '__main__':
       region=os.environ['CLOUD_REGION']
       protocol=os.environ['CLOUD_PROTOCOL']
       uri_type=os.environ['CLOUD_URI_TYPE']
+      endpoint_url=os.environ['CLOUD_BLOB_ENDPOINT']
+
       transfer_priority_switcher = {
          "0":"Expedited",
          "1":"Standard",
@@ -300,12 +323,12 @@ if __name__ == '__main__':
       }
       t_tier_idx = os.environ['CLOUD_OBJECTS_DEFAULT_TIER']
       objects_default_tier = objects_default_tier_switcher[t_tier_idx]
-      
+
       os.environ['AWS_DEFAULT_REGION'] = region
       os.environ['AWS_ACCESS_KEY_ID'] = access_key
       os.environ['AWS_SECRET_ACCESS_KEY'] = secret_key
 
-      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}, transfer_prio {7}, tranfer_ret {8}, default_tier {9}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type, transfer_priority, transfer_retention_days, objects_default_tier))
+      logging.info("bucket {0}, cloud_path {1}, access_key {2}, secret_key {3}, region {4}, protocol {5}, uri_type {6}, transfer_prio {7}, tranfer_ret {8}, default_tier {9}, endpoint_url {10}".format(bucket, cloud_path, access_key, "XXX", region, protocol, uri_type, transfer_priority, transfer_retention_days, objects_default_tier, endpoint_url))
 
       switcher = {
          "vol_ls":vol_ls,
