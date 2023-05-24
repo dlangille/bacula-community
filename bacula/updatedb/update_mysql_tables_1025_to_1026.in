@@ -111,6 +111,7 @@ ALTER TABLE Job
     ADD COLUMN LastReadDevice    blob,
     ADD COLUMN WriteStorageId    integer    default 0,
     ADD COLUMN WriteDevice       blob,
+    ADD COLUMN StatusInfo        blob,
     ADD COLUMN Encrypted         int        default 0;
 
 ALTER TABLE JobHisto
@@ -122,6 +123,7 @@ ALTER TABLE JobHisto
     ADD COLUMN LastReadDevice    blob,
     ADD COLUMN WriteStorageId    integer    default 0,
     ADD COLUMN WriteDevice       blob,
+    ADD COLUMN StatusInfo        blob,
     ADD COLUMN Encrypted         int        default 0;
 
 INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
