@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a simple backup of the Bacula build directory
+#   then restore it.
+#
+TestName="job-spool-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-confs
+
+make -C $cwd/build/src/plugins/fd install-test-plugin
+make -C $cwd/build/src/bfuse install
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >$outf
+echo "s%File = $cwd/build%File = $cwd/build/po%" >> $outf
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+change_jobname BackupClient1 $JobName
+start_test
+
+$bperl -e "set_global_maximum_concurrent_jobs(10)"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'Maximum Volumes', 10000, 'Pool')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MaximumFileIndex', '1MB', 'Device')"
+$bperl -e "add_attribute('$conf/bacula-sd.conf', 'MaximumJobSpoolSize', '5MB', 'Device')"
+#$bperl -e "add_attribute('$conf/bacula-fd.conf', 'PluginDirectory', '$bin/plugins', 'FileDaemon')"
+$bperl -e "add_attribute('$conf/bacula-dir.conf', 'MaximumVolumeBytes', '2MB', 'Pool')"
+$bperl -e "create_binfile('$tmp/bigfile0', 600)"
+cp $tmp/bigfile0  $tmp/bigfile1
+cp $tmp/bigfile0  $tmp/bigfile2
+cp $tmp/bigfile0  $tmp/bigfile3
+dd if=$tmp/bigfile0  of=$tmp/sparsefile seek=5120 count=1 bs=1024
+cp $tmp/sparsefile $tmp/sparsefile1
+
+cat <<EOF >> $conf/bacula-dir.conf
+FileSet {
+  Name = fstest
+  Include {
+    Options { Signature = MD5 }
+    File = $tmp/bigfile0
+    File = $cwd/build/po
+    File = $tmp/bigfile1
+    File = $cwd/build/scripts
+  }
+}
+EOF
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@$out /dev/null
+messages
+@$out $tmp/log1.out
+setdebug level=250 trace=1 storage=File1
+status client
+run job=$JobName fileset=fstest spooldata=yes level=full yes
+wait
+messages
+@$out $tmp/log2.out
+restore select all done yes
+wait
+messages
+@output $tmp/jobmedia
+llist jobmedia jobid=1
+@output $tmp/media
+llist media
+@output /dev/null
+quit
+END_OF_DATA
+
+run_bacula
+
+stop_bacula
+
+check_two_logs
+check_restore_diff
+
+end_test
