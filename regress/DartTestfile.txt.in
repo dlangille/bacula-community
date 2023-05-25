@@ -135,6 +135,7 @@ ADD_TEST(disk:maxfilesize-test "@regressdir@/tests/maxfilesize-test")
 ADD_TEST(disk:two-client-test "@regressdir@/tests/two-client-test")
 
 ADD_TEST(disk:short-incremental-test "@regressdir@/tests/short-incremental-test")
+ADD_TEST(disk:job-spool-test "@regressdir@/tests/job-spool-test")
 ADD_TEST(disk:jobmedia-bug2-test "@regressdir@/tests/jobmedia-bug2-test")
 ADD_TEST(disk:incremental-2disk "@regressdir@/tests/incremental-2disk")
 ADD_TEST(disk:file-span-vol-test "@regressdir@/tests/file-span-vol-test")
