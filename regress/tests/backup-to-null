@@ -16,6 +16,7 @@ JobName=backuptonull
 unset FORCE_DEDUP
 unset FORCE_ALIGNED
 unset FORCE_CLOUD
+unset FORCE_SPOOL_DATA
 
 scripts/cleanup
 scripts/copy-fifo-confs
