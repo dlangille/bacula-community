@@ -12,6 +12,9 @@ JobName=backup
 scripts/cleanup
 scripts/copy-confs
 
+# We count jobmedia, so no spooling please
+unset FORCE_SPOOL_DATA
+
 #
 # Zap out any schedule in default conf file so that
 #  it doesn't start during our test
