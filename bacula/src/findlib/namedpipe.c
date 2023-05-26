@@ -173,6 +173,7 @@ int namedpipe_get_fd(NamedPipe *self)
       return -1;
    }
    if (self->connected) {
+      int m = 0;
       if (self->mode & O_WRONLY || self->mode & O_APPEND) {
          m |= O_APPEND;
       
