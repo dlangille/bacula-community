@@ -8165,6 +8165,462 @@
 				]
 			}
 		},
+		"/api/v2/objects/overview": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object overview",
+				"description": "Get object overview.",
+				"responses": {
+					"200": {
+						"description": "Object overview",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"overview": {
+													"type": "object",
+													"properties": {
+														"objecttype": {
+															"type": "object",
+															"properties": {
+																"items": {
+																	"type": "array",
+																	"items": {
+																		"type": "object",
+																		"properties": {
+																			"objecttype": {
+																				"type": "string",
+																				"description": "Object type"
+																			},
+																			"objectname": {
+																				"type": "string",
+																				"description": "Object name"
+																			},
+																			"clientid": {
+																				"type": "string",
+																				"description": "Client identifier"
+																			},
+																			"client": {
+																				"type": "string",
+																				"description": "Client name"
+																			},
+																			"job": {
+																				"type": "string",
+																				"description": "Job name"
+																			},
+																			"level": {
+																				"type": "string",
+																				"description": "Job level"
+																			},
+																			"objectid": {
+																				"type": "string",
+																				"description": "Object identifier"
+																			},
+																			"jobid": {
+																				"type": "string",
+																				"description": " Job identifier"
+																			},
+																			"jobtdate": {
+																				"type": "integer",
+																				"description": "Job T date in UNIX timestamp form"
+																			},
+																			"starttime": {
+																				"type": "string",
+																				"description": "Job start time"
+																			},
+																			"objectcategory": {
+																				"type": "string",
+																				"description": "Object category"
+																			},
+																			"objectstatus": {
+																				"type": "string",
+																				"description": "Object status"
+																			},
+																			"jobstatus": {
+																				"type": "string",
+																				"description": "Job status"
+																			}
+																		}
+																	}
+																}
+															}
+														},
+														"files": {
+															"type": "object",
+															"properties": {
+																"items": {
+																	"type": "array",
+																	"items": {
+																		"type": "object",
+																		"properties": {
+																			"fileset": {
+																				"type": "string",
+																				"description": "Job fileset"
+																			},
+																			"job": {
+																				"type": "string",
+																				"description": "Job name"
+																			},
+																			"clientid": {
+																				"type": "string",
+																				"description": "Client identifier"
+																			},
+																			"client": {
+																				"type": "string",
+																				"description": "Client name"
+																			},
+																			"jobid": {
+																				"type": "string",
+																				"description": " Job identifier"
+																			},
+																			"level": {
+																				"type": "string",
+																				"description": "Job level"
+																			},
+																			"jobtdate": {
+																				"type": "integer",
+																				"description": "Job T date in UNIX timestamp form"
+																			},
+																			"starttime": {
+																				"type": "string",
+																				"description": "Job start time"
+																			},
+																			"jobstatus": {
+																				"type": "string",
+																				"description": "Job status"
+																			},
+																			"jobbytes": {
+																				"type": "integer",
+																				"description": "Job bytes"
+																			},
+																			"jobfiles": {
+																				"type": "integer",
+																				"description": "Job files"
+																			}
+																		}
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 520, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectname",
+						"in": "query",
+						"required": false,
+						"description": "Object name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectcategory",
+						"in": "query",
+						"required": false,
+						"description": "Object category, ex: 'mailbox'",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectsource",
+						"in": "query",
+						"required": false,
+						"description": "Object data source",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectuuid",
+						"in": "query",
+						"required": false,
+						"description": "Object UUID",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "objectstatus",
+						"in": "query",
+						"required": false,
+						"description": "Object status ex: 'T', 'e' ...",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "jobname",
+						"in": "query",
+						"required": false,
+						"description": "Job name",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "jobids",
+						"in": "query",
+						"required": false,
+						"description": "Job identifiers (comma separated)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected object property (default objectid). There can be any object property (objectid, objectname, objectsource ...etc.) except jobname.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
+						"name": "schedtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "schedtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "schedtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "schedtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Scheduled time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "starttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Start time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "starttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "starttime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Start time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "realstarttime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real start time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Real start time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "realstarttime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real start time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realstarttime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Real start time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "endtime_from",
+						"in": "query",
+						"required": false,
+						"description": "End time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "End time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "endtime_to",
+						"in": "query",
+						"required": false,
+						"description": "End time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "endtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "End time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "realendtime_from",
+						"in": "query",
+						"required": false,
+						"description": "Real end time from (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_from_date",
+						"in": "query",
+						"required": false,
+						"description": "Real end time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "realendtime_to",
+						"in": "query",
+						"required": false,
+						"description": "Real end time to (UNIX timestamp format, seconds)",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "realendtime_to_date",
+						"in": "query",
+						"required": false,
+						"description": "Real end time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+
+						"name": "age",
+						"in": "query",
+						"required": false,
+						"description": "Job age in seconds (used is start time). starttime_from and starttime_to take precedence over this parameter.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "joberrors",
+						"in": "query",
+						"required": false,
+						"description": "Show objects from jobs that contain or that do not contain errors.",
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/objects/stats/category-sum": {
 			"get": {
 				"tags": ["objects"],

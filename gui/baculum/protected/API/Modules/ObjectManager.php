@@ -22,6 +22,9 @@
 
 namespace Baculum\API\Modules;
 
+use Baculum\Common\Modules\Logging;
+use PDO;
+
 /**
  * Object manager module.
  *
@@ -125,6 +128,298 @@ LEFT JOIN Client USING (ClientId) '
 				'objects' => $result,
 				'overview' => (is_string($group_by) ? $overview : $this->getObjectCountByObjectType($criteria))
 			];
+		}
+		return $result;
+	}
+
+	/**
+	 * Get object records in overview.
+	 *
+	 * @param array $general_criteria SQL criteria to get object list
+	 * @param array $object_criteria SQL object specific criteria to get object list
+	 * @param mixed $limit_val result limit value
+	 * @param int $offset_val result offset value
+	 * @param string $sort_col column to sort
+	 * @param string $sort_order sort order (asc - ascending, desc - descending)
+	 * @return array object record list or empty list if no object found
+	 */
+	public function getObjectsOverview($general_criteria = [], $object_criteria = [], $limit_val = null, $offset_val = 0, $sort_col = null, $sort_order = 'DESC') {
+		$connection = ObjectRecord::finder()->getDbConnection();
+		$connection->setActive(true);
+		$pdo = $connection->getPdoInstance();
+
+		$limit = is_int($limit_val) && $limit_val > 0 ? ' LIMIT ' . $limit_val : '';
+		$offset = is_int($offset_val) && $offset_val > 0 ? ' OFFSET ' . $offset_val : '';
+		$db_params = $this->getModule('api_config')->getConfig('db');
+		if ($db_params['type'] === Database::PGSQL_TYPE) {
+		    $sort_col = strtolower($sort_col);
+		}
+
+		// default sorting for objects
+		$obj_order = ' ORDER BY
+			 ObjectType,
+			 ObjectName,
+			 ObjectUUID,
+			 Client.Name,
+			 Job.Name ';
+		$file_order = ' ORDER BY
+			FileSet.FileSet,
+			Job.Name,
+			Client.Name ';
+
+		if (empty($sort_col)) {
+			$sort_col = 'JobTDate';
+		}
+		$order = sprintf(
+			'ORDER BY %s %s ',
+			$sort_col,
+			$sort_order
+		);
+
+		$result = [
+			'overview' => []
+		];
+		$general_where = Database::getWhere($general_criteria, true);
+		$object_crit_all = array_merge($general_criteria, $object_criteria);
+		$object_where = Database::getWhere($object_crit_all);
+		try {
+			// start transaction
+			$pdo->beginTransaction();
+
+			// temporary table name
+			$objects_tname1 = 'objects_1_' . getmypid();
+			$objects_tname2 = 'objects_2_' . getmypid();
+			$objects_tname3 = 'objects_3_' . getmypid();
+			$objects_tname4 = 'objects_4_' . getmypid();
+
+			$db_params = $this->getModule('api_config')->getConfig('db');
+			if ($db_params['type'] === Database::PGSQL_TYPE) {
+				// PostgreSQL block
+
+				// create temporary table
+				$sql = 'CREATE TEMPORARY TABLE ' . $objects_tname1 . ' AS
+				SELECT DISTINCT ON (
+					ObjectType,
+					ObjectName,
+					ObjectUUID,
+					Client.Name,
+					Job.Name
+				)
+					ObjectType      AS objecttype,
+					ObjectName      AS objectname,
+					Client.ClientId AS clienid,
+					Client.Name     AS client,
+					Job.Name        AS job,
+					Job.Level       AS level,
+					ObjectId        AS objectid,
+					Object.JobId    AS jobid,
+					JobTDate        AS jobtdate,
+					Job.StartTime   AS starttime,
+					ObjectCategory  AS objectcategory,
+					ObjectStatus    AS objectstatus,
+					Job.JobStatus   AS jobstatus
+				FROM Object
+				JOIN Job USING (JobId)
+				JOIN Client USING (ClientId)
+				' . $object_where['where'] . $obj_order;
+
+				Database::execute($sql, $object_where['params']);
+
+				// get content for files
+				$sql = 'CREATE TEMPORARY TABLE ' . $objects_tname4 . ' AS
+						SELECT DISTINCT ON (FileSet.FileSet, Job.Name, Client.Name)
+							FileSet.FileSet AS fileset,
+							Job.Name        AS job,
+							Client.ClientId AS clienid,
+							Client.Name     AS client,
+							JobId           AS jobid,
+							Job.Level       AS level,
+							JobTDate        AS jobtdate,
+							StartTime       AS starttime,
+							JobStatus       AS jobstatus,
+							JobBytes        AS jobbytes,
+							JobFiles        AS jobfiles
+						FROM Job
+						JOIN FileSet USING (FileSetId)
+						JOIN Client USING (ClientId)
+						WHERE
+							FileSet.Content = \'files\'
+						' . (!empty($general_where['where']) ? ' AND ' . $general_where['where'] : '') . $file_order;
+
+				Database::execute($sql, $general_where['params']);
+
+			} elseif ($db_params['type'] === Database::MYSQL_TYPE) {
+				// MySQL block
+
+				// create temporary table 1 for objects
+				$sql = 'CREATE TABLE ' . $objects_tname1 . ' AS
+					SELECT CONCAT(
+							ObjectType,
+							ObjectName,
+							ObjectUUID,
+							Client.Name,
+							Job.Name
+						) AS K,
+						ObjectType      AS objecttype,
+						ObjectName      AS objectname,
+						Client.ClientId AS clienid,
+						Client.Name     AS client,
+						Job.Name        AS Job,
+						Job.Level       AS level,
+						ObjectId        AS objectid,
+						Object.JobId    AS jobid,
+						JobTDate        AS jobtdate,
+						StartTime       AS starttime,
+						ObjectCategory  AS objectcategory,
+						ObjectStatus    AS objectstatus,
+						JobStatus       AS jobstatus
+					FROM Object
+					JOIN Job USING (JobId)
+					JOIN Client USING (ClientId)' . $object_where['where'] . $obj_order;
+
+				Database::execute($sql, $object_where['params']);
+
+				// Create temporary table 2 for objects
+				$sql = 'CREATE TEMPORARY TABLE ' . $objects_tname2 . ' AS
+					SELECT ' . $objects_tname1 . '.K,
+						objecttype,
+						objectname,
+						client,
+						job,
+						objectid,
+						jobid,
+						AAA.jobtdate,
+						starttime,
+						objectcategory,
+						objectstatus,
+						jobstatus
+					FROM ' . $objects_tname1 . ' JOIN (
+						SELECT
+							AA.K,
+							MAX(AA.jobtdate) AS jobtdate
+						FROM ' . $objects_tname1 . ' AS AA
+						GROUP BY AA.K
+					) AS AAA ON (
+						AAA.K = ' . $objects_tname1 . '.K AND AAA.jobtdate = ' . $objects_tname1 . '.jobtdate
+					) ';
+
+				Database::execute($sql);
+
+				// Create temporary table 1 for files
+				$sql = 'CREATE TABLE ' . $objects_tname3 . ' AS
+					SELECT CONCAT(FileSet.FileSet, Job.Name, Client.Name) AS K,
+						FileSet.FileSet AS fileset,
+						Job.Name        AS job,
+						Client.ClientId AS clienid,
+						Client.Name     AS client,
+						JobId           AS jobid,
+						Job.Level       AS level,
+						JobTDate        AS jobtdate,
+						StartTime       AS starttime,
+						JobStatus       AS jobstatus,
+						JobBytes        AS jobbytes,
+						JobFiles        AS jobfiles
+					FROM Job
+					JOIN FileSet USING (FileSetId)
+					JOIN Client USING (ClientId)
+					WHERE
+						FileSet.Content = \'files\'
+					' . (!empty($general_where['where']) ? ' AND ' . $general_where['where'] : '') . $file_order;
+				Database::execute($sql, $general_where['params']);
+
+				// Create temporary table 2 for files
+				$sql = 'CREATE TEMPORARY TABLE ' . $objects_tname4 . ' AS
+					SELECT ' . $objects_tname3 . '.K,
+						fileset,
+						job,
+						clienid,
+						client,
+						jobid,
+						level,
+						AAA.jobtdate,
+						starttime,
+						jobstatus,
+						jobbytes,
+						jobfiles
+					FROM ' . $objects_tname3 . ' JOIN (
+						SELECT
+							AA.K,
+							MAX(AA.jobtdate) AS jobtdate
+						FROM ' . $objects_tname3 . ' AS AA
+						GROUP BY AA.K
+					) AS AAA ON (
+						AAA.K = ' . $objects_tname3 . '.K AND AAA.jobtdate = ' . $objects_tname3 . '.jobtdate
+					) ';
+				Database::execute($sql);
+			}
+
+			// count for each type
+			$sql = 'SELECT * FROM (
+					SELECT
+						ObjectType AS objecttype,
+						COUNT(1)   AS count
+					FROM ' . $objects_tname1 . '
+					GROUP BY ObjectType
+				) AS A UNION (
+					SELECT
+						\'files\' AS objecttype,
+						COUNT(1)   AS count
+					FROM ' . $objects_tname4 . '
+					GROUP BY ObjectType
+				)';
+			$statement = Database::runQuery($sql);
+			$object_count = $statement->fetchAll(PDO::FETCH_ASSOC);
+
+			for ($i = 0; $i < count($object_count); $i++) {
+				$items = [];
+				if ($object_count[$i]['objecttype'] == 'files') {
+					$sql = 'SELECT * 
+						FROM ' . $objects_tname4 . '
+						' . ((stripos($sort_col, 'object') === false) ? $order : '') . $limit . $offset;
+					$statement = Database::runQuery($sql);
+					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
+				} else {
+					$sql = 'SELECT * 
+						FROM ' . $objects_tname1 . '
+						WHERE ObjectType = \'' . $object_count[$i]['objecttype'] . '\'
+						' . $order . $limit . $offset;
+					$statement = Database::runQuery($sql);
+					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
+				}
+				if (!key_exists($object_count[$i]['objecttype'], $result['overview'])) {
+					// type does not exists, add objects
+					$result['overview'][$object_count[$i]['objecttype']] = [
+						'items' => $items,
+						'count' => $object_count[$i]['count']
+					];
+				} else {
+					// type exists, update count only
+					$result['overview'][$object_count[$i]['objecttype']]['count'] += $object_count[$i]['count'];
+				}
+			}
+
+			// drop temporary tables
+			$sql = 'DROP TABLE ' . $objects_tname1;
+			Database::execute($sql);
+
+			if ($db_params['type'] === Database::MYSQL_TYPE) {
+				$sql = 'DROP TABLE ' . $objects_tname2;
+				Database::execute($sql);
+				$sql = 'DROP TABLE ' . $objects_tname3;
+				Database::execute($sql);
+				$sql = 'DROP TABLE ' . $objects_tname4;
+				Database::execute($sql);
+			}
+		} catch(\PDOException $e) {
+			// rollback the transaction
+			//$pdo->rollBack();
+
+			// show the error message
+			$msg = 'SQL transation commit error: ' . $e->getMessage();
+			$this->getModule('logging')->log(
+				Logging::CATEGORY_EXECUTE,
+				$msg
+			);
 		}
 		return $result;
 	}

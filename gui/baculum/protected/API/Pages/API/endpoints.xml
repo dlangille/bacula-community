@@ -102,6 +102,7 @@
 	<!-- object endpoints -->
 	<url ServiceParameter="Objects" pattern="api/v2/objects/" />
 	<url ServiceParameter="ObjectClass" pattern="api/v2/objects/{id}/" parameters.id="\d+" />
+	<url ServiceParameter="ObjectsOverview" pattern="api/v2/objects/overview/" />
 	<url ServiceParameter="ObjectVersions" pattern="api/v2/objects/versions/{uuid}" parameters.uuid="[a-zA-Z0-9:.\-_ ]+" />
 	<url ServiceParameter="ObjectStatsCategorySum" pattern="api/v2/objects/stats/category-sum/" />
 	<url ServiceParameter="ObjectStatsCategoryStatus" pattern="api/v2/objects/stats/category-status/" />
