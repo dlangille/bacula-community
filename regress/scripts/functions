@@ -240,6 +240,11 @@ EOF
        $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolAttributes", "No", "Job")'
        variant_name="${variant_name} NoSpoolAttributes"
    fi
+   if [ x$FORCE_SPOOL_DATA = xyes ]; then
+       $bperl -e 'add_attribute("$conf/bacula-dir.conf", "SpoolData", "yes", "Job")'
+       $bperl -e "add_attribute('$conf/bacula-sd.conf', 'MaximumJobSpoolSize', '5MB', 'Device')"
+       variant_name="${variant_name} SpoolData"
+   fi
    if [ x$FORCE_SDPACKETCHECK = xyes ]; then
        $bperl -e 'add_attribute("$conf/bacula-fd.conf", "SDPacketCheck", "500", "FileDaemon")'
        variant_name="${variant_name} SDCheckPacket"
