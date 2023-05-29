@@ -59,8 +59,15 @@ class PluginM365TenantList extends BaculumAPIServer {
 		}
 
 		$tenants = $this->getModule('fd_plugin_cfg')->getConfig('m365', $client);
+		$out = [];
+		foreach ($tenants as $tenant_id => $opts) {
+			$tenant_name = key_exists('tenant_name', $opts) ? $opts['tenant_name'] : '';
+			$out[$tenant_id] = [
+				'tenant_name' => $tenant_name
+			];
+		}
 
-		$this->output = array_keys($tenants);
+		$this->output = $out;
 		$this->error = PluginM365Error::ERROR_NO_ERRORS;
 	}
 }

@@ -9229,21 +9229,28 @@
 		"/api/v2/plugins/m365/{clientid}/tenants": {
 			"get": {
 				"tags": ["plugins"],
-				"summary": "Microsoft 365 plugin tenant identifier list",
-				"description": "Get Microsoft 365 tenant identifier list.",
+				"summary": "Microsoft 365 plugin tenant identifier and name list",
+				"description": "Get Microsoft 365 tenant identifier and name list.",
 				"responses": {
 					"200": {
-						"description": "List of Microsoft 365 tenant identifiers.",
+						"description": "List of Microsoft 365 tenant identifiers with names.",
 						"content": {
 							"application/json": {
 								"schema": {
 									"type": "object",
 									"properties": {
 										"output": {
-											"type": "array",
-											"items": {
-												"type": "string",
-												"description": "Tenant identifier"
+											"type": "object",
+											"properties": {
+												"tenant_id": {
+													"type": "object",
+													"properties": {
+														"tenant_name": {
+															"type": "string",
+															"description": "Tenant name"
+														}
+													}
+												}
 											}
 										},
 										"error": {
