@@ -8404,7 +8404,7 @@
 						"name": "order_by",
 						"in": "query",
 						"required": false,
-						"description": "Sort by selected object property (default objectid). There can be any object property (objectid, objectname, objectsource ...etc.) except jobname.",
+						"description": "Sort by selected object property (default jobtdate). There can be one from the following properties: objectname, client, jobstatus.",
 						"schema": {
 							"type": "string"
 						}
