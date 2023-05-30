@@ -97,6 +97,7 @@ class SourceManager extends APIModule {
 	ores.jobid     AS jobid,
 	regexp_split_to_table(fres.Content, \',\') AS content,
 	jres.Type      AS type,
+	jres.Level     AS level,
 	jres.JobStatus AS jobstatus,
 	jres.JobErrors AS joberrors
 	FROM Job AS jres,
@@ -173,6 +174,7 @@ class SourceManager extends APIModule {
 				$sources[$i]['jobid'] = 0;
 				$sources[$i]['content'] = '';
 				$sources[$i]['type'] = '';
+				$sources[$i]['level'] = '';
 				$sources[$i]['jobstatus'] = '';
 				$sources[$i]['joberrors'] = '';
 			}

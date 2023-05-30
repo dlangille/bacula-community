@@ -11199,9 +11199,25 @@
 					"description": "Latest jobid",
 					"type": "integer"
 				},
+				"content": {
+					"description": "Job fileset content",
+					"type": "string"
+				},
+				"type": {
+					"description": "Job type",
+					"type": "string"
+				},
+				"level": {
+					"description": "Job level letter",
+					"type": "string"
+				},
 				"jobstatus": {
 					"description": "Job status latest job",
 					"type": "string"
+				},
+				"joberrors": {
+					"description": "Job errors",
+					"type": "integer"
 				}
 			}
 		},
