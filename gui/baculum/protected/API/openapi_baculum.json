@@ -3719,6 +3719,44 @@
 				]
 			}
 		},
+		"/api/v2/storages/resnames": {
+			"get": {
+				"tags": ["storages"],
+				"summary": "Storage resource names",
+				"description": "Get storage resource names",
+				"responses": {
+					"200": {
+						"description": "List of storage resource names",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "List storage resource names per director",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/storages/show": {
 			"get": {
 				"tags": ["storages"],

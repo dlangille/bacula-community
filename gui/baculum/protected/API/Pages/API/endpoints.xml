@@ -30,6 +30,7 @@
 	<!-- storages (storage daemons) endpoints -->
 	<url ServiceParameter="Storages" pattern="api/v2/storages/" />
 	<url ServiceParameter="Storage" pattern="api/v2/storages/{id}/" parameters.id="\d+" />
+	<url ServiceParameter="StorageResNames" pattern="api/v2/storages/resnames/" />
 	<url ServiceParameter="StoragesShow" pattern="api/v2/storages/show/" />
 	<url ServiceParameter="StorageShow" pattern="api/v2/storages/{id}/show/" parameters.id="\d+" />
 	<url ServiceParameter="StorageStatus" pattern="api/v2/storages/{id}/status/" parameters.id="\d+" />
