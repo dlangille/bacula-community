@@ -55,6 +55,7 @@
 		<!-- bconsole command modules -->
 		<module id="ls" class="Baculum\API\Modules\Ls" />
 		<module id="list" class="Baculum\API\Modules\BList" />
+		<module id="time" class="Baculum\API\Modules\TimeManager" />
 		<!-- changer command modules -->
 		<module id="changer_command" class="Baculum\API\Modules\ChangerCommand" />
 		<!-- plugin modules -->

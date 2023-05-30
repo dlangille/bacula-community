@@ -7106,6 +7106,72 @@
 				]
 			}
 		},
+		"/api/v2/directors/{director_name}/time": {
+			"get": {
+				"tags": ["directors"],
+				"summary": "Get director system time",
+				"description": "Get director system time",
+				"responses": {
+					"200": {
+						"description": "Director system time",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"properties": {
+												"year": {
+													"description": "Four digit year",
+													"type": "integer"
+												},
+												"month": {
+													"description": "Month (1-12)",
+													"type": "integer"
+												},
+												"day": {
+													"description": "Day (1-31)",
+													"type": "integer"
+												},
+												"hour": {
+													"description": "Hour (0-23)",
+													"type": "integer"
+												},
+												"minute": {
+													"description": "Minute (0-59)",
+													"type": "integer"
+												},
+												"second": {
+													"description": "Second (0-59)",
+													"type": "integer"
+												}
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 530, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "director_name",
+						"in": "path",
+						"description": "Director name",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/oauth2/clients": {
 			"get": {
 				"tags": ["oauth2"],
