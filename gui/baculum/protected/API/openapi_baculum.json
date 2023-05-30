@@ -10046,6 +10046,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "server",
+						"in": "query",
+						"required": false,
+						"description": "VMware server name",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}

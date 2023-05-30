@@ -65,12 +65,17 @@ class PluginVSphereListDatastores extends ConsoleOutputQueryPage {
 		if ($this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output'])) {
 			$out_format = $this->Request['output'];
 		}
-		$restore_host = $this->Request->contains('restore_host') && $misc->isValidName($this->Request['restore_host'])? $this->Request['restore_host'] : '';
 
 		$plugin = 'vsphere:';
+		$server = $this->Request->contains('server') && $misc->isValidName($this->Request['server'])? $this->Request['server'] : '';
+		if (!empty($server)) {
+			$plugin .= ' server="' . $server . '"';
+		}
+		$restore_host = $this->Request->contains('restore_host') && $misc->isValidName($this->Request['restore_host'])? $this->Request['restore_host'] : '';
 		if (!empty($restore_host)) {
 			$plugin .= ' restore_host="' . $restore_host . '"';
 		}
+
 		$out = new \StdClass;
 		$out->output = [];
 		$params = ['client' => $client, 'plugin' => $plugin];
