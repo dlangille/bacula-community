@@ -3742,7 +3742,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 4, 5, 6, 7, 9, 11, 1000]
 										}
 									}
 								}
@@ -4019,6 +4019,44 @@
 				"parameters": [{
 					"$ref": "#/components/parameters/PoolId"
 				}]
+			}
+		},
+		"/api/v2/pools/resnames": {
+			"get": {
+				"tags": ["pools"],
+				"summary": "Pool resource names",
+				"description": "Get pool resource names",
+				"responses": {
+					"200": {
+						"description": "List of pool resource names",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "List pool resource names per director",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 4, 5, 6, 7, 9, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
 			}
 		},
 		"/api/v2/pools/show": {
