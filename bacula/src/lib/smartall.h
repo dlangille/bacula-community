@@ -37,13 +37,13 @@ extern void *bmemset(void *s, int c, size_t n);
 #undef  SMARTALLOC
 #define SMARTALLOC SMARTALLOC
 
-extern void *sm_malloc(const char *fname, int lineno, unsigned int nbytes),
+extern void *sm_malloc(const char *fname, int lineno, size_t nbytes),
             *sm_calloc(const char *fname, int lineno,
-                unsigned int nelem, unsigned int elsize),
-            *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size),
-            *actuallymalloc(unsigned int size),
-            *actuallycalloc(unsigned int nelem, unsigned int elsize),
-            *actuallyrealloc(void *ptr, unsigned int size);
+                size_t nelem, size_t elsize),
+            *sm_realloc(const char *fname, int lineno, void *ptr, size_t size),
+            *actuallymalloc(size_t size),
+            *actuallycalloc(size_t nelem, size_t elsize),
+            *actuallyrealloc(void *ptr, size_t size);
 extern void sm_free(const char *fname, int lineno, void *fp);
 extern void actuallyfree(void *cp),
             sm_dump(bool bufdump, bool in_use=false), sm_static(int mode);
@@ -110,13 +110,13 @@ public:
 
 void *operator new(size_t s, const char *fname, int line)
 {
-   size_t size =  s > sizeof(int) ? (unsigned int)s : sizeof(int);
+   size_t size =  s > sizeof(int) ? s : sizeof(int);
    void *p = sm_malloc(fname, line, size);
    return bmemset(p, 0, size);   /* return memset() result to avoid GCC 6.1 issue */
 }
 void *operator new[](size_t s, const char *fname, int line)
 {
-   size_t size =  s > sizeof(int) ? (unsigned int)s : sizeof(int);
+   size_t size =  s > sizeof(int) ? s : sizeof(int);
    void *p = sm_malloc(fname, line, size);
    return bmemset(p, 0, size);  /* return memset() result to avoid GCC 6.1 issue */
 }

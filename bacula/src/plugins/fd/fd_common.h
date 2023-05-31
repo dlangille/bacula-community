@@ -42,9 +42,9 @@
 #endif
 
 #ifdef SMARTALLOC
-DLL_IMP_EXP void *sm_malloc(const char *fname, int lineno, unsigned int nbytes);
+DLL_IMP_EXP void *sm_malloc(const char *fname, int lineno, size_t nbytes);
 DLL_IMP_EXP void sm_free(const char *file, int line, void *fp);
-DLL_IMP_EXP void *reallymalloc(const char *fname, int lineno, unsigned int nbytes);
+DLL_IMP_EXP void *reallymalloc(const char *fname, int lineno, size_t nbytes);
 DLL_IMP_EXP void reallyfree(const char *file, int line, void *fp);
 
 #ifndef bmalloc

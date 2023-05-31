@@ -78,7 +78,7 @@ extern char my_name[];                /* daemon name */
 
 struct sm_abufhead {
    struct b_queue abq;         /* Links on allocated queue */
-   uint32_t ablen;             /* Buffer length in bytes */
+   size_t ablen;               /* Buffer length in bytes */
    const char *abfname;        /* File name pointer */
    uint32_t ablineno;          /* Line number of allocation */
    bool abin_use;              /* set when malloced and cleared when free */
@@ -97,7 +97,7 @@ static bool bufimode = false;   /* Buffers not tracked when True */
 /*  SMALLOC  --  Allocate buffer, enqueing on the orphaned buffer
                  tracking list.  */
 
-static void *smalloc(const char *fname, int lineno, unsigned int nbytes)
+static void *smalloc(const char *fname, int lineno, size_t nbytes)
 {
    char *buf;
 
@@ -240,7 +240,7 @@ void sm_free(const char *file, int line, void *fp)
       to check the in_use bit and detect doubly freed buffers.
    */
 
-   memset(cp+HEAD_SIZE, 0xAA, (int)(head->ablen - HEAD_SIZE));
+   memset(cp+HEAD_SIZE, 0xAA, head->ablen - HEAD_SIZE);
 
    free(cp);
 }
@@ -248,7 +248,7 @@ void sm_free(const char *file, int line, void *fp)
 /*  SM_MALLOC  --  Allocate buffer.  NULL is returned if no memory
                    was available.  */
 
-void *sm_malloc(const char *fname, int lineno, unsigned int nbytes)
+void *sm_malloc(const char *fname, int lineno, size_t nbytes)
 {
    void *buf;
 
@@ -262,7 +262,7 @@ void *sm_malloc(const char *fname, int lineno, unsigned int nbytes)
 
           memset(buf, 0x55, (int) nbytes);
        */
-      memset(buf, 0, (int) nbytes);      /* clear the memory */
+      memset(buf, 0, nbytes);      /* clear the memory */
    } else {
       Emsg0(M_ABORT, 0, _("Out of memory\n"));
    }
@@ -272,12 +272,12 @@ void *sm_malloc(const char *fname, int lineno, unsigned int nbytes)
 /*  SM_CALLOC  --  Allocate an array and clear it to zero.  */
 
 void *sm_calloc(const char *fname, int lineno,
-                unsigned int nelem, unsigned int elsize)
+                size_t nelem, size_t elsize)
 {
    void *buf;
 
    if ((buf = smalloc(fname, lineno, nelem * elsize)) != NULL) {
-      memset(buf, 0, (int) (nelem * elsize));
+      memset(buf, 0, (nelem * elsize));
    } else {
       Emsg0(M_ABORT, 0, _("Out of memory\n"));
    }
@@ -293,13 +293,13 @@ void *sm_calloc(const char *fname, int lineno,
                     This may result in programs which make heavy use  of
                     realloc() running much slower than normally.  */
 
-void *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size)
+void *sm_realloc(const char *fname, int lineno, void *ptr, size_t size)
 {
-   unsigned osize;
+   size_t osize;
    void *buf;
    char *cp = (char *) ptr;
 
-   Dmsg4(DT_MEMORY|1050, "sm_realloc %s:%d %p %d\n", get_basename(fname), (uint32_t)lineno, ptr, size);
+   Dmsg4(DT_MEMORY|1050, "sm_realloc %s:%d %p %llu\n", get_basename(fname), (uint32_t)lineno, ptr, (uint64_t)size);
    if (size <= 0) {
       e_msg(fname, lineno, M_ABORT, 0, _("sm_realloc size: %d\n"), size);
    }
@@ -329,7 +329,7 @@ void *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size)
 // sm_bytes -= head->ablen;
 
    if ((buf = smalloc(fname, lineno, size)) != NULL) {
-      memcpy(buf, ptr, (int)sm_min(size, osize));
+      memcpy(buf, ptr, sm_min(size, osize));
       /* If the new buffer is larger than the old, fill the balance
          of it with "designer garbage". */
       if (size > osize) {
@@ -338,13 +338,13 @@ void *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size)
             memset(((char *) buf) + osize, 0x55, (int) (size - osize));
          */
 
-         memset(((char *) buf) + osize, 0, (int) (size - osize));
+         memset(((char *) buf) + osize, 0, (size - osize));
       }
 
       /* All done.  Free and dechain the original buffer. */
       sm_free(fname, lineno, ptr);
    }
-   Dmsg4(DT_MEMORY|1060, _("sm_realloc %d at %p from %s:%d\n"), size, buf, get_basename(fname), (uint32_t)lineno);
+   Dmsg4(DT_MEMORY|1060, _("sm_realloc %llu at %p from %s:%d\n"), (uint64_t)size, buf, get_basename(fname), (uint32_t)lineno);
    return buf;
 }
 
@@ -353,7 +353,7 @@ void *sm_realloc(const char *fname, int lineno, void *ptr, unsigned int size)
                         by system or library routines not compiled
                         using SMARTALLOC.  */
 
-void *actuallymalloc(unsigned int size)
+void *actuallymalloc(size_t size)
 {
    return malloc(size);
 }
@@ -363,7 +363,7 @@ void *actuallymalloc(unsigned int size)
                         by system or library routines not compiled
                         using SMARTALLOC.  */
 
-void *actuallycalloc(unsigned int nelem, unsigned int elsize)
+void *actuallycalloc(size_t nelem, size_t elsize)
 {
    return calloc(nelem, elsize);
 }
@@ -373,9 +373,9 @@ void *actuallycalloc(unsigned int nelem, unsigned int elsize)
                          by system or library routines not compiled
                          using SMARTALLOC.  */
 
-void *actuallyrealloc(void *ptr, unsigned int size)
+void *actuallyrealloc(void *ptr, size_t size)
 {
-   Dmsg2(DT_MEMORY|1040, "Actuallyrealloc %p %d\n", ptr, size);
+   Dmsg2(DT_MEMORY|1040, "Actuallyrealloc %p %llu\n", ptr, (uint64_t)size);
    return realloc(ptr, size);
 }
 
@@ -412,15 +412,15 @@ void sm_dump(bool bufdump, bool in_use)
 
       if (ap->abfname != NULL) {
          char errmsg[500];
-         uint32_t memsize = ap->ablen - (HEAD_SIZE + 1);
+         size_t memsize = ap->ablen - (HEAD_SIZE + 1);
          char *cp = ((char *)ap) + HEAD_SIZE;
 
-         Pmsg6(0, "%s buffer: %s %d bytes at %p from %s:%d\n",
+         Pmsg6(0, "%s buffer: %s %llu bytes at %p from %s:%d\n",
             in_use?"In use":"Orphaned",
-            my_name, memsize, cp, get_basename(ap->abfname), ap->ablineno);
+               my_name, (uint64_t)memsize, cp, get_basename(ap->abfname), ap->ablineno);
          if (bufdump) {
             char buf[20];
-            unsigned llen = 0;
+            size_t llen = 0;
 
             errmsg[0] = EOS;
             while (memsize) {
@@ -503,15 +503,15 @@ int sm_check_rtn(const char *fname, int lineno, bool bufdump)
          Pmsg1(0, _("  Buffer address: %p\n"), ap);
 
          if (ap->abfname != NULL) {
-            uint32_t memsize = ap->ablen - (HEAD_SIZE + 1);
+            size_t memsize = ap->ablen - (HEAD_SIZE + 1);
             char errmsg[80];
 
             Pmsg4(0,
-              _("Damaged buffer:  %6u bytes allocated at line %d of %s %s\n"),
-               memsize, ap->ablineno, my_name, get_basename(ap->abfname)
+              _("Damaged buffer:  %6llu bytes allocated at line %d of %s %s\n"),
+                  (uint64_t)memsize, ap->ablineno, my_name, get_basename(ap->abfname)
             );
             if (bufdump) {
-               unsigned llen = 0;
+               size_t llen = 0;
                char *cp = ((char *) ap) + HEAD_SIZE;
 
                errmsg[0] = EOS;
