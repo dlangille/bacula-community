@@ -674,4 +674,28 @@ JOIN Job USING (JobId) '
 		sort($values);
 		return $values;
 	}
+
+	/**
+	 * Get existing object names.
+	 *
+	 * @param integer $limit_val maximum number of elements to return
+	 * @return array object names
+	 */
+	public function getObjectNames($limit_val = null) {
+		$limit = '';
+		if(is_int($limit_val) && $limit_val > 0) {
+			$limit = sprintf(
+				' LIMIT %d',
+				$limit_val
+			);
+		}
+		$sql = 'SELECT DISTINCT ObjectName as objectname
+			FROM Object
+			' . $limit;
+		$statement = Database::runQuery($sql);
+		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
+		$values = array_keys($result);
+		sort($values);
+		return $values;
+	}
 }

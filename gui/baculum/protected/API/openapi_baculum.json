@@ -8360,6 +8360,44 @@
 				}
 			}
 		},
+		"/api/v2/objects/names": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object names",
+				"description": "Get object names.",
+				"responses": {
+					"200": {
+						"description": "Object names.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Object name"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/objects/overview": {
 			"get": {
 				"tags": ["objects"],
