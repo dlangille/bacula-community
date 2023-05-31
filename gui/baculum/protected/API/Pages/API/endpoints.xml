@@ -106,6 +106,7 @@
 	<url ServiceParameter="ObjectClass" pattern="api/v2/objects/{id}/" parameters.id="\d+" />
 	<url ServiceParameter="ObjectsOverview" pattern="api/v2/objects/overview/" />
 	<url ServiceParameter="ObjectVersions" pattern="api/v2/objects/versions/{uuid}" parameters.uuid="[a-zA-Z0-9:.\-_ ]+" />
+	<url ServiceParameter="ObjectTypes" pattern="api/v2/objects/types/" />
 	<url ServiceParameter="ObjectStatsCategorySum" pattern="api/v2/objects/stats/category-sum/" />
 	<url ServiceParameter="ObjectStatsCategoryStatus" pattern="api/v2/objects/stats/category-status/" />
 	<url ServiceParameter="ObjectStatsSizeSum" pattern="api/v2/objects/stats/size-sum/" />

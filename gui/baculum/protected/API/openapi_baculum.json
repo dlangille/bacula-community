@@ -8327,6 +8327,39 @@
 				]
 			}
 		},
+		"/api/v2/objects/types": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object types",
+				"description": "Get object types.",
+				"responses": {
+					"200": {
+						"description": "Object types.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Object type"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		},
 		"/api/v2/objects/overview": {
 			"get": {
 				"tags": ["objects"],

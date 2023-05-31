@@ -659,4 +659,19 @@ JOIN Job USING (JobId) '
 		$statement = Database::runQuery($sql, $where['params']);
 		return $statement->fetchAll(\PDO::FETCH_ASSOC);
 	}
+
+	/**
+	 * Get existing object types.
+	 *
+	 * @return array object types
+	 */
+	public function getObjectTypes() {
+		$sql = 'SELECT DISTINCT ObjectType as objecttype
+			FROM Object';
+		$statement = Database::runQuery($sql);
+		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
+		$values = array_keys($result);
+		sort($values);
+		return $values;
+	}
 }
