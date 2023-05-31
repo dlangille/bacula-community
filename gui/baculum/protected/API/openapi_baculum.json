@@ -8216,6 +8216,17 @@
 						}
 					},
 					{
+
+						"name": "jobstatus",
+						"in": "query",
+						"required": false,
+						"description": "Job status. Note, some statuses can be not visible outside (used internally by Bacula)",
+						"schema": {
+							"enum": ["C", "R", "B", "T", "W", "E", "e", "f", "D", "A", "I", "F", "S", "m", "M", "s", "j", "c", "d", "t", "p", "i", "a", "l", "L"],
+							"type": "string"
+						}
+					},
+					{
 						"name": "joberrors",
 						"in": "query",
 						"required": false,
