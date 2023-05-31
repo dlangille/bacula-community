@@ -2198,18 +2198,6 @@ winver::winver(void)
     snprintf(WIN_VERSION, sizeof(WIN_VERSION), "%s %lu.%lu.%lu",
              platform, osvinfo.dwMajorVersion, osvinfo.dwMinorVersion, osvinfo.dwBuildNumber);
 
-#if 0
-    HANDLE h = CreateFile("G:\\foobar", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
-    CloseHandle(h);
-#endif
-#if 0
-    BPIPE *b = open_bpipe("ls -l", 10, "r");
-    char buf[1024];
-    while (!feof(b->rfd)) {
-        fgets(buf, sizeof(buf), b->rfd);
-    }
-    close_bpipe(b);
-#endif
 }
 
 BOOL CreateChildProcess(VOID);
