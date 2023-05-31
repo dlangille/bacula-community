@@ -49,6 +49,13 @@ case `uname -s` in
         echo "$TestName skipped: getfattr not installed"
         exit 0
       fi
+
+      # Require bacula-fd to be linked with libacl else check the configure ouput
+      ldd ${bin}/bacula-fd | grep libacl 2>&1 >/dev/null
+      if test $? -ne 0; then
+        echo "$TestName skipped: client is not linked with libacl"
+        exit 0
+      fi
       ;;
    Darwin)
       ;;
@@ -93,8 +100,8 @@ scripts/copy-confs
 outf="tmp/sed_tmp"
 echo "s%  Schedule =%# Schedule =%g" > $outf
 echo "s/Options {/Options { aclsupport=yes; xattrsupport = yes/" >> $outf
-cp ${cwd}/bin/bacula-dir.conf  $cwd/tmp/1
-sed -f ${outf} ${cwd}/tmp/1 >${cwd}/bin/bacula-dir.conf
+cp ${conf}/bacula-dir.conf  $cwd/tmp/1
+sed -f ${outf} ${cwd}/tmp/1 >${conf}/bacula-dir.conf
 
 d=${cwd}/build/acl
 
