@@ -9180,6 +9180,15 @@
 						}
 					},
 					{
+						"name": "joberrors",
+						"in": "query",
+						"required": false,
+						"description": "Show objects from jobs that contain or that do not contain errors.",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
 						"name": "hasobject",
 						"in": "query",
 						"required": false,

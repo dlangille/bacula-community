@@ -49,6 +49,10 @@ class Sources extends BaculumAPIServer {
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: null;
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? SourceManager::SOURCE_RESULT_MODE_OVERVIEW : SourceManager::SOURCE_RESULT_MODE_NORMAL;
+		$joberrors = null;
+		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
+			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
+		}
 
 		$allowed_sort_fields = ['job', 'client', 'fileset', 'starttime', 'endtime', 'jobid', 'content', 'type', 'jobstatus', 'joberrors'];
 		if (is_string($order_by) && !in_array($order_by, $allowed_sort_fields)) {
@@ -119,6 +123,21 @@ class Sources extends BaculumAPIServer {
 				$params['jres.endtime'][] = [
 					'operator' => '<=',
 					'vals' => date('Y-m-d H:i:s', $endtime_to)
+				];
+			}
+		}
+
+		if (!is_null($joberrors)) {
+			if ($joberrors === true) {
+				$params['jres.JobErrors'] = [];
+				$params['jres.JobErrors'][] = [
+					'operator' => '>',
+					'vals' => 0
+				];
+			} elseif ($joberrors === false) {
+				$params['jres.JobErrors'] = [];
+				$params['jres.JobErrors'][] = [
+					'vals' => 0
 				];
 			}
 		}
