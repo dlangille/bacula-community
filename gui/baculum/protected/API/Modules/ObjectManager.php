@@ -667,11 +667,11 @@ JOIN Job USING (JobId) '
 	 */
 	public function getObjectTypes() {
 		$sql = 'SELECT DISTINCT ObjectType as objecttype
-			FROM Object';
+			FROM Object
+			ORDER BY ObjectType';
 		$statement = Database::runQuery($sql);
 		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
 		$values = array_keys($result);
-		sort($values);
 		return $values;
 	}
 
@@ -691,11 +691,10 @@ JOIN Job USING (JobId) '
 		}
 		$sql = 'SELECT DISTINCT ObjectName as objectname
 			FROM Object
-			' . $limit;
+			ORDER BY ObjectName ' . $limit;
 		$statement = Database::runQuery($sql);
 		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
 		$values = array_keys($result);
-		sort($values);
 		return $values;
 	}
 }
