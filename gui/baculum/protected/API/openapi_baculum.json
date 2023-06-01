@@ -5200,6 +5200,44 @@
 				]
 			}
 		},
+		"/api/v2/volumes/names": {
+			"get": {
+				"tags": ["volumes"],
+				"summary": "Volume names",
+				"description": "Get volume names.",
+				"responses": {
+					"200": {
+						"description": "Volume names.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Volume name"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/filesets": {
 			"get": {
 				"tags": ["filesets"],

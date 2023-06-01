@@ -457,10 +457,33 @@ LEFT JOIN Storage USING (StorageId)
 	 */
 	public function getVolumesKeys($criteria = array(), $limit_val = 0) {
 		$volumes = [];
-		$vols = $this->getVolumes($criteria, $limit_val);
+		$vols = $this->getVolumes($criteria, [], $limit_val);
 		for ($i = 0; $i < count($vols); $i++) {
 			$volumes[$vols[$i]->volumename] = $vols[$i];
 		}
+		return $volumes;
+	}
+
+	/**
+	 * Get volumes names.
+	 *
+	 * @param integer $limit_val limit results value
+	 * @return array volume name list
+	 */
+	public function getVolumeNames($limit_val = null) {
+		$limit = '';
+		if(is_int($limit_val) && $limit_val > 0) {
+			$limit = sprintf(
+				' LIMIT %d',
+				$limit_val
+			);
+		}
+		$sql = 'SELECT VolumeName as volumename
+			FROM Media
+			ORDER BY VolumeName ' . $limit;
+		$statement = Database::runQuery($sql);
+		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
+		$volumes = array_keys($result);
 		return $volumes;
 	}
 }
