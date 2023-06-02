@@ -575,7 +575,7 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
    char curlevel;
    bool keep;
    bool ok=false;
-   int count=0, len;
+   int count=0;
 
    /* In Incremental, it means that the previous Full/Diff is well terminated */
    if (level != 'I') {
@@ -627,7 +627,6 @@ void joblist::prune_jobs(char *build_cmd(void *arg, const char *data, const char
       keep = false;
       datalen = 0;
 
-      len = strlen(buf);
       /* We don't capture the vol list, because our sscanf is limited to 1000 bytes  */
       if (scan_string(buf, "time=%60s level=%c key=%s name=%s root=%s prev=%s vollen=%d vol=", 
                       t, &curlevel, curkey, curjobname, rootjob, prevjob, &datalen) != 7) {
