@@ -60,6 +60,7 @@ class ObjectManager extends APIModule
 	 */
 	const OBJECT_RESULT_MODE_NORMAL = 'normal';
 	const OBJECT_RESULT_MODE_OVERVIEW = 'overview';
+	const OBJECT_RESULT_MODE_OVERVIEW_UNIQUE = 'overview_unique';
 
 	/**
 	 * Object result record view.
@@ -83,7 +84,7 @@ class ObjectManager extends APIModule
 	 * @param string $view job records view (basic, full)
 	 * @return array object list
 	 */
-	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $view = self::OBJ_RESULT_VIEW_FULL, $mode = self::OBJECT_RESULT_MODE_NORMAL) {
+	public function getObjects($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $group_offset = 0, $view = self::OBJ_RESULT_VIEW_FULL, $mode = self::OBJECT_RESULT_MODE_NORMAL) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -121,8 +122,16 @@ LEFT JOIN Client USING (ClientId) '
 . $where['where'] . $order . $limit . $offset;
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
-		$overview = Database::groupBy($group_by, $result, $group_limit, 'objecttype');
-		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW) {
+		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW_UNIQUE) {
+			Database::groupBy('objectname', $result, 1, 0, 'objecttype');
+			$func = function ($item) {
+				return ((object)$item[0]);
+			};
+			$result = array_values($result);
+			$result = array_map($func, $result);
+		}
+		$overview = Database::groupBy($group_by, $result, $group_limit, $group_offset, 'objecttype');
+		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW || $mode == self::OBJECT_RESULT_MODE_OVERVIEW_UNIQUE) {
 			// Overview mode.
 			$result = [
 				'objects' => $result,

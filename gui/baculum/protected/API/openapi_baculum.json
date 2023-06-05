@@ -8032,7 +8032,25 @@
 						"required": false,
 						"description": "Maximum number elements per group.",
 						"schema": {
-							"type": "string"
+							"type": "integer"
+						}
+					},
+					{
+						"name": "group_offset",
+						"in": "query",
+						"required": false,
+						"description": "Element offset per group.",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "unique_objects",
+						"in": "query",
+						"required": false,
+						"description": "Display only unique objects (equivalent for: groupby=objectname&group_limit=1).",
+						"schema": {
+							"type": "boolean"
 						}
 					},
 					{

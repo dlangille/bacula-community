@@ -232,15 +232,17 @@ class Database extends APIModule {
 	 * @param string $group_by column to use as group
 	 * @param array $result database results/records (please note - reference)
 	 * @param integer $group_limit group limit (zero means no limit)
+	 * @param integer $group_offset group offset
 	 * @param string|null $overview_by prepare overview (counts) by given object output property
 	 * @param array overview array or empty array if no overview requested
 	 */
-	public static function groupBy($group_by, &$result, $group_limit = 0, $overview_by = null) {
+	public static function groupBy($group_by, &$result, $group_limit = 0, $group_offset = 0, $overview_by = null) {
 		$overview = [];
 		if (is_string($group_by) && is_array($result)) {
 			// Group results
 			$new_result = [];
 			$len = count($result);
+			$group_cnts = [];
 			for ($i = 0; $i < $len; $i++) {
 				if (!property_exists($result[$i], $group_by)) {
 					continue;
@@ -248,10 +250,19 @@ class Database extends APIModule {
 				if (!key_exists($result[$i]->{$group_by}, $new_result)) {
 					$new_result[$result[$i]->{$group_by}] = [];
 				}
+				if (!key_exists($result[$i]->{$group_by}, $group_cnts)) {
+					$group_cnts[$result[$i]->{$group_by}] = 0;
+				}
+				if ($group_cnts[$result[$i]->{$group_by}] < $group_offset) {
+					$group_cnts[$result[$i]->{$group_by}]++;
+					// don't display elements lower than offset
+					continue;
+				}
 				if ($group_limit > 0 && count($new_result[$result[$i]->{$group_by}]) >= $group_limit) {
 					// limit per group reached
 					continue;
 				}
+				$group_cnts[$result[$i]->{$group_by}]++;
 				$new_result[$result[$i]->{$group_by}][] = $result[$i];
 				if (!key_exists($result[$i]->{$overview_by}, $overview)) {
 					$overview[$result[$i]->{$overview_by}] = [

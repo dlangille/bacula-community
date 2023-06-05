@@ -52,6 +52,7 @@ class Objects extends BaculumAPIServer {
 			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
 		}
 		$group_by = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
+		$group_offset = $this->Request->contains('group_offset') ? intval($this->Request['group_offset']) : 0;
 		$group_limit = $this->Request->contains('group_limit') ? intval($this->Request['group_limit']) : 0;
 
 		// UNIX timestamp values
@@ -82,6 +83,10 @@ class Objects extends BaculumAPIServer {
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'ObjectId';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? ObjectManager::OBJECT_RESULT_MODE_OVERVIEW : ObjectManager::OBJECT_RESULT_MODE_NORMAL;
+		$unique_objects = ($this->Request->contains('unique_objects') && $misc->isValidBooleanTrue($this->Request['unique_objects'])) ? true : false;
+		if ($mode === ObjectManager::OBJECT_RESULT_MODE_OVERVIEW && $unique_objects) {
+			$mode = ObjectManager::OBJECT_RESULT_MODE_OVERVIEW_UNIQUE;
+		}
 
 		$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
 		$prop_cols = $or->getProperties();
@@ -378,6 +383,7 @@ class Objects extends BaculumAPIServer {
 			$order_direction,
 			$group_by,
 			$group_limit,
+			$group_offset,
 			ObjectManager::OBJ_RESULT_VIEW_FULL,
 			$mode
 		);
