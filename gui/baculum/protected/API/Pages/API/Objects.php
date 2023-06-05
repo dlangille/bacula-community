@@ -84,9 +84,9 @@ class Objects extends BaculumAPIServer {
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
 		$mode = ($this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview'])) ? ObjectManager::OBJECT_RESULT_MODE_OVERVIEW : ObjectManager::OBJECT_RESULT_MODE_NORMAL;
 		$unique_objects = ($this->Request->contains('unique_objects') && $misc->isValidBooleanTrue($this->Request['unique_objects'])) ? true : false;
-		if ($mode === ObjectManager::OBJECT_RESULT_MODE_OVERVIEW && $unique_objects) {
-			$mode = ObjectManager::OBJECT_RESULT_MODE_OVERVIEW_UNIQUE;
-		}
+		$opts = [
+			'unique_objects' => $unique_objects
+		];
 
 		$or = new \ReflectionClass('Baculum\API\Modules\ObjectRecord');
 		$prop_cols = $or->getProperties();
@@ -377,6 +377,7 @@ class Objects extends BaculumAPIServer {
 
 		$objects = $this->getModule('object')->getObjects(
 			$params,
+			$opts,
 			$limit,
 			$offset,
 			$order_by_lc,
