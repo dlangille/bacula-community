@@ -528,11 +528,11 @@ bool joblist::store_job(char *data)
 
    if (level == 'F') {
       l = fprintf(fp, "time=%lld level=%c key=%s name=%s vollen=%d vol=%s\n", 
-               now, level, key, name, strlen(data), data);
+               (long long)now, level, key, name, (int)strlen(data), data);
 
    } else {
       l = fprintf(fp, "time=%lld level=%c key=%s name=%s root=%s prev=%s vollen=%d vol=%s\n",
-               now, level, key, name, root, prev, strlen(data), data);
+            (long long)now, level, key, name, root, prev, (int)strlen(data), data);
    }
 
    unbash_spaces(data);
