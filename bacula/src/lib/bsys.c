@@ -1771,7 +1771,9 @@ int bchmod(int fd, const char *path, mode_t mode)
 }
 
 /* Used to test the program */
+#ifdef HAVE_LINUX_OS
 static int init_size=1024;
+#endif
 static int dbglevel=500;
 
 /* alist(100, owned_by_alist) */
