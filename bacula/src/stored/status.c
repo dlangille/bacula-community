@@ -325,7 +325,7 @@ static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp, OutputWrite
       len = Mmsg(msg, _("\nDevice \"%s\" is not open or does not exist.\n"),
                  name);
       sendit(msg, len, sp);
-      if (!sp->api) sendit("==\n", 4, sp);
+      if (!sp->api) sendit("==\n", 3, sp);
       return;
    }
 
@@ -406,7 +406,7 @@ static void list_one_device(char *name, DEVICE *dev, STATUS_PKT *sp, OutputWrite
 
    dev->show_tape_alerts((DCR *)sp, list_short, list_all, status_alert_callback);
 
-   if (!sp->api) sendit("==\n", 4, sp);
+   if (!sp->api) sendit("==\n", 3, sp);
 }
 
 static void list_one_autochanger(char *name, AUTOCHANGER *changer, STATUS_PKT *sp, OutputWriter *ow)
