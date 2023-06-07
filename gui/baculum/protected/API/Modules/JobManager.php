@@ -212,7 +212,12 @@ LEFT JOIN FileSet USING (FilesetId)'
 			if ($db_params['type'] === Database::PGSQL_TYPE) {
 			    $sort_col = strtolower($sort_col);
 			}
-			$order = ' ORDER BY ' . $sort_col . ' ' . strtoupper($sort_order);
+			$sorder = strtoupper($sort_order);
+			$order = ' ORDER BY ' . $sort_col . ' ' . $sorder;
+
+			if ($sort_col == 'jobstatus') {
+				$order .= ',joberrors ' . $sorder;
+			}
 
 			// create temporary table
 			$jobid_jobstatus_tname = 'jobid_jobstatus_' . getmypid();
