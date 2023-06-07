@@ -234,9 +234,11 @@ class Database extends APIModule {
 	 * @param integer $group_limit group limit (zero means no limit)
 	 * @param integer $group_offset group offset
 	 * @param string|null $overview_by prepare overview (counts) by given object output property
+	 * @param string|null $sort_by sort group by given object property
+	 * @param string $sort_direction sort direction (asc|desc)
 	 * @param array overview array or empty array if no overview requested
 	 */
-	public static function groupBy($group_by, &$result, $group_limit = 0, $group_offset = 0, $overview_by = null) {
+	public static function groupBy($group_by, &$result, $group_limit = 0, $group_offset = 0, $overview_by = null, $sort_by = null, $sort_direction = 'asc') {
 		$overview = [];
 		if (is_string($group_by) && is_array($result)) {
 			// Group results
@@ -275,6 +277,26 @@ class Database extends APIModule {
 				}
 			}
 			$result = $new_result;
+			if (is_string($sort_by) && is_string($sort_direction)) {
+				$sort_direction = strtolower($sort_direction);
+				$func = function ($a, $b) use ($sort_by, $sort_direction) {
+					if (!property_exists($a, $sort_by) || !property_exists($b, $sort_by)) {
+						return 0;
+					}
+					$res = strcmp($a->{$sort_by}, $b->{$sort_by});
+					if ($sort_direction == 'desc') {
+						if ($a->{$sort_by} === $b->{$sort_by}) {
+							return 0;
+						}
+						return ($a->{$sort_by} < $b->{$sort_by}) ? 1 : -1;
+					} else {
+						return $res;
+					}
+				};
+				foreach ($result as $key => &$val) {
+					usort($val, $func);
+				}
+			}
 		}
 		return array_values($overview);
 	}
