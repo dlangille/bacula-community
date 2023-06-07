@@ -64,8 +64,8 @@ void print_mtab_item(void *user_ctx, struct stat *st, const char *fstype,
                       const char *mountpoint, const char *mntopts,
                       const char *fsname)
 {
-   fprintf(stderr, "dev=%p fstype=%s mountpoint=%s mntopts=%s\n",
-      ((void *)st->st_dev), fstype, mountpoint, mntopts);
+   fprintf(stderr, "dev=%llx fstype=%s mountpoint=%s mntopts=%s\n",
+      (unsigned long long)st->st_dev, fstype, mountpoint, mntopts);
 }
 
 static void add_mtab_item(void *user_ctx, struct stat *st, const char *fstype,
@@ -137,7 +137,7 @@ int main (int argc, char *const *argv)
       read_mtab(add_mtab_item, mtab_list);
       fprintf(stderr, "Size of mtab=%d\n", mtab_list->size());
       foreach_rblist(item, mtab_list) {
-         fprintf(stderr, "Found dev=%lx fstype=%s\n", item->dev, item->fstype);
+         fprintf(stderr, "Found dev=%llx fstype=%s\n", (unsigned long long)item->dev, item->fstype);
       }
       delete mtab_list;
       goto get_out;

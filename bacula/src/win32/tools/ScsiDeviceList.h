@@ -108,7 +108,7 @@ CScsiDeviceListEntry::GetDevicePath()
    if (m_szDevicePath[0] == _T('\0'))
    {
       _sntprintf( m_szDevicePath, c_MaxDevicePathLength, 
-                  _T("%d:%d:%d:%d"), 
+                  _T("%ld:%ld:%ld:%ld"),
                   (m_dwDeviceId >> 24) & 0xFF,
                   (m_dwDeviceId >> 16) & 0xFF,
                   (m_dwDeviceId >>  8) & 0xFF,
