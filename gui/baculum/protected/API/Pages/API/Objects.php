@@ -54,6 +54,8 @@ class Objects extends BaculumAPIServer {
 		$group_by = $this->Request->contains('groupby') && $misc->isValidColumn($this->Request['groupby']) ? strtolower($this->Request['groupby']) : null;
 		$group_offset = $this->Request->contains('group_offset') ? intval($this->Request['group_offset']) : 0;
 		$group_limit = $this->Request->contains('group_limit') ? intval($this->Request['group_limit']) : 0;
+		$group_order_by = $this->Request->contains('group_order_by') && $misc->isValidColumn($this->Request['group_order_by']) ? $this->Request['group_order_by']: 'ObjectId';
+		$group_order_direction = $this->Request->contains('group_order_direction') && $misc->isValidOrderDirection($this->Request['group_order_direction']) ? $this->Request['group_order_direction']: 'ASC';
 
 		// UNIX timestamp values
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
@@ -385,6 +387,8 @@ class Objects extends BaculumAPIServer {
 			$group_by,
 			$group_limit,
 			$group_offset,
+			$group_order_by,
+			$group_order_direction,
 			ObjectManager::OBJ_RESULT_VIEW_FULL,
 			$mode
 		);

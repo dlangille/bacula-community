@@ -84,7 +84,7 @@ class ObjectManager extends APIModule
 	 * @param string $view job records view (basic, full)
 	 * @return array object list
 	 */
-	public function getObjects($criteria = [], $opts = [], $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $group_offset = 0, $view = self::OBJ_RESULT_VIEW_FULL, $mode = self::OBJECT_RESULT_MODE_NORMAL) {
+	public function getObjects($criteria = [], $opts = [], $limit_val = null, $offset_val = 0, $sort_col = 'ObjectId', $sort_order = 'DESC', $group_by = null, $group_limit = 0, $group_offset = 0, $group_order_by = null, $group_order_direction = 'ASC', $view = self::OBJ_RESULT_VIEW_FULL, $mode = self::OBJECT_RESULT_MODE_NORMAL) {
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
 		    $sort_col = strtolower($sort_col);
@@ -130,7 +130,15 @@ LEFT JOIN Client USING (ClientId) '
 			$result = array_values($result);
 			$result = array_map($func, $result);
 		}
-		$overview = Database::groupBy($group_by, $result, $group_limit, $group_offset, 'objecttype');
+		$overview = Database::groupBy(
+			$group_by,
+			$result,
+			$group_limit,
+			$group_offset,
+			'objecttype',
+			$group_order_by,
+			$group_order_direction
+		);
 		if ($mode == self::OBJECT_RESULT_MODE_OVERVIEW) {
 			// Overview mode.
 			$result = [
