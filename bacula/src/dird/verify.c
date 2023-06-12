@@ -272,7 +272,7 @@ bool do_verify(JCR *jcr)
       /*
        * Start conversation with Storage daemon
        */
-      jcr->setJobStatus(JS_Blocked);
+      jcr->setJobStatus(JS_WaitSD);
       if (!connect_to_storage_daemon(jcr, 10, SDConnectTimeout, 1)) {
          Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
          return false;
@@ -307,7 +307,7 @@ bool do_verify(JCR *jcr)
     * OK, now connect to the File daemon
     *  and ask him for the files.
     */
-   jcr->setJobStatus(JS_Blocked);
+   jcr->setJobStatus(JS_WaitFD);
    if (!connect_to_file_daemon(jcr, 10, FDConnectTimeout, 1)) {
       Jmsg(jcr, M_FATAL, 0, "%s", jcr->errmsg);
       goto bail_out;
