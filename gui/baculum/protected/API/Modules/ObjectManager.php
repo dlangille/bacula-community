@@ -234,6 +234,7 @@ LEFT JOIN Client USING (ClientId) '
 					Job.StartTime   AS starttime,
 					ObjectCategory  AS objectcategory,
 					ObjectStatus    AS objectstatus,
+					ObjectSource    AS objectsource,
 					Job.JobStatus   AS jobstatus
 				FROM Object
 				JOIN Job USING (JobId)
@@ -289,6 +290,7 @@ LEFT JOIN Client USING (ClientId) '
 						StartTime       AS starttime,
 						ObjectCategory  AS objectcategory,
 						ObjectStatus    AS objectstatus,
+						ObjectSource    AS objectsource,
 						JobStatus       AS jobstatus
 					FROM Object
 					JOIN Job USING (JobId)
@@ -309,6 +311,7 @@ LEFT JOIN Client USING (ClientId) '
 						starttime,
 						objectcategory,
 						objectstatus,
+						objectsource,
 						jobstatus
 					FROM ' . $objects_tname1 . ' JOIN (
 						SELECT
