@@ -62,11 +62,9 @@ abstract class BaculumAPIServer extends TPage {
 	protected $director;
 
 	/**
-	 * Web interface User name that sent request to API.
-	 * Null value means administrator, any other value means normal user
-	 * (non-admin user).
+	 * Basic auth username
 	 */
-	protected $user;
+	protected $username;
 
 	/**
 	 * Endpoints available for every authenticated client.
@@ -101,6 +99,7 @@ abstract class BaculumAPIServer extends TPage {
 			$is_auth = true;
 			$username = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : null;
 			if ($username) {
+				$this->username = $username;
 				$props = $this->getModule('basic_config')->getConfig($username);
 				$this->initAuthParams($props);
 			}

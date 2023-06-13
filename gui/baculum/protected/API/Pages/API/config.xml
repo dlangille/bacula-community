@@ -39,6 +39,7 @@
 		<!-- config modules -->
 		<module id="api_config" class="Baculum\API\Modules\APIConfig" />
 		<module id="bacula_config" class="Baculum\API\Modules\BaculaConfig" />
+		<module id="bacula_config_acl" class="Baculum\API\Modules\BaculaConfigACL" />
 		<module id="bacula_setting" class="Baculum\API\Modules\BaculaSetting" />
 		<module id="device_config" class="Baculum\API\Modules\DeviceConfig" />
 		<!-- logging modules -->

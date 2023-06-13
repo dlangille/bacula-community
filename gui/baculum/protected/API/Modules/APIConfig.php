@@ -384,4 +384,19 @@ class APIConfig extends ConfigFileModule {
 		}
 		return $actions;
 	}
+
+	/**
+	 * Check if extended mode is enabled.
+	 *
+	 * @return bool true if extended mode is enabled, false otherwise
+	 */
+	public function isExtendedMode() {
+		$is_emode = false;
+		$api_config = $this->getConfig('api');
+		if (key_exists('extended_mode', $api_config) && $api_config['extended_mode'] === '1') {
+			// without extended mode all resources are allowed
+			$is_emode = true;
+		}
+		return $is_emode;
+	}
 }

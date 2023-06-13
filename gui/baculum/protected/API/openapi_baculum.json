@@ -6267,6 +6267,55 @@
 					}
 				]
 			},
+			"post": {
+				"tags": ["config"],
+				"summary": "Create component resource config",
+				"description": "Create specific component resource config",
+				"consumes": [ "application/json" ],
+				"responses": {
+					"200": {
+						"description": "Create single resource config",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"description": "Create resource config error message"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 80, 81, 82, 83, 84, 90, 91, 92, 93, 94, 95, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ComponentType"
+					},
+					{
+						"$ref": "#/components/parameters/ResourceType"
+					},
+					{
+						"$ref": "#/components/parameters/ResourceName"
+					},
+					{
+						"name": "config",
+						"in": "body",
+						"description": "Config in JSON form to create",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
 			"put": {
 				"tags": ["config"],
 				"summary": "Set component resource config",
@@ -6313,6 +6362,46 @@
 						"schema": {
 							"type": "string"
 						}
+					}
+				]
+			},
+			"delete": {
+				"tags": ["config"],
+				"summary": "Delete component resource config",
+				"description": "Delete specific component resource config",
+				"consumes": [ "application/json" ],
+				"responses": {
+					"200": {
+						"description": "Delete single resource config",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "object",
+											"description": "Delete resource config error message"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 80, 81, 82, 83, 84, 90, 91, 92, 93, 94, 96, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/ComponentType"
+					},
+					{
+						"$ref": "#/components/parameters/ResourceType"
+					},
+					{
+						"$ref": "#/components/parameters/ResourceName"
 					}
 				]
 			}

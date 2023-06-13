@@ -36,10 +36,14 @@ class BaculaConfigError extends GenericError {
 	const ERROR_CONFIG_NO_JSONTOOL_READY = 92;
 	const ERROR_WRITE_TO_CONFIG_ERROR = 93;
 	const ERROR_CONFIG_VALIDATION_ERROR = 94;
+	const ERROR_CONFIG_ALREADY_EXISTS = 95;
+	const ERROR_CONFIG_DOES_NOT_EXIST = 96;
 
 	const MSG_ERROR_CONFIG_DIR_NOT_WRITABLE = 'Config directory is not writable.';
 	const MSG_ERROR_UNEXPECTED_BACULA_CONFIG_VALUE = 'Unexpected Bacula config value.';
 	const MSG_ERROR_CONFIG_NO_JSONTOOL_READY = 'No JSON tool ready.';
 	const MSG_ERROR_WRITE_TO_CONFIG_ERROR = 'Write to config file error.';
 	const MSG_ERROR_CONFIG_VALIDATION_ERROR = 'Config validation error.';
+	const MSG_ERROR_CONFIG_ALREADY_EXISTS = 'Config already exists.';
+	const MSG_ERROR_CONFIG_DOES_NOT_EXIST = 'Config does not exist.';
 }
