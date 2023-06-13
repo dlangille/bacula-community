@@ -41,6 +41,11 @@
 
 #include "namedpipe.h"
 
+#ifdef NEED_DMSG
+#define Dmsg(level, format, ...) d_msg(__FILE__, __LINE__, level, format, __VA_ARGS__)
+void d_msg(const char *file, int line, int level, const char *fmt,...);
+#endif
+
 #ifdef TEST_PROGRAM
 # define Dmsg(level, ...) printf(__VA_ARGS__ ) 
 #endif
