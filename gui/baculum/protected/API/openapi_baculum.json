@@ -8599,6 +8599,10 @@
 																				"type": "string",
 																				"description": "Job name"
 																			},
+																			"type": {
+																				"type": "string",
+																				"description": "Job type"
+																			},
 																			"level": {
 																				"type": "string",
 																				"description": "Job level"
@@ -8671,6 +8675,10 @@
 																			"jobid": {
 																				"type": "string",
 																				"description": " Job identifier"
+																			},
+																			"type": {
+																				"type": "string",
+																				"description": "Job type"
 																			},
 																			"level": {
 																				"type": "string",
