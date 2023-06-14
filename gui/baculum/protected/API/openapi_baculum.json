@@ -8631,6 +8631,10 @@
 																				"type": "string",
 																				"description": "Object source"
 																			},
+																			"path": {
+																				"type": "string",
+																				"description": "Path"
+																			},
 																			"jobstatus": {
 																				"type": "string",
 																				"description": "Job status"
