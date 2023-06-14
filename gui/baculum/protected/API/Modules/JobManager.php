@@ -277,11 +277,11 @@ LEFT JOIN FileSet USING (FilesetId)'
 				JOIN ' . $jobid_jobstatus_tname . ' USING (JobId)
 				WHERE JobId IN
 				(
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\') ORDER BY JobId DESC ' . $jlimit . $offset . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_unsuccessful) . '\') ORDER BY JobId DESC )
 					UNION
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0 ORDER BY JobId DESC ' . $jlimit . $offset . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors > 0 ORDER BY JobId DESC)
 					UNION
-					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0 ORDER BY JobId DESC ' . $jlimit . $offset . ')
+					(SELECT JobId FROM ' . $jobid_jobstatus_tname . ' WHERE JobStatus IN (\'' . implode('\',\'', $this->js_successful) . '\') AND ' . $jobid_jobstatus_tname . '.JobErrors = 0 ORDER BY JobId DESC)
 				)';
 			$statement = Database::runQuery($sql);
 			$all_objects = $statement->fetchAll(PDO::FETCH_ASSOC | PDO::FETCH_GROUP);
