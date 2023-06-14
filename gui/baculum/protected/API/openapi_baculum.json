@@ -2170,6 +2170,15 @@
 						}
 					},
 					{
+						"name": "objectname",
+						"in": "query",
+						"required": false,
+						"description": "Job object name (ex. main-db123, Note4..etc.)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "schedtime_from",
 						"in": "query",
 						"required": false,
@@ -8617,6 +8626,10 @@
 																			"objectstatus": {
 																				"type": "string",
 																				"description": "Object status"
+																			},
+																			"objectsource": {
+																				"type": "string",
+																				"description": "Object source"
 																			},
 																			"jobstatus": {
 																				"type": "string",
