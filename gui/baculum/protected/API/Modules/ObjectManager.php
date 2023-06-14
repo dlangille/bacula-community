@@ -236,6 +236,7 @@ LEFT JOIN Client USING (ClientId) '
 					ObjectCategory  AS objectcategory,
 					ObjectStatus    AS objectstatus,
 					ObjectSource    AS objectsource,
+					ObjectSize      AS objectsize,
 					Path            AS path,
 					Job.JobStatus   AS jobstatus
 				FROM Object
@@ -295,6 +296,7 @@ LEFT JOIN Client USING (ClientId) '
 						ObjectCategory  AS objectcategory,
 						ObjectStatus    AS objectstatus,
 						ObjectSource    AS objectsource,
+						ObjectSize      AS objectsize,
 						Path            AS path,
 						JobStatus       AS jobstatus
 					FROM Object
@@ -318,6 +320,7 @@ LEFT JOIN Client USING (ClientId) '
 						objectcategory,
 						objectstatus,
 						objectsource,
+						objectsize,
 						path,
 						jobstatus
 					FROM ' . $objects_tname1 . ' JOIN (

@@ -8635,6 +8635,10 @@
 																				"type": "string",
 																				"description": "Object source"
 																			},
+																			"objectsize": {
+																				"type": "string",
+																				"description": "Object size"
+																			},
 																			"path": {
 																				"type": "string",
 																				"description": "Path"
