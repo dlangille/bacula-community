@@ -8739,7 +8739,7 @@
 						"name": "objecttype",
 						"in": "query",
 						"required": false,
-						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"description": "Object type, ex. 'm365' or 'PostgreSQL' (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
@@ -8748,7 +8748,7 @@
 						"name": "objectname",
 						"in": "query",
 						"required": false,
-						"description": "Object name",
+						"description": "Object name (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
@@ -8757,7 +8757,7 @@
 						"name": "objectcategory",
 						"in": "query",
 						"required": false,
-						"description": "Object category, ex: 'mailbox'",
+						"description": "Object category, ex: 'mailbox' (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
@@ -8766,7 +8766,7 @@
 						"name": "objectsource",
 						"in": "query",
 						"required": false,
-						"description": "Object data source",
+						"description": "Object data source (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
@@ -8775,7 +8775,7 @@
 						"name": "objectuuid",
 						"in": "query",
 						"required": false,
-						"description": "Object UUID",
+						"description": "Object UUID (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
@@ -8784,7 +8784,7 @@
 						"name": "objectstatus",
 						"in": "query",
 						"required": false,
-						"description": "Object status ex: 'T', 'e' ...",
+						"description": "Object status ex: 'T', 'e' ... (works with object type items)",
 						"schema": {
 							"type": "string"
 						}
