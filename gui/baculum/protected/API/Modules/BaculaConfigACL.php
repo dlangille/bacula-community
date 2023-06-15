@@ -34,7 +34,7 @@ class BaculaConfigACL extends APIModule
 	/**
 	 * Special config ACL action names.
 	 */
-	const CONFIG_ACL_ACTIONS = [
+	private static $config_acl_actions = [
 		'READ',
 		'CREATE',
 		'UPDATE',
@@ -44,7 +44,7 @@ class BaculaConfigACL extends APIModule
 	 * Validate if request command is allowed.
 	 *
 	 * @param string $console_name Director Console name
-	 * @param string $action current action (@see BaculaConfigACL::CONFIG_ACL_ACTIONS)
+	 * @param string $action current action (@see BaculaConfigACL::$config_acl_actions)
 	 * @param string $component_type component type (currently not used)
 	 * @param string $resource_type resource type
 	 * @return bool true if request command is allowed, false otherwise
@@ -73,7 +73,7 @@ class BaculaConfigACL extends APIModule
 	 */
 	private function validateAction($action)
 	{
-		return in_array($action, self::CONFIG_ACL_ACTIONS);
+		return in_array($action, self::$config_acl_actions);
 	}
 
 	/**
