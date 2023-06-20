@@ -8171,6 +8171,25 @@
 						}
 					},
 					{
+						"name": "group_order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort groups by selected object property (default objectid).",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "group_order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Group order direction. It can be 'asc' (ascending order - default) or 'desc' (descending order)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
 						"name": "schedtime_from",
 						"in": "query",
 						"required": false,
