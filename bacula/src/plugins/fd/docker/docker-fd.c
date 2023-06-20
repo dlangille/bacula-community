@@ -393,39 +393,36 @@ void DOCKER::switch_commandctx(bpContext *ctx, const char *command)
  */
 bRC DOCKER::prepare_bejob(bpContext* ctx, char *command)
 {
-   /* check if it is our Plugin command */
-   if (isourplugincommand(PLUGINPREFIX, command)){
-      /* first, parse backup command */
-      if (parse_plugin_command(ctx, command) != bRC_OK){
+   /* first, parse backup command */
+   if (parse_plugin_command(ctx, command) != bRC_OK){
+      return bRC_Error;
+   }
+
+   switch (listing_mode){
+   case DOCKER_LISTING_NONE:
+      /* other will prepare backup job in dkcommctx context */
+      return dkcommctx->prepare_bejob(ctx, estimate);
+   case DOCKER_LISTING_CONTAINER:
+      /* listing require all */
+      if (!dkcommctx->get_all_containers(ctx)){
          return bRC_Error;
       }
-
-      switch (listing_mode){
-         case DOCKER_LISTING_NONE:
-            /* other will prepare backup job in dkcommctx context */
-            return dkcommctx->prepare_bejob(ctx, estimate);
-         case DOCKER_LISTING_CONTAINER:
-            /* listing require all */
-            if (!dkcommctx->get_all_containers(ctx)){
-               return bRC_Error;
-            }
-            dkcommctx->set_all_containers_to_backup(ctx);
-            break;
-         case DOCKER_LISTING_IMAGE:
-            if (!dkcommctx->get_all_images(ctx)){
-               return bRC_Error;
-            }
-            dkcommctx->set_all_images_to_backup(ctx);
-            break;
-         case DOCKER_LISTING_VOLUME:
-            if (!dkcommctx->get_all_volumes(ctx)){
-               return bRC_Error;
-            }
-            dkcommctx->set_all_volumes_to_backup(ctx);
-            break;
-         default:
-            break;
+      dkcommctx->set_all_containers_to_backup(ctx);
+      break;
+   case DOCKER_LISTING_IMAGE:
+      if (!dkcommctx->get_all_images(ctx)){
+         return bRC_Error;
       }
+      dkcommctx->set_all_images_to_backup(ctx);
+      break;
+   case DOCKER_LISTING_VOLUME:
+      if (!dkcommctx->get_all_volumes(ctx)){
+         return bRC_Error;
+      }
+      dkcommctx->set_all_volumes_to_backup(ctx);
+      break;
+   default:
+      break;
    }
 
    return bRC_OK;
@@ -483,17 +480,13 @@ bRC DOCKER::prepare_estimate(bpContext* ctx, char *command)
  */
 bRC DOCKER::prepare_restore(bpContext* ctx, char *command)
 {
-   /* check if it is our Plugin command */
-   if (isourplugincommand(PLUGINPREFIX, command)){
-      /* first, parse backup command */
-      if (parse_plugin_command(ctx, command) != bRC_OK){
-         return bRC_Error;
-      }
-
-      /* prepare restore */
-      return dkcommctx->prepare_restore(ctx);
+   /* first, parse backup command */
+   if (parse_plugin_command(ctx, command) != bRC_OK){
+      return bRC_Error;
    }
-   return bRC_OK;
+
+   /* prepare restore */
+   return dkcommctx->prepare_restore(ctx);
 }
 
 /*
@@ -595,39 +588,34 @@ bRC DOCKER::handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
    /* Plugin command e.g. plugin = <plugin-name>:parameters */
    case bEventPluginCommand:
       DMSG_EVENT_STR(event, value);
-      if (isourplugincommand(PLUGINPREFIX, (char*)value)){
-         // Check supported level
-         if (unsupportedlevel){
-            DMSG0(ctx, DERROR, "Unsupported backup level. Doing FULL backup.\n");
-            JMSG0(ctx, M_ERROR, "Unsupported backup level. Doing FULL backup.\n");
-            /* single error message is enough */
-            unsupportedlevel = false;
-         }
+      if (unsupportedlevel){
+         DMSG0(ctx, DERROR, "Unsupported backup level. Doing FULL backup.\n");
+         JMSG0(ctx, M_ERROR, "Unsupported backup level. Doing FULL backup.\n");
+         /* single error message is enough */
+         unsupportedlevel = false;
+      }
 
-         // check accurate mode backup
-         int accurate;
-         getBaculaVar(bVarAccurate, &accurate);
-         DMSG(ctx, DINFO, "Accurate=%d\n", accurate);
-         if (accurate > 0 && !accurate_warning){
-            DMSG0(ctx, DERROR, "Accurate mode is not supported. Please disable Accurate mode for this job.\n");
-            JMSG0(ctx, M_WARNING, "Accurate mode is not supported. Please disable Accurate mode for this job.\n");
-            /* single error message is enough */
-            accurate_warning = true;
-         }
+      // check accurate mode backup
+      int accurate;
+      getBaculaVar(bVarAccurate, &accurate);
+      DMSG(ctx, DINFO, "Accurate=%d\n", accurate);
+      if (accurate > 0 && !accurate_warning){
+         DMSG0(ctx, DERROR, "Accurate mode is not supported. Please disable Accurate mode for this job.\n");
+         JMSG0(ctx, M_WARNING, "Accurate mode is not supported. Please disable Accurate mode for this job.\n");
+         /* single error message is enough */
+         accurate_warning = true;
       }
       break;
 
    case bEventOptionPlugin:
    case bEventHandleBackupFile:
-      if (isourplugincommand(PLUGINPREFIX, (char*)value)){
-         DMSG0(ctx, DERROR, "Invalid handle Option Plugin called!\n");
-         JMSG2(ctx, M_FATAL,
-               "The %s plugin doesn't support the Option Plugin configuration.\n"
-               "Please review your FileSet and move the Plugin=%s"
-               "... command into the Include {} block.\n",
-               PLUGINNAME, PLUGINPREFIX);
-         return bRC_Error;
-      }
+      DMSG0(ctx, DERROR, "Invalid handle Option Plugin called!\n");
+      JMSG2(ctx, M_FATAL,
+            "The %s plugin doesn't support the Option Plugin configuration.\n"
+            "Please review your FileSet and move the Plugin=%s"
+            "... command into the Include {} block.\n",
+            PLUGINNAME, PLUGINPREFIX);
+      return bRC_Error;
       break;
 
    case bEventEndFileSet:
