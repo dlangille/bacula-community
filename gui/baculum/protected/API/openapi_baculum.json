@@ -7314,6 +7314,24 @@
 							"type": "string",
 							"enum": ["header", "scheduled", "running", "terminated"]
 						}
+					},
+					{
+						"name": "limit",
+						"in": "query",
+						"description": "Item limit. It works only for JSON type output.",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "offset",
+						"in": "query",
+						"description": "Items offset.  It works only for JSON type output.",
+						"required": false,
+						"schema": {
+							"type": "integer"
+						}
 					}
 				]
 			}

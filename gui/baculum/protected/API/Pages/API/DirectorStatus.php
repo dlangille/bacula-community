@@ -34,10 +34,13 @@ use Baculum\Common\Modules\Errors\GenericError;
 class DirectorStatus extends ConsoleOutputPage {
 
 	public function get() {
+		$misc = $this->getModule('misc');
 		$status = $this->getModule('status_dir');
 		$director = $this->Request->contains('name') && $this->getModule('misc')->isValidName($this->Request['name']) ? $this->Request['name'] : null;
 		$type = $this->Request->contains('type') && $status->isValidOutputType($this->Request['type']) ? $this->Request['type'] : null;
 		$out_format = $this->Request->contains('output') && $this->isOutputFormatValid($this->Request['output']) ? $this->Request['output'] : parent::OUTPUT_FORMAT_RAW;
+		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
+		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 
 		$dirs = [];
 		$result = $this->getModule('bconsole')->getDirectors();
@@ -58,7 +61,9 @@ class DirectorStatus extends ConsoleOutputPage {
 		} elseif ($out_format === parent::OUTPUT_FORMAT_JSON) {
 			$out = $this->getJSONOutput([
 				'director' => $director,
-				'type' => $type
+				'type' => $type,
+				'limit' => $limit,
+				'offset' => $offset
 			]);
 		}
 		$this->output = $out['output'];
@@ -88,7 +93,9 @@ class DirectorStatus extends ConsoleOutputPage {
 		return $status->getStatus(
 			$params['director'],
 			null,
-			$params['type']
+			$params['type'],
+			$params['limit'],
+			$params['offset']
 		);
 	}
 }

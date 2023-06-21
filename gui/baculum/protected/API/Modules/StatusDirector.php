@@ -46,9 +46,11 @@ class StatusDirector extends ComponentStatusModule {
 	 * @param string $director director name
 	 * @param string $component_name component name
 	 * @param string $type output type (e.g. header, running, terminated ...etc.)
+	 * @param integer $limit item limit
+	 * @param integer $offset item offset
 	 * @return array ready array parsed component status output
 	 */
-	public function getStatus($director, $component_name = null, $type = null) {
+	public function getStatus($director, $component_name = null, $type = null, $limit = 0, $offset = 0) {
 		$ret = array('output' => array(), 'error' => 0);
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$director,
@@ -57,11 +59,34 @@ class StatusDirector extends ComponentStatusModule {
 		);
 		if ($result->exitcode === 0) {
 			$ret['output'] = $this->parseStatus($result->output, $type);
-			if (is_string($type) && key_exists($type, $ret['output'])) {
+			$is_type = (is_string($type) && key_exists($type, $ret['output']));
+			if ($is_type) {
 				if ($type === self::OUTPUT_TYPE_HEADER) {
 					$ret['output'] = array_pop($ret['output'][$type]);
 				} else {
 					$ret['output'] = $ret['output'][$type];
+				}
+			}
+			if ($limit > 0 || $offset > 0 && (!$type || $type != self::OUTPUT_TYPE_HEADER)) {
+				$output = $ret['output'];
+				if ($is_type) {
+					$output = [$type => $output];
+				}
+				$item_types = [
+					self::OUTPUT_TYPE_SCHEDULED,
+					self::OUTPUT_TYPE_RUNNING,
+					self::OUTPUT_TYPE_TERMINATED
+				];
+				foreach ($output as $type => $values) {
+					if (!in_array($type, $item_types)) {
+						continue;
+					}
+					$output[$type] = array_slice($values, $offset, $limit);
+				}
+				if ($is_type) {
+					$ret['output'] = $output[$type];
+				} else {
+					$ret['output'] = $output;
 				}
 			}
 		} else {
@@ -94,9 +119,13 @@ class StatusDirector extends ComponentStatusModule {
 		);
 		$opts = array();
 		for($i = 0; $i < count($output); $i++) {
+			if (preg_match('/^(error|errmsg)=/', $output[$i]) === 1) {
+				// skip error type items
+				continue;
+			}
 			if (in_array($output[$i], $types)) { // check if type
 				$type = rtrim($output[$i], ':');
-			} elseif ($type === self::OUTPUT_TYPE_HEADER && count($opts) == 0 && $output[$i] === '') {
+			} elseif ($type === self::OUTPUT_TYPE_HEADER && count($opts) == 1 && strpos($output[$i], 'level') === 0) {
 				/**
 				 * special treating 'scheduled' type because this type
 				 * is missing in the api status dir output.
