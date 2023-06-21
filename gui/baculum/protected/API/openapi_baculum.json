@@ -8642,6 +8642,10 @@
 																				"type": "string",
 																				"description": "Job start time"
 																			},
+																			"endtime": {
+																				"type": "string",
+																				"description": "Job end time"
+																			},
 																			"objectcategory": {
 																				"type": "string",
 																				"description": "Object category"
@@ -8714,6 +8718,10 @@
 																			"starttime": {
 																				"type": "string",
 																				"description": "Job start time"
+																			},
+																			"endtime": {
+																				"type": "string",
+																				"description": "Job end time"
 																			},
 																			"jobstatus": {
 																				"type": "string",
@@ -8830,7 +8838,7 @@
 						"name": "order_by",
 						"in": "query",
 						"required": false,
-						"description": "Sort by selected object property (default jobtdate). There can be one from the following properties: objectname, client, jobstatus.",
+						"description": "Sort by selected object property (default jobtdate). There can be one from the following properties: objectname, client, jobstatus, endtime.",
 						"schema": {
 							"type": "string"
 						}

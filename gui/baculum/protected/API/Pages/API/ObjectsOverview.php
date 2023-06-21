@@ -33,15 +33,6 @@ use Baculum\API\Modules\ObjectManager;
  */
 class ObjectsOverview extends BaculumAPIServer {
 
-	/**
-	 * Allowed order columns for object overview.
-	 */
-	private $overview_order_columns = [
-		'objectname',
-		'client',
-		'jobstatus'
-	];
-
 	public function get() {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') && $misc->isValidInteger($this->Request['limit']) ? (int)$this->Request['limit'] : 0;
@@ -91,7 +82,7 @@ class ObjectsOverview extends BaculumAPIServer {
 
 		if (!empty($order_by)) {
 			$order_by_lc = strtolower($order_by);
-			if (!in_array($order_by_lc, $this->overview_order_columns)) {
+			if (!in_array($order_by_lc, ObjectManager::$overview_order_columns['object']) && !in_array($order_by_lc, ObjectManager::$overview_order_columns['general'])) {
 				$this->output = ObjectError::MSG_ERROR_INVALID_PROPERTY;
 				$this->error = ObjectError::ERROR_INVALID_PROPERTY;
 				return;

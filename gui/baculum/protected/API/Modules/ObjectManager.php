@@ -34,6 +34,15 @@ use PDO;
  */
 class ObjectManager extends APIModule
 {
+
+	/**
+	 * Allowed order columns for object overview.
+	 */
+	public static $overview_order_columns = [
+		'object' => ['objectname', 'endtime'],
+		'general' => ['client', 'jobstatus', 'endtime']
+	];
+
 	/**
 	 * Object result in job and object endpoint can be displayed in on of the two views:
 	 *  - basic - display only base job and object properties
@@ -167,9 +176,10 @@ LEFT JOIN Client USING (ClientId) '
 
 		$limit = is_int($limit_val) && $limit_val > 0 ? ' LIMIT ' . $limit_val : '';
 		$offset = is_int($offset_val) && $offset_val > 0 ? ' OFFSET ' . $offset_val : '';
+		$sort_col_i = strtolower($sort_col);
 		$db_params = $this->getModule('api_config')->getConfig('db');
 		if ($db_params['type'] === Database::PGSQL_TYPE) {
-		    $sort_col = strtolower($sort_col);
+		    $sort_col = $sort_col_i;
 		}
 
 		// default sorting for objects
@@ -186,6 +196,10 @@ LEFT JOIN Client USING (ClientId) '
 
 		if (empty($sort_col)) {
 			$sort_col = 'JobTDate';
+		} elseif (in_array($sort_col_i, ObjectManager::$overview_order_columns['object'])) {
+			$obj_order .= sprintf(',%s %s', $sort_col, $sort_order);
+		} elseif (in_array($sort_col_i, ObjectManager::$overview_order_columns['general'])) {
+			$file_order .= sprintf(',%s %s', $sort_col, $sort_order);
 		}
 		$order = sprintf(
 			'ORDER BY %s %s ',
@@ -233,6 +247,7 @@ LEFT JOIN Client USING (ClientId) '
 					Object.JobId    AS jobid,
 					JobTDate        AS jobtdate,
 					Job.StartTime   AS starttime,
+					Job.EndTime     AS endtime,
 					ObjectCategory  AS objectcategory,
 					ObjectStatus    AS objectstatus,
 					ObjectSource    AS objectsource,
@@ -258,6 +273,7 @@ LEFT JOIN Client USING (ClientId) '
 							Job.Level       AS level,
 							JobTDate        AS jobtdate,
 							StartTime       AS starttime,
+							EndTime         AS endtime,
 							JobStatus       AS jobstatus,
 							JobBytes        AS jobbytes,
 							JobFiles        AS jobfiles
@@ -293,6 +309,7 @@ LEFT JOIN Client USING (ClientId) '
 						Object.JobId    AS jobid,
 						JobTDate        AS jobtdate,
 						StartTime       AS starttime,
+						EndTime         AS endtime,
 						ObjectCategory  AS objectcategory,
 						ObjectStatus    AS objectstatus,
 						ObjectSource    AS objectsource,
@@ -317,6 +334,7 @@ LEFT JOIN Client USING (ClientId) '
 						jobid,
 						AAA.jobtdate,
 						starttime,
+						endtime,
 						objectcategory,
 						objectstatus,
 						objectsource,
@@ -347,6 +365,7 @@ LEFT JOIN Client USING (ClientId) '
 						Job.Level       AS level,
 						JobTDate        AS jobtdate,
 						StartTime       AS starttime,
+						EndTime         AS endtime,
 						JobStatus       AS jobstatus,
 						JobBytes        AS jobbytes,
 						JobFiles        AS jobfiles
@@ -370,6 +389,7 @@ LEFT JOIN Client USING (ClientId) '
 						level,
 						AAA.jobtdate,
 						starttime,
+						endtime,
 						jobstatus,
 						jobbytes,
 						jobfiles
