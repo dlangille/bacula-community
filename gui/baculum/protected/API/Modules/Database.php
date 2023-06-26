@@ -397,7 +397,7 @@ class Database extends APIModule {
 		}
 		if (count($odr) > 0) {
 			$ob = $with_clause ? ' ORDER BY ' : '';
-			$odr_str = $ob . implode(',', $odr);
+			$odr_str = $ob . implode(',', $odr) . ' ';
 		}
 		return $odr_str;
 	}
