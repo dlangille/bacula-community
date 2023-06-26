@@ -193,9 +193,10 @@ LEFT JOIN Storage USING (StorageId)
 	 * @param array $criteria SQL criteria to get volume overview
 	 * @param integer $limit_val item limit
 	 * @param integer $offset_val offset value
+	 * @param array $sort order by and order direction in form [[by1, direction1], [by2, direction2]...etc.]
 	 * @return array volume overview
 	 */
-	public function getMediaOverview($criteria = [], $limit_val = 0, $offset_val = 0) {
+	public function getMediaOverview($criteria = [], $limit_val = 0, $offset_val = 0, $sort = [['VolStatus', 'ASC'],['LastWritten', 'DESC']]) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = " LIMIT $limit_val ";
@@ -204,6 +205,8 @@ LEFT JOIN Storage USING (StorageId)
 		if (is_int($offset_val) && $offset_val > 0) {
 			$offset = ' OFFSET ' . $offset_val;
 		}
+
+		$order = Database::getOrder($sort);
 
 		$where = Database::getWhere($criteria);
 
@@ -250,7 +253,7 @@ LEFT JOIN Storage USING (StorageId)
 			JOIN Storage USING (StorageId)
 			JOIN Pool USING (PoolId)
 			' .  (!empty($where['where']) ? $where['where'] . ' AND ' : ' WHERE ') . ' VolType IN (' . implode(',', $vt_disk) . ')
-			ORDER BY VolStatus ASC, LastWritten DESC' . $limit . $offset;
+			' . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
 		$voltype_disk = $statement->fetchAll(PDO::FETCH_OBJ);
@@ -276,7 +279,7 @@ LEFT JOIN Storage USING (StorageId)
 			JOIN Storage USING (StorageId)
 			JOIN Pool USING (PoolId)
 			' .  (!empty($where['where']) ? $where['where'] . ' AND ' : ' WHERE ') . ' VolType IN (' . implode(',', $vt_tape) . ')
-			ORDER BY VolStatus ASC, LastWritten DESC' . $limit . $offset;
+			' . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
 		$voltype_tape = $statement->fetchAll(PDO::FETCH_OBJ);
@@ -302,7 +305,7 @@ LEFT JOIN Storage USING (StorageId)
 			JOIN Storage USING (StorageId)
 			JOIN Pool USING (PoolId)
 			' .  (!empty($where['where']) ? $where['where'] . ' AND ' : ' WHERE ') . ' VolType IN (' . implode(',', $vt_cloud) . ')
-			ORDER BY VolStatus ASC, LastWritten DESC' . $limit . $offset;
+			' . $order . $limit . $offset;
 
 		$statement = Database::runQuery($sql, $where['params']);
 		$voltype_cloud = $statement->fetchAll(PDO::FETCH_OBJ);

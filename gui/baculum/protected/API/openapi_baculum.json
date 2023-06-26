@@ -4533,6 +4533,44 @@
 					},
 					{
 						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected volume property (default volstatus). There can be any volume property (mediaid, volumename...etc.)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order - default) or 'desc' (descending order)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
+						"name": "sec_order_by",
+						"in": "query",
+						"required": false,
+						"description": "Second dimension sort by selected volume property (default lastwritten). There can be any volume property (mediaid, volumename ...etc.)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "sec_order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Direction for second dimension of sorting. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
 					}
 				]
 			}

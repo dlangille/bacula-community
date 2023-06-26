@@ -22,6 +22,7 @@
 
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\PoolError;
+use Baculum\Common\Modules\Errors\VolumeError;
 
 /**
  * Media/Volumes overview endpoint.
@@ -35,6 +36,40 @@ class VolumesOverview extends BaculumAPIServer {
 		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'VolStatus';
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction'] : 'ASC';
+		$sec_order_by = $this->Request->contains('sec_order_by') && $misc->isValidColumn($this->Request['sec_order_by']) ? $this->Request['sec_order_by']: 'LastWritten';
+		$sec_order_direction = $this->Request->contains('sec_order_direction') && $misc->isValidOrderDirection($this->Request['sec_order_direction']) ? $this->Request['sec_order_direction'] : 'DESC';
+		$order = [
+			[
+				$order_by,
+				$order_direction
+			],
+			[
+				$sec_order_by,
+				$sec_order_direction
+			]
+		];
+		$jr = new \ReflectionClass('Baculum\API\Modules\VolumeRecord');
+		$sort_cols = $jr->getProperties();
+		$columns = [];
+		foreach ($sort_cols as $cols) {
+			$columns[] = $cols->getName();
+		}
+		$col_err = null;
+		for ($i = 0; $i < count($order); $i++) {
+			$order_by_lc = strtolower($order[$i][0]);
+			if (!in_array($order_by_lc, $columns)) {
+				$col_err = $order[$i][0];
+				break;
+			}
+		}
+		if ($col_err) {
+			$this->output = VolumeError::MSG_ERROR_INVALID_PROPERTY . ' Prop=>' . $col_err;
+			$this->error = VolumeError::ERROR_INVALID_PROPERTY;
+			return;
+		}
+
 		$pools = $this->getModule('pool')->getPools();
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
@@ -59,17 +94,18 @@ class VolumesOverview extends BaculumAPIServer {
 				$ret = $this->getModule('volume')->getMediaOverview(
 					$params,
 					$limit,
-					$offset
+					$offset,
+					$order
 				);
 				$this->output = $ret;
-				$this->error = PoolError::ERROR_NO_ERRORS;
+				$this->error = VolumeError::ERROR_NO_ERRORS;
 			} else {
 				$this->output = PoolError::MSG_ERROR_POOL_DOES_NOT_EXISTS;
 				$this->error = PoolError::ERROR_POOL_DOES_NOT_EXISTS;
 			}
 		} else {
-			$this->output = PoolError::MSG_ERROR_WRONG_EXITCODE;
-			$this->error = PoolError::ERROR_WRONG_EXITCODE . ' Exitcode=> ' . $result->exitcode;
+			$this->output = PoolError::MSG_ERROR_WRONG_EXITCODE . ' Exitcode=> ' . $result->exitcode;
+			$this->error = PoolError::ERROR_WRONG_EXITCODE;
 		}
 	}
 }
