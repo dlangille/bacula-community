@@ -193,10 +193,11 @@ LEFT JOIN FileSet USING (FilesetId)'
 	 * @param array $criteria SQL criteria to get job list
 	 * @param mixed $limit_val result limit value
 	 * @param int $offset_val result offset value
+	 * @param array $sort order by and order direction in form [[by1, direction1], [by2, direction2]...etc.]
 	 * @param string $view job records view (basic, full)
 	 * @return array job record list with objects or empty list if no job found
 	 */
-	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort_col = 'EndTime', $sort_order = 'DESC', $view = self::JOB_RESULT_VIEW_FULL) {
+	public function getJobsObjectsOverview($criteria = array(), $limit_val = null, $offset_val = 0, $sort = [['EndTime', 'DESC']],  $view = self::JOB_RESULT_VIEW_FULL) {
 
 		$connection = JobRecord::finder()->getDbConnection();
 		$connection->setActive(true);
@@ -207,17 +208,19 @@ LEFT JOIN FileSet USING (FilesetId)'
 			// start transaction
 			$pdo->beginTransaction();
 
-			// Prepare order_by and order_direction values
-			$db_params = $this->getModule('api_config')->getConfig('db');
-			if ($db_params['type'] === Database::PGSQL_TYPE) {
-			    $sort_col = strtolower($sort_col);
-			}
-			$sorder = strtoupper($sort_order);
-			$order = ' ORDER BY ' . $sort_col . ' ' . $sorder;
+			$sort_copy = $sort;
+			for ($i = 0, $j = 0; $i < count($sort); $i++, $j++) {
+				if (strcasecmp($sort[$i][0], 'jobstatus') == 0) {
+					// if one from sorting condition is jobstatus, add sorting by joberrors as next element
+					array_splice($sort_copy, ($j+1), 0, [['joberrors', $sort_copy[$j][1]]]);
 
-			if ($sort_col == 'jobstatus') {
-				$order .= ',joberrors ' . $sorder;
+					// take into account $sort_copy counter
+					$j++;
+				}
 			}
+			$sort = $sort_copy;
+
+			$order = Database::getOrder($sort);
 
 			// create temporary table
 			$jobid_jobstatus_tname = 'jobid_jobstatus_' . getmypid();

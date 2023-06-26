@@ -2388,6 +2388,25 @@
 						}
 					},
 					{
+						"name": "sec_order_by",
+						"in": "query",
+						"required": false,
+						"description": "Second dimension sort by selected job property (default 'name'). There can be any job property (jobid, job, clientid ...etc.)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "sec_order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Direction for second dimension of sorting. It can be 'asc' (ascending order) or 'desc' (ascending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
+					},
+					{
 						"name": "view",
 						"in": "query",
 						"required": false,

@@ -84,18 +84,37 @@ class JobsObjects extends BaculumAPIServer {
 		$age = $this->Request->contains('age') && $misc->isValidInteger($this->Request['age']) ? (int)$this->Request['age'] : null;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: 'EndTime';
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: 'DESC';
+		$sec_order_by = $this->Request->contains('sec_order_by') && $misc->isValidColumn($this->Request['sec_order_by']) ? $this->Request['sec_order_by']: 'name';
+		$sec_order_direction = $this->Request->contains('sec_order_direction') && $misc->isValidOrderDirection($this->Request['sec_order_direction']) ? $this->Request['sec_order_direction']: 'ASC';
+		$order = [
+			[
+				$order_by,
+				$order_direction
+			],
+			[
+				$sec_order_by,
+				$sec_order_direction
+			]
+		];
+
 		$view = ($this->Request->contains('view') && $misc->isValidResultView($this->Request['view'])) ? $this->Request['view'] : JobManager::JOB_RESULT_VIEW_FULL;
 
 		$jr = new \ReflectionClass('Baculum\API\Modules\JobRecord');
 		$sort_cols = $jr->getProperties();
-		$order_by_lc = strtolower($order_by);
 		$columns = [];
 		foreach ($sort_cols as $cols) {
-			$name = $cols->getName();
-			$columns[] = $name;
+			$columns[] = $cols->getName();
 		}
-		if (!in_array($order_by_lc, $columns)) {
-			$this->output = JobError::MSG_ERROR_INVALID_PROPERTY;
+		$col_err = null;
+		for ($i = 0; $i < count($order); $i++) {
+			$order_by_lc = strtolower($order[$i][0]);
+			if (!in_array($order_by_lc, $columns)) {
+				$col_err = $order[$i][0];
+				break;
+			}
+		}
+		if ($col_err) {
+			$this->output = JobError::MSG_ERROR_INVALID_PROPERTY . ' Prop=>' . $col_err;
 			$this->error = JobError::ERROR_INVALID_PROPERTY;
 			return;
 		}
@@ -129,8 +148,7 @@ class JobsObjects extends BaculumAPIServer {
 				$params,
 				null,
 				0,
-				$order_by,
-				$order_direction,
+				$order,
 				$view
 			);
 			$this->output = $result;
@@ -480,8 +498,7 @@ class JobsObjects extends BaculumAPIServer {
 					$params,
 					$limit,
 					$offset,
-					$order_by,
-					$order_direction,
+					$order,
 					$view
 				);
 				$this->output = $result;

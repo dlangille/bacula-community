@@ -25,6 +25,7 @@ namespace Baculum\API\Modules;
 use Baculum\Common\Modules\Logging;
 use Baculum\Common\Modules\Errors\DatabaseError;
 use Baculum\API\Modules\JobRecord;
+use Prado\Prado;
 use Prado\Data\TDbConnection;
 use Prado\Exceptions\TDbException;
 
@@ -372,6 +373,33 @@ class Database extends APIModule {
 			$command->execute();
 		}
 		return $statement;
+	}
+
+	/**
+	 * Get SQL order clause.
+	 *
+	 * @param array $order order by and order direction in form [[by1, direction1], [by2, direction2]...etc.]
+	 * @param boolean $with_clause return with 'ORDER BY' clause
+	 * @return string SQL order clause with values or empty string if no order criteria given
+	 */
+	public static function getOrder(array $order, $with_clause = true) {
+		$odr_str = '';
+		$odr = [];
+		// Prepare order_by and order_direction values
+		$db_params = Prado::getApplication()->getModule('api_config')->getConfig('db');
+		for ($i = 0; $i < count($order); $i++) {
+			list($order_by, $order_direction) = $order[$i];
+			if ($db_params['type'] === self::PGSQL_TYPE) {
+			    $order_by = strtolower($order_by);
+			}
+			$sorder = strtoupper($order_direction);
+			$odr[] = sprintf('%s %s', $order_by, $sorder);
+		}
+		if (count($odr) > 0) {
+			$ob = $with_clause ? ' ORDER BY ' : '';
+			$odr_str = $ob . implode(',', $odr);
+		}
+		return $odr_str;
 	}
 }
 ?>
