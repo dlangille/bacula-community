@@ -89,10 +89,7 @@ class BaculaConfigACL extends APIModule
 		$config = $bacula_setting->getConfig(
 			'dir',
 			'Console',
-			$console_name,
-			[
-				'apply_jobdefs' => true
-			]
+			$console_name
 		);
 		if ($config['exitcode'] === 0) {
 			if (key_exists('CommandAcl', $config['output'])) {
