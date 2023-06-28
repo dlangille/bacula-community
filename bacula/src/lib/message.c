@@ -2172,7 +2172,7 @@ struct comp comp_codes[] = {
 int get_component_statuscode(const char *component)
 {
    for (int i=0; comp_codes[i].name ; i++) {
-      if (strcasecmp(comp_codes[i].name, component) == 0) {
+      if (strncasecmp(comp_codes[i].name, component, strlen(comp_codes[i].name)) == 0) {
          return comp_codes[i].code;
       }
    }

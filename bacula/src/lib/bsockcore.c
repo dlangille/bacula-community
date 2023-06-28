@@ -264,6 +264,9 @@ bool BSOCKCORE::connect(JCR * jcr, int retry_interval, utime_t max_retry_time,
       now = time(NULL);
       if (begin_time + max_retry_time <= now) {
          int code = get_component_statuscode(name);
+         /*
+	  * DE0029, DE0039, FE0019, FE0039, SE0039, SE0029...
+	  */
          Mmsg(errmsg, _("[%cE00%d9] Unable to connect to %s on %s:%d. ERR=%s\n"),
               component_code, code, name, host, port, be.bstrerror());
          goto bail_out;
