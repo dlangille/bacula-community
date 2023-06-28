@@ -33,9 +33,22 @@ use Baculum\Common\Modules\Errors\ObjectError;
 class ObjectNames extends BaculumAPIServer {
 
 	public function get() {
+		$misc = $this->getModule('misc');
 		$limit = $this->Request->contains('limit') ? (int)$this->Request['limit'] : null;
+		$objecttype = $this->Request->contains('objecttype') && $misc->isValidName($this->Request['objecttype']) ? $this->Request['objecttype'] : null;
 
-		$this->output = $this->getModule('object')->getObjectNames($limit);
+		$params = [];
+		if (!empty($objecttype)) {
+			$params['Object.ObjectType'] = [];
+			$params['Object.ObjectType'][] = [
+				'vals' => $objecttype
+			];
+		}
+
+		$this->output = $this->getModule('object')->getObjectNames(
+			$params,
+			$limit
+		);
 		$this->error = ObjectError::ERROR_NO_ERRORS;
 	}
 }

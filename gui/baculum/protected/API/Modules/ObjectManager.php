@@ -732,10 +732,11 @@ JOIN Job USING (JobId) '
 	/**
 	 * Get existing object names.
 	 *
+	 * @param array $criteria SQL criteria in nested array format (@see  Databaes::getWhere)
 	 * @param integer $limit_val maximum number of elements to return
 	 * @return array object names
 	 */
-	public function getObjectNames($limit_val = null) {
+	public function getObjectNames($criteria = [], $limit_val = null) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = sprintf(
@@ -743,10 +744,12 @@ JOIN Job USING (JobId) '
 				$limit_val
 			);
 		}
+		$where = Database::getWhere($criteria);
 		$sql = 'SELECT DISTINCT ObjectName as objectname
 			FROM Object
+			' . $where['where'] . ' 
 			ORDER BY ObjectName ' . $limit;
-		$statement = Database::runQuery($sql);
+		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
 		$values = array_keys($result);
 		return $values;
