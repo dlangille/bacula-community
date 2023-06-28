@@ -8913,7 +8913,7 @@
 						"name": "order_by",
 						"in": "query",
 						"required": false,
-						"description": "Sort by selected object property (default jobtdate). There can be one from the following properties: objectname, client, jobstatus, endtime.",
+						"description": "Sort by selected object property (default endtime). There can be one from the following properties: objectname, client, jobstatus, endtime.",
 						"schema": {
 							"type": "string"
 						}

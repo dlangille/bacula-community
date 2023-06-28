@@ -169,7 +169,7 @@ LEFT JOIN Client USING (ClientId) '
 	 * @param string $sort_order sort order (asc - ascending, desc - descending)
 	 * @return array object record list or empty list if no object found
 	 */
-	public function getObjectsOverview($general_criteria = [], $object_criteria = [], $limit_val = null, $offset_val = 0, $sort_col = null, $sort_order = 'DESC') {
+	public function getObjectsOverview($general_criteria = [], $object_criteria = [], $limit_val = null, $offset_val = 0, $sort_col = 'endtime', $sort_order = 'DESC') {
 		$connection = ObjectRecord::finder()->getDbConnection();
 		$connection->setActive(true);
 		$pdo = $connection->getPdoInstance();
@@ -188,11 +188,13 @@ LEFT JOIN Client USING (ClientId) '
 			 ObjectName,
 			 ObjectUUID,
 			 Client.Name,
-			 Job.Name ';
+			 Job.Name,
+			 JobTDate DESC ';
 		$file_order = ' ORDER BY
 			FileSet.FileSet,
 			Job.Name,
-			Client.Name ';
+			Client.Name,
+			JobTDate DESC ';
 
 		if (empty($sort_col)) {
 			$sort_col = 'JobTDate';
