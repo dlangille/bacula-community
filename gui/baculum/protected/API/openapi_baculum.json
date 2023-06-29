@@ -8575,6 +8575,44 @@
 				]
 			}
 		},
+		"/api/v2/objects/categories": {
+			"get": {
+				"tags": ["objects"],
+				"summary": "Object categories",
+				"description": "Get object categories.",
+				"responses": {
+					"200": {
+						"description": "Object categories.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"type": "string",
+												"description": "Object category"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					}
+				]
+			}
+		},
 		"/api/v2/objects/types": {
 			"get": {
 				"tags": ["objects"],

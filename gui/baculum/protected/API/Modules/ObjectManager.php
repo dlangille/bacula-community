@@ -478,23 +478,6 @@ LEFT JOIN Client USING (ClientId) '
 		return $result;
 	}
 
-	/**
-	 * Get object categories based on criterias.
-	 *
-	 * @param array $criteria SQL criteria to get job list
-	 * @return array category list or empty list if no category found
-	 */
-	public function getObjectCategories($criteria = []) {
-		$where = Database::getWhere($criteria);
-
-		$sql = 'SELECT DISTINCT ObjectCategory as objectcategory
-FROM Object 
-JOIN Job USING (JobId) '
-. $where['where'];
-		$statement = Database::runQuery($sql, $where['params']);
-		return $statement->fetchAll(\PDO::FETCH_ASSOC);
-	}
-
 	public function getObjectById($objectid) {
 		$params = [
 			'Object.ObjectId' => [[
@@ -753,5 +736,27 @@ JOIN Job USING (JobId) '
 		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
 		$values = array_keys($result);
 		return $values;
+	}
+
+	/**
+	 * Get existing object categories.
+	 *
+	 * @param integer $limit_val maximum number of elements to return
+	 * @return array object names
+	 */
+	public function getObjectCategories($limit_val = null) {
+		$limit = '';
+		if(is_int($limit_val) && $limit_val > 0) {
+			$limit = sprintf(
+				' LIMIT %d',
+				$limit_val
+			);
+		}
+		$sql = 'SELECT DISTINCT ObjectCategory as objectcategory
+			FROM Object
+			ORDER BY ObjectCategory ' . $limit;
+		$statement = Database::runQuery($sql);
+		$result = $statement->fetchAll(PDO::FETCH_COLUMN);
+		return $result;
 	}
 }
