@@ -32,6 +32,11 @@ namespace Baculum\API\Modules;
 class BaculaConfigACL extends APIModule
 {
 	/**
+	 * Super-user command ACL. It replaces all other keywords and acctions.
+	 */
+	const ROOT_ACL_COMMAND = 'ALL';
+
+	/**
 	 * Special config ACL action names.
 	 */
 	private static $config_acl_actions = [
@@ -40,6 +45,17 @@ class BaculaConfigACL extends APIModule
 		'UPDATE',
 		'DELETE'
 	];
+
+	/**
+	 * Check if action is root ACL action.
+	 *
+	 * @param string $action action name
+	 * @return boolean true if action is root type, otherwise false
+	 */
+	private function isRootACLAction($action) {
+		return ($action === self::ROOT_ACL_COMMAND);
+	}
+
 	/**
 	 * Validate if request command is allowed.
 	 *
@@ -56,7 +72,7 @@ class BaculaConfigACL extends APIModule
 		if ($this->validateAction($action)) {
 			$command_acls = $this->getCommandACLs($user_id);
 			for ($i = 0; $i < count($command_acls); $i++) {
-				if ($command_acls[$i]['action'] === $action && $command_acls[$i]['keyword'] === $resource) {
+				if (($command_acls[$i]['action'] === $action && $command_acls[$i]['keyword'] === $resource) || $this->isRootACLAction($command_acls[$i]['action'])) {
 					$valid = true;
 					break;
 				}
@@ -112,9 +128,16 @@ class BaculaConfigACL extends APIModule
 		for ($i = 0; $i < count($commands); $i++) {
 			// @TODO: Propose using commands in form <RESOURCE>_<ACTION> or <PREFIX>_<RESOURCE>_<ACTION>
 			if (preg_match('/^(?P<action>(READ|CREATE|UPDATE|DELETE))_(?P<keyword>[A-Z]+)$/', $commands[$i], $match) === 1) {
+				// normal action
 				$command_acls[] = [
 					'keyword' => $match['keyword'],
 					'action' => $match['action']
+				];
+			} elseif ($this->isRootACLAction($commands[$i])) {
+				// root action
+				$command_acls[] = [
+					'keyword' => self::ROOT_ACL_COMMAND,
+					'action' => self::ROOT_ACL_COMMAND
 				];
 			}
 		}
