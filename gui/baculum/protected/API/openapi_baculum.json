@@ -10830,6 +10830,10 @@
 				"fileset": {
 					"description": "FileSet name",
 					"type": "string"
+				},
+				"content": {
+					"description": "Comma separated FileSet content types (files, postgresql, mysql...etc.)",
+					"type": "string"
 				}
 			}
 		},

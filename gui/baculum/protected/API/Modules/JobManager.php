@@ -161,7 +161,8 @@ class JobManager extends APIModule {
 		$sql = 'SELECT ' .  $job_record . ' 
 Client.Name as client, 
 Pool.Name as pool, 
-FileSet.FileSet as fileset 
+FileSet.FileSet as fileset, 
+COALESCE(FileSet.Content, \'\') as content 
 FROM Job 
 JOIN Client USING (ClientId) 
 LEFT JOIN Pool USING (PoolId) 
