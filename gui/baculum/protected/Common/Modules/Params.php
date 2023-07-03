@@ -31,7 +31,7 @@ namespace Baculum\Common\Modules;
  */
 class Params extends CommonModule {
 
-	const BACULUM_VERSION = '13.0.3';
+	const BACULUM_VERSION = '15.0.0';
 
 	public static $months = array(
 		'jan' => 'January',

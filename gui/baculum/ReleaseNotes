@@ -1,3 +1,52 @@
+                Release Notes for Baculum 15.0.0
+
+This is a new feature release. Almost all changes are for the API part.
+It extends the API capabilities for new functions.
+
+New changes and fixes:
+ - Add fileset content property to jobs endpoint
+ - Add object categories endpoint
+ - Add support for ALL action in console ACL
+ - Add objecttype filter to objects names endpoint
+ - Add default sorting by endtime to objects overview endpoint
+ - Tweak remove not needed applying jobdefs
+ - Add sorting parameters to volumes overview endpoint
+ - Tweak add space in multi-dimensional sorting clause
+ - Add second dimension of sorting in jobs objects endpoint
+ - Add offset and limit parameters to director status endpoint
+ - Add sorting by endtime and add endtime property to objects overview endpoint
+ - Add group_order_by and group_order_direction parameters to documentation
+ - Add notes about object type filters in objects overview endpoint
+ - Fix storing ACL config actions for very old PHP versions
+ - Add objectsize property to objects overview endpoint
+ - Add job type property to objects overview endpoint
+ - Add path property to objects overview endpoint
+ - Fix offset and limit parameter in jobs objects endpoint
+ - Add objectname parameter to jobs objects endpoint
+ - Add objectsource property to objects overview endpoint
+ - New API config ACLs
+ - Add group_order_by and group_order_direction parameters to objects endpoint
+ - Add to grup function sorting group capability
+ - Add sorting by joberrors if sorted by jobstatus first
+ - Improve using unique_objects parameter in object endpoint
+ - Add group_offset and unique_objects parameters to objects endpoint
+ - Add volume names endpoint
+ - Tweak improve getting object types and names
+ - Add object names endpoint
+ - Add object types endpoint
+ - Add documentation for client parameter in objects endpoint
+ - Add job status filter to objects endpoint
+ - Add joberrors filter to sources endpoint
+ - Add server parameter to list vsphere datastores endpoint
+ - Add job level property to sources endpoint
+ - Add pool resnames endpoint
+ - Add storage resnames endpoint
+ - Add director time endpoint
+ - Change M365 tenants endpoint output to contain tenant names
+ - Update documentation
+ - Add object overview endpoint
+ - Update release notes
+
 
                Release Notes for Baculum 13.0.3
 
