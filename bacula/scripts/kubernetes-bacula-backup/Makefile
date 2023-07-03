@@ -1,7 +1,7 @@
 #
 # Simple Makefile for building plugins for Bacula
 #
-# Copyright (C) 2000-2022 Kern Sibbald
+# Copyright (C) 2000-2023 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 # The script creates a docker image of the baculatar.py

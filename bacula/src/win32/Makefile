@@ -1,4 +1,4 @@
-# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2000-2023 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 #  Makefile for Win32/Win64 Bacula File daemon

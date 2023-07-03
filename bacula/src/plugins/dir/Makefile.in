@@ -1,7 +1,7 @@
 #
 # Simple Makefile for building test FD plugins for Bacula
 #
-# Copyright (C) 2000-2020 Kern Sibbald
+# Copyright (C) 2000-2023 Kern Sibbald
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 @MCOMMON@
