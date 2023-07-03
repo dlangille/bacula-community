@@ -297,7 +297,7 @@ EOD;
 			SELECT
 					conname,
 					pg_catalog.pg_get_constraintdef(oid) AS consrc,
-					contype,
+					CAST(contype AS text),
 					conrelid AS relid,
 					NULL AS indkey,
 					FALSE AS indisclustered
