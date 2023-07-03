@@ -1146,7 +1146,7 @@ static void llist_scheduled_jobs(UAContext *ua)
    }
 
    if (num_jobs > list->size() && !ua->api) {
-      ua->send_msg(_("\n%d scheduled Jobs over %d are displayed. Use the limit parameter to display more Jobs.\n"), limit, list->size(), days);
+      ua->send_msg(_("\n%d of %d scheduled Jobs displayed. Use the limit parameter to display more Jobs.\n"), limit, list->size(), days);
    }
    delete list;
 
