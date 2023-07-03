@@ -158,11 +158,16 @@ class JobManager extends APIModule {
 			$join = ' LEFT JOIN Job AS PriorJob ON (Job.PriorJobId = PriorJob.JobId) ';
 		}
 
+		$record = FileSetRecord::finder();
+		$connection = $record->getDbConnection();
+		$tableinfo = $record->getRecordGateway()->getRecordTableInfo($record);
+		$content = $tableinfo->getColumns()->itemAt('content') !== null ? 'FileSet.Content' : '\'\'';
+
 		$sql = 'SELECT ' .  $job_record . ' 
 Client.Name as client, 
 Pool.Name as pool, 
 FileSet.FileSet as fileset, 
-COALESCE(FileSet.Content, \'\') as content 
+' . $content . ' AS content 
 FROM Job 
 JOIN Client USING (ClientId) 
 LEFT JOIN Pool USING (PoolId) 
