@@ -69,7 +69,7 @@ class WebConfig extends ConfigFileModule {
 	 *   0 - keep value in localStorage. Settings are persistent.
 	 *   int > 0 - keep value in localStorage for specific given time.
 	 */
-	public const DEF_KEEP_TABLE_SETTINGS = 7200;
+	const DEF_KEEP_TABLE_SETTINGS = 7200;
 
 	/**
 	 * Default value for showing time in job log.
