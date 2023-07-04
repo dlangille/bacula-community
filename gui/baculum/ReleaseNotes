@@ -1,9 +1,12 @@
+
                 Release Notes for Baculum 15.0.0
 
 This is a new feature release. Almost all changes are for the API part.
 It extends the API capabilities for new functions.
 
 New changes and fixes:
+ - Fix content field in job record
+ - Improve support for newer PostgreSQL versions
  - Add fileset content property to jobs endpoint
  - Add object categories endpoint
  - Add support for ALL action in console ACL
