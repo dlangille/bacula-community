@@ -159,7 +159,6 @@ class JobManager extends APIModule {
 		}
 
 		$record = FileSetRecord::finder();
-		$connection = $record->getDbConnection();
 		$tableinfo = $record->getRecordGateway()->getRecordTableInfo($record);
 		$content = $tableinfo->getColumns()->itemAt('content') !== null ? 'FileSet.Content' : '\'\'';
 
