@@ -204,7 +204,7 @@ LEFT JOIN Client USING (ClientId) '
 			$file_order .= sprintf(',%s %s', $sort_col, $sort_order);
 		}
 		$order = sprintf(
-			'ORDER BY %s %s ',
+			' %s %s ',
 			$sort_col,
 			$sort_order
 		);
@@ -429,14 +429,14 @@ LEFT JOIN Client USING (ClientId) '
 				if ($object_count[$i]['objecttype'] == 'files') {
 					$sql = 'SELECT * 
 						FROM ' . $objects_tname4 . '
-						' . ((stripos($sort_col, 'object') === false) ? $order : '') . $limit . $offset;
+						' . ((stripos($sort_col, 'object') === false) ? 'ORDER BY ' . $order : '') . $limit . $offset;
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				} else {
 					$sql = 'SELECT * 
 						FROM ' . $objects_tname1 . '
 						WHERE ObjectType = \'' . $object_count[$i]['objecttype'] . '\'
-						' . $order . $limit . $offset;
+						ORDER BY ObjectType, ObjectSource, ObjectCategory, ' . $order . $limit . $offset;
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				}
@@ -466,7 +466,7 @@ LEFT JOIN Client USING (ClientId) '
 			}
 		} catch(\PDOException $e) {
 			// rollback the transaction
-			//$pdo->rollBack();
+			$pdo->rollBack();
 
 			// show the error message
 			$msg = 'SQL transation commit error: ' . $e->getMessage();
