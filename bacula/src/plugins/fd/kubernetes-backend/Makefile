@@ -32,7 +32,7 @@ install: build
 	@$(PYTHON_PROG) setup.py install
 
 install-deps: requirements.txt
-	PYTHONPATH=$(PYTHONPATH) $(PIP_PROG) install --user -r requirements.txt
+	PYTHONPATH=$(PYTHONPATH) $(PIP_PROG) install --break-system-packages -r requirements.txt
 	touch install-deps
 
 binary: install-deps
