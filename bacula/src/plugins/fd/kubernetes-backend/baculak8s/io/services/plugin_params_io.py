@@ -78,6 +78,11 @@ class PluginParamsIO(DefaultIO):
                 if len(param) < 2:
                     param.append(True)
 
+                # Allow simple quote to identify string parameters.
+                if isinstance(param[1], str):
+                    if param[1][0] == "'":
+                        param[1] = ''.join(param[1].split("'"))
+
                 # handle array parameters automatically
                 if param[0] in block.keys():
                     if isinstance(block[param[0]], list):
