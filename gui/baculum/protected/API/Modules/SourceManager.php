@@ -201,7 +201,22 @@ class SourceManager extends APIModule {
 		// Sort items if needed
 		if (is_string($order_by)) {
 			// Sort all items
-			$misc->sortResultsByField($sources, $order_by, $order_direction);
+			if ($order_by == 'jobstatus') {
+				// for jobstatus sort also by joberrors
+				$misc::sortResultsByField(
+					$sources,
+					$order_by,
+					$order_direction,
+					'joberrors',
+					$misc::ORDER_DIRECTION_ASC
+				);
+			} else {
+				$misc::sortResultsByField(
+					$sources,
+					$order_by,
+					$order_direction
+				);
+			}
 		}
 
 		if ($mode == self::SOURCE_RESULT_MODE_OVERVIEW) {

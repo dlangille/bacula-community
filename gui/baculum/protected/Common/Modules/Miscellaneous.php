@@ -346,13 +346,26 @@ class Miscellaneous extends TModule {
 		return $jobid;
 	}
 
-	public function sortResultsByField(&$result, $order_by, $order_direction) {
+	public static function sortResultsByField(&$result, $order_by, $order_direction, $sec_order_by = '', $sec_order_direction = '') {
 		$order_by = strtolower($order_by);
 		$order_direction = strtolower($order_direction);
-		$sort_by_func = function($a, $b) use ($order_by, $order_direction) {
-			$cmp = strnatcasecmp($a[$order_by], $b[$order_by]);
-			if ($order_direction === self::ORDER_DIRECTION_DESC) {
-				$cmp = -$cmp;
+		$sec_order_by = strtolower($sec_order_by);
+		$sec_order_direction = strtolower($sec_order_direction);
+		$sort_by_func = function($a, $b) use ($order_by, $order_direction, $sec_order_by, $sec_order_direction) {
+			$cmp = 0;
+			if ($a[$order_by] == $b[$order_by]) {
+				if ($sec_order_by && $sec_order_direction) {
+					if ($sec_order_direction === self::ORDER_DIRECTION_ASC) {
+						$cmp = strnatcasecmp($a[$sec_order_by], $b[$sec_order_by]);
+					} elseif ($sec_order_direction === self::ORDER_DIRECTION_DESC) {
+						$cmp = strnatcasecmp($b[$sec_order_by], $a[$sec_order_by]);
+					}
+				}
+			} else {
+				$cmp = strnatcasecmp($a[$order_by], $b[$order_by]);
+				if ($order_direction === self::ORDER_DIRECTION_DESC) {
+					$cmp = -$cmp;
+				}
 			}
 			return $cmp;
 		};
