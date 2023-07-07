@@ -61,7 +61,7 @@ FileSetName="TestPluginKubernetesSet"
 . scripts/functions
 . scripts/regress-utils.sh
 
-# export debug=1
+export debug=1
 scripts/cleanup
 scripts/copy-kubernetes-plugin-confs
 printf "Preparing ... "
@@ -71,7 +71,7 @@ setup_plugin_param "kubernetes:"
 if [ "x$KUBECONFIG" != "x" ]
 then
    export KUBECONFIG
-   LPLUG="${LPLUG} config=\"$KUBECONFIG\""
+   LPLUG="${LPLUG} config='$KUBECONFIG'"
 fi
 
 mkdir -p ${tmp}
