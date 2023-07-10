@@ -82,7 +82,7 @@ class ObjectsOverview extends BaculumAPIServer {
 
 		if (!empty($order_by)) {
 			$order_by_lc = strtolower($order_by);
-			if (!in_array($order_by_lc, ObjectManager::$overview_order_columns['object']) && !in_array($order_by_lc, ObjectManager::$overview_order_columns['general'])) {
+			if (!in_array($order_by_lc, ObjectManager::$overview_order_columns['file']) && !in_array($order_by_lc, ObjectManager::$overview_order_columns['object'])) {
 				$this->output = ObjectError::MSG_ERROR_INVALID_PROPERTY;
 				$this->error = ObjectError::ERROR_INVALID_PROPERTY;
 				return;

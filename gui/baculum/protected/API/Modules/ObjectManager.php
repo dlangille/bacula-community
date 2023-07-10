@@ -39,8 +39,8 @@ class ObjectManager extends APIModule
 	 * Allowed order columns for object overview.
 	 */
 	public static $overview_order_columns = [
-		'object' => ['objectname', 'endtime'],
-		'general' => ['client', 'jobstatus', 'endtime']
+		'object' => ['objectname', 'client', 'jobstatus', 'endtime'],
+		'file' => ['client', 'jobstatus', 'endtime', 'fileset']
 	];
 
 	/**
@@ -200,7 +200,7 @@ LEFT JOIN Client USING (ClientId) '
 			$sort_col = 'JobTDate';
 		} elseif (in_array($sort_col_i, ObjectManager::$overview_order_columns['object'])) {
 			$obj_order .= sprintf(',%s %s', $sort_col, $sort_order);
-		} elseif (in_array($sort_col_i, ObjectManager::$overview_order_columns['general'])) {
+		} elseif (in_array($sort_col_i, ObjectManager::$overview_order_columns['file'])) {
 			$file_order .= sprintf(',%s %s', $sort_col, $sort_order);
 		}
 		$order = sprintf(
@@ -429,14 +429,14 @@ LEFT JOIN Client USING (ClientId) '
 				if ($object_count[$i]['objecttype'] == 'files') {
 					$sql = 'SELECT * 
 						FROM ' . $objects_tname4 . '
-						' . ((stripos($sort_col, 'object') === false) ? 'ORDER BY ' . $order : '') . $limit . $offset;
+						' . (in_array($sort_col_i, self::$overview_order_columns['file']) ? 'ORDER BY ' . $order : '') . $limit . $offset;
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				} else {
 					$sql = 'SELECT * 
 						FROM ' . $objects_tname1 . '
 						WHERE ObjectType = \'' . $object_count[$i]['objecttype'] . '\'
-						ORDER BY ObjectType, ObjectSource, ObjectCategory, ' . $order . $limit . $offset;
+						ORDER BY ObjectType, ObjectSource, ObjectCategory ' . (in_array($sort_col_i, self::$overview_order_columns['object']) ? ',' . $order : '') . $limit . $offset;
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				}
