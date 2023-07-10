@@ -39,7 +39,7 @@ class ObjectManager extends APIModule
 	 * Allowed order columns for object overview.
 	 */
 	public static $overview_order_columns = [
-		'object' => ['objectname', 'client', 'jobstatus', 'endtime'],
+		'object' => ['objectname', 'objectcategory', 'client', 'jobstatus', 'endtime'],
 		'file' => ['client', 'jobstatus', 'endtime', 'fileset']
 	];
 
@@ -433,10 +433,15 @@ LEFT JOIN Client USING (ClientId) '
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				} else {
+					$order_by = ['ObjectType', 'ObjectSource'];
+					if ($sort_col_i !== 'objectcategory') {
+						$order_by[] = 'ObjectCategory';
+					}
 					$sql = 'SELECT * 
 						FROM ' . $objects_tname1 . '
 						WHERE ObjectType = \'' . $object_count[$i]['objecttype'] . '\'
-						ORDER BY ObjectType, ObjectSource, ObjectCategory ' . (in_array($sort_col_i, self::$overview_order_columns['object']) ? ',' . $order : '') . $limit . $offset;
+						ORDER BY ' . implode(',', $order_by)
+						. (in_array($sort_col_i, self::$overview_order_columns['object']) ? ',' . $order : '') . $limit . $offset;
 					$statement = Database::runQuery($sql);
 					$items = $statement->fetchAll(PDO::FETCH_ASSOC);
 				}
