@@ -8609,6 +8609,15 @@
 				"parameters": [
 					{
 						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"name": "objecttype",
+						"in": "query",
+						"required": false,
+						"description": "Object type, ex. 'm365' or 'PostgreSQL'",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
@@ -8960,7 +8969,7 @@
 						"name": "order_by",
 						"in": "query",
 						"required": false,
-						"description": "Sort by selected object property (default endtime). There can be one from the following properties: objectname, client, jobstatus, endtime.",
+						"description": "Sort by selected object property (default endtime). There can be one from the following properties: objectname, objectcategory, client, fileset, jobstatus, endtime.",
 						"schema": {
 							"type": "string"
 						}

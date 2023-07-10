@@ -712,9 +712,8 @@ LEFT JOIN Client USING (ClientId) '
 			FROM Object
 			ORDER BY ObjectType';
 		$statement = Database::runQuery($sql);
-		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
-		$values = array_keys($result);
-		return $values;
+		$result = $statement->fetchAll(PDO::FETCH_COLUMN);
+		return $result;
 	}
 
 	/**
@@ -738,18 +737,18 @@ LEFT JOIN Client USING (ClientId) '
 			' . $where['where'] . ' 
 			ORDER BY ObjectName ' . $limit;
 		$statement = Database::runQuery($sql, $where['params']);
-		$result = $statement->fetchAll(\PDO::FETCH_GROUP);
-		$values = array_keys($result);
-		return $values;
+		$result = $statement->fetchAll(PDO::FETCH_COLUMN);
+		return $result;
 	}
 
 	/**
 	 * Get existing object categories.
 	 *
+	 * @param array $criteria SQL criteria in nested array format (@see  Databaes::getWhere)
 	 * @param integer $limit_val maximum number of elements to return
 	 * @return array object names
 	 */
-	public function getObjectCategories($limit_val = null) {
+	public function getObjectCategories($criteria = [], $limit_val = null) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = sprintf(
@@ -757,10 +756,12 @@ LEFT JOIN Client USING (ClientId) '
 				$limit_val
 			);
 		}
+		$where = Database::getWhere($criteria);
 		$sql = 'SELECT DISTINCT ObjectCategory as objectcategory
 			FROM Object
+			' . $where['where'] . ' 
 			ORDER BY ObjectCategory ' . $limit;
-		$statement = Database::runQuery($sql);
+		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(PDO::FETCH_COLUMN);
 		return $result;
 	}
