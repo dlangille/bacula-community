@@ -188,8 +188,8 @@ char *sellist::get_expanded_list()
          edit_int64(val, ed1);
          len = strlen(ed1);
 
-         /* Alloc more space if needed */
-         if ((p + len + 1) > (expanded + expandedsize)) {
+         /* Alloc more space if needed ( '2' because of '\0' & ',')*/
+         if ((p + len + 2) > (expanded + expandedsize)) {
             expandedsize = expandedsize * 2;
 
             tmp = (char *) realloc(expanded, expandedsize);
