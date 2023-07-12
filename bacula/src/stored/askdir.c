@@ -676,14 +676,14 @@ bool dir_create_jobmedia_record(DCR *dcr, bool zero)
       return true;
    }
    if (!zero && dcr->VolLastIndex == 0) {
-      Pmsg7(0/*dbglvl*/, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
+      Pmsg7(dbglvl, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
          dcr->VolumeName, dcr->WroteVol, dcr->VolMediaId,
          dcr->VolFirstIndex, dcr->VolLastIndex, dcr->StartAddr, dcr->EndAddr);
       return true;                    /* nothing written to the Volume */
    }
    /* Throw out records where the start address is bigger than the end */
    if (!zero && dcr->StartAddr > dcr->EndAddr) {
-      Pmsg7(0/*dbglvl*/, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
+      Pmsg7(dbglvl, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
          dcr->VolumeName, dcr->WroteVol, dcr->VolMediaId,
          dcr->VolFirstIndex, dcr->VolLastIndex, dcr->StartAddr, dcr->EndAddr);
       return true;
@@ -697,7 +697,7 @@ bool dir_create_jobmedia_record(DCR *dcr, bool zero)
    /* Throw out records where FI is zero -- i.e. nothing done */
    if (!zero && dcr->VolFirstIndex == 0 &&
         (dcr->StartAddr != 0 || dcr->EndAddr != 0)) {
-      Pmsg7(0/*dbglvl*/, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
+      Pmsg7(dbglvl, "Discard: JobMedia Vol=%s wrote=%d MediaId=%lld FI=%lu LI=%lu StartAddr=%lld EndAddr=%lld\n",
          dcr->VolumeName, dcr->WroteVol, dcr->VolMediaId,
          dcr->VolFirstIndex, dcr->VolLastIndex, dcr->StartAddr, dcr->EndAddr);
       return true;
