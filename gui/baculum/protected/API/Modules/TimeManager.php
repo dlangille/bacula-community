@@ -35,7 +35,7 @@ class TimeManager extends APIModule {
 	 * Director time format.
 	 * Example: '29-May-2023 09:01:34'.
 	 */
-	const DIRECTOR_TIME_FORMAT = 'j-M-Y h:i:s';
+	const DIRECTOR_TIME_FORMAT = 'j-M-Y H:i:s';
 
 	/**
 	 * Parse time returned by Director time command.
