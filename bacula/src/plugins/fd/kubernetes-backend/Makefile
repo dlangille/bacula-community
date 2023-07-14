@@ -13,7 +13,7 @@ PYTHON_PROG=$(shell ./get_python PYTHON)
 PYTHONPATH=$(shell ./get_python PYTHONPATH)
 PYTHON_PREFIX=$(shell ./get_python PYTHON_PREFIX)
 
-PIP_MAJOR_VERSION=$(shell pip --version | awk '{print $$2}' | awk -v FS=\. '{print $$1}')
+PIP_MAJOR_VERSION=$(shell $(PIP_PROG) --version | $(AWK) '{print $$2}' | $(AWK) -v FS=\. '{print $$1}')
 PIP_OPTIONS = --user
 # Implemented PEP 668: https://pip.pypa.io/en/stable/news/#v23-0-1 we need --break-system-packages option.
 ifeq ($(shell test $(PIP_MAJOR_VERSION) -ge 23; echo $$?),0)
