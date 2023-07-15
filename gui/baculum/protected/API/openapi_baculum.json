@@ -2682,6 +2682,34 @@
 										"output": {
 											"type": "object",
 											"properties": {
+												"job_count": {
+													"type": "integer",
+													"description": "Total number of jobs"
+												},
+												"most_occupied_client": {
+													"type": "string",
+													"description": "The most occupied client by jobs"
+												},
+												"most_occupied_client_count": {
+													"type": "integer",
+													"description": "Job count ran on the most occupied client"
+												},
+												"most_occupied_job": {
+													"type": "string",
+													"description": "The most often running job"
+												},
+												"most_occupied_job_count": {
+													"type": "integer",
+													"description": "Job count the most often running job"
+												},
+												"most_occupied_pool": {
+													"type": "string",
+													"description": "The most occupied pool by jobs"
+												},
+												"most_occupied_pool_count": {
+													"type": "integer",
+													"description": "Job count ran on the most occupied pool"
+												},
 												"bytes": {
 													"type": "integer",
 													"description": "Total number backed up bytes"

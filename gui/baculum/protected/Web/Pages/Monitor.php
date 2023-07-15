@@ -56,10 +56,15 @@ class Monitor extends BaculumPage {
 
 		$web_config = $this->getModule('web_config')->getConfig();
 		$job_limit = WebConfig::DEF_MAX_JOBS;
-		if (count($web_config) > 0 && key_exists('max_jobs', $web_config['baculum'])) {
-			$job_limit = $web_config['baculum']['max_jobs'];
-		}
-
+		$job_age = 0;
+		if (count($web_config) > 0) {
+			if (key_exists('max_jobs', $web_config['baculum'])) {
+				$job_limit = $web_config['baculum']['max_jobs'];
+			}
+			if (key_exists('job_age_on_job_status_graph', $web_config['baculum'])) {
+				$job_age = $web_config['baculum']['job_age_on_job_status_graph'];
+			}
+ 		}
 		$error = null;
 		$params = $this->Request->contains('params') ? $this->Request['params'] : [];
 		if (!is_array($params)) {
@@ -74,11 +79,13 @@ class Monitor extends BaculumPage {
 			if (is_array($params['jobs'])) {
 				if (key_exists('name', $params['jobs']) && is_array($params['jobs']['name'])) {
 					for ($i = 0; $i < count($params['jobs']['name']); $i++) {
+						// @TODO: Add support for multiple names in query
 						$job_query['name'] = $params['jobs']['name'][$i];
 					}
 				}
 				if (key_exists('client', $params['jobs']) && is_array($params['jobs']['client'])) {
 					for ($i = 0; $i < count($params['jobs']['client']); $i++) {
+						// @TODO: Add support for multiple clients in query
 						$job_query['client'] = $params['jobs']['client'][$i];
 					}
 				}
@@ -86,6 +93,10 @@ class Monitor extends BaculumPage {
 			if ($this->Request->contains('use_limit') && $this->Request['use_limit'] == 1) {
 				$job_query['limit'] = $job_limit;
 			}
+			if ($this->Request->contains('use_age') && $this->Request['use_age'] == 1) {
+				$job_query['age'] = $job_age;
+			}
+
 			if (count($job_query) > 0) {
 				$job_params[] = '?' . http_build_query($job_query);
 			}
