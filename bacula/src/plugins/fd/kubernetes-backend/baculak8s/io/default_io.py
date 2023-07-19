@@ -76,6 +76,9 @@ class DefaultIO(object):
     def send_error(self, message):
         self.send_packet(STATUS_ERROR, message)
 
+    def send_non_fatal_error(self, message):
+        self.send_packet(STATUS_NON_FATAL_ERROR, message)
+        
     def send_warning(self, message):
         self.send_packet(STATUS_WARNING, message)
 

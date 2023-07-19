@@ -284,7 +284,7 @@ class JobPodBacula(Job, metaclass=ABCMeta):
                 self.tarstderr = self.tarstderr.rstrip('\n')
             # classify it as error or warning
             if self.tarexitcode != '0':
-                self._handle_error(self.tarstderr)
+                self._handle_non_fatal_error(self.tarstderr)
             else:
                 self._io.send_warning(self.tarstderr)
 

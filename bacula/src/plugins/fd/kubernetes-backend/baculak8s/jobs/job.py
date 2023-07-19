@@ -88,6 +88,13 @@ class Job(metaclass=ABCMeta):
                         git_version=data.git_version,
                     ))
 
+    def _handle_non_fatal_error(self, error_message):
+        if self._params.get("abort_on_error", None) == "1":
+            self._io.send_abort(error_message)
+            self._abort()
+        else:
+            self._io.send_non_fatal_error(error_message)
+
     def _handle_error(self, error_message):
         if self._params.get("abort_on_error", None) == "1":
             self._io.send_abort(error_message)
