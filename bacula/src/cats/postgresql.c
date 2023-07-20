@@ -43,6 +43,7 @@
 #undef PACKAGE_STRING
 #undef PACKAGE_TARNAME
 #undef PACKAGE_VERSION
+#undef PACKAGE_URL
 
 #include  "libpq-fe.h"
 #include  "postgres_ext.h"       /* needed for NAMEDATALEN */
