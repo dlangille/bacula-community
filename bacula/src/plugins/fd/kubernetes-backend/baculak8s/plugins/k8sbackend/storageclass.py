@@ -77,7 +77,7 @@ def storageclass_list_all_names(storagev1api):
     # logging.debug(storageclass)
     for sc in storageclass.items:
         sclist[sc.metadata.name] = {
-            'fi': FileInfo(name="/%s/%s" % (K8SObjType.K8SOBJ_STORAGECLASS_Path, sc.metadata.name),
+            'fi': FileInfo(name="/{}/{}".format(K8SObjType.K8SOBJ_STORAGECLASS_Path, sc.metadata.name),
                            ftype=NOT_EMPTY_FILE,
                            size=1024,   # arbitrary file size
                            uid=0, gid=0,

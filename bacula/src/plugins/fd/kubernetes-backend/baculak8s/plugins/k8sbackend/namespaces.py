@@ -65,7 +65,7 @@ def namespaces_list_all_names(corev1api):
     namespaces = corev1api.list_namespace(watch=False)
     for ns in namespaces.items:
         nslist[ns.metadata.name] = {
-            'fi': FileInfo(name="/%s/%s" % (K8SObjType.K8SOBJ_NAMESPACE_Path, ns.metadata.name),
+            'fi': FileInfo(name="/{}/{}".format(K8SObjType.K8SOBJ_NAMESPACE_Path, ns.metadata.name),
                            ftype=DIRECTORY,
                            size=0,
                            uid=0, gid=0,

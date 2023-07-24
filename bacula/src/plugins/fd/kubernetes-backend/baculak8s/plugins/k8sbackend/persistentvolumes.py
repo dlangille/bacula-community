@@ -77,7 +77,7 @@ def persistentvolumes_list_all_names(corev1api):
         pvsize = pv.spec.capacity['storage']
         logging.debug("pvsize: {} / {}".format(type(pvsize), pvsize))
         pvlist[pvname] = {
-            'fi': FileInfo(name="/%s/%s" % (K8SObjType.K8SOBJ_PVOLUME_Path, pvname),
+            'fi': FileInfo(name="/{}/{}".format(K8SObjType.K8SOBJ_PVOLUME_Path, pvname),
                            ftype=NOT_EMPTY_FILE,
                            size=k8s_size_to_int(pvsize),
                            uid=0, gid=0,

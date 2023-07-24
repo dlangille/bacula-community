@@ -21,7 +21,7 @@ from baculak8s.io.log import Log
 from baculak8s.io.packet_definitions import *
 from baculak8s.plugins.plugin import *
 
-CONNECTION_ERROR_TEMPLATE = "Error connecting to the chosen Data Source. %s."
+CONNECTION_ERROR_TEMPLATE = "Error connecting to the chosen Data Source. {error}."
 HOST_NOT_FOUND_CONNECTION_ERROR = "404 Not found. Name or service not known"
 HOST_TIMEOUT_ERROR = "Host connection timeout. Maximum retries exceeded"
 AUTH_FAILED_CONNECTION_ERROR = "Authentication Failed"
@@ -52,17 +52,17 @@ class DefaultIO(object):
 
     def __get_connection_error_message(self, error_code):
         if error_code == ERROR_HOST_NOT_FOUND:
-            return CONNECTION_ERROR_TEMPLATE % HOST_NOT_FOUND_CONNECTION_ERROR
+            return CONNECTION_ERROR_TEMPLATE.format(error=HOST_NOT_FOUND_CONNECTION_ERROR)
         elif error_code == ERROR_HOST_TIMEOUT:
-            return CONNECTION_ERROR_TEMPLATE % HOST_TIMEOUT_ERROR
+            return CONNECTION_ERROR_TEMPLATE.format(error=HOST_TIMEOUT_ERROR)
         elif error_code == ERROR_AUTH_FAILED:
-            return CONNECTION_ERROR_TEMPLATE % AUTH_FAILED_CONNECTION_ERROR
+            return CONNECTION_ERROR_TEMPLATE.format(error=AUTH_FAILED_CONNECTION_ERROR)
         elif error_code == ERROR_SSL_FAILED:
-            return CONNECTION_ERROR_TEMPLATE % SSL_ERROR
+            return CONNECTION_ERROR_TEMPLATE.format(error=SSL_ERROR)
         elif error_code == ERROR_CONNECTION_REFUSED:
-            return CONNECTION_ERROR_TEMPLATE % CONNECTION_REFUSED_TEMPLATE
+            return CONNECTION_ERROR_TEMPLATE.format(error=CONNECTION_REFUSED_TEMPLATE)
         else:
-            return CONNECTION_ERROR_TEMPLATE % UNEXPECTED_CONNECTION_ERROR
+            return CONNECTION_ERROR_TEMPLATE.format(error=UNEXPECTED_CONNECTION_ERROR)
 
     def send_eod(self):
         packet_header = EOD_PACKET + b"\n"
@@ -112,7 +112,7 @@ class DefaultIO(object):
             bytes_content = packet_content.encode()
 
         packet_length = str(len(bytes_content)).zfill(6)
-        packet_header = "%s%s\n" % (status, packet_length)
+        packet_header = "{}{}\n".format(status, packet_length)
 
         sys.stdout.buffer.write(packet_header.encode())
         sys.stdout.buffer.write(bytes_content)

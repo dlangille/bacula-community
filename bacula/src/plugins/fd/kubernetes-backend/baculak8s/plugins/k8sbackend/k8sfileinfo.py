@@ -62,23 +62,23 @@ def k8sfilepath(objtype, nsname='', name=''):
     if objtype is not None:
         if objtype == K8SObjType.K8SOBJ_NAMESPACE:
             # namespace
-            return '/%s/%s/%s/%s.%s' % (defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
+            return '/{}/{}/{}/{}.{}'.format(defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
                                         nsname, name, defaultk8sext)
         if objtype == K8SObjType.K8SOBJ_PVOLUME:
             # persistent volume
-            return '/%s/%s/%s.%s' % (defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_PVOLUME],
+            return '/{}/{}/{}.{}'.format(defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_PVOLUME],
                                      name, defaultk8sext)
         if objtype == K8SObjType.K8SOBJ_STORAGECLASS:
             # storage class
-            return '/%s/%s/%s.%s' % (defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_STORAGECLASS],
+            return '/{}/{}/{}.{}'.format(defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_STORAGECLASS],
                                      name, defaultk8sext)
         if objtype == K8SObjType.K8SOBJ_PVCDATA:
             # PVC Data tar archive here
-            return '/%s/%s/%s/%s/%s.%s' % (defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
+            return '/{}/{}/{}/{}/{}.{}'.format(defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
                                            nsname, K8SObjType.pathdict[K8SObjType.K8SOBJ_PVCDATA],
                                            name, defaultk8sarchext)
         # other objects
-        return '/%s/%s/%s/%s/%s.%s' % (defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
+        return '/{}/{}/{}/{}/{}.{}'.format(defaultk8spath, K8SObjType.pathdict[K8SObjType.K8SOBJ_NAMESPACE],
                                        nsname, K8SObjType.pathdict[objtype], name, defaultk8sext)
     return None
 
@@ -112,12 +112,12 @@ def k8sfileobjecttype(fnames):
         # handle namespaced objects
         objtype.update({'namespace': fnames[2]})
         filename = fnames[3]
-        if filename.endswith('.%s' % defaultk8sext):
+        if filename.endswith('.{}'.format(defaultk8sext)):
             objtype.update({'obj': K8SObjType.K8SOBJ_NAMESPACE})
         elif filename == K8SObjType.K8SOBJ_PVCS_Path:
             # handle pvcs both config and data
             filename = fnames[4]
-            if filename.endswith('.%s' % defaultk8sext):
+            if filename.endswith('.{}'.format(defaultk8sext)):
                 # this is a config file
                 objtype.update({'obj': K8SObjType.K8SOBJ_PVOLCLAIM})
             else:

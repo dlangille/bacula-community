@@ -25,7 +25,7 @@ from baculak8s.jobs.job_pod_bacula import (PVCDATA_GET_ERROR, JobPodBacula)
 from baculak8s.plugins.k8sbackend.baculaannotations import BaculaAnnotationsClass
 from baculak8s.util.respbody import parse_json_descr
 
-PATTERN_NOT_FOUND = "No matches found for pattern %s"
+PATTERN_NOT_FOUND = "No matches found for pattern {}"
 NO_PV_FOUND = "No required Persistent Volumes found at the cluster"
 NO_SC_FOUND = "No required Storage Classes found at the cluster"
 NO_NS_FOUND = "No required Namespaces found at the cluster"
@@ -270,5 +270,5 @@ class EstimationJob(JobPodBacula):
         # Assures that all patterns got at least one match
         for pattern in patterns:
             if pattern not in matches:
-                error_msg = PATTERN_NOT_FOUND % pattern
+                error_msg = PATTERN_NOT_FOUND.format(pattern)
                 self._handle_error(error_msg)

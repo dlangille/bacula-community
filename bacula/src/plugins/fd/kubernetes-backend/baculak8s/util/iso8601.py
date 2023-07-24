@@ -124,12 +124,11 @@ def parse_date(datestring):
     if groups["fraction"] is None:
         groups["fraction"] = 0
     else:
-        groups["fraction"] = int(float("0.%s" % groups["fraction"]) * 1e6)
+        groups["fraction"] = int(float("0.{}".format(groups["fraction"])) * 1e6)
 
     try:
         return datetime(int(groups["year"]), int(groups["month"]), int(groups["day"]),
                         int(groups["hour"]), int(groups["minute"]), int(groups["second"]),
                         int(groups["fraction"]), tz)
     except Exception as e:
-        raise ParseError("Failed to create a valid datetime record due to: %s"
-                         % e)
+        raise ParseError("Failed to create a valid datetime record due to: {}".format(e))

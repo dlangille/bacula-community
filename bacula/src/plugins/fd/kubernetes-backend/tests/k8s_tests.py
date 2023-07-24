@@ -92,7 +92,7 @@ class K8STest(BaseTest):
                     expected_name = file["name"]
                     if len(splitted) > 1:
                         path = "/".join(splitted[1:])
-                        expected_name = "%s/%s" % (path, expected_name)
+                        expected_name = "{}/{}".format(path, expected_name)
                     self.assertIn(expected_name, uploaded_names)
                     self.assertIn(file['size'], uploaded_bytes)
 

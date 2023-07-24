@@ -513,7 +513,7 @@ class KubernetesPlugin(Plugin):
         method_name = 'upload_' + str(K8SObjType.methoddict.get(file_info.objtype))
         method = getattr(self, method_name, None)
         if method is None:
-            return {'error': 'Invalid object type: %s' % file_info.objtype}
+            return {'error': 'Invalid object type: {}'.format(file_info.objtype)}
         if file_info.objcache is None:
             current_file = self.check_file(file_info)
             if isinstance(current_file, dict) and 'error' in current_file:
@@ -620,7 +620,7 @@ class KubernetesPlugin(Plugin):
         method_name = '_check_' + str(K8SObjType.methoddict.get(file_info.objtype))
         method = getattr(self, method_name, None)
         if method is None:
-            return {'error': 'Invalid object type: %s' % file_info.objtype}
+            return {'error': 'Invalid object type: {}'.format(file_info.objtype)}
         return method(file_info)
 
     def __exec_check_object(self, action, check_connection=True):

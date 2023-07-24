@@ -38,16 +38,16 @@ RESTORE_LOOP_ERROR = "Invalid packet during restore loop."
 FNAME_WITHOUT_FSOURCE_ERROR = "Invalid FNAME packet. It should have information about the Files Source."
 
 XATTR_ERROR_TEMPLATE = "Error while transferring files extended attributes to the chosen Data Source" \
-                       "\nFile: %s\nBucket: %s.\n"
+                       "\nFile: {}\nBucket: {}.\n"
 
 ACL_ERROR_TEMPLATE = "Error while transferring files access control list to the chosen Data Source" \
-                     "\nFile: %s\nBucket: %s.\n"
+                     "\nFile: {}\nBucket: {}.\n"
 
 FILE_ERROR_TEMPLATE = "Error while transferring file content to the chosen Data Source" \
-                      "\n\tFile: %s\n\tNamespace: %s\n\tdetails: %s"
+                      "\n\tFile: {}\n\tNamespace: {}\n\tdetails: {}"
 
 BUCKET_ERROR_TEMPLATE = "Error while creating a Bucket on the chosen Data Source" \
-                      "Bucket: %s.\n"
+                      "Bucket: {}.\n"
 
 COMMA_SEPARATOR_NOT_SUPPORTED = "Comma separator not supported yet."
 
@@ -175,7 +175,7 @@ class RestoreIO(DefaultIO):
         header = self.read_line()
         if not header:
             raise ValueError("Packet Header not found")
-        logging.debug('io.read_data: ' + str(header))
+        logging.debug('io.read_data: {}'.format(header))
         if header == EOD_PACKET:
             Log.save_received_eod(header)
             return None

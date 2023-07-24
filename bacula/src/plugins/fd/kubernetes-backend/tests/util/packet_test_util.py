@@ -21,7 +21,7 @@ from baculaswift.io.packet_definitions import EOD_PACKET
 
 class PacketTestUtil(object):
     def data_packet(self, data):
-        packet = ("D%s\n" % str(len(data)).zfill(6)).encode()
+        packet = ("D{}\n".format(str(len(data)).zfill(6)).encode())
         packet += data
         return packet
 
@@ -30,7 +30,7 @@ class PacketTestUtil(object):
 
     def command_packet(self, packet_content):
         packet_content += "\n"
-        packet_header = "C%s\n" % str(len(packet_content)).zfill(6)
+        packet_header = "C{}\n".format(str(len(packet_content)).zfill(6))
         return (packet_header + packet_content).encode()
 
     def eod_packet(self):

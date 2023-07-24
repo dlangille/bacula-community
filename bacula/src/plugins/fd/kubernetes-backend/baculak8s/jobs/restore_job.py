@@ -260,7 +260,7 @@ class RestoreJob(JobPodBacula):
                     error_msg = RESTORE_RES_ERR.format(parse_json_descr(response))
                     self._handle_error(error_msg)
                 else:
-                    error_msg = FILE_ERROR_TEMPLATE % (file_info.name, file_info.namespace, response['error'])
+                    error_msg = FILE_ERROR_TEMPLATE.format(file_info.name, file_info.namespace, response['error'])
                     self._handle_error(error_msg)
         else:
             if file_info.size != 0 or file_info.objtype == K8SObjType.K8SOBJ_PVCDATA:

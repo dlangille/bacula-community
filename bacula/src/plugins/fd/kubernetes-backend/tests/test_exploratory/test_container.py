@@ -42,7 +42,7 @@ class ContainerTest(BaseTest):
     def __create_containers(self, amount):
 
         for i in range(0, amount):
-            self.swift_connection.put_container("container=%s" % i)
+            self.swift_connection.put_container("container={}".format(i))
 
     def test_should_list_container_metadata(self):
         container_name = "cats"

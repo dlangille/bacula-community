@@ -30,7 +30,7 @@ from tests.util.packet_test_util import PacketTestUtil
 
 
 class HandshakePacketBuilder(PacketTestUtil):
-    def build(self, packet_content="Hello %s 1" % BACKEND_PLUGIN_TYPE):
+    def build(self, packet_content="Hello {} 1".format(BACKEND_PLUGIN_TYPE)):
         return self.command_packet(packet_content)
 
 
@@ -51,16 +51,16 @@ class JobInfoBlockBuilder(PacketTestUtil):
         packet = JobInfoStartPacketBuilder().build()
         packet += self.command_packet("Name=az_14125_bcjn")
         packet += self.command_packet("JobID=334")
-        packet += self.command_packet("Type=%s" % job_type.upper())
+        packet += self.command_packet("Type={}".format(job_type.upper()))
 
         if where is not None:
-            packet += self.command_packet("Where=%s" % where)
+            packet += self.command_packet("Where={}".format(where))
 
         if since is not None:
-            packet += self.command_packet("Since=%s" % since)
+            packet += self.command_packet("Since={}".format(since))
 
         if replace is not None:
-            packet += self.command_packet("Replace=%s" % replace)
+            packet += self.command_packet("Replace={}".format(replace))
 
         packet += self.eod_packet()
         return packet
@@ -107,36 +107,36 @@ class PluginParamsBlockBuilder(PacketTestUtil):
               password=True,
               passfile=None):
         packet = PluginParamsStartPacketBuilder().build()
-        packet += self.command_packet("User=%s" % BACKEND_PLUGIN_USER)
-        packet += self.command_packet("URL=%s" % BACKEND_PLUGIN_URL)
+        packet += self.command_packet("User={}".format(BACKEND_PLUGIN_USER))
+        packet += self.command_packet("URL={}".format(BACKEND_PLUGIN_URL))
 
         if password:
-            packet += self.command_packet("Password=%s" % BACKEND_PLUGIN_PWD)
+            packet += self.command_packet("Password={}".format(BACKEND_PLUGIN_PWD))
 
         if includes is not None:
             for include in includes:
-                packet += self.command_packet("include=%s" % include)
+                packet += self.command_packet("include={}".format(include))
 
         if regex_includes is not None:
             for regex_include in regex_includes:
-                packet += self.command_packet("regex_include=%s" % regex_include)
+                packet += self.command_packet("regex_include={}".format(regex_include))
 
         if excludes is not None:
             for exclude in excludes:
-                packet += self.command_packet("exclude=%s" % exclude)
+                packet += self.command_packet("exclude={}".format(exclude))
 
         if regex_excludes is not None:
             for regex_exclude in regex_excludes:
-                packet += self.command_packet("regex_exclude=%s" % regex_exclude)
+                packet += self.command_packet("regex_exclude={}".format(regex_exclude))
 
         if segment_size is not None:
-            packet += self.command_packet("be_object_segment_size=%s" % segment_size)
+            packet += self.command_packet("be_object_segment_size={}".format(segment_size))
 
         if restore_local_path is not None:
-            packet += self.command_packet("restore_local_path=%s" % restore_local_path)
+            packet += self.command_packet("restore_local_path={}".format(restore_local_path))
 
         if passfile is not None:
-            packet += self.command_packet("passfile=%s" % passfile)
+            packet += self.command_packet("passfile={}".format(passfile))
 
         packet += self.command_packet("debug=1")
         packet += self.eod_packet()
@@ -144,22 +144,22 @@ class PluginParamsBlockBuilder(PacketTestUtil):
 
     def without_url(self):
         packet = PluginParamsStartPacketBuilder().build()
-        packet += self.command_packet("User=%s" % BACKEND_PLUGIN_USER)
-        packet += self.command_packet("Password=%s" % BACKEND_PLUGIN_PWD)
+        packet += self.command_packet("User={}".format(BACKEND_PLUGIN_USER))
+        packet += self.command_packet("Password={}".format(BACKEND_PLUGIN_PWD))
         packet += self.eod_packet()
         return packet
 
     def without_user(self):
         packet = PluginParamsStartPacketBuilder().build()
-        packet += self.command_packet("Password=%s" % BACKEND_PLUGIN_PWD)
-        packet += self.command_packet("URL=%s" % BACKEND_PLUGIN_URL)
+        packet += self.command_packet("Password={}".format(BACKEND_PLUGIN_PWD))
+        packet += self.command_packet("URL={}".format(BACKEND_PLUGIN_URL))
         packet += self.eod_packet()
         return packet
 
     def without_pwd(self):
         packet = PluginParamsStartPacketBuilder().build()
-        packet += self.command_packet("User=%s" % BACKEND_PLUGIN_USER)
-        packet += self.command_packet("URL=%s" % BACKEND_PLUGIN_URL)
+        packet += self.command_packet("User={}".format(BACKEND_PLUGIN_USER))
+        packet += self.command_packet("URL={}".format(BACKEND_PLUGIN_URL))
         packet += self.eod_packet()
         return packet
 
@@ -251,18 +251,18 @@ class RestoreFileCommandBuilder(PacketTestUtil):
         if fname_without_fsource:
             file_source = ""
         else:
-            file_source = "@%s" % BACKEND_PLUGIN_TYPE
+            file_source = "@{}".format(BACKEND_PLUGIN_TYPE)
 
         if where:
-            packet = self.command_packet('FNAME:%s/%s/%s/%s' % (where, file_source, bucket, file['name']))
+            packet = self.command_packet('FNAME:{}/{}/{}/{}'.format(where, file_source, bucket, file['name']))
         else:
-            packet = self.command_packet('FNAME:%s/%s/%s' % (file_source, bucket, file['name']))
-        packet += self.command_packet('STAT:F %s 0 0 %s 1 473' % (file['size'], DEFAULT_FILE_MODE))
+            packet = self.command_packet('FNAME:{}/{}/{}'.format(file_source, bucket, file['name']))
+        packet += self.command_packet('STAT:F {} 0 0 {} 1 473'.format(file['size'], DEFAULT_FILE_MODE))
 
         if "modified-at" not in file:
             file["modified-at"] = 2222222222
 
-        packet += self.command_packet('TSTAMP:1111111111 %s 3333333333' % file["modified-at"])
+        packet += self.command_packet('TSTAMP:1111111111 {} 3333333333'.format(file["modified-at"]))
         packet += self.eod_packet()
         return packet
 
@@ -326,13 +326,13 @@ class RestoreFileCommandBuilder(PacketTestUtil):
         return packet
 
     def bucket_info(self, bucket):
-        packet = self.command_packet('FNAME:@%s/%s/' % (BACKEND_PLUGIN_TYPE, bucket['name']))
+        packet = self.command_packet('FNAME:@{}/{}/'.format(BACKEND_PLUGIN_TYPE, bucket['name']))
 
         if "modified-at" not in bucket:
             bucket["modified-at"] = 2222222222
 
-        packet += self.command_packet('STAT:D 12345 0 0 %s 1 473' % DEFAULT_DIR_MODE)
-        packet += self.command_packet('TSTAMP:1111111111 %s 3333333333' % bucket["modified-at"])
+        packet += self.command_packet('STAT:D 12345 0 0 {} 1 473'.format(DEFAULT_DIR_MODE))
+        packet += self.command_packet('TSTAMP:1111111111 {} 3333333333'.format(bucket["modified-at"]))
         packet += self.eod_packet()
         return packet
 

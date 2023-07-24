@@ -20,8 +20,8 @@ import os
 import baculak8s
 
 PLUGIN_WORKING = os.getenv("PLUGIN_WORKING", "/opt/bacula/working/kubernetes")
-PRE_JOB_LOG_NAME_TEMPLATE = "pre_job_%s.log"
-LOG_NAME_TEMPLATE = "%s_%s_%s.log"
+PRE_JOB_LOG_NAME_TEMPLATE = "pre_job_{}.log"
+LOG_NAME_TEMPLATE = "{pid}_{job_id}_{job_name}.log"
 
 
 class LogConfig(object):
@@ -44,7 +44,7 @@ class LogConfig(object):
                     os.makedirs(PLUGIN_WORKING)
 
         # The Log File starts with a "Pre Job" name
-        file_name = PRE_JOB_LOG_NAME_TEMPLATE % os.getpid()
+        file_name = PRE_JOB_LOG_NAME_TEMPLATE.format(os.getpid())
         file_name = os.path.join(PLUGIN_WORKING, file_name)
         logging.basicConfig(filename=file_name, level=logging.DEBUG, filemode='w+', format='%(levelname)s:[%(pathname)s:%(lineno)d in %(funcName)s] %(message)s')
 
@@ -58,8 +58,8 @@ class LogConfig(object):
     @staticmethod
     def _create(job_info):
         pid = os.getpid()
-        old_name = PRE_JOB_LOG_NAME_TEMPLATE % pid
-        new_name = LOG_NAME_TEMPLATE % (pid, job_info["jobid"], job_info["name"])
+        old_name = PRE_JOB_LOG_NAME_TEMPLATE.format(pid)
+        new_name = LOG_NAME_TEMPLATE.format(pid=pid, job_id=job_info["jobid"], job_name=job_info["name"])
         old_name = os.path.join(PLUGIN_WORKING, old_name)
         new_name = os.path.join(PLUGIN_WORKING, new_name)
         if os.path.isfile(old_name):
@@ -68,7 +68,7 @@ class LogConfig(object):
     @staticmethod
     def _delete_pre_job_log():
         pid = os.getpid()
-        pre_job_log_file = PRE_JOB_LOG_NAME_TEMPLATE % pid
+        pre_job_log_file = PRE_JOB_LOG_NAME_TEMPLATE.format(pid)
         pre_job_log_file = os.path.join(PLUGIN_WORKING, pre_job_log_file)
         if os.path.isfile(pre_job_log_file):
             os.remove(pre_job_log_file)
@@ -93,7 +93,7 @@ class Log:
 
     @staticmethod
     def save_received_packet(packet_header, packet_content):
-        message = "Received Packet\n%s\n%s\n" % (packet_header.decode(), packet_content)
+        message = "Received Packet\n{}\n{}\n".format(packet_header.decode(), packet_content)
         logging.debug(message)
 
     @staticmethod
@@ -106,12 +106,12 @@ class Log:
 
     @staticmethod
     def save_sent_packet(packet_header, packet_content):
-        message = "Sent Packet\n%s%s" % (packet_header, packet_content)
+        message = "Sent Packet\n{}{}".format(packet_header, packet_content)
         logging.debug(message)
 
     @staticmethod
     def save_exit_code(exit_code):
-        message = "Backend finished with Exit Code: %s" % exit_code
+        message = "Backend finished with Exit Code: {}".format(exit_code)
         logging.debug(message)
 
     @staticmethod
