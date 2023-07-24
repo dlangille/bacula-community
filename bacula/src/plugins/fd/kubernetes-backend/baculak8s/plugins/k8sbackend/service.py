@@ -63,9 +63,7 @@ def services_restore_namespaced(corev1api, file_info, file_content):
     if services.spec.cluster_ip != 'None':
         # clean some data
         services.spec.cluster_ip = None
-        # When libraries were upgraded to kubernetes 26, this change was needed.
-        if services.spec.cluster_i_ps:
-            services.spec.cluster_i_ps  = None
+
     if file_info.objcache is not None:
         # object exist so we replace it
         response = corev1api.replace_namespaced_service(k8sfile2objname(file_info.name),

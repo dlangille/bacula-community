@@ -50,7 +50,7 @@ def encoder_load(msg, filename=None):
     if filename.endswith('.json') or (filename is None and defaultk8sext == 'json'):
         return json.loads(msg)
     else:
-        return yaml.load(msg, Loader=yaml.FullLoader)
+        return yaml.load(msg, Loader=yaml.Loader)
 
 
 def k8sfile2objname(fname):
