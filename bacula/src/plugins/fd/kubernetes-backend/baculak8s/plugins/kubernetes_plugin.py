@@ -515,12 +515,12 @@ class KubernetesPlugin(Plugin):
         if method is None:
             return {'error': 'Invalid object type: %s' % file_info.objtype}
         if file_info.objcache is None:
-            curent_file = self.check_file(file_info)
-            if isinstance(curent_file, dict) and 'error' in curent_file:
+            current_file = self.check_file(file_info)
+            if isinstance(current_file, dict) and 'error' in current_file:
                 file_info.objcache = None
-                logging.error("check_file: {}".format(curent_file['error']))
+                logging.error("check_file: {}".format(current_file['error']))
             else:
-                file_info.objcache = curent_file
+                file_info.objcache = current_file
         return method(file_info, file_content)
 
     def restore_file(self, file_info, file_content_source=None):
