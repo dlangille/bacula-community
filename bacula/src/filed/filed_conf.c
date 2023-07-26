@@ -157,7 +157,7 @@ static RES_ITEM dir_items[] = {
    {"Schedule", store_res, ITEM(res_dir.schedule), R_SCHEDULE, 0, 0},
    {"ReconnectionTime", store_time,ITEM(res_dir.reconnection_time), 0, ITEM_DEFAULT, 60 * 45},
    {"AllowedBackupDirectories",   store_alist_str,     ITEM(res_dir.allowed_backup_dirs), 0, 0, 0},
-   {"ExlcudedBackupDirectories",   store_alist_str,     ITEM(res_dir.excluded_backup_dirs), 0, 0, 0},
+   {"ExcludedBackupDirectories",   store_alist_str,     ITEM(res_dir.excluded_backup_dirs), 0, 0, 0},
    {"AllowedScriptDirectories",    store_alist_str,     ITEM(res_dir.allowed_script_dirs), 0, 0, 0},
    {"AllowedRestoreDirectories",   store_alist_str,     ITEM(res_dir.allowed_restore_dirs), 0, 0, 0},
    {"BackupJobUser",               store_str,           ITEM(res_dir.backup_job_user),   0, 0, 0},
