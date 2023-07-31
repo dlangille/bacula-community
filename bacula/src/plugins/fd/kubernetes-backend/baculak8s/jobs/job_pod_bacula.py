@@ -52,9 +52,13 @@ CANNOT_REMOVE_BACKUP_POD_ERR = "Cannot remove backup pod. Err={}"
 PVCDATA_GET_ERROR = "Cannot get PVC Data object Err={}"
 PVCCLONE_YAML_PREPARED_INFO = "Prepare snapshot: {namespace}/{snapname} storage: {storage} capacity: {capacity}"
 CANNOT_CREATE_PVC_CLONE_ERR = "Cannot create PVC snapshot. Err={}"
+CANNOT_CREATE_VSNAPSHOT_ERR = "Cannot create Volume Snapshot. Err={}"
+CANNOT_CREATE_PVC_SNAPSHOT_ERR = "Cannot create PVC from Volume Snapshot. Err={}"
 CANNOT_REMOVE_PVC_CLONE_ERR = "Cannot remove PVC snapshot. Err={}"
+CANNOT_REMOVE_VSNAPSHOT_ERR = "Unable to remove volume snapshot {vsnapshot}! Please you must remove it manually."
 CANNOT_START_CONNECTIONSERVER = "Cannot start ConnectionServer. Err={}"
 
+VSNAPSHOT_BACKUP_COMPATIBLE_INFO = "The pvc `{}` is compatible with volume snapshot backup. Doing backup with this tecnology."
 
 class JobPodBacula(Job, metaclass=ABCMeta):
     """
@@ -330,3 +334,35 @@ class JobPodBacula(Job, metaclass=ABCMeta):
                 return None
 
         return clonename
+
+    def handle_create_vsnapshot_backup(self, namespace, pvcdata):
+        """
+        Manage operations to create snapshot and new pvc from this snapshot to do backup. 
+        """
+        # Check if pvc is compatible with vsnapshot
+        if not self._plugin.check_vsnapshot_compatibility(pvcdata.get('storage_class_name')):
+            return None, pvcdata
+
+        self._io.send_info(VSNAPSHOT_BACKUP_COMPATIBLE_INFO.format(pvcdata.get('name')))
+        vsnapshot = self._plugin.create_vsnapshot(namespace, pvcdata.get('name'))
+        if isinstance(vsnapshot, dict) and 'error' in vsnapshot:
+            self._handle_error(CANNOT_CREATE_VSNAPSHOT_ERR.format(parse_json_descr(vsnapshot)))
+            return None, None
+        # Create pvc from volume snapshot
+        new_pvc = self._plugin.create_pvc_from_vsnapshot(namespace, pvcdata)
+        if isinstance(new_pvc, dict) and 'error' in new_pvc:
+            self._handle_error(CANNOT_CREATE_PVC_SNAPSHOT_ERR.format(parse_json_descr(new_pvc)))
+            return None, None
+        self._io.send_info(VSNAPSHOT_BACKUP_COMPATIBLE_INFO.format(new_pvc.get('name')))
+        return vsnapshot, new_pvc
+
+    def handle_delete_vsnapshot_backup(self, namespace, vsnapshot, pvcdata):
+        logging.debug('handle_delete_vsnapshot: {}/{}'.format(namespace, vsnapshot))
+        if vsnapshot is None:
+            return None
+        response = self._plugin.remove_pvcclone(namespace, pvcdata.get('name'))
+        if isinstance(response, dict) and "error" in response:
+            return self._handle_error(CANNOT_REMOVE_PVC_CLONE_ERR.format(vsnapshot=vsnapshot.get('name')))
+        response = self._plugin.remove_vsnapshot(namespace, vsnapshot.get('name'))
+        if isinstance(response, dict) and "error" in response:
+            return self._handle_error(CANNOT_REMOVE_VSNAPSHOT_ERR.format(vsnapshot=vsnapshot.get('name')))

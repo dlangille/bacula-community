@@ -128,6 +128,10 @@ class BackupJob(EstimationJob):
 
     def process_pvcdata(self, namespace, pvcdata):
         status = None
+        # Detect if pvcdata is compatible with snapshots
+        vsnapshot, pvcdata = self.handle_create_vsnapshot_backup(namespace, pvcdata)
+
+        logging.debug('Process_pvcdata (Backup_job): {} {}'.format(vsnapshot, pvcdata))
         if self.prepare_bacula_pod(pvcdata, namespace=namespace, mode='backup'):
             super()._estimate_file(pvcdata)     # here to send info about pvcdata to plugin
             status = self.__backup_pvcdata(namespace=namespace)
@@ -135,6 +139,8 @@ class BackupJob(EstimationJob):
                 self._io.send_eod()
                 self.handle_tarstderr()
             self.handle_delete_pod(namespace=namespace)
+        # Both prepare_bacula_pod fails or not, we must remove snapshot and pvc
+        self.handle_delete_vsnapshot_backup(namespace, vsnapshot, pvcdata)
         return status
 
     def handle_pod_container_exec_command(self, corev1api, namespace, pod, runjobparam, failonerror=False):

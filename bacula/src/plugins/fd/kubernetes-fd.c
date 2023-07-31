@@ -18,10 +18,10 @@
 */
 /**
  * @file kubernetes-fd.c
- * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * @author Francisco Manuel Garcia Botella (francisco.garcia@baculasystems.com)
  * @brief This is a Bacula Kubernetes Plugin with metaplugin interface.
- * @version 2.0.5
- * @date 2021-01-05
+ * @version 2.1.0
+ * @date 2023-07-31
  *
  * @copyright Copyright (c) 2021 All rights reserved.
  *            IP transferred to Bacula Systems according to agreement.
@@ -31,10 +31,10 @@
 
 /* Plugin Info definitions */
 const char *PLUGIN_LICENSE       = "Bacula AGPLv3";
-const char *PLUGIN_AUTHOR        = "Radoslaw Korzeniewski";
-const char *PLUGIN_DATE          = "April 2021";
-const char *PLUGIN_VERSION       = "2.0.5"; // TODO: should synchronize with kubernetes-fd.json
-const char *PLUGIN_DESCRIPTION   = "Bacula Enterprise Kubernetes Plugin";
+const char *PLUGIN_AUTHOR        = "Radoslaw Korzeniewski, Francisco Manuel Garcia Botella";
+const char *PLUGIN_DATE          = "July 2023";
+const char *PLUGIN_VERSION       = "2.1.0"; // TODO: should synchronize with kubernetes-fd.json
+const char *PLUGIN_DESCRIPTION   = "Bacula Kubernetes Plugin";
 
 /* Plugin compile time variables */
 const char *PLUGINPREFIX         = "kubernetes:";

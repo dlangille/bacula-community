@@ -24,9 +24,9 @@ if sys.version_info < (3, 0):
 
 setup(
     name='baculak8s',
-    version='2.0.2',
-    author='Radoslaw Korzeniewski',
-    author_email='radekk@korzeniewski.net',
+    version='2.1.0',
+    author='Francisco Manuel Garcia Botella',
+    author_email='francisco.garcia@baculasystems.com',
     packages=find_packages(exclude=('tests', 'tests.*')),
     # packages=packages,
     license="Bacula® - The Network Backup Solution",

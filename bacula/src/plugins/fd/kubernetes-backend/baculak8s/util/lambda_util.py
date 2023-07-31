@@ -15,8 +15,26 @@
 #
 #   Bacula(R) is a registered trademark of Kern Sibbald.
 
+import logging
+import time
+
+K8S_NUM_MAX_TRIES_ERROR = "Reached maximum number of tries! Message: {message}"
+NUM_MAX_TRIES = 20
 
 def apply(condition, iterable):
     # Helper method to map lambdas on iterables
     # Created just for readability
     return list(map(condition, iterable))
+
+
+def wait_until_resource_is_ready(action, error_msg = 'Reached num maximum tries.', sleep = 3):
+    logging.debug('Waiting until resource is ready')
+    tries = 0
+    is_ready = False
+    while not is_ready:
+        is_ready = action()
+        if tries >= NUM_MAX_TRIES:
+            logging.debug("Reached num maximum tries.")
+            return { 'error': K8S_NUM_MAX_TRIES_ERROR.format(message=error_msg)}
+        time.sleep(sleep)
+    return {}

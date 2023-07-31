@@ -32,6 +32,7 @@ from baculak8s.plugins import k8sbackend
 from baculak8s.plugins.k8sbackend.baculabackup import BACULABACKUPPODNAME
 from baculak8s.plugins.k8sbackend.baculaannotations import annotated_namespaced_pods_data
 from baculak8s.plugins.k8sbackend.configmaps import *
+from baculak8s.plugins.k8sbackend.csi_snapshot import *
 from baculak8s.plugins.k8sbackend.daemonset import *
 from baculak8s.plugins.k8sbackend.deployment import *
 from baculak8s.plugins.k8sbackend.endpoints import *
@@ -53,11 +54,11 @@ from baculak8s.plugins.k8sbackend.statefulset import *
 from baculak8s.plugins.k8sbackend.storageclass import *
 from baculak8s.plugins.plugin import *
 from baculak8s.util.date_util import gmt_to_unix_timestamp
+from baculak8s.util.lambda_util import wait_until_resource_is_ready
 
 HTTP_NOT_FOUND = 404
 K8S_POD_CONTAINER_STATUS_ERROR = "Pod status error! Reason: {}, Message: {}"
-
-
+K8S_VOLUME_SNAPSHOT_STATUS_ERROR = "Volume status error! Reason: {}, Message: {}"
 class KubernetesPlugin(Plugin):
     """
         Plugin that communicates with Kubernetes API
@@ -184,6 +185,7 @@ class KubernetesPlugin(Plugin):
         self.corev1api = client.CoreV1Api(api_client=self.clientAPI)
         self.appsv1api = client.AppsV1Api(api_client=self.clientAPI)
         self.storagev1api = client.StorageV1Api(api_client=self.clientAPI)
+        self.crd_api = client.CustomObjectsApi(api_client=self.clientAPI) # To manage csi snapshots
 
         logging.getLogger(requests.packages.urllib3.__package__).setLevel(logging.ERROR)
         logging.getLogger(client.rest.__package__).setLevel(logging.ERROR)
@@ -531,6 +533,9 @@ class KubernetesPlugin(Plugin):
             return self.__restore_k8s_object(file_info, file_content_source)
 
     # TODO: export/move all checks into k8sbackend
+    def check_vsnapshot_compatibility(self, storage_class_name):
+        return SNAPSHOT_DRIVER_COMPATIBLE in storage_class_name
+
     def _check_config_map(self, file_info):
         return self.__exec_check_object(
             lambda: self.corev1api.read_namespaced_config_map(k8sfile2objname(file_info.name), file_info.namespace))
@@ -777,11 +782,67 @@ class KubernetesPlugin(Plugin):
             return response
         return {}
 
+    def vsnapshot_isready(self, namespace, snapshot_name):
+        response = self._vsnapshot_status(namespace, snapshot_name)
+        if isinstance(response, dict) and "error" in response:
+            return response
+        status = response.get('status')
+        logging.debug("vsnapshot_isready:ReadyToUse:{}".format(status))
+        if status is None:
+            return False
+        return status.get('readyToUse')
+
+    def create_vsnapshot(self, namespace, pvcname):
+        logging.info("Creating vsnapshot of pvc `{}`".format(pvcname))
+        snapshot = prepare_create_snapshot_body(namespace, pvcname, self._params.get('jobid'))
+        response = self.__execute(lambda: self.crd_api.create_namespaced_custom_object(**snapshot, pretty=True))
+        if isinstance(response, dict) and "error" in response:
+            return response
+        snapshot_name = snapshot.get("body").get("metadata").get("name")
+        logging.debug('Request create snapshot `{}` sent correctly'.format(snapshot_name))
+        wait_until_resource_is_ready(
+            lambda: self.vsnapshot_isready(namespace, snapshot_name),
+            "Waiting create volume snapshot `{}` to be ready.".format(snapshot_name)
+        )
+        logging.info("Created successfully vsnapshot of pvc `{}`".format(pvcname))
+        return {
+            'name': snapshot_name,
+            'kind': snapshot.get('body').get('kind'),
+            'source': pvcname,
+            'namespace': namespace,
+            'volume_snapshot_class_name': snapshot.get('body').get('spec').get('volumeSnapshotClassName')
+        }
+
+    def create_pvc_from_vsnapshot(self, namespace, pvcdata):
+        new_pvc = prepare_pvc_from_vsnapshot_body(namespace, pvcdata, self._params.get('jobid'))
+        response = self.create_pvc_clone(namespace, new_pvc)
+        if isinstance(response, dict) and 'error' in response:
+            return response
+        response = self.get_pvcdata_namespaced(namespace, new_pvc.get('metadata').get('name'))
+        if isinstance(response, dict) and 'error' in response:
+            return response
+        logging.debug('PVC from vsnapshot Response: {}'.format(response))
+        new_pvc_name = response.get('name')
+        wait_until_resource_is_ready(
+            lambda: self.pvc_status(namespace, new_pvc_name),
+            'Waiting create pvc from snapshot `{}` to be ready'.format(new_pvc_name)
+        )
+        return {
+            'name': new_pvc_name,
+            'node_name': response.get('node_name'),
+            'storage_class_name': response.get('storage_class_name'),
+            'capacity': response.get('capacity'),
+            'fi': pvcdata.get('fi')
+        }
+
     def backup_pod_status(self, namespace):
         return self.corev1api.read_namespaced_pod_status(name=BACULABACKUPPODNAME, namespace=namespace)
 
     def pvc_status(self, namespace, pvcname):
         return self.__execute(lambda: self.corev1api.read_namespaced_persistent_volume_claim_status(name=pvcname, namespace=namespace))
+
+    def _vsnapshot_status(self, namespace, snapshot_name):
+        return self.__execute(lambda: self.crd_api.get_namespaced_custom_object_status(**prepare_snapshot_action(namespace, snapshot_name)))
 
     def backup_pod_isready(self, namespace, seq=None, podname=BACULABACKUPPODNAME):
         pod = self.backup_pod_status(namespace)
@@ -816,12 +877,25 @@ class KubernetesPlugin(Plugin):
         return {}
 
     def remove_pvcclone(self, namespace, clonename):
-        logging.debug('remove_pvcclone')
+        logging.debug('remove_pvcclone `{}`'.format(clonename))
         response = self.__execute(lambda: self.corev1api.delete_namespaced_persistent_volume_claim(
             clonename, namespace, grace_period_seconds=0,
             propagation_policy='Foreground'))
         if isinstance(response, dict) and "error" in response:
             return response
+        r1 = self.get_pvcdata_namespaced(namespace, clonename)
+        wait_until_resource_is_ready(lambda: 'error' in self.get_pvcdata_namespaced(namespace, clonename))
+        r2 = self.get_pvcdata_namespaced(namespace, clonename)
+        logging.debug('PVC removed `{}`'.format(clonename))
+        return {}
+
+    def remove_vsnapshot(self, namespace, vsnapshot_name):
+        logging.debug('remove_vsnapshot `{}`'.format(vsnapshot_name))
+        response = self.__execute(lambda: self.crd_api.delete_namespaced_custom_object(**prepare_snapshot_action(namespace, vsnapshot_name)))
+        logging.debug('Response remove_vsnapshot {}'.format(response))
+        if isinstance(response, dict) and "error" in response:
+            return response
+        logging.debug('Volume Snapshot removed `{}`'.format(vsnapshot_name))
         return {}
 
     def check_gone_backup_pod(self, namespace, force=False):
