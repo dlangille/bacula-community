@@ -37,6 +37,34 @@ export LPLUG
 }
 
 #
+# Create self-signed certificate.
+#
+# in:
+# $1 (optional): Directory to save the csr, key and pem.
+# $2 (optional): Name of csr, key and pem
+#
+setup_self_signed_cert()
+{
+   cert_dir="/tmp/"
+   cert_name="snakeoil"
+   if [ "x$1" != "x" ]
+   then
+      if [ "${1:(-1)}" != "/" ]
+      then
+         cert_dir=${1}/
+      fi
+   fi
+   if [ "x${2}" != "x" ]
+   then
+      cert_name=${2}
+   fi
+   echo "[INIT] CREATE OPENSSL CERTS"
+   `openssl req -nodes -newkey rsa:2048 -keyout ${cert_dir}${cert_name}.key -out ${cert_dir}${cert_name}.csr -subj "/C=CH/ST=Vaud/L=Yverdon-les-Bains/O=Backup Security/OU=R&D Department/CN=baculasystems.com"`
+   `openssl x509 -req -sha256 -days 365 -in ${cert_dir}${cert_name}.csr -signkey ${cert_dir}${cert_name}.key -out ${cert_dir}${cert_name}.pem`
+   echo "[END] CREATE OPENSSL CERTS"
+}
+
+#
 # common check if test pass by checking input param
 #
 # in:
@@ -282,6 +310,31 @@ then
 else
    return 0
 fi
+}
+
+#
+# Check the expected string on any log file
+#
+# in:
+# $1 - type of log. Values allowed: b,r,e,l
+# $2 - the string to seach into logfile
+# $3 - a test number to examine which means we will check log${ltest}.out logfile
+check_regress_string_in_log()
+{
+   type_log=$1
+   to_search=$2
+   n_test=$3
+   log_file=${tmp}/${type_log}log${n_test}.out
+   grep "${to_search}" ${log_file}
+   F=$?
+   if [ $F -ne 0 ]
+   then
+      error_stat="${type_log}stat"
+      declare -g "${error_stat}"=$((${!error_stat}+1))
+      return 1
+   else
+      return 0
+   fi
 }
 
 #
