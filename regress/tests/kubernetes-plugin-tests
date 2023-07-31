@@ -100,6 +100,11 @@ then
 fi
 ${KUBECTL} apply -f scripts/kubernetes-plugintest.yaml 2>&1 >> ${tmp}/kube.log
 
+if [ $KUBE_PROXY_BACKUP_TEST -ne 0 ]
+then
+   ${KUBECTL} apply -f scripts/kubernetes-plugintest-csi-driver.yaml 2>&1 >> ${tmp}/kube.log
+fi
+
 i=0
 SPIN=('-' '\\' '|' '/')
 printf "waiting to ready ...  "
@@ -130,6 +135,25 @@ printf "variables ... "
 ${KUBECTL} get ns -o name > ${tmp}/allns.log
 ${KUBECTL} get pv -o name > ${tmp}/allpv.log
 PV1=`${KUBECTL} -n plugintest get pvc/plugintest-persistent-volume-claim -o go-template='{{.spec.volumeName}}'`
+PV_CSI1=`${KUBECTL} -n plugintest get pvc/plugintest-persistent-volume-claim-csi -o go-template='{{.spec.volumeName}}'`
+BACKUP_PROXY_ARGS=""
+
+if [ $KUBE_PROXY_BACKUP_TEST -ne 0 ]
+then
+   if [ $KUBE_GEN_CERT -ne 0 ]
+   then
+      setup_self_signed_cert $KUBE_FD_CERT_DIR $KUBE_FD_CERT_NAME
+      if [ "x$KUBE_FD_CERT_FILE" = "x" ]
+      then
+         KUBE_FD_CERT_FILE=${KUBE_FD_CERT_DIR}${KUBE_FD_CERT_NAME}.pem
+         KUBE_FD_KEY_FILE=${KUBE_FD_CERT_DIR}${KUBE_FD_CERT_NAME}.key
+      fi
+   fi
+   BACKUP_PROXY_CERTS="fdkeyfile=$KUBE_FD_KEY_FILE fdcertfile=$KUBE_FD_CERT_FILE"
+   BACKUP_PROXY_ARGS="pvcdata baculaimage=${KUBE_BACULA_IMAGE} pluginhost=${KUBE_PROXY_POD_PLUGIN_HOST}"
+   BACKUP_PROXY_ARGS="$BACKUP_PROXY_ARGS $BACKUP_PROXY_CERTS"
+fi
+
 
 # prepare kubernetes backend
 export PLUGIN_WORKING=${cwd}/working
@@ -139,6 +163,8 @@ echo "PV1: $PV1" > ${tmp}/objinfo.log
 out_sed="${tmp}/sed_tmp"
 echo "s%@LPLUG@%${LPLUG}%" > ${out_sed}
 echo "s%@PV1@%${PV1}%" >> ${out_sed}
+echo "s%@PV_CSI1@%${PV_CSI1}%" >> ${out_sed}
+echo "s%@BACKUP_PROXY_ARGS@%${BACKUP_PROXY_ARGS}%" >> ${out_sed}
 
 sed -i -f ${out_sed} ${conf}/bacula-dir.conf
 
@@ -266,6 +292,20 @@ do
    F=$?
    regress_test_result ${F}
 done
+
+# second, backup with proxy backup if it's activated
+if [ $KUBE_PROXY_BACKUP_TEST -ne 0 ]
+then
+   expected_string_in_log="is compatible with volume snapshot backup"
+   TEST=4
+   do_regress_backup_test ${TEST}
+   check_regress_backup_statusT ${TEST}
+   F=$?
+   echo "Check backup statusT:" $(regress_test_result ${F})
+   check_regress_string_in_log "b" "${expected_string_in_log}" ${TEST}
+   F=$?
+   echo "Check use volume snapshot tecnology: " $(regress_test_result ${F})
+fi
 
 # now, backup with warnings
 for TEST in `seq 11 13`

@@ -190,6 +190,18 @@ Job {
 }
 
 FileSet {
+  Name = "TestPluginKubernetesSet4"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest persistentvolume=@PV_CSI1@ @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest4"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet4
+}
+
+FileSet {
   Name = "TestPluginKubernetesSet11"
   Include { Options { signature=SHA1 }
     Plugin = "@LPLUG@ namespace=nonexistent"
