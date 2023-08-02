@@ -325,7 +325,7 @@ check_regress_string_in_log()
    to_search=$2
    n_test=$3
    log_file=${tmp}/${type_log}log${n_test}.out
-   grep "${to_search}" ${log_file}
+   grep "${to_search}" ${log_file} > /dev/null
    F=$?
    if [ $F -ne 0 ]
    then

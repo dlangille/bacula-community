@@ -18,7 +18,8 @@
 */
 /**
  * @file kubernetes-fd.c
- * @author Francisco Manuel Garcia Botella (francisco.garcia@baculasystems.com)
+ * @author Radosław Korzeniewski (radoslaw@korzeniewski.net)
+ * Modified by: Francisco Manuel Garcia Botella (francisco.garcia@baculasystems.com)
  * @brief This is a Bacula Kubernetes Plugin with metaplugin interface.
  * @version 2.1.0
  * @date 2023-07-31

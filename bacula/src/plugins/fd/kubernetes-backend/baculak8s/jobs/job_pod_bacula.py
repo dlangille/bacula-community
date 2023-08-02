@@ -58,7 +58,7 @@ CANNOT_REMOVE_PVC_CLONE_ERR = "Cannot remove PVC snapshot. Err={}"
 CANNOT_REMOVE_VSNAPSHOT_ERR = "Unable to remove volume snapshot {vsnapshot}! Please you must remove it manually."
 CANNOT_START_CONNECTIONSERVER = "Cannot start ConnectionServer. Err={}"
 
-VSNAPSHOT_BACKUP_COMPATIBLE_INFO = "The pvc `{}` is compatible with volume snapshot backup. Doing backup with this tecnology."
+VSNAPSHOT_BACKUP_COMPATIBLE_INFO = "The pvc `{}` is compatible with volume snapshot backup. Doing backup with this technology."
 
 class JobPodBacula(Job, metaclass=ABCMeta):
     """
