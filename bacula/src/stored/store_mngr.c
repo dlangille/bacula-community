@@ -48,6 +48,10 @@ static bool build_query_size(DEVICE *dev, struct query_size **qs)
    struct stat statp;
    struct query_size *temp_qs;
 
+   if (!dev) {
+      return false;
+   }
+   
    /* Alloc helper struct, set correct size for this dev and add it to list
     * so that later we can sum size of all unique devices */
    temp_qs = (struct query_size *) malloc(sizeof(struct query_size));
