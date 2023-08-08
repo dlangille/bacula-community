@@ -20,6 +20,10 @@ scripts/copy-migration-confs
 scripts/prepare-disk-changer
 echo "${cwd}/build" >${cwd}/tmp/file-list
 
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "LabelMedia", "yes", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "LabelFormat", "\"Vol\${JobId}_\${PriorJobId}_\${PriorJobName}\"", "Pool")'
+$bperl -e 'add_attribute("$conf/bacula-dir.conf", "MaximumVolumeJobs", "1", "Pool")'
+
 change_jobname NightlySave $JobName
 start_test
 
@@ -37,9 +41,9 @@ cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 messages
 @$out ${cwd}/tmp/log1.out
 setdebug level=000 storage=File
-label storage=File volume=FileVolume001 Pool=Default
-label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
-label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
+@#label storage=File volume=FileVolume001 Pool=Default
+@#label storage=DiskChanger volume=ChangerVolume001 slot=1 Pool=Full drive=0
+@#label storage=DiskChanger volume=ChangerVolume002 slot=2 Pool=Full drive=0
 @# run two jobs (both will be migrated)
 run job=$JobName yes
 run job=$JobName yes
@@ -87,6 +91,12 @@ END_OF_DATA
 run_bacula
 check_for_zombie_jobs storage=File
 stop_bacula
+
+grep "Vol5_1_MigrationJobSave" $tmp/log1.out > /dev/null
+if [ $? -ne 0 ]; then
+    print_debug "ERROR: Should find custom volume name"
+    estat=1
+fi
 
 check_two_logs
 check_restore_diff
