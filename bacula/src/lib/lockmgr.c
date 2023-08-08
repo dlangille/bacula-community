@@ -80,6 +80,12 @@
 #endif
 #endif
 
+#ifdef DEVELOPER
+#define CHECK_INTERVAL 30
+#else
+#define CHECK_INTERVAL 1200
+#endif
+
 /*
   Inspired from
   http://www.cs.berkeley.edu/~kamil/teaching/sp03/041403.pdf
@@ -762,7 +768,7 @@ void *check_deadlock(void *)
 
       gettimeofday(&tv, &tz);
       timeout.tv_nsec = 0;
-      timeout.tv_sec = tv.tv_sec + 30;
+      timeout.tv_sec = tv.tv_sec + CHECK_INTERVAL;
 
       pthread_mutex_lock(&undertaker_mutex);
       pthread_cond_timedwait(&undertaker_cond, &undertaker_mutex, &timeout);
