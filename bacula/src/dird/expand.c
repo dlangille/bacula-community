@@ -126,6 +126,13 @@ static int job_item(JCR *jcr, int code,
    case 12:                           /* JobName */
       str = jcr->Job;
       break;
+   case 13:
+      str = jcr->previous_jr.Name;     /* Previous Job name */
+      break;
+   case 14:
+      bsnprintf(buf, sizeof(buf), "%d", jcr->previous_jr.JobId); /* Previous JobId */
+      str = buf;
+      break;
    }
    *val_ptr = bstrdup(str);
    *val_len = strlen(str);
@@ -160,6 +167,8 @@ static struct s_built_in_vars built_in_vars[] = {
    { NT_("Catalog"),   10, job_item},
    { NT_("MediaType"), 11, job_item},
    { NT_("JobName"),   12, job_item},
+   { NT_("PriorJobName"), 13, job_item},
+   { NT_("PriorJobId"), 14, job_item},
 
    { NULL, 0, NULL}
 };
