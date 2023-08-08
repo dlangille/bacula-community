@@ -103,6 +103,21 @@ void CLIENT::create_client_globals()
    client_globals.append(globals);
 }
 
+int32_t CLIENT::tryIncNumConcurrentJobs(int32_t val, int32_t inc)
+{
+   LOCK_GUARD(globals_mutex);
+   if (globals == NULL) {
+      return 0;
+   }
+   if (globals->NumConcurrentJobs < val) {
+      globals->NumConcurrentJobs += inc;
+
+   } else {
+      return 0;
+   }
+   return globals->NumConcurrentJobs;
+}
+
 int32_t CLIENT::getNumConcurrentJobs()
 {
    LOCK_GUARD(globals_mutex);
@@ -260,6 +275,21 @@ void STORE::create_store_globals()
    globals->name = bstrdup(name());
    globals->enabled = -1;       /* Not set */
    store_globals.append(globals);
+}
+
+int32_t STORE::tryIncNumConcurrentJobs(int32_t val, int32_t inc)
+{
+   LOCK_GUARD(globals_mutex);
+   if (globals == NULL) {
+      return 0;
+   }
+   if (globals->NumConcurrentJobs < val) {
+      globals->NumConcurrentJobs += inc;
+
+   } else {
+      return 0;
+   }
+   return globals->NumConcurrentJobs;
 }
 
 int32_t STORE::getNumConcurrentReadJobs()

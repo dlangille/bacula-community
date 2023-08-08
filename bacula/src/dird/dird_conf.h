@@ -309,6 +309,7 @@ public:
    void create_client_globals();
    int32_t getNumConcurrentJobs();
    int32_t incNumConcurrentJobs(int32_t inc);
+   int32_t tryIncNumConcurrentJobs(int32_t val, int32_t inc);
    char *address(POOLMEM *&buf);
    void setAddress(char *addr);
    bool is_enabled();
@@ -376,6 +377,7 @@ public:
    int32_t getNumConcurrentReadJobs();
    int32_t incNumConcurrentJobs(int32_t inc);
    int32_t incNumConcurrentReadJobs(int32_t inc);
+   int32_t tryIncNumConcurrentJobs(int32_t val, int32_t inc);
    bool is_enabled();
    void setEnabled(bool val);
 };
