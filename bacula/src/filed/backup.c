@@ -227,8 +227,9 @@ bool blast_data_to_storage_daemon(JCR *jcr, char *addr)
 
 #ifdef HAVE_ZSTD
    ZSTD_freeCCtx((ZSTD_CCtx*)jcr->ZSTD_compress_workset);
+   jcr->ZSTD_compress_workset = NULL;
 #endif
-   
+
    crypto_session_end(jcr);
 
    bdelete_and_null(jcr->sd_packet_mgr);
@@ -1543,7 +1544,7 @@ static bool do_zstd_compression(bctx_t &bctx)
       size_t ret = ZSTD_compressCCtx((ZSTD_CCtx*) jcr->ZSTD_compress_workset,
                                      bctx.cbuf2, bctx.max_compress_len,
                                      bctx.rbuf, sd->msglen,
-                                     10);
+                                     bctx.ff_pkt->Compress_level);
       
       if (ZSTD_isError(ret)) {
          /** this should NEVER happen */

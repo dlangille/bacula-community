@@ -2099,6 +2099,8 @@ static int set_options(findFOPTS *fo, const char *opts)
                fo->Compress_level = 10;
                break;
             }
+         } else {
+            Dmsg1(10, "Ignore unknown compression code Z%c in the FileSet\n", *p);
          }
          break;
       case 'd':                 /* Deduplication 0=none 1=Storage 2=Local */
