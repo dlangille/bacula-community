@@ -5,7 +5,7 @@
 #
 # Run a simple backup of the Bacula build directory using the compressed option
 # then restore it.
-# XPARAM ZSTD_LEVEL=(ZSTD|10:ZSTD1|10:ZSTD10|10:ZSTD19)
+# XPARAM ZSTD_LEVEL=(ZSTD|10:ZSTD1|10:ZSTD3|10:ZSTD10|10:ZSTD19|11:NONE)
 
 TestName="zstd-test"
 JobName=zstd
@@ -18,11 +18,13 @@ echo "${cwd}/build/po/fr.po" >${cwd}/tmp/file-list
 
 start_test
 
-if [ -n "$ZSTD_LEVEL" ] ; then
+if [ "$ZSTD_LEVEL" = "NONE" ] ; then
+   sed -i "s/compression\s*=\s*ZSTD\s*//" $conf/bacula-dir.conf
+elif [ -n "$ZSTD_LEVEL" ] ; then
    sed -i "s/compression\s*=\s*ZSTD\s*/compression=${ZSTD_LEVEL}/" $conf/bacula-dir.conf
 else
    ZSTD_LEVEL="ZSTD"
- fi
+fi
 
 cat <<END_OF_DATA >${cwd}/tmp/bconcmds
 @output /dev/null
