@@ -2084,10 +2084,13 @@ static int set_options(findFOPTS *fo, const char *opts)
             fo->Compress_algo = COMPRESS_LZO1X;
             fo->Compress_level = 1; /* not used with LZO */
          }
-         else if (*p >= 'r' && *p <= 't') {
+         else if (*p >= 'r' && *p <= 'u') {
             fo->flags |= FO_COMPRESS;
             fo->Compress_algo = COMPRESS_ZSTD;
             switch(*p) {
+            case 'u':
+               fo->Compress_level = 10;
+               break;
             case 'r':
                fo->Compress_level = 1;
                break;
@@ -2096,7 +2099,7 @@ static int set_options(findFOPTS *fo, const char *opts)
                break;
             case 's':
             default:
-               fo->Compress_level = 10;
+               fo->Compress_level = 3;
                break;
             }
          } else {
