@@ -1128,17 +1128,20 @@ bool generic_driver::clean_cloud_volume(const char *VolumeName, cleanup_cb_type 
       if (!parts.get(i)) {
          continue;
       }
-      rtn |= call_fct("delete", VolumeName, (char*)parts.get(i), NULL, NULL, cancel_cb, err);
-      if (rtn == 0) {
+      int r = call_fct("delete", VolumeName, (char*)parts.get(i), NULL, NULL, cancel_cb, err);
+      if (r == 0) {
          Dmsg2(dbglvl, "clean_cloud_volume for %s: Unlink file %s.\n", VolumeName, (char*)parts.get(i));
+      } else {
+         Dmsg4(dbglvl, "clean_cloud_volume delete %s/%s returns %d. err=%s\n", VolumeName, (char*)parts.get(i), r, err);
       }
+      rtn |= r;
       if ((cancel_cb && cancel_cb->fct && cancel_cb->fct(cancel_cb->arg))) {
          Mmsg(err, _("clean_cloud_volume. cancelled by job.\n"));
          return false;
       }
    }
 
-   return (ret == 0);
+   return (ret|rtn == 0);
 }
 
 struct get_cloud_volume_parts_list_read_cb_arg {

@@ -63,7 +63,7 @@ update_cloud()
    fi
 
    if [ x$CLOUD_NAME = xOracleCloud -a -f $HOME/.oci/config ]; then
-       oci  os bucket create --name ${1:-regressbucket}
+       #oci  os bucket create --name ${1:-regressbucket} --compartiment-id 
        $bperl -e "add_attribute('$conf/bacula-sd.conf', 'HostName', '$HOME/.oci/config', 'Cloud', 'OracleCloud')"
    fi
 
