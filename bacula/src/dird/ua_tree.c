@@ -233,6 +233,9 @@ int insert_tree_handler(void *ctx, int num_fields, char **row)
          if (node->delta_seq == -1) { /* just created */
             tree_remove_node(tree->root, node);
 
+         } else if (delta_seq == node->delta_seq && JobId == node->JobId && FileIndex == node->FileIndex) {
+            /* Got duplicated record, just skip it */
+
          } else {
             tree->ua->warning_msg(_("Something is wrong with the Delta sequence of %s, "
                                     "skipping new parts. Current sequence is %d\n"),
