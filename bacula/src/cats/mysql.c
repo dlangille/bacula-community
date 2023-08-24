@@ -276,13 +276,14 @@ bool BDB_MYSQL::bdb_open_database(JCR *jcr)
       bmicrosleep(5,0); 
    } 
 
-#if MYSQL_VERSION_ID <= 50117
+#if MYSQL_VERSION_ID  <   80034 // Deprecated in 8.0.34
+# if MYSQL_VERSION_ID <=  50117
    mysql_options(&mdb->m_instance, MYSQL_OPT_RECONNECT, (char*)&reconnect); /* so connection does not timeout */
-#else
+# else
    mysql_options(&mdb->m_instance, MYSQL_OPT_RECONNECT, &reconnect); /* so connection does not timeout */
-#endif
-
+# endif
    Dmsg0(50, "mysql_real_connect done\n");
+#endif
    Dmsg3(50, "db_user=%s db_name=%s db_password=%s\n", mdb->m_db_user, mdb->m_db_name, 
         (mdb->m_db_password == NULL) ? "(NULL)" : mdb->m_db_password); 
  
