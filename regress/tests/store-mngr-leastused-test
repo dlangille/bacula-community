@@ -51,6 +51,37 @@ Job {
   FileSet = "Full Set"
   ClientRunBeforeJob = "sleep 3"
 }
+Job {
+  Name = "ByPool"
+  Type = Backup
+  Client = $HOST-fd
+  Messages = Standard
+  Storage = vDisk1, vDisk2
+  Storage Group Policy = FreeSpace
+  Pool = LeastUsed
+  FileSet = "Full Set"
+  ClientRunBeforeJob = "sleep 3"
+}
+Job {
+  Name = "ByPool2"
+  Type = Backup
+  Client = $HOST-fd
+  Messages = Standard
+  Storage = vDisk1
+  Pool = LeastUsed
+  FileSet = "Full Set"
+  ClientRunBeforeJob = "sleep 3"
+}
+Pool {
+  Name = LeastUsed
+  Pool Type = Backup
+  Recycle = yes                       # Bacula can automatically recycle Volumes
+  AutoPrune = yes                     # Prune expired volumes
+  Volume Retention = 365d             # one year
+  LabelFormat = vol
+  Storage = vDisk2, vDisk3
+  Storage Group Policy = LeastUsed
+}
 END_OF_DATA
 
 $bperl -e 'set_global_maximum_concurrent_jobs(10)'
@@ -99,12 +130,27 @@ messages
 run job=StoreGroupJob level=Full yes
 wait
 messages
+@$out  ${cwd}/tmp/log4.out
+setdebug level=200 trace=1 dir
+run job=StoreGroupJob pool=LeastUsed level=Full yes
+run job=ByPool level=Full yes
+run job=ByPool2 level=Full yes
+wait
+messages
+setdebug level=0 trace=1 dir
 quit
 END_OF_DATA
 
 run_bacula
 
 stop_bacula
+
+nb=`grep 'was selected out of group of 2 available storages. StorageGroupPolicy "LeastUsed" used' $tmp/log4.out | wc -l`
+if [ $nb != 3 ]; then
+    print_debug "ERROR: Incorrect selection by Pool"
+    estat=1
+fi
+
 
 # Each vDisk should get 3 jobs
 awk '/Storage:/ { tab[$2]++ } END { for (t in tab) { if (tab[t] != 3) { print t ": ERROR found="  tab[t]} } }' $tmp/log2.out > $tmp/1
