@@ -1273,7 +1273,7 @@ static void list_scheduled_jobs(UAContext *ua)
       prt_runtime(ua, sp, novolume, &ow, &cache, tmp, i);
    }
    if (num_jobs > i && !ua->api) {
-      ua->send_msg(_("\n%d scheduled Jobs over %d are displayed. Use the limit parameter to display more Jobs.\n"),
+      ua->send_msg(_("\n%d of %d scheduled Jobs are displayed. Use the limit parameter to display more Jobs.\n"),
                    limit, num_jobs, days);
    }
    if (num_jobs == 0 && !ua->api) {
