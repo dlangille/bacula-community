@@ -52,6 +52,17 @@ Job {
   ClientRunBeforeJob = "sleep 3"
 }
 Job {
+  Name = "StoreGroupJob2"
+  Type = Backup
+  Client = $HOST-fd
+  Messages = Standard
+  Storage = vDisk1, vDisk2, vDisk3
+  Storage Group Policy = FreeSpace
+  Pool = Default
+  FileSet = "Full Set"
+  ClientRunBeforeJob = "sleep 3"
+}
+Job {
   Name = "ByPool"
   Type = Backup
   Client = $HOST-fd
@@ -132,7 +143,7 @@ wait
 messages
 @$out  ${cwd}/tmp/log4.out
 setdebug level=200 trace=1 dir
-run job=StoreGroupJob pool=LeastUsed level=Full yes
+run job=StoreGroupJob2 pool=LeastUsed level=Full yes
 run job=ByPool level=Full yes
 run job=ByPool2 level=Full yes
 wait
