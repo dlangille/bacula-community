@@ -638,6 +638,12 @@ bool do_mac(JCR *jcr)
    wjcr->jr.JobTDate = wjcr->start_time;
    wjcr->setJobStatus(JS_Running);
 
+   wjcr->jr.PriorJobId = jcr->previous_jr.JobId;
+   if (jcr->previous_jr.PriorJob[0]) {
+      bstrncpy(wjcr->jr.PriorJob, jcr->previous_jr.PriorJob, sizeof(wjcr->jr.PriorJob));
+   } else {
+      bstrncpy(wjcr->jr.PriorJob, jcr->previous_jr.Job, sizeof(wjcr->jr.PriorJob));
+   }
 
    /* Update job start record for the real mac backup job */
    if (!db_update_job_start_record(wjcr, wjcr->db, &wjcr->jr)) {
@@ -812,12 +818,6 @@ void mac_cleanup(JCR *jcr, int TermCode, int writeTermCode)
       wjcr->JobFiles = jcr->JobFiles = wjcr->SDJobFiles;
       wjcr->JobBytes = jcr->JobBytes = wjcr->SDJobBytes;
       wjcr->jr.RealEndTime = 0;
-      wjcr->jr.PriorJobId = jcr->previous_jr.JobId;
-      if (jcr->previous_jr.PriorJob[0]) {
-         bstrncpy(wjcr->jr.PriorJob, jcr->previous_jr.PriorJob, sizeof(wjcr->jr.PriorJob));
-      } else {
-         bstrncpy(wjcr->jr.PriorJob, jcr->previous_jr.Job, sizeof(wjcr->jr.PriorJob));
-      }
       wjcr->JobErrors += wjcr->SDErrors;
       update_job_end(wjcr, TermCode);
 
