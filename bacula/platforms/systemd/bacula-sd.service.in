@@ -17,7 +17,7 @@
 Description=Bacula Storage Daemon service
 Requires=network.target
 After=network.target
-RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@ @piddir@
+RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@
 
 # from http://www.freedesktop.org/software/systemd/man/systemd.service.html
 [Service]
@@ -28,7 +28,7 @@ SupplementaryGroups=@sd_user@
 Environment="LD_LIBRARY_PATH=@libdir@"
 # comment out to get traces working at startup using -T and -d options
 #WorkingDirectory=@working_dir@
-ExecStart=@sbindir@/bacula-sd -dt -c @sysconfdir@/bacula-sd.conf
+ExecStart=@sbindir@/bacula-sd -d -v -P -c @sysconfdir@/bacula-sd.conf
 StandardError=syslog
 TimeoutStopSec=3min
 LimitMEMLOCK=infinity
