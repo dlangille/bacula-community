@@ -22,7 +22,7 @@ RequiresMountsFor=@working_dir@ @sysconfdir@ @sbindir@
 
 # from http://www.freedesktop.org/software/systemd/man/systemd.service.html
 [Service]
-Type=simple
+Type=exec
 User=@fd_user@
 Group=@fd_group@
 ExecStart=@sbindir@/bacula-fd -fP -c @sysconfdir@/bacula-fd.conf
