@@ -874,6 +874,8 @@ build_vendor
 build_cpu
 build
 LIBTOOL
+CHECK_DMSG
+DO_CHECK_DMSG
 LOCAL_DEFS
 LOCAL_LDFLAGS
 LOCAL_CFLAGS
@@ -986,6 +988,7 @@ SHELL'
 ac_subst_files='MCOMMON'
 ac_user_opts='
 enable_option_checking
+enable_check_dmsg
 enable_libtool
 enable_shared
 enable_static
@@ -1726,6 +1729,7 @@ Optional Features:
   --disable-option-checking  ignore unrecognized --enable/--with options
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --enable-check-dmsg     enable check for Dmsg(0) [default=no]
   --enable-libtool        enable building using GNU libtool [default=yes]
   --enable-shared[=PKGS]  build shared libraries [default=yes]
   --enable-static[=PKGS]  build static libraries [default=no]
@@ -6035,6 +6039,28 @@ MAKE_SHELL=/bin/sh
 
 
 
+
+
+
+do_check_dmsg=no
+# Check whether --enable-check-dmsg was given.
+if test "${enable_check_dmsg+set}" = set; then :
+  enableval=$enable_check_dmsg;
+       if test x$enableval = xyes; then
+	  do_check_dmsg=yes
+       fi
+
+
+fi
+
+
+if test x$do_check_dmsg = xyes; then
+   DO_CHECK_DMSG=
+   CHECK_DMSG=$PWD/scripts/check_dmsg
+else
+   DO_CHECK_DMSG=true
+   CHECK_DMSG=true
+fi
 
 
 
@@ -32638,7 +32664,15 @@ if test "x${subsysdir}" = "x${sbindir}" ; then
    exit 1
 fi
 
-ac_config_files="$ac_config_files autoconf/Make.common Makefile manpages/Makefile scripts/btraceback scripts/bconsole scripts/baculabackupreport scripts/bacula scripts/bacula-ctl-dir scripts/bacula-ctl-fd scripts/bacula-ctl-sd scripts/devel_bacula scripts/Makefile scripts/logrotate scripts/mtx-changer scripts/disk-changer scripts/logwatch/Makefile scripts/logwatch/logfile.bacula.conf scripts/bat.desktop scripts/bat.desktop.xsu scripts/bat.desktop.consolehelper scripts/bat.console_apps scripts/aws_cloud_driver scripts/bacula-tray-monitor.desktop scripts/kubernetes-bacula-backup/Dockerfile src/Makefile src/host.h src/console/Makefile src/console/bconsole.conf src/qt-console/bat.conf src/qt-console/bat.pro src/qt-console/bat.pro.mingw32 src/qt-console/bat.pro.mingw64 src/qt-console/install_conf_file src/qt-console/tray-monitor/tray-monitor.conf src/qt-console/tray-monitor/bacula-tray-monitor.conf src/qt-console/tray-monitor/tray-monitor.pro src/qt-console/tray-monitor/tray-monitor.pro.mingw32 src/qt-console/tray-monitor/tray-monitor.pro.mingw64 src/qt-console/tray-monitor/install_conf_file src/dird/Makefile src/dird/bacula-dir.conf src/lib/Makefile src/stored/Makefile src/stored/bacula-sd.conf src/filed/Makefile src/filed/bacula-fd.conf src/cats/Makefile src/cats/make_catalog_backup.pl src/cats/make_catalog_backup src/cats/delete_catalog_backup src/cats/create_postgresql_database src/cats/update_postgresql_tables src/cats/make_postgresql_tables src/cats/grant_postgresql_privileges src/cats/drop_postgresql_tables src/cats/drop_postgresql_database src/cats/create_mysql_database src/cats/update_mysql_tables src/cats/make_mysql_tables src/cats/grant_mysql_privileges src/cats/drop_mysql_tables src/cats/drop_mysql_database src/cats/create_sqlite3_database src/cats/update_sqlite3_tables src/cats/make_sqlite3_tables src/cats/grant_sqlite3_privileges src/cats/drop_sqlite3_tables src/cats/drop_sqlite3_database src/cats/sqlite src/cats/mysql src/cats/create_bacula_database src/cats/update_bacula_tables src/cats/grant_bacula_privileges src/cats/make_bacula_tables src/cats/drop_bacula_tables src/cats/drop_bacula_database src/cats/install-default-backend src/findlib/Makefile src/tools/Makefile src/tools/cdp-client/Makefile src/plugins/fd/Makefile.inc src/plugins/sd/Makefile src/plugins/dir/Makefile.inc src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py po/Makefile.in updatedb/update_mysql_tables updatedb/update_sqlite3_tables updatedb/update_postgresql_tables updatedb/update_mysql_tables_9_to_10 updatedb/update_sqlite3_tables_9_to_10 updatedb/update_postgresql_tables_9_to_10 updatedb/update_mysql_tables_10_to_11 updatedb/update_sqlite3_tables_10_to_11 updatedb/update_postgresql_tables_10_to_11 updatedb/update_mysql_tables_11_to_12 updatedb/update_sqlite3_tables_11_to_12 updatedb/update_postgresql_tables_11_to_12 updatedb/update_postgresql_tables_1021_to_1022 updatedb/update_postgresql_tables_1022_to_1023 updatedb/update_postgresql_tables_1023_to_1024 updatedb/update_postgresql_tables_1024_to_1025 updatedb/update_mysql_tables_1020_to_1021 updatedb/update_mysql_tables_1021_to_1022 updatedb/update_mysql_tables_1022_to_1023 updatedb/update_mysql_tables_1023_to_1024 updatedb/update_mysql_tables_1024_to_1025 examples/nagios/check_bacula/Makefile platforms/rpms/redhat/bacula.spec platforms/rpms/redhat/bacula-bat.spec platforms/rpms/redhat/bacula-docs.spec platforms/rpms/redhat/bacula-mtx.spec platforms/rpms/suse/bacula.spec platforms/rpms/suse/bacula-bat.spec platforms/rpms/suse/bacula-docs.spec platforms/rpms/suse/bacula-mtx.spec $PFILES"
+if test -f src/plugins/fd/kubernetes-backend/Makefile.in; then
+    PFILES="${PFILES}  src/plugins/fd/kubernetes-backend/Makefile"
+fi
+
+if test -f src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py.in; then
+   PFILES="${PFILES} src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py"
+fi
+
+ac_config_files="$ac_config_files autoconf/Make.common Makefile manpages/Makefile scripts/btraceback scripts/bconsole scripts/baculabackupreport scripts/bacula scripts/bacula-ctl-dir scripts/bacula-ctl-fd scripts/bacula-ctl-sd scripts/devel_bacula scripts/Makefile scripts/logrotate scripts/mtx-changer scripts/disk-changer scripts/key-manager.py scripts/install-key-manager.sh scripts/logwatch/Makefile scripts/logwatch/logfile.bacula.conf scripts/bat.desktop scripts/bat.desktop.xsu scripts/bat.desktop.consolehelper scripts/bat.console_apps scripts/aws_cloud_driver scripts/bacula-tray-monitor.desktop scripts/kubernetes-bacula-backup/Dockerfile src/Makefile src/host.h src/console/Makefile src/console/bconsole.conf src/qt-console/bat.conf src/qt-console/bat.pro src/qt-console/bat.pro.mingw32 src/qt-console/bat.pro.mingw64 src/qt-console/install_conf_file src/qt-console/tray-monitor/tray-monitor.conf src/qt-console/tray-monitor/bacula-tray-monitor.conf src/qt-console/tray-monitor/tray-monitor.pro src/qt-console/tray-monitor/tray-monitor.pro.mingw32 src/qt-console/tray-monitor/tray-monitor.pro.mingw64 src/qt-console/tray-monitor/install_conf_file src/dird/Makefile src/dird/bacula-dir.conf src/lib/Makefile src/stored/Makefile src/stored/bacula-sd.conf src/filed/Makefile src/filed/bacula-fd.conf src/cats/Makefile src/cats/make_catalog_backup.pl src/cats/make_catalog_backup src/cats/delete_catalog_backup src/cats/create_postgresql_database src/cats/update_postgresql_tables src/cats/make_postgresql_tables src/cats/grant_postgresql_privileges src/cats/drop_postgresql_tables src/cats/drop_postgresql_database src/cats/create_mysql_database src/cats/update_mysql_tables src/cats/make_mysql_tables src/cats/grant_mysql_privileges src/cats/drop_mysql_tables src/cats/drop_mysql_database src/cats/create_sqlite3_database src/cats/update_sqlite3_tables src/cats/make_sqlite3_tables src/cats/grant_sqlite3_privileges src/cats/drop_sqlite3_tables src/cats/drop_sqlite3_database src/cats/sqlite src/cats/mysql src/cats/create_bacula_database src/cats/update_bacula_tables src/cats/grant_bacula_privileges src/cats/make_bacula_tables src/cats/drop_bacula_tables src/cats/drop_bacula_database src/cats/install-default-backend src/findlib/Makefile src/tools/Makefile src/tools/cdp-client/Makefile src/plugins/fd/Makefile.inc src/plugins/sd/Makefile src/plugins/dir/Makefile.inc src/plugins/fd/kubernetes-backend/baculak8s/plugins/k8sbackend/baculabackupimage.py po/Makefile.in updatedb/update_mysql_tables updatedb/update_sqlite3_tables updatedb/update_postgresql_tables updatedb/update_mysql_tables_9_to_10 updatedb/update_sqlite3_tables_9_to_10 updatedb/update_postgresql_tables_9_to_10 updatedb/update_mysql_tables_10_to_11 updatedb/update_sqlite3_tables_10_to_11 updatedb/update_postgresql_tables_10_to_11 updatedb/update_mysql_tables_11_to_12 updatedb/update_sqlite3_tables_11_to_12 updatedb/update_postgresql_tables_11_to_12 updatedb/update_postgresql_tables_1021_to_1022 updatedb/update_postgresql_tables_1022_to_1023 updatedb/update_postgresql_tables_1023_to_1024 updatedb/update_postgresql_tables_1024_to_1025 updatedb/update_mysql_tables_1020_to_1021 updatedb/update_mysql_tables_1021_to_1022 updatedb/update_mysql_tables_1022_to_1023 updatedb/update_mysql_tables_1023_to_1024 updatedb/update_mysql_tables_1024_to_1025 examples/nagios/check_bacula/Makefile platforms/rpms/redhat/bacula.spec platforms/rpms/redhat/bacula-bat.spec platforms/rpms/redhat/bacula-docs.spec platforms/rpms/redhat/bacula-mtx.spec platforms/rpms/suse/bacula.spec platforms/rpms/suse/bacula-bat.spec platforms/rpms/suse/bacula-docs.spec platforms/rpms/suse/bacula-mtx.spec $PFILES"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -33740,6 +33774,8 @@ do
     "scripts/logrotate") CONFIG_FILES="$CONFIG_FILES scripts/logrotate" ;;
     "scripts/mtx-changer") CONFIG_FILES="$CONFIG_FILES scripts/mtx-changer" ;;
     "scripts/disk-changer") CONFIG_FILES="$CONFIG_FILES scripts/disk-changer" ;;
+    "scripts/key-manager.py") CONFIG_FILES="$CONFIG_FILES scripts/key-manager.py" ;;
+    "scripts/install-key-manager.sh") CONFIG_FILES="$CONFIG_FILES scripts/install-key-manager.sh" ;;
     "scripts/logwatch/Makefile") CONFIG_FILES="$CONFIG_FILES scripts/logwatch/Makefile" ;;
     "scripts/logwatch/logfile.bacula.conf") CONFIG_FILES="$CONFIG_FILES scripts/logwatch/logfile.bacula.conf" ;;
     "scripts/bat.desktop") CONFIG_FILES="$CONFIG_FILES scripts/bat.desktop" ;;
@@ -35422,6 +35458,7 @@ cd ${BUILD_DIR}
 cd scripts
 chmod 755 bacula btraceback mtx-changer
 chmod 755 bconsole disk-changer devel_bacula logrotate
+chmod 755 key-manager.py install-key-manager.sh
 cd ..
 
 c=updatedb
