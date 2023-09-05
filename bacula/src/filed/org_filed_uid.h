@@ -20,7 +20,7 @@
 #ifndef ORG_FILED_UID_H
 #define ORG_FILED_UID_H
 
-#define set_job_user(a)
-#define reset_job_user(a)
+#define set_job_user(a) 1
+#define reset_job_user(a) 
 
 #endif /* ORG_FILED_UID_H */
