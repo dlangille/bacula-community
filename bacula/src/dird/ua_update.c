@@ -1155,6 +1155,8 @@ static int update_volumeprotect_cmd(UAContext *ua)
    int drive, i, ret=1;
    alist list(20, owned_by_alist);
    POOL_MEM tmp, filter;
+   const char *join_job = "";
+   pm_strcpy(tmp, "\n");
 
    *prev_sd = *dev_name = 0;
 
@@ -1167,15 +1169,26 @@ static int update_volumeprotect_cmd(UAContext *ua)
          bstrncpy(dev_name, ua->argv[i], sizeof(dev_name));
 
       } else if (strcasecmp(ua->argk[i], "storage") == 0) {
-         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+         if (!is_name_valid(ua->argv[i], tmp.handle()) || !acl_access_ok(ua, Storage_ACL, ua->argv[i]))
+         {
             ua->error_msg(_("Invalid storage name. %s"), tmp.c_str());
             return 0;
          }
          Mmsg(tmp, " AND Storage.Name = '%s' ", ua->argv[i]);
          pm_strcat(filter, tmp);
 
+      } else if (strcasecmp(ua->argk[i], "jobid") == 0) {
+         if (!acl_access_jobid_ok(ua, ua->argv[i])) { // checks job and client
+            ua->error_msg(_("Invalid jobid list\n"));
+            return 0;
+         }
+         join_job = " JOIN JobMedia USING (MediaId) JOIN Job USING (JobId) ";
+         Mmsg(tmp, " AND Job.JobId IN (%s) ", ua->argv[i]);
+         pm_strcat(filter, tmp);
+
       } else if (strcasecmp(ua->argk[i], "pool") == 0) {
-         if (!is_name_valid(ua->argv[i], tmp.handle())) {
+         if (!is_name_valid(ua->argv[i], tmp.handle()) || !acl_access_ok(ua, Pool_ACL, ua->argv[i]))
+         {
             ua->error_msg(_("Invalid pool name. %s"), tmp.c_str());
             return 0;
          }
