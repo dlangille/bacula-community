@@ -319,13 +319,6 @@ void storage::dec_curr_store() {
    Dmsg2(dbglvl, "Store: %s Dec ncj=%d\n", store->name(), num);
 }
 
-static void swapit(uint32_t *v1, uint32_t *v2)
-{
-   uint32_t temp = *v1;
-   *v1 = *v2;
-   *v2 = temp;
-}
-
 void QueryStore::apply_policy(bool write_store) {
    alist *list = write_store ? wstore.get_list() : rstore.get_list();
    STORE *store = NULL;
