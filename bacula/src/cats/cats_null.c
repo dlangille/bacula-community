@@ -14,8 +14,7 @@
    This notice must be preserved when any source code is
    conveyed and/or propagated.
 
-   Bacula(R) is a registered trademark of Kern Sibbald.
-*/ 
+   Bacula(R) is a registered trademark of Kern Sibbald.*/ 
 /* 
  * Null Bacula backend function replaced with the correct one
  *  at install time.

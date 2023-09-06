@@ -163,13 +163,13 @@ struct JOB_DBR {
    int PurgedFiles;
    int HasBase;
    int Reviewed;                /* In list, values are 0 (unset), 1 and 2 */
-   char Client[MAX_NAME_LENGTH]; /* Set in db_get_job_record() */
    int isVirtualFull;
    double Rate;
    double CompressRatio;
    DBId_t WriteStorageId;
    DBId_t LastReadStorageId;
    int Encrypted;
+   char Client[MAX_NAME_LENGTH]; /* Set in db_get_job_record() */
 
    /* Note, FirstIndex, LastIndex, Start/End File and Block
     * are only used in the JobMedia record.
