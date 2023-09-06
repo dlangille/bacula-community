@@ -28,7 +28,6 @@
 #include "bacula.h"
 #include "parse_conf.h"
 #include "jcr.h"
-#define STATUS_FUNCTIONS
 #include "status.h"
 #include <time.h>
 

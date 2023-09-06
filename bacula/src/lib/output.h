@@ -25,6 +25,9 @@
 
 #include "bacula.h"
 
+/* define some standard error code to use in OutputWriter::set_error() */
+#define OWE_NO_DATA     501
+
 enum _OutputType {
    OT_INT,                      /* Integer */
    OT_SIZE,                     /* int64 size */
