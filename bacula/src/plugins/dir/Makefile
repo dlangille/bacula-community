@@ -47,6 +47,8 @@ $(LIBTOOL_CLEAN_TARGET):
 
 clean: $(LIBTOOL_CLEAN_TARGET)
 	$(NO_ECHO)rm -f main *.so *.o 1 2 3
+	$(MAKE) -C totp clean
+	$(MAKE) -C ldap clean
 
 distclean: clean
 	$(NO_ECHO)rm -f Makefile
