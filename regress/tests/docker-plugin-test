@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2000-2022 Kern Sibbald
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 
@@ -37,7 +38,7 @@ FileSetName="TestPluginDockerSet"
 . scripts/regress-utils.sh
 
 echo "Preparing, please wait ... "
-#set -x
+# set -x
 # export requires variables
 DOCKER_CMD="/usr/bin/docker"
 setup_plugin_param "docker:"
@@ -45,44 +46,40 @@ setup_plugin_param "docker:"
 mkdir -p ${tmp}
 
 # check requirements
-C1=`${DOCKER_CMD} ps -a --filter 'Name=container' -q | wc -l`
-if [ $C1 -eq 0 ]
+C1=$(${DOCKER_CMD} ps -a --filter 'Name=container' -q | wc -l)
+if [ "$C1" -eq 0 ]
 then
-	echo "Docker containers with name: container* required!"
-	exit 1
+	${DOCKER_CMD} pull hello-world:latest > ${tmp}/docker.pull.log
+	${DOCKER_CMD} run --name container1 hello-world:latest > ${tmp}/docker.container1.log
+	${DOCKER_CMD} run --name container2 hello-world:latest > ${tmp}/docker.container2.log
 fi
+
+C2=$(${DOCKER_CMD} images --filter 'reference=testimage:latest' -q | wc -l)
+if [ "$C2" -eq 0 ]
+then
+	${DOCKER_CMD} pull hello-world:latest > ${tmp}/docker.pull.log
+	${DOCKER_CMD} tag hello-world:latest testimage:latest > ${tmp}/docker.tag.log
+fi
+
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	RC1=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' -q | wc -l`
-	if [ $RC1 -eq 0 ]
+	RC1=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' -q | wc -l)
+	if [ "$RC1" -eq 0 ]
 	then
 		echo "Docker containers with name: container* required!"
 		exit 1
 	fi
 fi
 
-I1=`${DOCKER_CMD} images --filter "reference=testimage:latest" -q | wc -l`
-if [ $I1 -eq 0 ]
-then
-	IN=`${DOCKER_CMD} images --filter "dangling=true" -q | head -1`
-	if [ "x$IN" != "x" ]
-	then
-		${DOCKER_CMD} image tag $IN "testimage:latest"
-	else
-		# cannot tag unnamed images
-		echo "Docker image with tag: testimage:latest* required!"
-		exit 1
-	fi
-fi
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	RI1=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --filter "reference=testimage:latest" -q | wc -l`
-	if [ $RI1 -eq 0 ]
+	RI1=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --filter "reference=testimage:latest" -q | wc -l)
+	if [ "$RI1" -eq 0 ]
 	then
-		IN=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --filter "dangling=true" -q | head -1`
+		IN=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --filter "dangling=true" -q | head -1)
 		if [ "x$IN" != "x" ]
 		then
-			${DOCKER_CMD} -H "${PLUGDOCKERHOST}" image tag $IN "testimage:latest"
+			${DOCKER_CMD} -H "${PLUGDOCKERHOST}" image tag "$IN" "testimage:latest"
 		else
 			# cannot tag unnamed images
 			echo "Docker image with tag: testimage:latest* required!"
@@ -91,7 +88,7 @@ then
 	fi
 fi
 
-VOLUME1_NAME=`${DOCKER_CMD} volume ls --format "{{.Name}}" | head -1`
+VOLUME1_NAME=$(${DOCKER_CMD} volume ls --format "{{.Name}}" | head -1)
 export VOLUME1_NAME
 VOLUME2_NAME="testvolume"
 export VOLUME2_NAME
@@ -99,7 +96,7 @@ export VOLUME2_NAME
 # prepare a local volume for backup and restore
 mkdir -p ${tmp}/volproxy
 tar czf ${tmp}/volproxy/archive.tar.gz /usr/include 2> /dev/null
-VOLARCHIVE=`md5sum ${tmp}/volproxy/archive.tar.gz`
+VOLARCHIVE=$(md5sum ${tmp}/volproxy/archive.tar.gz)
 ${DOCKER_CMD} volume create ${VOLUME2_NAME} > /dev/null
 ${DOCKER_CMD} run --rm -v ${VOLUME2_NAME}:/data -v ${tmp}/volproxy:/volproxy ubuntu sh -c "rm -rf /data/* && /bin/cp -R /volproxy/* /usr/include /data"
 RC=$?
@@ -110,62 +107,62 @@ then
 fi
 
 # prepare testcontainer with testvolume
-DT=`${DOCKER_CMD} ps -a --format "{{.ID}} {{.Names}}" | grep " testcontainer$" | awk '{print $1}'`
-DC=`echo $DT | wc -l`
-if [ $DC -ne 0 ]
+DT=$(${DOCKER_CMD} ps -a --format "{{.ID}} {{.Names}}" | grep " testcontainer$" | awk '{print $1}')
+DC=$(echo $DT | wc -l)
+if [ "$DC" -ne 0 ]
 then
 	${DOCKER_CMD} rm testcontainer > /dev/null
 fi
-DV=`${DOCKER_CMD} run -d -v ${VOLUME2_NAME}:/data --name testcontainer ubuntu`
+DV=$(${DOCKER_CMD} run -d -v ${VOLUME2_NAME}:/data --name testcontainer ubuntu)
 
-VOLUME_CONTAINER=$DV
+VOLUME_CONTAINER="$DV"
 export VOLUME_CONTAINER
 
 # Get two docker containers and two docker images and substitute it in bacula configs
-D1=`${DOCKER_CMD} ps -a --format '{{.ID}} {{.Names}}' | head -1`
-D2=`${DOCKER_CMD} ps -a --format '{{.ID}} {{.Names}}' | tail -1`
-CONTAINER1_ID=`echo $D1 | awk '{print $1}'`
-CONTAINER1_NAME=`echo $D1 | awk '{print $2}'`
+D1=$(${DOCKER_CMD} ps -a --format '{{.ID}} {{.Names}}' | head -1)
+D2=$(${DOCKER_CMD} ps -a --format '{{.ID}} {{.Names}}' | tail -1)
+CONTAINER1_ID=$(echo $D1 | awk '{print $1}')
+CONTAINER1_NAME=$(echo $D1 | awk '{print $2}')
 export CONTAINER1_ID
 export CONTAINER1_NAME
-CONTAINER2_ID=`echo $D2 | awk '{print $1}'`
-CONTAINER2_NAME=`echo $D2 | awk '{print $2}'`
+CONTAINER2_ID=$(echo $D2 | awk '{print $1}')
+CONTAINER2_NAME=$(echo $D2 | awk '{print $2}')
 export CONTAINER2_ID
 export CONTAINER2_NAME
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	RD1=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --format '{{.ID}} {{.Names}}' | head -1`
-	RD2=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --format '{{.ID}} {{.Names}}' | tail -1`
-	R_CONTAINER1_ID=`echo $RD1 | awk '{print $1}'`
-	R_CONTAINER1_NAME=`echo $RD1 | awk '{print $2}'`
+	RD1=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --format '{{.ID}} {{.Names}}' | head -1)
+	RD2=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --format '{{.ID}} {{.Names}}' | tail -1)
+	R_CONTAINER1_ID=$(echo $RD1 | awk '{print $1}')
+	R_CONTAINER1_NAME=$(echo $RD1 | awk '{print $2}')
 	export R_CONTAINER1_ID
 	export R_CONTAINER1_NAME
-	R_CONTAINER2_ID=`echo $RD2 | awk '{print $1}'`
-	R_CONTAINER2_NAME=`echo $RD2 | awk '{print $2}'`
+	R_CONTAINER2_ID=$(echo $RD2 | awk '{print $1}')
+	R_CONTAINER2_NAME=$(echo $RD2 | awk '{print $2}')
 	export R_CONTAINER2_ID
 	export R_CONTAINER2_NAME
 fi
 
-I1=`${DOCKER_CMD} images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep 'testimage:latest'`
-I2=`${DOCKER_CMD} images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep -v 'testimage:latest' | head -1`
-IMAGE1_ID=`echo $I1 | awk '{print $1}'`
-IMAGE1_NAME=`echo $I1 | awk '{print $2}'`
+I1=$(${DOCKER_CMD} images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep 'testimage:latest')
+I2=$(${DOCKER_CMD} images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep -v 'testimage:latest' | head -1)
+IMAGE1_ID=$(echo $I1 | awk '{print $1}')
+IMAGE1_NAME=$(echo $I1 | awk '{print $2}')
 export IMAGE1_ID
 export IMAGE1_NAME
-IMAGE2_ID=`echo $I2 | awk '{print $1}'`
-IMAGE2_NAME=`echo $I2 | awk '{print $2}'`
+IMAGE2_ID=$(echo $I2 | awk '{print $1}')
+IMAGE2_NAME=$(echo $I2 | awk '{print $2}')
 export IMAGE2_ID
 export IMAGE2_NAME
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	RI1=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep 'testimage:latest'`
-	RI2=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep -v 'testimage:latest' | head -1`
-	R_IMAGE1_ID=`echo $RI1 | awk '{print $1}'`
-	R_IMAGE1_NAME=`echo $RI1 | awk '{print $2}'`
+	RI1=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep 'testimage:latest')
+	RI2=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --format '{{.ID}} {{.Repository}}:{{.Tag}}' | grep -v 'testimage:latest' | head -1)
+	R_IMAGE1_ID=$(echo $RI1 | awk '{print $1}')
+	R_IMAGE1_NAME=$(echo $RI1 | awk '{print $2}')
 	export R_IMAGE1_ID
 	export R_IMAGE1_NAME
-	R_IMAGE2_ID=`echo $RI2 | awk '{print $1}'`
-	R_IMAGE2_NAME=`echo $RI2 | awk '{print $2}'`
+	R_IMAGE2_ID=$(echo $RI2 | awk '{print $1}')
+	R_IMAGE2_NAME=$(echo $RI2 | awk '{print $2}')
 	export R_IMAGE2_ID
 	export R_IMAGE2_NAME
 fi
@@ -173,7 +170,7 @@ fi
 out_sed="${tmp}/sed_tmp"
 cp ${rscripts}/docker-plugin-test-bacula-dir.conf ${tmp}
 # local
-echo "s%@container1id@%${CONTAINER1_ID}%g" >${out_sed}
+echo "s%@container1id@%${CONTAINER1_ID}%g" > ${out_sed}
 echo "s%@container1name@%${CONTAINER1_NAME}%g" >>${out_sed}
 echo "s%@image1id@%${IMAGE1_ID}%g" >>${out_sed}
 echo "s%@image1name@%${IMAGE1_NAME}%g" >>${out_sed}
@@ -233,7 +230,7 @@ then
 	${DOCKER_CMD} -H "${PLUGDOCKERHOST}" images --format '{{.ID}} {{.Repository}}:{{.Tag}}' > ${tmp}/rallimages.log
 fi
 
-cat <<END_OF_DATA >${tmp}/bconcmds
+cat <<END_OF_DATA > ${tmp}/bconcmds
 @output /dev/null
 messages
 @$out ${tmp}/log.out
@@ -247,10 +244,10 @@ run_bacula
 # special case for all objects
 do_regress_estimate_test
 F=0
-RET=`grep "/@docker/" ${tmp}/elog.out | grep "tar" | wc -l`
-RES=`cat ${tmp}/allcontainers.log ${tmp}/allimages.log ${tmp}/allvolumes.log | wc -l`
-echo "RET: $RET RES: $RES" >> ${tmp}/elog.out
-if [ $RET -ne $RES ]
+RET=$(grep "/@docker/" "${tmp}/elog.out" | grep -c "tar")
+RES=$(cat ${tmp}/allcontainers.log "${tmp}/allimages.log" "${tmp}/allvolumes.log" | wc -l)
+echo "RET: $RET RES: $RES" >> "${tmp}/elog.out"
+if [ "$RET" -ne "$RES" ]
 then
    F=1
    estat=$((estat+1))
@@ -263,8 +260,8 @@ then
 	TEST="remote"
 	do_regress_estimate_test ${TEST}
 	F=0
-	RET=`grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l`
-	RES=`cat ${tmp}/rallcontainers.log ${tmp}/rallimages.log | wc -l`
+	RET=$(grep "/@docker/" ${tmp}/elog${TEST}.out | grep -c "tar")
+	RES=$(cat ${tmp}/rallcontainers.log ${tmp}/rallimages.log | wc -l)
 	echo "RET: $RET RES: $RES" >> ${tmp}/elog${TEST}.out
 	if [ $RET -ne $RES ]
 	then
@@ -274,18 +271,18 @@ then
 	regress_test_result ${F}
 fi
 
-test8nr=`${DOCKER_CMD} ps -a --filter 'Name=container' --format {{.Names}} | grep "^container.$" | wc -l`
-test9nr=`${DOCKER_CMD} ps -a --filter 'Name=container' --format {{.Names}} | grep -v "^test" | wc -l`
-test14nr=`${DOCKER_CMD} container inspect ${VOLUME_CONTAINER} --format "{{range .Mounts}}V {{end}}" | wc -w`
+test8nr=$(${DOCKER_CMD} ps -a --filter 'Name=container' --format {{.Names}} | grep -c "^container.$")
+test9nr=$(${DOCKER_CMD} ps -a --filter 'Name=container' --format {{.Names}} | grep -v -c "^test")
+test14nr=$(${DOCKER_CMD} container inspect ${VOLUME_CONTAINER} --format "{{range .Mounts}}V {{end}}" | wc -w)
 estat=0
-RESULTS=(1 1 1 1 2 2 2 ${test8nr} ${test9nr} $((test9nr+1)) 1 2 2 $((test14nr+1)))
+RESULTS=(1 1 1 1 2 2 2 "${test8nr}" "${test9nr}" $((test9nr+1)) 1 2 2 $((test14nr+1)))
 echo ${RESULTS[*]} >> ${tmp}/results.out
 # then estimate with data
-for TEST in `seq 1 14`
+for TEST in $(seq 1 14)
 do
 do_regress_estimate_test ${TEST}
 F=0
-RET=`grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l`
+RET=$(grep "/@docker/" ${tmp}/elog${TEST}.out | grep -c "tar")
 RES=${RESULTS[$((TEST-1))]}
 echo "RET: $RET RES: $RES" >> ${tmp}/elog${TEST}.out
 if [ $RET -ne $RES ]
@@ -300,7 +297,7 @@ done
 TEST=19
 do_regress_estimate_test ${TEST}
 F=0
-RET=`grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l`
+RET=$(grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l)
 RES=6
 echo "RET: $RET RES: $RES" >> ${tmp}/elog${TEST}.out
 if [ $RET -ne $RES ]
@@ -312,9 +309,9 @@ regress_test_result ${F}
 
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	rtest8nr=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' --format {{.Names}} | grep "^container.$" | wc -l`
-	rtest9nr=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' --format {{.Names}} | grep -v "^test" | wc -l`
-	rtest14nr=`${DOCKER_CMD} -H "${PLUGDOCKERHOST}" container inspect ${VOLUME_CONTAINER} --format "{{range .Mounts}}V {{end}}" | wc -w`
+	rtest8nr=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' --format {{.Names}} | grep -c "^container.$")
+	rtest9nr=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" ps -a --filter 'Name=container' --format {{.Names}} | grep -v -c "^test")
+	rtest14nr=$(${DOCKER_CMD} -H "${PLUGDOCKERHOST}" container inspect ${VOLUME_CONTAINER} --format "{{range .Mounts}}V {{end}}" | wc -w)
 	estat=0
 	RESULTS=(1 1 1 1 2 2 2 ${rtest8nr} ${rtest9nr} $((rtest9nr+1)) 1 2 2 $((rtest14nr+1)))
 	echo ${RESULTS[*]} >> ${tmp}/rresults.out
@@ -323,7 +320,7 @@ then
 	do
 	do_regress_estimate_test ${TEST}
 	F=0
-	RET=`grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l`
+	RET=$(grep "/@docker/" ${tmp}/elog${TEST}.out | grep "tar" | wc -l)
 	RES=${RESULTS[$((TEST-101))]}
 	echo "RET: $RET RES: $RES" >> ${tmp}/elog${TEST}.out
 	if [ $RET -ne $RES ]
@@ -339,7 +336,7 @@ fi
 TEST=1
 do_regress_listing_test ${TEST} "/"
 F=0
-RET=`grep "^drwxr-x---" ${tmp}/llog${TEST}.out | wc -l`
+RET=$(grep -c "^drwxr-x---" ${tmp}/llog${TEST}.out)
 echo "RET: $RET" >> ${tmp}/llog${TEST}.out
 if [ $RET -ne 3 ]
 then
@@ -348,11 +345,11 @@ then
 fi
 regress_test_result ${F}
 
-allcont=`cat ${tmp}/allcontainers.log | wc -l`
+allcont=$(cat ${tmp}/allcontainers.log | wc -l)
 TEST=$((TEST+1))
 do_regress_listing_test ${TEST} "container"
 F=0
-RET=`grep "^-rw-r-----" ${tmp}/llog${TEST}.out | wc -l`
+RET=$(grep -c "^-rw-r-----" ${tmp}/llog${TEST}.out)
 echo "RET: $RET ALLCONT: ${allcont}" >> ${tmp}/llog${TEST}.out
 if [ $RET -ne ${allcont} ]
 then
@@ -361,11 +358,11 @@ then
 fi
 regress_test_result ${F}
 
-allimgs=`cat ${tmp}/allimages.log | wc -l`
+allimgs=$(cat ${tmp}/allimages.log | wc -l)
 TEST=$((TEST+1))
 do_regress_listing_test ${TEST} "image"
 F=0
-RET=`grep "^brw-r-----" ${tmp}/llog${TEST}.out | wc -l`
+RET=$(grep -c "^brw-r-----" ${tmp}/llog${TEST}.out)
 echo "RET: $RET ALLIMGS: ${allimgs}" >> ${tmp}/llog${TEST}.out
 if [ $RET -ne ${allimgs} ]
 then
@@ -374,11 +371,11 @@ then
 fi
 regress_test_result ${F}
 
-allvols=`cat ${tmp}/allvolumes.log | wc -l`
+allvols=$(cat ${tmp}/allvolumes.log | wc -l)
 TEST=$((TEST+1))
 do_regress_listing_test ${TEST} "volume"
 F=0
-RET=`grep "^brw-r-----" ${tmp}/llog${TEST}.out | wc -l`
+RET=$(grep -c "^brw-r-----" ${tmp}/llog${TEST}.out)
 echo "RET: $RET ALLVOLS: ${allvols}" >> ${tmp}/llog${TEST}.out
 if [ $RET -ne ${allvols} ]
 then
@@ -392,7 +389,7 @@ then
 	TEST=100
 	do_regress_listing_test ${TEST} "/" "docker: docker_host=${PLUGDOCKERHOST}"
 	F=0
-	RET=`grep "^drwxr-x---" ${tmp}/llog${TEST}.out | wc -l`
+	RET=$(grep -c "^drwxr-x---" ${tmp}/llog${TEST}.out)
 	echo "RET: $RET" >> ${tmp}/llog${TEST}.out
 	if [ $RET -ne 3 ]
 	then
@@ -401,11 +398,11 @@ then
 	fi
 	regress_test_result ${F}
 
-	allcont=`cat ${tmp}/rallcontainers.log | wc -l`
+	allcont=$(cat ${tmp}/rallcontainers.log | wc -l)
 	TEST=$((TEST+1))
 	do_regress_listing_test ${TEST} "container" "docker: docker_host=${PLUGDOCKERHOST}"
 	F=0
-	RET=`grep "^-rw-r-----" ${tmp}/llog${TEST}.out | wc -l`
+	RET=$(grep -c "^-rw-r-----" ${tmp}/llog${TEST}.out)
 	echo "RET: $RET ALLCONT: ${allcont}" >> ${tmp}/llog${TEST}.out
 	if [ $RET -ne ${allcont} ]
 	then
@@ -414,11 +411,11 @@ then
 	fi
 	regress_test_result ${F}
 
-	allimgs=`cat ${tmp}/rallimages.log | wc -l`
+	allimgs=$(cat ${tmp}/rallimages.log | wc -l)
 	TEST=$((TEST+1))
 	do_regress_listing_test ${TEST} "image" "docker: docker_host=${PLUGDOCKERHOST}"
 	F=0
-	RET=`grep "^brw-r-----" ${tmp}/llog${TEST}.out | wc -l`
+	RET=$(grep -c "^brw-r-----" ${tmp}/llog${TEST}.out)
 	echo "RET: $RET ALLIMGS: ${allimgs}" >> ${tmp}/llog${TEST}.out
 	if [ $RET -ne ${allimgs} ]
 	then
@@ -433,7 +430,7 @@ fi
 #
 bstat=0
 # first backup with data
-for TEST in `seq 1 14` 19
+for TEST in $(seq 1 14) 19
 do
 do_regress_backup_test ${TEST}
 check_regress_backup_statusT ${TEST}
@@ -442,7 +439,7 @@ regress_test_result ${F}
 done
 
 # now, backup with warnings
-for TEST in `seq 21 24`
+for TEST in $(seq 21 24)
 do
 do_regress_backup_test ${TEST}
 check_regress_backup_statusW ${TEST}
@@ -451,7 +448,7 @@ regress_test_result ${F}
 done
 
 # now, backup failed to test
-for TEST in `seq 31 34`
+for TEST in $(seq 31 34)
 do
 do_regress_backup_test ${TEST}
 check_regress_backup_statusE ${TEST}
@@ -461,7 +458,7 @@ done
 
 if [ "x${PLUGDOCKERHOST}" != "x" ]
 then
-	for TEST in `seq 101 110`
+	for TEST in $(seq 101 110)
 	do
 	do_regress_backup_test ${TEST}
 	check_regress_backup_statusT ${TEST}
@@ -485,8 +482,8 @@ mv ${tmp}/blog150.out ${tmp}/blog150F.out
 do_regress_backup_test 150 "incremental"
 check_regress_backup_statusT 150
 F=$?
-LE=`grep "docker: Unsupported backup level" ${tmp}/blog150.out | wc -l`
-AE=`grep "docker: Accurate mode is not supported. Please disable Accurate mode for this job" ${tmp}/blog150.out | wc -l`
+LE=$(grep -c "docker: Unsupported backup level" ${tmp}/blog150.out)
+AE=$(grep -c "docker: Accurate mode is not supported. Please disable Accurate mode for this job" ${tmp}/blog150.out)
 if [ $LE -ne 0 -o $AE -ne 0 ]
 then
 	F=1
@@ -504,8 +501,8 @@ mv ${tmp}/blog151.out ${tmp}/blog151F.out
 do_regress_backup_test 151 "incremental"
 check_regress_backup_statusW 151
 F=$?
-LE=`grep "docker: Unsupported backup level." ${tmp}/blog151.out | wc -l`
-AE=`grep "docker: Accurate mode is not supported." ${tmp}/blog151.out | wc -l`
+LE=$(grep -c "docker: Unsupported backup level." ${tmp}/blog151.out)
+AE=$(grep -c "docker: Accurate mode is not supported." ${tmp}/blog151.out)
 if [ $LE -ne 1 -o $AE -ne 1 ]
 then
 	F=1
@@ -526,17 +523,17 @@ do_regress_restore_test ${TEST} 1 "/" "select all"
 check_regress_restore_statusT ${TEST}
 F=$?
 ## gather info from Docker service after restore
-JOBID=`grep "JobId=" ${tmp}/rlog${TEST}.out | awk '{print $3}'|cut -f 2 -d'='`
-rc=`grep "docker: Docker Container restore:" ${tmp}/rlog${TEST}.out|awk '{print $10}'`
-rdc=`${DOCKER_CMD} ps -a --format "{{.ID}} {{.Image}}" | grep "${rcontainer}/${JOBID}:restore" | wc -l`
+JOBID=$(grep "JobId=" ${tmp}/rlog${TEST}.out | awk '{print $3}'|cut -f 2 -d'=')
+rc=$(grep "docker: Docker Container restore:" ${tmp}/rlog${TEST}.out|awk '{print $10}')
+rdc=$(${DOCKER_CMD} ps -a --format "{{.ID}} {{.Image}}" | grep -c "${rcontainer}/${JOBID}:restore")
 echo "RC: $rc RDC: $rdc" >> ${tmp}/rlog${TEST}.out
 if [ $rdc -ne 1 ]
 then
    F=1
    dstat=$((dstat+1))
 else
-   rrc=`${DOCKER_CMD} ps -a --format "{{.ID}} {{.Image}}" | grep "${rcontainer}/${JOBID}:restore" | awk '{print $1}'`
-   rri=`${DOCKER_CMD} images --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep "${rcontainer}/${JOBID}:restore" | awk '{print $1}'`
+   rrc=$(${DOCKER_CMD} ps -a --format "{{.ID}} {{.Image}}" | grep "${rcontainer}/${JOBID}:restore" | awk '{print $1}')
+   rri=$(${DOCKER_CMD} images --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep "${rcontainer}/${JOBID}:restore" | awk '{print $1}')
    echo "RRC: $rrc RRI: $rri" >> ${tmp}/rlog${TEST}.out
    if [ "x$rrc" != "x" ]
    then
@@ -558,9 +555,9 @@ do_regress_restore_test ${TEST} 2 "/" "select all"
 check_regress_restore_statusT ${TEST}
 F=$?
 ## gather info from Docker service after restore
-JOBID=`grep "JobId=" ${tmp}/rlog${TEST}.out | awk '{print $3}'|cut -f 2 -d'='`
-ri=`grep "docker: Docker Image restore:" ${tmp}/rlog${TEST}.out|awk '{print $10}'`
-rdi=`${DOCKER_CMD} images --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep "testimage:latest" | wc -l`
+JOBID=$(grep "JobId=" ${tmp}/rlog${TEST}.out | awk '{print $3}'|cut -f 2 -d'=')
+ri=$(grep "docker: Docker Image restore:" ${tmp}/rlog${TEST}.out|awk '{print $10}')
+rdi=$(${DOCKER_CMD} images --format "{{.ID}} {{.Repository}}:{{.Tag}}" | grep -c "testimage:latest")
 echo "RI: $ri RDI: $rdi" >> ${tmp}/rlog${TEST}.out
 if [ $rdi -ne 1 ]
 then
@@ -573,7 +570,7 @@ regress_test_result ${F}
 TEST=$((TEST+1))
 echo "TEST ${TEST} - restore single volume to Docker" > ${tmp}/rlog${TEST}.out
 # prepare the docker
-DC=`${DOCKER_CMD} ps -a --format "{{.ID}} {{.Names}}" | grep " testcontainer$" | awk '{print $1}' | wc -l`
+DC=$(${DOCKER_CMD} ps -a --format "{{.ID}} {{.Names}}" | grep " testcontainer$" | awk '{print $1}' | wc -l)
 echo "dc: $DC" >> ${tmp}/rlog${TEST}.out
 if [ $DC -ne 0 ]
 then
@@ -596,7 +593,7 @@ then
 	F=1
 	dstat=$((dstat+1))
 else
-	mkdir -p ${tmp}/volproxy 
+	mkdir -p ${tmp}/volproxy
 	${DOCKER_CMD} run --rm -v ${VOLUME2_NAME}:/data -v ${tmp}/volproxy:/volproxy ubuntu sh -c "md5sum /data/archive.tar.gz > /volproxy/volarchive.out" >> ${tmp}/rlog${TEST}.out
 	rco=`cat ${tmp}/volarchive.log | awk '{print $2}'`
 	rcb=`cat ${tmp}/volproxy/volarchive.out | awk '{print $1}'`
@@ -640,7 +637,7 @@ then
 	F=1
 	dstat=$((dstat+1))
 else
-	mkdir -p ${tmp}/volproxy 
+	mkdir -p ${tmp}/volproxy
 	${DOCKER_CMD} run --rm -v ${VOLUME2_NAME}:/data -v ${tmp}/volproxy:/volproxy ubuntu sh -c "md5sum /data/archive.tar.gz > /volproxy/volarchive.out" >> ${tmp}/rlog${TEST}.out
 	rco=`cat ${tmp}/volarchive.log | awk '{print $2}'`
 	rcb=`cat ${tmp}/volproxy/volarchive.out | awk '{print $1}'`
