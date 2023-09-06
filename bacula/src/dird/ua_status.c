@@ -1217,7 +1217,7 @@ static void list_scheduled_jobs(UAContext *ua)
    if (i >= 0 && is_a_number(ua->argv[i])) {
       limit=atoi(ua->argv[i]);
       if (limit == 0) {
-         limit = -1;            // disable limit
+         limit = -1;            // disable limit, 0 means nothing in this context
       }
    } else if (ua->api) {
       limit = -1;               // no limit with the api mode

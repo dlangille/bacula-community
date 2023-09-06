@@ -17,12 +17,14 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 /*
+ *
  *   Bootstrap Record header file
  *
  *      BSR (bootstrap record) handling routines split from
  *        ua_restore.c July MMIII
  *
  *     Kern Sibbald, July MMII
+ *
  */
 
 #ifndef BSR_H

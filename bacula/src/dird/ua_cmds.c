@@ -2549,7 +2549,6 @@ static void do_storage_cmd(UAContext *ua, const char *command)
       ua->send_msg("%s", sd->msg);
    }
    sd->signal(BNET_TERMINATE);
-
 bail_out:
    free_bsock(ua->jcr->store_bsock);
 }

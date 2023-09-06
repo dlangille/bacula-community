@@ -17,11 +17,9 @@
    Bacula(R) is a registered trademark of Kern Sibbald.
 */
 /*
- *
  *   Bacula Director -- User Agent Database Query Commands
  *
  *     Kern Sibbald, December MMI
- *
  */
 
 #include "bacula.h"
