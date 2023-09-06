@@ -24,6 +24,9 @@
 #define _ALIGNED_DEV_H_
 
 class aligned_dev : public file_dev {
+protected:
+   void get_volume_fpath(const char *vol_name, POOLMEM **buf);
+
 public:
 
    aligned_dev();
@@ -38,6 +41,8 @@ public:
    void clear_adata_addr();
 
    /* DEVICE virtual functions that we redefine */
+   void set_file_size(uint64_t val);
+   uint64_t update_file_size(uint64_t add);
    void setVolCatName(const char *name);
    void setVolCatStatus(const char *status);
    void free_dcr_blocks(DCR *dcr);
@@ -105,6 +110,11 @@ public:
    bool get_os_device_freespace();
    bool is_fs_nearly_full(uint64_t threshold);
    int rehydrate_record(DCR *dcr, DEV_RECORD *rec);
+
+   int set_writable(int fd, const char *vol_name);
+   int set_readonly(int fd, const char *vol_name);
+   int set_atime(int fd, const char *vol_name, btime_t val);
+
    /*
     * Locking and blocking calls
     */
