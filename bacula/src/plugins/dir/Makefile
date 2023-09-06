@@ -17,6 +17,9 @@ include Makefile.inc
 
 all: dirpluglib.lo example-plugin-dir.la test-authentication-api-dir.la
 
+install-totp:
+	$(MAKE) -C totp/ install
+
 # example-plugin-dir.lo: example-plugin-dir.c ${DIRDIR}/dir_plugins.h
 # 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CFLAGS) -I../.. -I${DIRDIR} -c example-plugin-dir.c
 
@@ -31,7 +34,7 @@ test-authentication-api-dir.la: test-authentication-api-dir.lo dirpluglib.lo
 	@echo "Linking $(@:.la=.so) ..."
 	$(NO_ECHO)$(LIBTOOL_LINK) --silent $(CXX) $(LDFLAGS) -shared $^ -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
 
-install: all
+install: all $(DIRPLUG_INSTALL_TARGET)
 	$(NO_ECHO)$(MKDIR) $(DESTDIR)$(plugindir)
 
 install-bpam-ldap:
