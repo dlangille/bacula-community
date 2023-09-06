@@ -1,0 +1,256 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Run a couple of tests with bconsole and console Directory ACL
+#
+TestName="console-directoryacl-test"
+JobName=backup
+. scripts/functions
+
+scripts/cleanup
+scripts/copy-test-confs
+
+#
+# Zap out any schedule in default conf file so that
+#  it doesn't start during our test
+#
+outf="$tmp/sed_tmp"
+echo "s%  Schedule =%# Schedule =%g" >${outf}
+cp $scripts/bacula-dir.conf $tmp/1
+sed -f ${outf} $tmp/1 >$scripts/bacula-dir.conf
+
+echo "$cwd/build/po"   > $tmp/file-list
+echo "$cwd/build/src/lib"   >> $tmp/file-list
+echo "$cwd/build/src/jcr.h" >> $tmp/file-list
+echo "$tmp/denied"          >> $tmp/file-list
+
+mkdir $tmp/denied
+chmod 700 $tmp/denied
+cp -r $cwd/build/po $tmp/denied/
+
+change_jobname NightlySave $JobName
+
+cat <<EOF >> $conf/bacula-dir.conf
+Console {
+  Name = restricted-cwd
+  Description = "Should not see anything"
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = "$cwd/"        # We have nothing in the $cwd directory
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-cwd-star
+  Description = "Should see everything"
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = "$cwd/*"       # The star at the end implies that we can see everything
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-po
+  Description = "Should see only the po files and the jcr.h file"
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = "$cwd/build/po/", "$cwd/build/src/"
+  UserIdAcl = *all*
+}
+Console {
+  Name = restricted-uid
+  Description = "Should see everything, same UID"
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = "$UID"
+}
+Console {
+  Name = restricted-uid3
+  Description = "Should not see the denied directory. Other files are ok"
+  Password = xxx
+  JobAcl    = *all*
+  ClientAcl = *all*
+  PoolAcl   = *all*
+  CatalogAcl  = *all*
+  FileSetAcl  = *all*
+  CommandAcl  = *all*
+  StorageAcl  = *all*
+  WhereAcl = *all*
+  DirectoryAcl = *all*
+  UserIdAcl = "1", "2"
+}
+EOF
+
+for i in cwd cwd-star uid po uid3
+do
+    cat <<EOF >> $tmp/bconsole.conf.$i
+Console {
+  Name = restricted-$i
+  Password = xxx
+}
+EOF
+
+sed 's/Password.*/Password = xxx/' $conf/bconsole.conf >> $tmp/bconsole.conf.$i
+done
+
+start_test
+
+if [ x$FORCE_TLS = xyes ]; then
+    for i in cwd cwd-star uid po uid3
+    do
+        $bperl -e "setup_cons_tls('$tmp/bconsole.conf.$i')"
+    done
+fi
+
+
+cat <<EOF > $tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log1.out
+label volume=TestVolume001 pool=Default storage=File
+run job=$JobName level=full client=$CLIENT yes
+wait
+messages
+@$out $tmp/not-restricted.out
+restore where=$tmp/not-restricted yes
+5
+m *
+lsmark
+done
+wait
+@$out $tmp/not-restricted-all.out
+restore where=$tmp/not-restricted-all select all yes
+lsmark
+done
+wait
+@$out $tmp/restricted-uid1.out
+@# We should not see anything
+.setuid uid=1 gid=1
+restore where=$tmp/restricted-uid1
+5
+m *
+lsmark
+done
+yes
+wait
+restore where=$tmp/restricted-uid1-all select all yes
+lsmark
+done
+wait
+messages
+quit
+EOF
+
+run_bacula
+
+for i in cwd cwd-star uid po uid3
+do
+    $bperl -e "extract_resource('$conf/bacula-dir.conf', 'Console', 'restricted-$i')" > $tmp/1
+    a=`grep Description $tmp/1`
+    cat <<EOF > $tmp/bconcmds
+@##############################################
+@output /dev/null
+messages
+@$out $tmp/restricted-$i.out
+@# $a
+@#
+restore where=$tmp/restricted-$i
+5
+m *
+lsmark
+done
+yes
+wait
+@$out $tmp/restricted-$i-all.out
+restore where=$tmp/restricted-$i-all select all yes
+lsmark
+done
+wait
+messages
+quit
+EOF
+if test "$debug" -eq 1; then
+    $bin/bconsole -c $tmp/bconsole.conf.$i < $tmp/bconcmds
+else
+    $bin/bconsole -c $tmp/bconsole.conf.$i < $tmp/bconcmds >/dev/null 2>&1
+fi
+done
+
+if [ -d $tmp/restricted-uid1/$tmp/denied ]; then
+    print_debug "ERROR: Should not find $tmp/denied in $tmp/restricted-uid1"
+    estat=1
+fi
+
+grep denied $tmp/restricted-uid1.out > /dev/null
+if [ $? -eq 0 ]; then
+    print_debug "ERROR: Should not find $tmp/denied in $tmp/restricted-uid1.out"
+    estat=1
+fi
+
+for i in cwd-star uid po uid3
+do
+    $rscripts/diff.pl -s $tmp/restricted-$i -d $tmp/restricted-$i-all
+    if [ $? != 0 ]; then
+        print_debug "ERROR: Should not find a difference between $tmp/restricted-$i and $tmp/restricted-$i-all"
+        estat=1
+    fi
+done
+
+if [ -d $tmp/restricted-cwd ]; then
+    print_debug "ERROR: Should not find a directory for the restricted-cwd restore"
+    estat=1
+fi
+
+for i in po uid3
+do
+    grep jcr.h $tmp/restricted-$i.out > /dev/null
+    if [ $? -ne 0 ]; then
+        print_debug "ERROR: Should  find jcr.h in $tmp/restricted-$i.out"
+        estat=1
+    fi
+
+    grep fr.po $tmp/restricted-$i.out > /dev/null
+    if [ $? -ne 0 ]; then
+        print_debug "ERROR: Should find fr.po in $tmp/restricted-$i.out"
+        estat=1
+    fi
+
+    grep denied/ $tmp/restricted-$i.out > /dev/null
+    if [ $? -eq 0 ]; then
+        print_debug "ERROR: Should not find the denied directory in $tmp/restricted-$i.out"
+        estat=1
+    fi
+done
+
+stop_bacula
+end_test
