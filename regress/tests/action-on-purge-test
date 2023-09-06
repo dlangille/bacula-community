@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# Copyright (C) 2000-2023 Kern Sibbald
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
 # License: BSD 2-Clause; see file LICENSE-FOSS
 #
 #
@@ -90,7 +91,7 @@ list volume
 sql
 select VolumeName, VolStatus, ActionOnPurge FROM Media;
 
-setdebug level=100 director
+setdebug level=100 director trace=1
 quit
 END_OF_DATA
 
@@ -171,21 +172,21 @@ check_two_logs
 print_debug "Test if Pool record is ok"
 r=`awk '/Default/ { print $4 }' $tmp/log4.out`
 if [ "$r" != 1 ]; then
-    print_debug "ActionOnPurge on Pool record should be 1 ($r)"
+    print_debug "ERROR: ActionOnPurge on Pool record should be 1 ($r)"
     estat=2
 fi
 
 print_debug "Test TestVolume001 if Media record is ok"
 r=`awk '/TestVolume001/ { print $4 }' $tmp/log4.out`
 if [ "$r" != 1 ]; then
-    print_debug "ActionOnPurge on Media record should be 1"
+    print_debug "ERROR: ActionOnPurge on Media record should be 1"
     estat=2
 fi
 
 print_debug "Test TestVolume002 if Media record is ok"
 r=`awk '/TestVolume002/ { print $4 }' $tmp/log4.out`
 if [ "$r" != 0 ]; then
-    print_debug "ActionOnPurge on Media record should be 0"
+    print_debug "ERROR: ActionOnPurge on Media record should be 0"
     estat=2
 fi
 
