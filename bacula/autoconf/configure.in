@@ -4240,11 +4240,13 @@ AC_CONFIG_FILES([
    updatedb/update_postgresql_tables_1022_to_1023 \
    updatedb/update_postgresql_tables_1023_to_1024 \
    updatedb/update_postgresql_tables_1024_to_1025 \
+   updatedb/update_postgresql_tables_1025_to_1026 \
    updatedb/update_mysql_tables_1020_to_1021 \
    updatedb/update_mysql_tables_1021_to_1022 \
    updatedb/update_mysql_tables_1022_to_1023 \
    updatedb/update_mysql_tables_1023_to_1024 \
    updatedb/update_mysql_tables_1024_to_1025 \
+   updatedb/update_mysql_tables_1025_to_1026 \
    examples/nagios/check_bacula/Makefile \
    platforms/rpms/redhat/bacula.spec \
    platforms/rpms/redhat/bacula-bat.spec \
