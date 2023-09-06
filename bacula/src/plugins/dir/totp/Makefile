@@ -33,12 +33,12 @@ totp-dir.la:  $(TOTPOBJ)
 
 btotp: $(TOTPSRC) ../dirpluglib.lo
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -DBTOTP_PROGRAM=1 -c $< -o btotp.lo
-	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -o $@ btotp.lo ../dirpluglib.lo -L${LIBDIR} -lbac
+	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -o $@ btotp.lo ../dirpluglib.lo -L${LIBDIR} -lbac ${OPENSSL_LIBS}
 
 btotp_test: $(TOTPSRC) ../dirpluglib.lo
 	$(MAKE) -C ${LIBDIR} alist_test
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -DTEST_PROGRAM=1 -c $< -o btotp_test.lo
-	$(LIBTOOL_LINK) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -o $@ btotp_test.lo ../dirpluglib.lo ${LIBDIR}/unittests.o -L${LIBDIR} -lbac
+	$(LIBTOOL_LINK) $(CXX) -I${SRCDIR} -I${LIBDIR} -I${SRCDIR}/dird -I.. -DSYSCONFDIR=\"$(sysconfdir)\" -DWORKDIR=\"$(DESTDIR)$(working_dir)\" -o $@ btotp_test.lo ../dirpluglib.lo ${LIBDIR}/unittests.o -L${LIBDIR} -lbac ${OPENSSL_LIBS}
 
 install-test: btotp_test
 	$(NO_ECHO)$(MKDIR) $(DESTDIR)$(sbindir)
