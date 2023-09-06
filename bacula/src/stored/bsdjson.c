@@ -431,6 +431,11 @@ static void dump_json(display_filter *filter)
          /* Copy the resource into res_all */
          memcpy(&res_all, res, sizeof(res_all));
 
+         if (strcmp(resources[resinx].name, "Dedupengine") == 0 &&
+             strcmp(res_all.hdr.name, "*Dedup*" /*default_legacy_dedupengine*/) == 0) {
+            continue; /* Don't display the dummy Dedupengine "*Dedup*" resource */
+         }
+
          if (filter->resource_name) {
             bool skip=true;
             /* The Name should be at the first place, so this is not a real loop */
@@ -739,10 +744,13 @@ static int check_resources()
 #ifdef SD_DEDUP_SUPPORT
    DEDUPRES *dedup;
    foreach_res(dedup, R_DEDUP) {
+      if (strcmp(dedup->hdr.name, "*Dedup*" /*default_legacy_dedupengine*/) == 0) {
+         break; /* this is the dummy "*Dedup* resource, test should be done in Storage */
+      }
       if (dedup->driver_type == D_LEGACY_DRIVER) {
          if (dedup->dedup_dir == NULL) {
             Jmsg(NULL, M_FATAL, 0,
-                 _("Failed to initialize Dedup Legasy. DedupDirectory not defined for Dedup \"%s\"\n"),
+                 _("Failed to initialize Dedup Legacy. DedupDirectory not defined for Dedup \"%s\"\n"),
                  dedup->hdr.name);
             OK = false;
          }

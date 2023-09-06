@@ -2174,7 +2174,7 @@ bool cloud_dev::is_eod_valid(DCR *dcr)
    }
    if (ok) {
       if (do_update) {
-         Dmsg2(dbglvl, "Correcting catalog for Volume \"%s\":\n%s", dcr->VolumeName, err.c_str());
+         Jmsg2(jcr, M_INFO, 0, _("Correcting catalog for Volume \"%s\":\n%s\n"), dcr->VolumeName, err.c_str());
          if (!dir_update_volume_info(dcr, false, true)) {
             Jmsg(jcr, M_WARNING, 0, _("Error updating Catalog\n"));
             dcr->mark_volume_in_error();

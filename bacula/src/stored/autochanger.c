@@ -60,6 +60,7 @@ bool init_autochangers()
          if (!device->changer_command && changer->changer_command) {
             device->changer_command = bstrdup(changer->changer_command);
          }
+         /* ***BEEF*** */
          if (!device->lock_command && changer->lock_command) {
             device->lock_command = bstrdup(changer->lock_command);
          }

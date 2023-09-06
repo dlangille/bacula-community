@@ -30,21 +30,20 @@ void dedup_filter_record(int verbose, DCR *dcr, DEV_RECORD *rec, char *dedup_msg
 /* Interface between DEDUP and SD */
 class DedupStoredInterfaceBase
 {
+#if 0
+protected:
+   virtual void *do_rehydration_thread(void){return NULL;};
+   virtual int handle_rehydration_command(BSOCK *fd){return -1;};
+#endif
+
 public:
 
    DedupStoredInterfaceBase(JCR *jcr, DedupEngine *dedupengine) {};
    virtual ~DedupStoredInterfaceBase() {};
 
-      // deduplication
-   virtual int start_deduplication() {return -1;};
-   virtual void *wait_deduplication(bool emergency=false) {return NULL;};
-   virtual void *do_deduplication_thread(void){return NULL;};
-
    // rehydration
    virtual int start_rehydration(){return -1;};
    virtual void *wait_rehydration(bool emergency=false){return NULL;};
-   virtual void *do_rehydration_thread(void){return NULL;};
-   virtual int handle_rehydration_command(BSOCK *fd){return -1;};
    virtual bool wait_flowcontrol_rehydration(int free_rec_count, int timeoutms){return false;};
    virtual bool do_flowcontrol_rehydration(int free_rec_count, int retry_timeoutms=250){return false;};
    virtual void warn_rehydration_eod() {};

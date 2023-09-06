@@ -268,7 +268,9 @@ uint32_t transfer::append_status(POOL_MEM& msg)
 void transfer::append_api_status(OutputWriter &ow)
 {
    lock_guard lg(m_stat_mutex);
+
    Dmsg2(dbglvl, "transfer::append_api_status state=%d JobId=%d\n", m_state, m_job_id);
+
 
    if (m_state > TRANS_STATE_PROCESSED) {
          ow.get_output(OT_START_OBJ,

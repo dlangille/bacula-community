@@ -50,7 +50,7 @@ public:
    void term(DCR *dcr);
    virtual bool dedup_cmd(JCR *jcr);
    virtual void *dedup_get_dedupengine() { return (void*)dedupengine; };
-
+   virtual bool is_fs_nearly_full(uint64_t threshold);
 };
 
 #endif  /* DEDUP_DEV_H */

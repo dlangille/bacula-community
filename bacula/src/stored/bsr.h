@@ -78,7 +78,6 @@ struct BSR_SESSID {
 struct BSR_SESSTIME {
    BSR_SESSTIME *next;
    uint32_t sesstime;
-   bool done;                         /* local done */
 };
 
 struct BSR_VOLFILE {

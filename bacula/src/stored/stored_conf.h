@@ -133,6 +133,7 @@ public:
    DedupEngine *dedupengine;
    int dedupengine_use_count;
    char *dedup_err_msg;               /* is set for any error status */
+   uint32_t max_container_open;       /* the maximum number of simultaneously open container */
 };
 
 /*
