@@ -1,0 +1,108 @@
+#!/bin/sh
+#
+# Copyright (C) 2000-2021 Kern Sibbald
+# Copyright (C) 2021-2023 Bacula Systems SA
+# License: BSD 2-Clause; see file LICENSE-FOSS
+#
+# Test versioning. We run 1 backup, modify part.2 and reupload it -> should get partXXXX.2 versioned part generated
+# Test version cleanup. Do a cloud truncate -> should get partXXXX.2 deleted in debug trace
+TestName="cloud-versioned-part-test"
+JobName=NightlySave
+. scripts/functions
+
+require_cloud
+
+#config is required for cloud cleanup
+scripts/copy-test-confs
+scripts/cleanup
+
+FORCE_FILE_SET=${FORCE_FILE_SET:-"${cwd}/build/src/stored"}
+echo "$FORCE_FILE_SET" >${cwd}/tmp/file-list
+
+start_test
+
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumPartSize", "10000000", "Device")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumUploadBandwidth", "4MB/s", "Cloud")'
+$bperl -e 'add_attribute("$conf/bacula-sd.conf", "MaximumDownloadBandwidth", "4MB/s", "Cloud")'
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+label storage=File volume=Vol1
+END_OF_DATA
+
+# do label
+run_bacula
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@$out ${cwd}/tmp/log1.out
+@#setdebug tags=cloud level=50 trace=1 storage
+run job=$JobName level=Full yes
+wait
+list volumes
+llist volume=Vol1
+messages
+END_OF_DATA
+
+echo "Running job 1"
+run_bconsole
+
+echo $tmp/Vol1/part.1 >> $tmp/Vol1/part.2
+
+cat <<END_OF_DATA >$tmp/bconcmds
+@output /dev/null
+messages
+@$out $tmp/log2.out
+@#setdebug tags=cloud level=50 trace=1 storage
+cloud upload storage=File volume=Vol1
+messages
+END_OF_DATA
+
+echo "Running job 2"
+run_bconsole
+ls -l tmp/Vol*
+
+cat <<END_OF_DATA >${cwd}/tmp/bconcmds
+@output /dev/null
+messages
+@# 
+@# now do purge the cloud
+@#
+@$out $tmp/log4.out
+setdebug tags=cloud level=50 trace=1 storage
+update volume=Vol1 actiononpurge=Truncate
+purge volume=Vol1
+truncate storage=File
+
+@$out $tmp/log41.out
+cloud list storage=File
+cloud list volume=Vol1 storage=File
+quit
+END_OF_DATA
+
+run_bconsole
+
+sleep 2
+check_for_zombie_jobs storage=File 
+stop_bacula
+
+# must have a versioned part reported in job2
+grep "Vol1/part.2 was present on the cloud and has been versioned to " ${tmp}/log2.out 2>&1 >/dev/null
+if test $? -ne 0; then
+    echo "Error: could not find versioned part"
+    estat=1
+fi
+
+# must check if the versioned part has been cleaned up
+grep "clean_cloud_volume for Vol1: Unlink file" ${working}/*.trace 2>&1 >/dev/null
+if test $? -ne 0; then
+    echo "Error: could not find versioned part cleanup"
+    estat=2
+fi
+
+check_two_logs
+
+end_test
