@@ -150,6 +150,15 @@
 			"Event": {
 				"$ref": "#/definitions/Event"
 			},
+			"FileEvents": {
+				"type": "array",
+				"items": {
+					"$ref": "#/definitions/FileEvent"
+				}
+			},
+			"FileEvent": {
+				"$ref": "#/definitions/FileEvent"
+			},
 			"PluginM365Emails": {
 				"type": "array",
 				"items": {
@@ -9828,6 +9837,164 @@
 				]
 			}
 		},
+		"/api/v2/fileevents": {
+			"get": {
+				"tags": ["fileevents"],
+				"summary": "File event list",
+				"description": "Get file event list.",
+				"responses": {
+					"200": {
+						"description": "List of file events",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/FileEvents"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/Limit"
+					},
+					{
+						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "sourcejobid",
+						"in": "query",
+						"required": false,
+						"description": "Source job identifier",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "jobid",
+						"in": "query",
+						"required": false,
+						"description": "Job identifier",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "fileindex",
+						"in": "query",
+						"required": false,
+						"description": "File index",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "type",
+						"in": "query",
+						"required": false,
+						"description": "File event type",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "severity",
+						"in": "query",
+						"required": false,
+						"description": "File event severity",
+						"schema": {
+							"type": "integer"
+						}
+					},
+					{
+						"name": "source",
+						"in": "query",
+						"required": false,
+						"description": "From where file event comes",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "description",
+						"in": "query",
+						"required": false,
+						"description": "File event description",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "time_from_date",
+						"in": "query",
+						"required": false,
+						"description": "File event time from (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "time_to_date",
+						"in": "query",
+						"required": false,
+						"description": "File event time to (date/time format YYYY-MM-DD HH:II:SS)",
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v2/fileevents/{fileeventid}": {
+			"get": {
+				"tags": ["fileevents"],
+				"summary": "File event by id",
+				"description": "Get single file event.",
+				"responses": {
+					"200": {
+						"description": "Single file event by id",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"$ref": "#/components/schemas/FileEvent"
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 6, 7, 170, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "id",
+						"in": "path",
+						"required": true,
+						"description": "File event identifier",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/tenants": {
 			"get": {
 				"tags": ["plugins"],
@@ -11731,6 +11898,47 @@
 				},
 				"eventstext": {
 					"description": "Event text",
+					"type": "string"
+				}
+			}
+		},
+		"FileEvent": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"description": "File event identifier",
+					"type": "integer"
+				},
+				"time": {
+					"description": "File event time (YYYY-MM-DD HH:MM::SS.MMMMMM)",
+					"type": "string"
+				},
+				"sourcejobid": {
+					"description": "File event source job identifier",
+					"type": "integer"
+				},
+				"jobid": {
+					"description": "Job identifier",
+					"type": "integer"
+				},
+				"fileindex": {
+					"description": "File index",
+					"type": "integer"
+				},
+				"type": {
+					"description": "File event type",
+					"type": "string"
+				},
+				"description": {
+					"description": "File event description",
+					"type": "string"
+				},
+				"severity": {
+					"description": "File event severity",
+					"type": "integer"
+				},
+				"source": {
+					"description": "From where file event comes",
 					"type": "string"
 				}
 			}
