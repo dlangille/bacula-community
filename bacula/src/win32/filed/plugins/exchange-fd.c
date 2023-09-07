@@ -23,6 +23,7 @@
  */
 
 #include "exchange-fd.h"
+#undef strncpy
 
 /* Pointers to Bacula functions */
 bFuncs *bfuncs = NULL;
@@ -305,7 +306,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       {
       _DebugMessage(0, "backup command=%s\n", (char *)value);    
       char *command = new char[strlen((char *)value) + 1];
-      strcpy(command, (char *)value);
+      bstrncpy(command, (char *)value, strlen((char *)value)+1);
       char *plugin_name = strtok((char *)command, ":");
       char *path = strtok(NULL, ":");
       char *option;
@@ -331,7 +332,7 @@ static bRC handlePluginEvent(bpContext *ctx, bEvent *event, void *value)
       char *path_bit = strtok(path, "/");
       for (i = 0; path_bit != NULL && i < 6; i++) {
          context->path_bits[i] = new char[strlen(path_bit) + 1];
-         strcpy(context->path_bits[i], path_bit);
+         bstrncpy(context->path_bits[i], path_bit, strlen(path_bit)+1);
          path_bit = strtok(NULL, "/");
       }
 
