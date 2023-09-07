@@ -231,7 +231,7 @@ class Miscellaneous extends TModule {
 	}
 
 	public function isValidNameExt($name_ext) {
-		return (preg_match('/^[\w:\.\-\s\*=@]{1,127}$/', $name_ext) === 1);
+		return (preg_match('/^[\w:\.\-\s\*=@:]{1,127}$/', $name_ext) === 1);
 	}
 
 	public function isValidState($state) {
