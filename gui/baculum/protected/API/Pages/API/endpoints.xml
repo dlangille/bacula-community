@@ -116,6 +116,9 @@
 	<!-- event endpoints -->
 	<url ServiceParameter="Events" pattern="api/v2/events/" />
 	<url ServiceParameter="Event" pattern="api/v2/events/{id}" parameters.id="\d+" />
+	<!-- file event endpoints -->
+	<url ServiceParameter="FileEvents" pattern="api/v2/fileevents/" />
+	<url ServiceParameter="FileEvent" pattern="api/v2/fileevents/{id}" parameters.id="\d+" />
 	<!-- source endpoints -->
 	<url ServiceParameter="Sources" pattern="api/v2/sources/" />
 	<!-- @TODO: Separate this endpoint outside 'joblog' -->

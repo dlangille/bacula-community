@@ -30,6 +30,7 @@
 		<module id="volume" class="Baculum\API\Modules\VolumeManager" />
 		<module id="object" class="Baculum\API\Modules\ObjectManager" />
 		<module id="event" class="Baculum\API\Modules\EventManager" />
+		<module id="fileevent" class="Baculum\API\Modules\FileEventManager" />
 		<module id="source" class="Baculum\API\Modules\SourceManager" />
 		<!-- tools modules -->
 		<module id="bconsole" class="Baculum\API\Modules\Bconsole" />
