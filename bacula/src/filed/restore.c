@@ -408,17 +408,17 @@ void do_restore(JCR *jcr)
    fdmsg->start_read_sock();
    bmessage *bmsg = fdmsg->new_msg(); /* get a message, to exchange with fdmsg */
 
-   if (have_zstd) {
+#ifdef HAVE_ZSTD
       ZSTD_DCtx *pZSTD = ZSTD_createDCtx();
       jcr->ZSTD_decompress_workset = pZSTD;
-   }
+#endif
 
-   if (have_lzo) {
+#ifdef HAVE_LZO
       if (lzo_init() != LZO_E_OK) {
          Jmsg(jcr, M_FATAL, 0, _("LZO init failed\n"));
          goto get_out;
       }
-   }
+#endif
 
    if (have_crypto) {
       rctx.cipher_ctx.buf = get_memory(CRYPTO_CIPHER_MAX_BLOCK_SIZE);
