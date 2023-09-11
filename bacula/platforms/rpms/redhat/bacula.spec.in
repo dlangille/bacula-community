@@ -728,7 +728,7 @@ export BACULA="Bacula"
         --with-systemd=%{systemd_dir} \
 %endif
 %if !%{client_only}
-        --enable-totp-bpam  \
+    --enable-totp-bpam  \
 %endif
         --enable-antivirus-plugin \
 %if %{tcpwrappers}
@@ -977,6 +977,7 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{script_dir}/bacula-ctl-sd
 %attr(-, root, %{daemon_group}) %{script_dir}/tapealert
 %attr(-, root, %{daemon_group}) %{script_dir}/baculabackupreport
+%attr(-, root, %{daemon_group}) %{script_dir}/mtx-changer
 %attr(-, root, %{daemon_group}) %{_sbindir}/dbcheck
 %attr(-, root, %{storage_daemon_group}) %config(noreplace) %{script_dir}/mtx-changer.conf
 %attr(-, root, %{daemon_group}) %{plugin_dir}/ldap-dir.so
@@ -1343,7 +1344,8 @@ fi
 %attr(-, root, %{daemon_group}) %{_sbindir}/bconsole
 %attr(-, root, %{daemon_group}) %{_sbindir}/bbconsjson
 %attr(-, root, %{daemon_group}) %{script_dir}/bconsole
-%attr(-, root, %{daemon_group}) %config(noreplace) %{sysconf_dir}/bconsole.conf+%attr(-, root, %{daemon_group}) %{_mandir}/man8/bconsole.8.%{manpage_ext}
+%attr(-, root, %{daemon_group}) %config(noreplace) %{sysconf_dir}/bconsole.conf
+%attr(-, root, %{daemon_group}) %{_mandir}/man8/bconsole.8.%{manpage_ext}
 
 %files client
 %defattr(-,root,root)
@@ -1356,7 +1358,6 @@ fi
 %if %{usesystemd}
 %attr(-, root, %{daemon_group})  %{systemd_dir}/bacula-fd.service
 %else
-%{script_dir}/bacula-ctl-fd
 /etc/init.d/bacula-fd
 %endif
 
@@ -1365,7 +1366,10 @@ fi
 %attr(-, root, %{daemon_group}) %config(noreplace) %{sysconf_dir}/bacula-fd.conf
 %attr(-, root, %{daemon_group}) %dir %{working_dir}
 
+%attr(-, root, %{daemon_group}) %{script_dir}/bacula-ctl-fd
 %{_sbindir}/bacula-fd
+%{_sbindir}/bfdjson
+%{_sbindir}/bsnapshot
 %attr(-, root, %{daemon_group}) %{plugin_dir}/bpipe-fd.so
 %{_sbindir}/bconsole
 %{_mandir}/man8/bacula-fd.8.%{manpage_ext}
