@@ -3588,6 +3588,7 @@ dnl
 DIRPLUG_INSTALL_TARGET=
 EXTRA_INSTALL_SCRIPTS=
 PLUGIN_INSTALL_TARGET=
+
 support_antivirus=no
 AC_ARG_ENABLE(antivirus-plugin,
    AC_HELP_STRING([--disable-antivirus-plugin], [disable Antivirus support @<:@default=yes@:>@]),
@@ -3601,7 +3602,7 @@ AC_ARG_ENABLE(antivirus-plugin,
 )
 
 if test x$support_antivirus = xyes ; then
-   PLUGIN_INSTALL_TARGET="$PLUGIN_INSTALL_TARGET install-antivirus"
+   FD_PLUGIN_INSTALL="$FD_PLUGIN_INSTALL install-antivirus"
 fi
 
 AC_SUBST(PLUGIN_INSTALL_TARGET)
