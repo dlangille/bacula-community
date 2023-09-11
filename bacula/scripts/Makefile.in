@@ -12,9 +12,14 @@ VPATH = 	@srcdir@
 topdir = ..
 thisdir = scripts
 
+CYTHON=@CYTHON@
+CYTHON_LIBS=@CYTHON_LIBS@
+CYTHON_INC=@CYTHON_INC@
 
 first_rule: all
 dummy:
+
+EXTRA_INSTALL_SCRIPTS=@EXTRA_INSTALL_SCRIPTS@
 
 MKDIR = $(topdir)/autoconf/mkinstalldirs
 
@@ -23,7 +28,7 @@ MKDIR = $(topdir)/autoconf/mkinstalldirs
 all: Makefile
 
 depend:
-	
+
 
 #-------------------------------------------------------------------------
 
