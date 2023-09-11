@@ -106,6 +106,23 @@ delta-fd.lo: delta-fd.c ${FDDIR}/fd_plugins.h fd_common.h
 delta-fd.la: Makefile delta-fd$(DEFAULT_OBJECT_TYPE)
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) $(RSYNC_LIBS) -shared delta-fd.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version 
 
+test-verify-fd.lo: test-verify-fd.c ${FDDIR}/fd_plugins.h fd_common.h
+	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(RSYNC_INC) $(CFLAGS) -I../.. -I${FDDIR} -c test-verify-fd.c
+
+test-verify-fd.la: Makefile test-verify-fd$(DEFAULT_OBJECT_TYPE)
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared test-verify-fd.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+
+install-antivirus: antivirus-fd.la
+	$(MKDIR) $(DESTDIR)$(plugindir)
+	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) antivirus-fd.la $(DESTDIR)$(plugindir)
+	$(RMF) $(DESTDIR)$(plugindir)/antivirus-fd.la
+
+antivirus-fd.lo: antivirus-fd.c ${FDDIR}/fd_plugins.h fd_common.h
+	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I../.. -I${FDDIR} -c antivirus-fd.c
+
+antivirus-fd.la: Makefile antivirus-fd$(DEFAULT_OBJECT_TYPE)
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS) -shared antivirus-fd.lo -o $@ -rpath $(plugindir) -module -export-dynamic -avoid-version
+
 test-plugin-fd.lo: test-plugin-fd.c ${FDDIR}/fd_plugins.h
 	$(LIBTOOL_COMPILE) $(CXX) $(DEFS) $(DEBUG) $(CPPFLAGS) $(CFLAGS) -I../.. -I${FDDIR} -c test-plugin-fd.c
 
