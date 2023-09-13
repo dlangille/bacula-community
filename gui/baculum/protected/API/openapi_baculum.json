@@ -456,7 +456,7 @@
 										"error": {
 											"type": "integer",
 											"description": "Error code",
-											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 1000]
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 1000]
 										}
 									}
 								}
@@ -470,6 +470,16 @@
 					},
 					{
 						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Client name",
+						"schema": {
+							"type": "string",
+							"pattern": "[a-zA-Z0-9:.-_ ]+"
+						}
 					},
 					{
 						"name": "plugin",
