@@ -34,12 +34,40 @@ class Clients extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
+		$client = $this->Request->contains('name') && $misc->isValidName($this->Request['name']) ? $this->Request['name'] : '';
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$plugin = $this->Request->contains('plugin') && $misc->isValidAlphaNumeric($this->Request['plugin']) ? $this->Request['plugin'] : '';
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
 			$params = [];
+
+			$clients = [];
+			if (!empty($client)) {
+				if (in_array($client, $result->output)) {
+					$clients = [$client];
+				} else {
+					// no client name provided but not found in the configuration
+					$this->output = ClientError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
+					$this->error = ClientError::ERROR_CLIENT_DOES_NOT_EXISTS;
+					return;
+				}
+			} else {
+				$clients = $result->output;
+			}
+			if (count($clients) == 0) {
+				// no $clients criteria means that user has no client resource assigned.
+				$this->output = [];
+				$this->error = ClientError::ERROR_NO_ERRORS;
+				return;
+			}
+
+			$params['Client.Name'] = [];
+			$params['Client.Name'][] = [
+				'operator' => 'IN',
+				'vals' => $clients
+			];
+
 			if (!empty($plugin)) {
 				$params['Plugins'] = [];
 				$params['Plugins'][] = [
