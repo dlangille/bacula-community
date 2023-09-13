@@ -889,6 +889,9 @@ chmod o-rwx $RPM_BUILD_ROOT%{working_dir}
 # fix me - building enable-client-only installs files not included in bacula-client package
 %if %{client_only}
 # Program docs not installed on client
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bbconsjson.8.%{manpage_ext}
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bsdjson.8.%{manpage_ext}
+rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bdirjson.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bacula-dir.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bacula-sd.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bcopy.8.%{manpage_ext}
@@ -899,7 +902,6 @@ rm -f $RPM_BUILD_ROOT%{_mandir}/man8/btape.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/dbcheck.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bregex.8.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{_mandir}/man8/bwild.8.%{manpage_ext}
-rm -f $RPM_BUILD_ROOT%{_mandir}/man1/bsmtp.1.%{manpage_ext}
 rm -f $RPM_BUILD_ROOT%{script_dir}/bacula
 rm -f $RPM_BUILD_ROOT%{script_dir}/bacula_config
 rm -f $RPM_BUILD_ROOT%{script_dir}/bacula-ctl-dir
@@ -1005,7 +1007,6 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{_sbindir}/bacula-dir
 %attr(-, root, %{daemon_group}) %{_sbindir}/bacula-sd
 %attr(-, root, %{daemon_group}) %{_sbindir}/btraceback
-%attr(-, root, %{daemon_group}) %{_sbindir}/bsmtp
 %attr(-, root, %{daemon_group}) %{_sbindir}/bscan
 %attr(-, root, %{daemon_group}) %{_sbindir}/btape
 %attr(-, root, %{daemon_group}) %{_sbindir}/bdirjson
@@ -1017,6 +1018,8 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{_sbindir}/bls
 %attr(755, root, %{daemon_group}) %{_sbindir}/bregex
 %attr(755, root, %{daemon_group}) %{_sbindir}/bwild
+%{_mandir}/man8/bdirjson.8.%{manpage_ext}
+%{_mandir}/man8/bsdjson.8.%{manpage_ext}
 %{_mandir}/man8/bacula-dir.8.%{manpage_ext}
 %{_mandir}/man8/bacula-sd.8.%{manpage_ext}
 %{_mandir}/man8/bacula.8.%{manpage_ext}
@@ -1029,7 +1032,6 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %{_mandir}/man8/dbcheck.8.%{manpage_ext}
 %{_mandir}/man8/bregex.8.%{manpage_ext}
 %{_mandir}/man8/bwild.8.%{manpage_ext}
-%{_mandir}/man1/bsmtp.1.%{manpage_ext}
 %{_mandir}/man1/bat.1.%{manpage_ext}
 %_prefix/share/doc/*
 
@@ -1346,6 +1348,7 @@ fi
 %attr(-, root, %{daemon_group}) %{script_dir}/bconsole
 %attr(-, root, %{daemon_group}) %config(noreplace) %{sysconf_dir}/bconsole.conf
 %attr(-, root, %{daemon_group}) %{_mandir}/man8/bconsole.8.%{manpage_ext}
+%attr(-, root, %{daemon_group}) %{_mandir}/man8/bbconsjson.8.%{manpage_ext}
 
 %files client
 %defattr(-,root,root)
@@ -1371,8 +1374,8 @@ fi
 %{_sbindir}/bfdjson
 %{_sbindir}/bsnapshot
 %attr(-, root, %{daemon_group}) %{plugin_dir}/bpipe-fd.so
-%{_sbindir}/bconsole
 %{_mandir}/man8/bacula-fd.8.%{manpage_ext}
+%{_mandir}/man8/bfdjson.8.%{manpage_ext}
 %_prefix/share/doc/*
 
 %pre client
