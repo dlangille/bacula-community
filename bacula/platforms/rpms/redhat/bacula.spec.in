@@ -1001,11 +1001,8 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %attr(-, root, %{daemon_group}) %{script_dir}/sample-query.sql
 %attr(-, root, %{daemon_group}) %{script_dir}/query.sql
 
-%attr(-, %{storage_daemon_user}, %{daemon_group}) %dir %{working_dir}
-
 %attr(-, root, %{daemon_group}) %{_sbindir}/bacula-dir
 %attr(-, root, %{daemon_group}) %{_sbindir}/bacula-sd
-%attr(-, root, %{daemon_group}) %{_sbindir}/btraceback
 %attr(-, root, %{daemon_group}) %{_sbindir}/bscan
 %attr(-, root, %{daemon_group}) %{_sbindir}/btape
 %attr(-, root, %{daemon_group}) %{_sbindir}/bdirjson
@@ -1027,7 +1024,6 @@ rm -f $RPM_BUILD_DIR/Release_Notes-%{version}-%{release}.txt
 %{_mandir}/man8/bls.8.%{manpage_ext}
 %{_mandir}/man8/bscan.8.%{manpage_ext}
 %{_mandir}/man8/btape.8.%{manpage_ext}
-%{_mandir}/man8/btraceback.8.%{manpage_ext}
 %{_mandir}/man8/dbcheck.8.%{manpage_ext}
 %{_mandir}/man8/bregex.8.%{manpage_ext}
 %{_mandir}/man8/bwild.8.%{manpage_ext}
@@ -1366,7 +1362,6 @@ fi
 %attr(644, root, root) /etc/logrotate.d/bacula
 
 %attr(-, root, %{daemon_group}) %config(noreplace) %{sysconf_dir}/bacula-fd.conf
-%attr(-, root, %{daemon_group}) %dir %{working_dir}
 
 %attr(-, root, %{daemon_group}) %{script_dir}/bacula-ctl-fd
 %{_sbindir}/bacula-fd
@@ -1457,6 +1452,8 @@ fi
 %attr(-, root, %{daemon_group}) %{script_dir}/btraceback.mdb
 %attr(-, root, root) %{_mandir}/man1/bsmtp.1.%{manpage_ext}
 %attr(-, root, %{daemon_group}) %{_sbindir}/bsmtp
+%attr(-, %{storage_daemon_user}, %{daemon_group}) %dir %{working_dir}
+
 
 
 %post storage-key-manager
