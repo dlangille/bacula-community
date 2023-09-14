@@ -423,9 +423,8 @@ Summary: Bacula - The Network Backup Solution
 Group: System Environment/Daemons
 Provides: bacula-dir, bacula-sd, bacula-server
 Provides: libbaccats-%{version}.so()(64bit)
-Conflicts: bacula-client
 
-Requires: ncurses, libstdc++, zlib, openssl
+Requires: ncurses, libstdc++, zlib, openssl, bacula-client, bacula-console
 Requires: glibc, readline, %{name}-libs
 Requires: mt-st, mtx, bzip2, lsscsi
 
