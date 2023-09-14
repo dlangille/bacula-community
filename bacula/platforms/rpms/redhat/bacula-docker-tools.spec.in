@@ -52,7 +52,7 @@ cp %{_sourcedir}/baculatar-docker-%{docker_tar_version}.tar.gz ${RPM_BUILD_ROOT}
 if which docker > /dev/null 2> /dev/null
 then
     echo "Importing Docker image"
-    docker load -i %{lib_dir}/bacula-backup-%{k8s_version}.tar.gz
+    docker load -i %{lib_dir}/bacula-backup-%{docker_tar_version}.tar.gz
 
     if [ ! $? -eq 0 ] ; then
         echo "Unable to install %{lib_dir}/baculatar-docker-%{docker_tar_version}.tar.gz Docker image automatically."
