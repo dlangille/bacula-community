@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\Delete;
 use Baculum\Common\Modules\Errors\ObjectError;
 
 /**
@@ -38,6 +39,23 @@ class ObjectClass extends BaculumAPIServer {
 		if (is_object($object)) {
 			$this->output = $object;
 			$this->error = ObjectError::ERROR_NO_ERRORS;
+		} else {
+			$this->output = ObjectError::MSG_ERROR_OBJECT_DOES_NOT_EXISTS;
+			$this->error = ObjectError::ERROR_OBJECT_DOES_NOT_EXISTS;
+		}
+	}
+
+	public function remove($id) {
+		$objectid = (int)$id;
+		$object = $this->getModule('object')->getObjectById($objectid);
+		if (is_object($object)) {
+			$result = $this->getModule('delete')->delete(
+				$this->director,
+				Delete::TYPE_OBJECT,
+				$object->objectid
+			);
+			$this->output = $result['output'];
+			$this->error = $result['error'];
 		} else {
 			$this->output = ObjectError::MSG_ERROR_OBJECT_DOES_NOT_EXISTS;
 			$this->error = ObjectError::ERROR_OBJECT_DOES_NOT_EXISTS;
