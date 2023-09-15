@@ -21,6 +21,7 @@
  */
 
 use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\Delete;
 use Baculum\Common\Modules\Errors\ClientError;
 
 /**
@@ -46,13 +47,29 @@ class Client extends BaculumAPIServer {
 				$this->error = ClientError::ERROR_NO_ERRORS;
 			} else {
 				$this->output = ClientError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
-				$this->error =ClientError::ERROR_CLIENT_DOES_NOT_EXISTS;
+				$this->error = ClientError::ERROR_CLIENT_DOES_NOT_EXISTS;
 			}
 		} else {
 			$this->output = $result->output;
 			$this->error = $result->exitcode;
 		}
 	}
-}
 
+	public function remove($id) {
+		$clientid = (int)$id;
+		$client = $this->getModule('client')->getClientById($clientid);
+		if (is_object($client)) {
+			$result = $this->getModule('delete')->delete(
+				$this->director,
+				Delete::TYPE_CLIENT,
+				$client->name
+			);
+			$this->output = $result['output'];
+			$this->error = $result['error'];
+		} else {
+			$this->output = ClientError::MSG_ERROR_CLIENT_DOES_NOT_EXISTS;
+			$this->error =ClientError::ERROR_CLIENT_DOES_NOT_EXISTS;
+		}
+	}
+}
 ?>
