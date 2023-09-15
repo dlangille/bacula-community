@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\Delete;
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\PoolError;
 
@@ -51,6 +52,23 @@ class Pool extends BaculumAPIServer {
 		} else {
 			$this->output = $result->output;
 			$this->error = $result->exitcode;
+		}
+	}
+
+	public function remove($id) {
+		$poolid = (int)$id;
+		$pool = $this->getModule('pool')->getPoolById($poolid);
+		if (is_object($pool)) {
+			$result = $this->getModule('delete')->delete(
+				$this->director,
+				Delete::TYPE_POOL,
+				$pool->name
+			);
+			$this->output = $result['output'];
+			$this->error = $result['error'];
+		} else {
+			$this->output = PoolError::MSG_ERROR_POOL_DOES_NOT_EXISTS;
+			$this->error = PoolError::ERROR_POOL_DOES_NOT_EXISTS;
 		}
 	}
 }
