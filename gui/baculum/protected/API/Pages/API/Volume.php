@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\Delete;
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\VolumeError;
 
@@ -97,26 +98,17 @@ class Volume extends BaculumAPIServer {
 		$mediaid = $this->Request->contains('id') ? intval($this->Request['id']) : 0;
 		$volume = $this->getModule('volume')->getVolumeById($mediaid);
 		if (is_object($volume)) {
-			$result = $this->getModule('bconsole')->bconsoleCommand(
+			$result = $this->getModule('delete')->delete(
 				$this->director,
-				[
-					'delete',
-					'volume="' . $volume->volumename . '"',
-					'yes'
-				]
+				Delete::TYPE_VOLUME,
+				$volume->volumename
 			);
-			if ($result->exitcode === 0) {
-				$this->output = $result->output;
-				$this->error = VolumeError::ERROR_NO_ERRORS;
-			} else {
-				$this->output = $result->output;
-				$this->error = VolumeError::ERROR_WRONG_EXITCODE;
-			}
+			$this->output = $result['output'];
+			$this->error = $result['error'];
 		} else {
 			$this->output = VolumeError::MSG_ERROR_VOLUME_DOES_NOT_EXISTS;
 			$this->error = VolumeError::ERROR_VOLUME_DOES_NOT_EXISTS;
 		}
 	}
 }
-
 ?>
