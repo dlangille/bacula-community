@@ -56,6 +56,7 @@
 		<module id="comp_actions" class="Baculum\API\Modules\ComponentActions" />
 		<!-- bconsole command modules -->
 		<module id="ls" class="Baculum\API\Modules\Ls" />
+		<module id="delete" class="Baculum\API\Modules\Delete" />
 		<module id="list" class="Baculum\API\Modules\BList" />
 		<module id="time" class="Baculum\API\Modules\TimeManager" />
 		<!-- changer command modules -->
