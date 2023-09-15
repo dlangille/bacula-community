@@ -20,6 +20,7 @@
  * Bacula(R) is a registered trademark of Kern Sibbald.
  */
 
+use Baculum\API\Modules\Delete;
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\Common\Modules\Errors\JobError;
 
@@ -65,12 +66,13 @@ class Job extends BaculumAPIServer {
 		if ($result->exitcode === 0) {
 			$job = $this->getModule('job')->getJobById($jobid);
 			if(is_object($job) && in_array($job->name, $result->output)) {
-				$result = $this->getModule('bconsole')->bconsoleCommand(
+				$result = $this->getModule('delete')->delete(
 					$this->director,
-					array('delete', 'jobid="' . $job->jobid . '"')
+					Delete::TYPE_JOBID,
+					$job->jobid
 				);
-				$this->output = $result->output;
-				$this->error = $result->exitcode;
+				$this->output = $result['output'];
+				$this->error = $result['error'];
 			} else {
 				$this->output = JobError::MSG_ERROR_JOB_DOES_NOT_EXISTS;
 				$this->error = JobError::ERROR_JOB_DOES_NOT_EXISTS;
