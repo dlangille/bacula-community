@@ -568,6 +568,48 @@
 				"parameters": [{
 					"$ref": "#/components/parameters/ClientId"
 				}]
+			},
+			"delete": {
+				"tags": ["clients"],
+				"summary": "Delete client",
+				"description": "Delete client by specific client identifier.",
+				"responses": {
+					"200": {
+						"description": "Delete client command output and error code.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "Console output from removing client",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 10, 11, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "clientid",
+						"in": "path",
+						"description": "Client identifier",
+						"required":  true,
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
 			}
 		},
 		"/api/v2/clients/{clientid}/show": {
@@ -1331,7 +1373,7 @@
 				"description": "Delete job by specific Job identifier.",
 				"responses": {
 					"200": {
-						"description": "Job properties",
+						"description": "Delete jobid command output and error code.",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -4002,6 +4044,48 @@
 				"parameters": [{
 					"$ref": "#/components/parameters/PoolId"
 				}]
+			},
+			"delete": {
+				"tags": ["pools"],
+				"summary": "Delete pool",
+				"description": "Delete pool by specific pool identifier.",
+				"responses": {
+					"200": {
+						"description": "Delete pool command output and error code.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "Console output from removing pool",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 40, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "poolid",
+						"in": "path",
+						"description": "Pool identifier",
+						"required":  true,
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
 			}
 		},
 		"/api/v2/pools/{poolid}/volumes": {
@@ -8639,6 +8723,48 @@
 						"in": "path",
 						"required": true,
 						"description": "Object identifier",
+						"schema": {
+							"type": "integer"
+						}
+					}
+				]
+			},
+			"delete": {
+				"tags": ["objects"],
+				"summary": "Delete object",
+				"description": "Delete object by specific object identifier.",
+				"responses": {
+					"200": {
+						"description": "Delete object command output and error code.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "Console output from removing object",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 11, 500, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"name": "objectid",
+						"in": "path",
+						"description": "Object identifier",
+						"required":  true,
 						"schema": {
 							"type": "integer"
 						}
