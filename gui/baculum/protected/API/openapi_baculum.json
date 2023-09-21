@@ -10131,6 +10131,65 @@
 				]
 			}
 		},
+		"/api/v2/plugins/core/{storageid}/storage/ls": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "List files and directories on the storage daemon host",,
+				"description": "Get list of files and directories on the storage daemon host.",
+				"responses": {
+					"200": {
+						"description": "List of files and directories on the storage daemon host",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "File and directory list with properties",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 20, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"name": "path",
+						"in": "query",
+						"description": "Path to list files and directories",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					},
+					{
+						"name": "dironly",
+						"in": "query",
+						"description": "If true, in output are listed directories only",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/tenants": {
 			"get": {
 				"tags": ["plugins"],
