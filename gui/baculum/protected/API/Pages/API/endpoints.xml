@@ -150,6 +150,7 @@
 	<!-- Plugins -->
 	<!-- M365 Plugin -->
 	<url ServiceParameter="PluginCoreDirFileList" pattern="api/v2/plugins/core/{id}/storage/ls/" parameters.id="\d+" />
+	<url ServiceParameter="PluginCoreDiskPerf" pattern="api/v2/plugins/core/{id}/storage/diskperf/" parameters.id="\d+" />
 	<url ServiceParameter="PluginM365ListLoggedUsers" pattern="api/v2/plugins/m365/{id}/users/" parameters.id="\d+" />
 	<url ServiceParameter="PluginM365ListLoggedUsers" pattern="api/v2/plugins/m365/{id}/{tenantid}/users/" parameters.id="\d+" parameters.tenantid="[a-zA-Z0-9:.\-_ ]+" />
 	<url ServiceParameter="PluginM365EmailList" pattern="api/v2/plugins/m365/{id}/{tenantid}/emails/" parameters.id="\d+" parameters.tenantid="[a-zA-Z0-9:.\-_ ]+" />
