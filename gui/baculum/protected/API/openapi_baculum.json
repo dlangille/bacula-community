@@ -10064,6 +10064,47 @@
 				]
 			}
 		},
+		"/api/v2/plugins/core/{storageid}/storage/diskperf": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Check performance of the storage daemon disk devices",,
+				"description": "Check performance of the storage daemon disk devices.",
+				"responses": {
+					"200": {
+						"description": "Check performance of the storage daemon disk devices.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "Performance results per archive device",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 20, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/tenants": {
 			"get": {
 				"tags": ["plugins"],
