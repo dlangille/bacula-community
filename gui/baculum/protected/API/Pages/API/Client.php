@@ -35,8 +35,9 @@ class Client extends BaculumAPIServer {
 	public function get() {
 		$clientid = $this->Request->contains('id') ? intval($this->Request['id']) : 0;
 		$client = null;
+		$cli_mod = $this->getModule('client');
 		if ($clientid > 0) {
-			$client = $this->getModule('client')->getClientById($clientid);
+			$client = $cli_mod->getClientById($clientid);
 		}
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {

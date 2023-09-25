@@ -40,6 +40,9 @@ class ClientRecord extends APIDbModule {
 	public $jobretention;
 	public $plugins;
 
+	public $os;
+	public $version;
+
 	public static function finder($className = __CLASS__) {
 		return parent::finder($className);
 	}
