@@ -34,14 +34,26 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
 class ClientManager extends APIModule {
 
 	/**
+	 * Result modes.
+	 */
+	const CLIENT_RESULT_MODE_NORMAL = 'normal';
+	const CLIENT_RESULT_MODE_OVERVIEW = 'overview';
+
+	/**
+	 * Uname pattern to split values.
+	 */
+	const CLIENT_UNAME_PATTERN = '/^(?P<version>[\w\d\.]+)\s+\((?P<release_date>[\da-z]+\))?\s+(?P<os>.+)$/i';
+
+	/**
 	 * Get client list.
 	 *
 	 * @param mixed $limit_val result limit value
 	 * @param int $offset_val result offset value
 	 * @param array $criteria SQL criteria to get job list
+	 * @param string $mode result mode
 	 * @return array clients or empty list if no client found
 	 */
-	public function getClients($limit_val = 0, $offset_val = 0, $criteria = []) {
+	public function getClients($limit_val = 0, $offset_val = 0, $criteria = [], $mode = self::CLIENT_RESULT_MODE_NORMAL) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
@@ -55,17 +67,59 @@ class ClientManager extends APIModule {
 		$sql = 'SELECT *
 FROM Client 
 ' . $where['where'] . $offset . $limit;
-
 		$statement = Database::runQuery($sql, $where['params']);
-		return $statement->fetchAll(\PDO::FETCH_OBJ);
+		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
+		$this->setSpecialFields($result);
+		if ($mode == self::CLIENT_RESULT_MODE_OVERVIEW) {
+			$sql = 'SELECT COUNT(1) AS count FROM Client ' . $where['where'];
+			$statement = Database::runQuery($sql, $where['params']);
+			$count = $statement->fetch(\PDO::FETCH_OBJ);
+			if (!is_object($count)) {
+				$count = (object)['count' => 0];
+			}
+			$result = [
+				'clients' => $result,
+				'count' => $count->count
+			];
+		}
+		return $result;
+	}
+
+	/**
+	 * Set special client properties.
+	 *
+	 * @param array $result client results (note: reference)
+	 */
+	private function setSpecialFields(&$result) {
+		for ($i = 0; $i < count($result); $i++) {
+			// Add operating system info and client version
+			$result[$i]->os = '';
+			$result[$i]->version = '';
+			if (preg_match(self::CLIENT_UNAME_PATTERN, $result[$i]->uname, $match) === 1) {
+				$result[$i]->os = $match['os'];
+				$result[$i]->version = $match['version'];
+			}
+		}
 	}
 
 	public function getClientByName($name) {
-		return ClientRecord::finder()->findByName($name);
+		$result = ClientRecord::finder()->findByName($name);
+		if (is_object($result)) {
+			$result = [$result];
+			$this->setSpecialFields($result);
+			$result = array_shift($result);
+		}
+		return $result;
 	}
 
 	public function getClientById($id) {
-		return ClientRecord::finder()->findByclientid($id);
+		$result = ClientRecord::finder()->findByclientid($id);
+		if (is_object($result)) {
+			$result = [$result];
+			$this->setSpecialFields($result);
+			$result = array_shift($result);
+		}
+		return $result;
 	}
 }
 ?>

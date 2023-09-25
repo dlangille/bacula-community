@@ -488,6 +488,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "overview",
+						"in": "query",
+						"required": false,
+						"description": "If set, it provides the client list overview form. Offset and limit parameters do not apply to overview counts.",
+						"schema": {
+							"type": "boolean"
+						}
 					}
 				]
 			}
@@ -11087,6 +11096,14 @@
 				"jobretention": {
 					"description": "Retention time (in seconds) for jobs",
 					"type": "integer"
+				},
+				"os": {
+					"description": "Operating system information",
+					"type": "string"
+				},
+				"version": {
+					"description": "Bacula client version",
+					"type": "string"
 				}
 			}
 		},

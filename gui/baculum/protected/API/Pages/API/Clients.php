@@ -21,6 +21,7 @@
  */
 
 use Baculum\API\Modules\BaculumAPIServer;
+use Baculum\API\Modules\ClientManager;
 use Baculum\Common\Modules\Errors\ClientError;
 
 /**
@@ -38,6 +39,7 @@ class Clients extends BaculumAPIServer {
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$plugin = $this->Request->contains('plugin') && $misc->isValidAlphaNumeric($this->Request['plugin']) ? $this->Request['plugin'] : '';
+		$mode = $this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']) ? ClientManager::CLIENT_RESULT_MODE_OVERVIEW : ClientManager::CLIENT_RESULT_MODE_NORMAL;
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
 			$params = [];
@@ -78,16 +80,10 @@ class Clients extends BaculumAPIServer {
 			$clients = $this->getModule('client')->getClients(
 				$limit,
 				$offset,
-				$params
+				$params,
+				$mode
 			);
-			array_shift($result->output);
-			$clients_output = array();
-			foreach($clients as $client) {
-				if(in_array($client->name, $result->output)) {
-					$clients_output[] = $client;
-				}
-			}
-			$this->output = $clients_output;
+			$this->output = $clients;
 			$this->error = ClientError::ERROR_NO_ERRORS;
 		} else {
 
