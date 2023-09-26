@@ -22,6 +22,7 @@
 
 use Baculum\API\Modules\BaculumAPIServer;
 use Baculum\API\Modules\ClientManager;
+use Baculum\API\Modules\Database;
 use Baculum\Common\Modules\Errors\ClientError;
 
 /**
@@ -39,6 +40,8 @@ class Clients extends BaculumAPIServer {
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : 0;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : 0;
 		$plugin = $this->Request->contains('plugin') && $misc->isValidAlphaNumeric($this->Request['plugin']) ? $this->Request['plugin'] : '';
+		$os = $this->Request->contains('os') && $misc->isValidNameExt($this->Request['os']) ? $this->Request['os'] : '';
+		$version = $this->Request->contains('version') && $misc->isValidColumn($this->Request['version']) ? $this->Request['version'] : '';
 		$mode = $this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']) ? ClientManager::CLIENT_RESULT_MODE_OVERVIEW : ClientManager::CLIENT_RESULT_MODE_NORMAL;
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
@@ -76,6 +79,24 @@ class Clients extends BaculumAPIServer {
 					'operator' => 'LIKE',
 					'vals' => "%{$plugin}%"
 				];
+			}
+
+			$db_params = $this->getModule('api_config')->getConfig('db');
+			$regex_op = $db_params['type'] == Database::PGSQL_TYPE ? '~*' : 'REGEXP';
+			if (!empty($os) || !empty($version)) {
+				$params['Client.Uname'] = [];
+				if (!empty($os)) {
+					$params['Client.Uname'][] = [
+						'operator' => $regex_op,
+						'vals' => '^[[:alnum:]]+\\.[[:alnum:]]+\\.[[:alnum:]]+ +\\([[:alnum:]]+\\) +.*' . $os . '.*$'
+					];
+				}
+				if (!empty($version)) {
+					$params['Client.Uname'][] = [
+						'operator' => $regex_op,
+						'vals' => '^.*' . $version . '.* +\\([[:alnum:]]+\\) *.*$'
+					];
+				}
 			}
 			$clients = $this->getModule('client')->getClients(
 				$limit,
