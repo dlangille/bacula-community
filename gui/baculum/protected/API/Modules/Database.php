@@ -207,6 +207,10 @@ class Database extends APIModule {
 						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
 						$value[$i]['operator'] = '';
+					} elseif (in_array($value[$i]['operator'], ['REGEXP', 'REGEXP BINARY', '~', '~*'])) {
+						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
 					} else {
 						$cond[] = "$key = :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
