@@ -497,6 +497,24 @@
 						"schema": {
 							"type": "boolean"
 						}
+					},
+					{
+						"name": "os",
+						"in": "query",
+						"required": false,
+						"description": "Operating system filter. Value provided here is sourrunded by regex .* and .* so there is possible to provide only a part of the operating system info. This parameter supports regexp and it is case insensitive.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "version",
+						"in": "query",
+						"required": false,
+						"description": "Client version filter. Value provided here is sourrunded by regex .* and .* so there is possible to provide only a part of the version. This parameter supports regexp and it is case insensitive.",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
