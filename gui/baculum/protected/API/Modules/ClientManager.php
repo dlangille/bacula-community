@@ -50,10 +50,11 @@ class ClientManager extends APIModule {
 	 * @param mixed $limit_val result limit value
 	 * @param int $offset_val result offset value
 	 * @param array $criteria SQL criteria to get job list
+	 * @param array $jobs jobs used to get job properties per client
 	 * @param string $mode result mode
 	 * @return array clients or empty list if no client found
 	 */
-	public function getClients($limit_val = 0, $offset_val = 0, $criteria = [], $mode = self::CLIENT_RESULT_MODE_NORMAL) {
+	public function getClients($limit_val = 0, $offset_val = 0, $criteria = [], $jobs = [], $mode = self::CLIENT_RESULT_MODE_NORMAL) {
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
@@ -62,12 +63,37 @@ class ClientManager extends APIModule {
 		if (is_int($offset_val) && $offset_val > 0) {
 			$offset = ' OFFSET ' . $offset_val;
 		}
+		$jcriteria = [];
+		if (count($jobs) > 0) {
+			$jcriteria['Job.Name'] = [];
+			$jcriteria['Job.Name'][] = [
+				'operator' => 'IN',
+				'vals' => $jobs
+			];
+		}
+		$jwhere = Database::getWhere($jcriteria, true);
+		if (!empty($jwhere['where'])) {
+			$jwhere['where'] = ' AND ' . $jwhere['where'];
+		}
 		$where = Database::getWhere($criteria);
 
-		$sql = 'SELECT *
-FROM Client 
-' . $where['where'] . $offset . $limit;
-		$statement = Database::runQuery($sql, $where['params']);
+		$sql = '
+SELECT DISTINCT 
+	Client.*,
+	COALESCE(J.running_jobs, 0) AS running_jobs
+FROM
+	Client AS Client
+	LEFT JOIN (
+		SELECT ClientId AS clientid, COUNT(1) AS running_jobs
+		FROM Client
+		JOIN Job USING (ClientId)
+		WHERE Job.JobStatus IN (\'C\', \'R\')
+		' . $jwhere['where'] . '
+		GROUP BY ClientId
+	) AS J ON (Client.ClientId = J.ClientId) 
+	' . $where['where'] . $offset . $limit;
+		$params = array_merge($jwhere['params'], $where['params']);
+		$statement = Database::runQuery($sql, $params);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
 		$this->setSpecialFields($result);
 		if ($mode == self::CLIENT_RESULT_MODE_OVERVIEW) {

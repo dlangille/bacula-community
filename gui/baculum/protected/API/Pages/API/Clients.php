@@ -98,10 +98,23 @@ class Clients extends BaculumAPIServer {
 					];
 				}
 			}
+
+			$jobs = [];
+			$result = $this->getModule('bconsole')->bconsoleCommand(
+				$this->director,
+				['.jobs'],
+				null,
+				true
+			);
+			if ($result->exitcode === 0) {
+				$jobs = $result->output;
+			}
+
 			$clients = $this->getModule('client')->getClients(
 				$limit,
 				$offset,
 				$params,
+				$jobs,
 				$mode
 			);
 			$this->output = $clients;

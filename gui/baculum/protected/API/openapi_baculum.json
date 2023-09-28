@@ -10989,6 +10989,10 @@
 					"description": "Retention time (in seconds) for jobs",
 					"type": "integer"
 				},
+				"running_jobs": {
+					"description": "Number of currently running jobs on client",
+					"type": "integer"
+				},
 				"os": {
 					"description": "Operating system information",
 					"type": "string"
