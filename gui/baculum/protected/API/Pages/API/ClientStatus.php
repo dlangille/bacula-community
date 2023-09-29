@@ -21,6 +21,7 @@
  */
  
 use Baculum\API\Modules\ConsoleOutputPage;
+use Baculum\API\Modules\StatusClient;
 use Baculum\Common\Modules\Errors\ClientError;
 use Baculum\Common\Modules\Errors\GenericError;
 
@@ -65,6 +66,7 @@ class ClientStatus extends ConsoleOutputPage {
 				'client' => $client->name,
 				'type' => $type
 			]);
+			$this->addExtraProperties($type, $out);
 		}
 		$this->output = $out['output'];
 		$this->error = $out['error'];
@@ -95,6 +97,44 @@ class ClientStatus extends ConsoleOutputPage {
 			$params['client'],
 			$params['type']
 		);
+	}
+
+	/**
+	 * Add extra properties to JSON status client output.
+	 *
+	 * @param string $type output type (running, terminated...)
+	 * @param string $result client output JSON results (be careful - reference)
+	 */
+	private function addExtraProperties($type, &$result) {
+		if ($type == StatusClient::OUTPUT_TYPE_RUNNING) {
+			$jobids = [];
+			for ($i = 0; $i < count($result['output']); $i++) {
+				$jobids[] = $result['output'][$i]['jobid'];
+			}
+			if (count($jobids) == 0) {
+				// no jobs, no extra props
+				return;
+			}
+			$params = [
+				'Job.JobId' => [[
+					'operator' => 'IN',
+					'vals' => $jobids
+				]]
+			];
+			$jobs = $this->getModule('job')->getJobs(
+				$params
+			);
+			for ($i = 0; $i < count($jobids); $i++) {
+				for ($j = 0; $j < count($jobs); $j++) {
+					if ($jobids[$i] != $jobs[$j]->jobid) {
+						continue;
+					}
+					$result['output'][$i]['name'] = $jobs[$j]->name;
+					$result['output'][$i]['fileset'] = $jobs[$j]->fileset;
+					break;
+				}
+			}
+		}
 	}
 }
 
