@@ -43,6 +43,8 @@ class Clients extends BaculumAPIServer {
 		$os = $this->Request->contains('os') && $misc->isValidNameExt($this->Request['os']) ? $this->Request['os'] : '';
 		$version = $this->Request->contains('version') && $misc->isValidColumn($this->Request['version']) ? $this->Request['version'] : '';
 		$mode = $this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']) ? ClientManager::CLIENT_RESULT_MODE_OVERVIEW : ClientManager::CLIENT_RESULT_MODE_NORMAL;
+		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: null;
+		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: null;
 		$result = $this->getModule('bconsole')->bconsoleCommand($this->director, array('.client'));
 		if ($result->exitcode === 0) {
 			$params = [];
@@ -110,9 +112,30 @@ class Clients extends BaculumAPIServer {
 				$jobs = $result->output;
 			}
 
+			$sort = [];
+			if (!is_null($order_by)) {
+				if (is_null($order_direction)) {
+					$order_direction = 'ASC';
+				}
+				$cr = new \ReflectionClass('Baculum\API\Modules\ClientRecord');
+				$sort_cols = $cr->getProperties();
+				$order_by_lc = strtolower($order_by);
+				$columns = [];
+				foreach ($sort_cols as $cols) {
+					$columns[] = $cols->getName();
+				}
+				if (!in_array($order_by_lc, $columns)) {
+					$this->output = ClientError::MSG_ERROR_INVALID_PROPERTY;
+					$this->error = ClientError::ERROR_INVALID_PROPERTY;
+					return;
+				}
+				$sort = [[$order_by_lc, $order_direction]];
+			}
+
 			$clients = $this->getModule('client')->getClients(
 				$limit,
 				$offset,
+				$sort,
 				$params,
 				$jobs,
 				$mode
