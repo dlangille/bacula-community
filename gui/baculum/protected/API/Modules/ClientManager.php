@@ -49,12 +49,18 @@ class ClientManager extends APIModule {
 	 *
 	 * @param mixed $limit_val result limit value
 	 * @param int $offset_val result offset value
+	 * @param array $sort order by and order direction in form [[by1, direction1]]
 	 * @param array $criteria SQL criteria to get job list
 	 * @param array $jobs jobs used to get job properties per client
 	 * @param string $mode result mode
 	 * @return array clients or empty list if no client found
 	 */
-	public function getClients($limit_val = 0, $offset_val = 0, $criteria = [], $jobs = [], $mode = self::CLIENT_RESULT_MODE_NORMAL) {
+	public function getClients($limit_val = 0, $offset_val = 0, $sort = [['Name', 'ASC']], $criteria = [], $jobs = [], $mode = self::CLIENT_RESULT_MODE_NORMAL) {
+		$extra_cols = ['os', 'version'];
+		$order = '';
+		if (count($sort) == 1 && !in_array($sort[0][0], $extra_cols)) {
+			$order = Database::getOrder($sort);
+		}
 		$limit = '';
 		if(is_int($limit_val) && $limit_val > 0) {
 			$limit = ' LIMIT ' . $limit_val;
@@ -91,11 +97,22 @@ FROM
 		' . $jwhere['where'] . '
 		GROUP BY ClientId
 	) AS J ON (Client.ClientId = J.ClientId) 
-	' . $where['where'] . $offset . $limit;
+	' . $where['where'] . $order . $offset . $limit;
 		$params = array_merge($jwhere['params'], $where['params']);
 		$statement = Database::runQuery($sql, $params);
-		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
+		$result = $statement->fetchAll(\PDO::FETCH_ASSOC);
 		$this->setSpecialFields($result);
+		if (count($sort) == 1 && in_array($sort[0][0], $extra_cols)) {
+			$misc = $this->getModule('misc');
+			// Order by os or version
+			$misc::sortResultsByField(
+				$result,
+				$sort[0][0],
+				$sort[0][1],
+				'name',
+				$misc::ORDER_DIRECTION_ASC
+			);
+		}
 		if ($mode == self::CLIENT_RESULT_MODE_OVERVIEW) {
 			$sql = 'SELECT COUNT(1) AS count FROM Client ' . $where['where'];
 			$statement = Database::runQuery($sql, $where['params']);
@@ -119,11 +136,11 @@ FROM
 	private function setSpecialFields(&$result) {
 		for ($i = 0; $i < count($result); $i++) {
 			// Add operating system info and client version
-			$result[$i]->os = '';
-			$result[$i]->version = '';
-			if (preg_match(self::CLIENT_UNAME_PATTERN, $result[$i]->uname, $match) === 1) {
-				$result[$i]->os = $match['os'];
-				$result[$i]->version = $match['version'];
+			$result[$i]['os'] = '';
+			$result[$i]['version'] = '';
+			if (preg_match(self::CLIENT_UNAME_PATTERN, $result[$i]['uname'], $match) === 1) {
+				$result[$i]['os'] = $match['os'];
+				$result[$i]['version'] = $match['version'];
 			}
 		}
 	}
@@ -131,9 +148,9 @@ FROM
 	public function getClientByName($name) {
 		$result = ClientRecord::finder()->findByName($name);
 		if (is_object($result)) {
-			$result = [$result];
+			$result = [(array)$result];
 			$this->setSpecialFields($result);
-			$result = array_shift($result);
+			$result = (object)array_shift($result);
 		}
 		return $result;
 	}
@@ -141,9 +158,9 @@ FROM
 	public function getClientById($id) {
 		$result = ClientRecord::finder()->findByclientid($id);
 		if (is_object($result)) {
-			$result = [$result];
+			$result = [(array)$result];
 			$this->setSpecialFields($result);
-			$result = array_shift($result);
+			$result = (object)array_shift($result);
 		}
 		return $result;
 	}

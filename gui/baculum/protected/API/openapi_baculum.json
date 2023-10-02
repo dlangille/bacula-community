@@ -515,6 +515,25 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "order_by",
+						"in": "query",
+						"required": false,
+						"description": "Sort by selected client property (default by name). There can be any client property.",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"name": "order_direction",
+						"in": "query",
+						"required": false,
+						"description": "Order direction. It can be 'asc' (ascending order) or 'desc' (descending order - default)",
+						"schema": {
+							"type": "string",
+							"enum": ["asc", "desc"]
+						}
 					}
 				]
 			}
