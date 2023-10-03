@@ -12108,6 +12108,14 @@
 				"source": {
 					"description": "From where file event comes",
 					"type": "string"
+				},
+				"filename": {
+					"description": "File name",
+					"type": "string"
+				},
+				"path": {
+					"description": "File directory path",
+					"type": "string"
 				}
 			}
 		},
