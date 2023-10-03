@@ -43,6 +43,10 @@ class FileEventRecord extends APIDbModule {
 	public $severity;
 	public $source;
 
+	// Extra properties
+	public $filename;
+	public $path;
+
 	public static function finder($className = __CLASS__) {
 		return parent::finder($className);
 	}

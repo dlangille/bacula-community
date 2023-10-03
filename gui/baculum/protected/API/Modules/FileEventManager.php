@@ -56,7 +56,14 @@ class FileEventManager extends APIModule {
 
 		$where = Database::getWhere($criteria);
 
-		$sql = 'SELECT FileEvents.* FROM FileEvents ' . $where['where'] . $order . $limit . $offset;
+		$sql = 'SELECT
+				FileEvents.*,
+				Path.Path,
+				File.Filename
+			FROM FileEvents
+			LEFT JOIN File ON (FileEvents.JobId = File.JobId AND FileEvents.FileIndex = File.FileIndex)
+			LEFT JOIN Path USING (PathId)
+			' . $where['where'] . $order . $limit . $offset;
 
 		return FileEventRecord::finder()->findAllBySql($sql, $where['params']);
 	}
