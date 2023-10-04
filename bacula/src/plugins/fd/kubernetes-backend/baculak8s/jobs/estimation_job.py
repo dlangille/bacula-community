@@ -38,11 +38,15 @@ RES_LIST_ERROR = "Cannot list resource objects. Err={}"
 PROCESSING_NAMESPACE_INFO = "Processing namespace: {namespace}"
 PROCESSING_PVCDATA_START_INFO = "Start backup volume claim: {pvc}"
 PROCESSING_PVCDATA_STOP_INFO = "Finish backup volume claim: {pvc}"
+PROCESSING_PODBACKUP_PHASE_START_INFO = "Start backup phase of pvcs that they are in pod annotations"
+PROCESSING_PODBACKUP_PHASE_FINISH_INFO = "Finish backup phase of pvcs that they are in pod annotations"
 PROCESSING_PODBACKUP_START_INFO = "Start backup Pod: {namespace}/{podname}"
 PROCESSING_PODBACKUP_FINISH_INFO = "Finish backup Pod: {namespace}/{podname}"
+SKIP_PVCDATA_SECOND_BACKUP_INFO = "Skip backup of pvc `{}` because it did previously with a pod"
+SECOND_TRY_PVCDATA_INFO = "Generic try to do backup of this pvc `{}`"
 BA_PVC_NOT_FOUND_ERROR = "Requested volume claim: {pvc} on {namespace}/{podname} not found!"
 BA_PVCNAME_ERROR = "Invalid annotations for Pod: {namespace}/{podname}. {bavol} Required!"
-PROCESS_POD_PVCDATA_ERROR = "Cannot process Pod PVC Data backup!"
+PROCESS_POD_PVCDATA_ERROR = "Cannot process Pod PVC Data backup: {namespace}/{podname}!"
 LABEL_PARAM_INVALID_ERROR = "Label parameter ({}) is invalid!"
 
 
@@ -132,11 +136,15 @@ class EstimationJob(JobPodBacula):
                 podsannotated = self._plugin.get_annotated_namespaced_pods_data(nsname, estimate=estimate)
                 logging.debug("processing get_annotated_namespaced_pods_data:{}:nrfound:{}".format(nsname,
                                                                                                    len(podsannotated)))
+                # We can define what pvc backup in two places: fileset and pod annotation. So, we save the pod annotations to we don't backup two times the same.
+                pvc_backed={}
                 # here we have a list of pods which are anotated
                 if podsannotated is not None:
                     if isinstance(podsannotated, dict) and podsannotated.get('exception'):
                         self._handle_error(PODS_LIST_ERROR.format(parse_json_descr(podsannotated)))
                     else:
+                        if not estimate:
+                            self._io.send_info(PROCESSING_PODBACKUP_PHASE_START_INFO)
                         for pod in podsannotated:
                             logging.debug('PODDATA:{}'.format(pod))
                             # this is required parameter!
@@ -154,13 +162,20 @@ class EstimationJob(JobPodBacula):
                                                                                               podname=podname))
                                 status = self.process_pod_pvcdata(nsname, pod, pvcnames)
                                 if status is None:
-                                    logging.error("Some unknown error!")
-                                    self._handle_error(PROCESS_POD_PVCDATA_ERROR)
+                                    for pvc_name in pvcnames.split(','):
+                                        pvc_backed[pvc_name] = 'error' 
+                                    logging.error("Some unknown error at {namespace}/{podname}!".format(namespace=nsname, podname=podname))
+                                    self._handle_error(PROCESS_POD_PVCDATA_ERROR.format(namespace=nsname, podname=podname))
                                     break
                                 if not estimate:
+                                    for pvc_name in pvcnames.split(','):
+                                        pvc_backed[pvc_name] = 'ok'
                                     self._io.send_info(PROCESSING_PODBACKUP_FINISH_INFO.format(namespace=nsname,
                                                                                                podname=podname))
-
+                        if not estimate:
+                            self._io.send_info(PROCESSING_PODBACKUP_PHASE_FINISH_INFO)
+                            logging.debug("PVCs backed through pod annotations: {}".format(pvc_backed))
+                
                 pvcdatalist = self._plugin.list_pvcdata_for_namespace(nsname, estimate=estimate)
                 logging.debug("processing list_pvcdata_for_namespace:{}:nrfound:{}".format(nsname, len(pvcdatalist)))
                 if pvcdatalist is not None:
@@ -171,6 +186,13 @@ class EstimationJob(JobPodBacula):
                             pvcdata = pvcdatalist.get(pvc)
                             logging.debug('PVCDATA:{}:{}'.format(pvc, pvcdata))
                             if not estimate:
+                                logging.debug("Previous pvc_backed: {} /{}".format(pvc_backed, pvc))
+                                # If a pod has annotations to backup a pvc, it did it previously. So, skip if it was ok, if not second try.
+                                if pvc_backed.get(pvc) == 'ok':
+                                    self._io.send_info(SKIP_PVCDATA_SECOND_BACKUP_INFO.format(pvc))
+                                    continue
+                                elif pvc_backed.get(pvc) == 'error':
+                                    self._io.send_info(SECOND_TRY_PVCDATA_INFO.format(pvc))
                                 self._io.send_info(PROCESSING_PVCDATA_START_INFO.format(pvc=pvc))
                             status = self.process_pvcdata(nsname, pvcdata)
                             if status is None:

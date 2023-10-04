@@ -49,18 +49,7 @@ def main():
         return exit_code
     except SystemExit:
         pass
-    """
-    LogConfig.start()
-    plugin_name = HandshakeService().execute()
-    job_info = JobInfoService().execute()
-    plugin_params = PluginParamsService(job_info).execute()
-    LogConfig.handle_params(job_info, plugin_params)
-    merged_params = merge_two_dicts(job_info, plugin_params)
-    plugin = PluginFactory.create(plugin_name, merged_params)
-    job = JobFactory.create(merged_params, plugin)
-    job.execute()
-    JobEndService(merged_params, plugin).execute()
-    """
+
     exit_code = 0
     Log.save_exit_code(exit_code)
     return exit_code
