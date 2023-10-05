@@ -339,6 +339,7 @@ class ObjectsOverview extends BaculumAPIServer {
 		}
 
 		$objects = $this->getModule('object')->getObjectsOverview(
+			$this->director,
 			$general_params,
 			$object_params,
 			$limit,

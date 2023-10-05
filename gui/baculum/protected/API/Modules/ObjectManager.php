@@ -161,6 +161,7 @@ LEFT JOIN Client USING (ClientId) '
 	/**
 	 * Get object records in overview.
 	 *
+	 * @param string $director director name
 	 * @param array $general_criteria SQL criteria to get object list
 	 * @param array $object_criteria SQL object specific criteria to get object list
 	 * @param mixed $limit_val result limit value
@@ -169,7 +170,7 @@ LEFT JOIN Client USING (ClientId) '
 	 * @param string $sort_order sort order (asc - ascending, desc - descending)
 	 * @return array object record list or empty list if no object found
 	 */
-	public function getObjectsOverview($general_criteria = [], $object_criteria = [], $limit_val = null, $offset_val = 0, $sort_col = 'endtime', $sort_order = 'DESC') {
+	public function getObjectsOverview($director, $general_criteria = [], $object_criteria = [], $limit_val = null, $offset_val = 0, $sort_col = 'endtime', $sort_order = 'DESC') {
 		$connection = ObjectRecord::finder()->getDbConnection();
 		$connection->setActive(true);
 		$pdo = $connection->getPdoInstance();
@@ -212,9 +213,61 @@ LEFT JOIN Client USING (ClientId) '
 		$result = [
 			'overview' => []
 		];
+
+		$bconsole = $this->getModule('bconsole');
+
+		// get allowed job list
+		$jobs = [];
+		$jobs_result = $bconsole->bconsoleCommand(
+			$director,
+			['.jobs'],
+			null,
+			true
+		);
+		if ($jobs_result->exitcode === 0) {
+			$jobs = array_filter($jobs_result->output);
+		}
+		if (count($jobs) == 0) {
+			// NOTE: No jobs, no objects, EXIT
+			return $result;
+		}
+		if (!key_exists('Job.Name', $general_criteria)) {
+			$general_criteria['Job.Name'] = [];
+		}
+		$general_criteria['Job.Name'][] = [
+			'operator' => 'IN',
+			'vals' => $jobs
+		];
+
+
+
+		// get allowed client list
+		$clients = [];
+		$clients_result = $bconsole->bconsoleCommand(
+			$director,
+			['.client'],
+			null,
+			true
+		);
+		if ($clients_result->exitcode === 0) {
+			$clients = array_filter($clients_result->output);
+		}
+		if (count($clients) == 0) {
+			// NOTE: No clients, no objects, EXIT
+			return $result;
+		}
+		if (!key_exists('Client.Name', $general_criteria)) {
+			$general_criteria['Client.Name'] = [];
+		}
+		$general_criteria['Client.Name'][] = [
+			'operator' => 'IN',
+			'vals' => $clients
+		];
+
 		$general_where = Database::getWhere($general_criteria, true);
 		$object_crit_all = array_merge($general_criteria, $object_criteria);
 		$object_where = Database::getWhere($object_crit_all);
+
 		try {
 			// start transaction
 			$pdo->beginTransaction();
