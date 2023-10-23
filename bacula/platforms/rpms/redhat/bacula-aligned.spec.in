@@ -65,6 +65,7 @@ Prefix: %{_prefix}
 Distribution: Bacula Aligned Volumes
 
 Source0: http://www.prdownloads.sourceforge.net/bacula/%{product}-%{version}.tar.gz
+Source1: http://www.prdownloads.sourceforge.net/bacula/%{product}-aligned-driver-%{version}.tar.gz
 
 Requires: bacula-sd, %{base_package_name}-libs = %{_version}
 
@@ -86,6 +87,7 @@ This is Bacula Aligned Volumes Storage plugin.
 
 %prep
 %setup -T -D -n bacula-%{_version} -b 0
+%setup -T -D -n bacula-%{_version} -b 1
 
 %build
 
