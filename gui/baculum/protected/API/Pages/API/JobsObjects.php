@@ -409,8 +409,14 @@ class JobsObjects extends BaculumAPIServer {
 		);
 		if ($result->exitcode === 0) {
 			$vals = [];
-			if (!empty($jobname) && in_array($jobname, $result->output)) {
-				$vals = [$jobname];
+			if (!empty($jobname)) {
+				if (in_array($jobname, $result->output)) {
+					$vals = [$jobname];
+				} else {
+					$this->output = JobError::MSG_ERROR_JOB_DOES_NOT_EXISTS;
+					$this->error = JobError::ERROR_JOB_DOES_NOT_EXISTS;
+					return;
+				}
 			} else {
 				$vals = $result->output;
 			}
