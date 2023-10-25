@@ -8584,6 +8584,15 @@
 						"schema": {
 							"type": "string"
 						}
+					},
+					{
+						"name": "fileset",
+						"in": "query",
+						"required": false,
+						"description": "FileSet name",
+						"schema": {
+							"type": "string"
+						}
 					}
 				]
 			}
