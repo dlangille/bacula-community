@@ -127,7 +127,8 @@ class ObjectManager extends APIModule
 		$sql = 'SELECT ' . $obj_record . ' 
 FROM Object 
 JOIN Job USING (JobId) 
-LEFT JOIN Client USING (ClientId) '
+LEFT JOIN Client USING (ClientId) 
+LEFT JOIN FileSet USING (FileSetId) '
 . $where['where'] . $order . $limit . $offset;
 		$statement = Database::runQuery($sql, $where['params']);
 		$result = $statement->fetchAll(\PDO::FETCH_OBJ);
