@@ -13,8 +13,56 @@ metadata:
   name: plugintest-persistent-volume-claim-csi
 spec:
   accessModes:
-  - ReadWriteOnce
+    - ReadWriteOnce
   resources:
     requests:
       storage: 1Gi
   storageClassName: csi-hostpath-sc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plugintest-persistent-volume-claim-csi-2
+  namespace: plugintest
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: csi-hostpath-sc
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: plugintest-annotations-test
+  namespace: plugintest
+  labels:
+    app: plugintest
+    environment: production
+spec:
+  hostname: plugintest-3-csi
+  subdomain: plugintest-subdomain
+  containers:
+    - image: busybox:1.28
+      command:
+        - sleep
+        - "3600"
+      name: plugintest
+      volumeMounts:
+        - name: plugintest-pvc-persistent-storage-csi
+          mountPath: /data-csi
+        - name: plugintest-pvc-persistent-storage-csi-2
+          mountPath: /data-csi-2
+        - name: plugintest-pvc-persistent-storage-standard
+          mountPath: /data
+  volumes:
+    - name: plugintest-pvc-persistent-storage-csi
+      persistentVolumeClaim:
+        claimName: plugintest-persistent-volume-claim-csi
+    - name: plugintest-pvc-persistent-storage-csi-2
+      persistentVolumeClaim:
+        claimName: plugintest-persistent-volume-claim-csi-2
+    - name: plugintest-pvc-persistent-storage-standard
+      persistentVolumeClaim:
+        claimName: plugintest-persistent-volume-claim

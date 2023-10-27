@@ -80,7 +80,7 @@ class KubernetesPlugin(Plugin):
                 # pvcdata without value
                 _pvcdata = True
             else:
-                _pvcdata = [_pvcdata]
+                _pvcdata = _pvcdata.split(',')
 
         self.config = {
             'config_file': params.get("config", None),
@@ -533,8 +533,12 @@ class KubernetesPlugin(Plugin):
             return self.__restore_k8s_object(file_info, file_content_source)
 
     # TODO: export/move all checks into k8sbackend
-    def check_vsnapshot_compatibility(self, storage_class_name):
+    def check_storage_compatibility_with_vsnapshot(self, storage_class_name):
         return SNAPSHOT_DRIVER_COMPATIBLE in storage_class_name
+
+    def check_pvc_compatiblity_with_vsnapshot(self, namespace, pvc_name):
+        pvc = self.get_pvcdata_namespaced(namespace, pvc_name)
+        return self.check_storage_compatibility_with_vsnapshot(pvc.get('storage_class_name'))
 
     def _check_config_map(self, file_info):
         return self.__exec_check_object(
@@ -881,6 +885,7 @@ class KubernetesPlugin(Plugin):
         response = self.__execute(lambda: self.corev1api.delete_namespaced_persistent_volume_claim(
             clonename, namespace, grace_period_seconds=0,
             propagation_policy='Foreground'))
+        logging.debug("Response: {}".format(response))
         if isinstance(response, dict) and "error" in response:
             return response
         r1 = self.get_pvcdata_namespaced(namespace, clonename)

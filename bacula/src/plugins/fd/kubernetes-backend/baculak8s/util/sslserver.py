@@ -199,6 +199,12 @@ class ConnectionServer(object):
             process_client_data(self.connstream)
         finally:
             logging.debug('ConnectionServer:Finish - disconnect.')
-            self.connstream.shutdown(socket.SHUT_RDWR)
+            try:
+                self.connstream.shutdown(socket.SHUT_RDWR)
+            except Exception as e:
+                logging.debug('throw exception when disconnect.')
+                logging.error(e)
+            logging.debug('ConnectionServer:Finish - shutdown.')
             self.connstream.close()
+            logging.debug('ConnectionServer:Finish - closed.')
         return {}

@@ -38,7 +38,8 @@ BA_MODE_ERROR = "Invalid annotations for Pod: {namespace}/{podname}. Backup Mode
 BA_EXEC_STDOUT = "{}:{}"
 BA_EXEC_STDERR = "{} Error:{}"
 BA_EXEC_ERROR = "Pod Container execution: {}"
-
+POD_BACKUP_SELECTED = "The backup mode selected to the pvc `{}` is `{}`"
+CHANGE_BACKUP_MODE_FOR_INCOMPATIBLITY_PVC = "The pvc `{}` is not compatible with snapshot backup, changing mode to standard. Only pvc with storage that they use CSI driver are compatible."
 
 class BackupJob(EstimationJob):
     """
@@ -126,10 +127,12 @@ class BackupJob(EstimationJob):
             return False
         return True
 
-    def process_pvcdata(self, namespace, pvcdata):
+    def process_pvcdata(self, namespace, pvcdata, backup_with_pod = False):
         status = None
+        vsnapshot = None
         # Detect if pvcdata is compatible with snapshots
-        vsnapshot, pvcdata = self.handle_create_vsnapshot_backup(namespace, pvcdata)
+        if not backup_with_pod:
+            vsnapshot, pvcdata = self.handle_create_vsnapshot_backup(namespace, pvcdata.get('name'))
 
         logging.debug('Process_pvcdata (Backup_job): {} {}'.format(vsnapshot, pvcdata))
         if self.prepare_bacula_pod(pvcdata, namespace=namespace, mode='backup'):
@@ -140,7 +143,8 @@ class BackupJob(EstimationJob):
                 self.handle_tarstderr()
             self.handle_delete_pod(namespace=namespace)
         # Both prepare_bacula_pod fails or not, we must remove snapshot and pvc
-        self.handle_delete_vsnapshot_backup(namespace, vsnapshot, pvcdata)
+        if not backup_with_pod:
+            self.handle_delete_vsnapshot_backup(namespace, vsnapshot, pvcdata)
         return status
 
     def handle_pod_container_exec_command(self, corev1api, namespace, pod, runjobparam, failonerror=False):
@@ -202,21 +206,38 @@ class BackupJob(EstimationJob):
         handledvolumes = []
 
         # iterate on requested volumes for shapshot
-        logging.debug("iterate over requested vols for snapshot: {}".format(requestedvolumes))
+        logging.debug("iterate over requested vols for backup: {}".format(requestedvolumes))
         for pvc in requestedvolumes:
             pvcname = pvc
-            logging.debug("handling vol before snapshot: {}".format(pvcname))
-            if backupmode == BaculaBackupMode.Snapshot:
+            vsnapshot = None
+            logging.debug("handling vol before backup: {}".format(pvcname))
+            self._io.send_info(POD_BACKUP_SELECTED.format(pvcname, backupmode))
+            # self._io.send_info("The pvc `{}` will be backedup with {} mode".format(pvcname, backupmode))
+            if backupmode == BaculaBackupMode.Clone:
                 # snapshot if requested
                 pvcname = self.create_pvcclone(namespace, pvcname)
                 if pvcname is None:
                     # error
                     logging.error("create_pvcclone failed!")
                     return False
-            logging.debug("handling vol after snapshot: {}".format(pvcname))
+
+            if backupmode == BaculaBackupMode.Snapshot:
+                vsnapshot, pvc_from_vsnap = self.handle_create_vsnapshot_backup(namespace, pvcname)
+                logging.debug("The vsnapshot created from pvc {} is: {}".format(pvcname, vsnapshot))
+                logging.debug("The pvc create from vsnapshot {} is: {}".format(vsnapshot, pvc_from_vsnap))
+                if vsnapshot == None:
+                    logging.debug(CHANGE_BACKUP_MODE_FOR_INCOMPATIBLITY_PVC.format(pvcname))
+                    # backupmode = BaculaBackupMode.Clone
+                    self._io.send_info(CHANGE_BACKUP_MODE_FOR_INCOMPATIBLITY_PVC.format(pvcname))
+                else:
+                    pvc = pvc_from_vsnap.get("name")
+                    pvcname = pvc_from_vsnap.get("name")
+
+            logging.debug("handling vol after snapshot/clone: {}".format(pvcname))
             handledvolumes.append({
                 'pvcname': pvcname,
                 'pvc': pvc,
+                'vsnapshot': vsnapshot
                 })
 
         failonerror = BoolParam.handleParam(pod.get(BaculaAnnotationsClass.RunAfterSnapshotonError), False)     # the default is ignore errors
@@ -241,16 +262,19 @@ class BackupJob(EstimationJob):
                 logging.debug('PVCDATA:{}:{}'.format(pvc, pvcdata))
                 logging.debug('PVCDATA FI.name:{}'.format(pvcdata.get('fi').name))
                 if len(pvcdata) > 0:
-                    status = self.process_pvcdata(namespace, pvcdata)
+                    status = self.process_pvcdata(namespace, pvcdata, True)
 
         # iterate on requested volumes for delete snap
         logging.debug("iterate over requested vols for delete snap: {}".format(handledvolumes))
         for volumes in handledvolumes:
             pvcname = volumes['pvcname']
-
-            if backupmode == BaculaBackupMode.Snapshot:
+            logging.debug("Should remove this pvc: {}".format(pvcname))
+            if backupmode == BaculaBackupMode.Clone:
                 # snapshot delete if snapshot requested
                 status = self.delete_pvcclone(namespace, pvcname)
+            if backupmode == BaculaBackupMode.Snapshot and volumes['vsnapshot'] is not None:
+                status = self.handle_delete_vsnapshot_backup(namespace, volumes['vsnapshot'], volumes['pvc'])
+        logging.debug("Finish removing pvc clones and vsnapshots. Status {}".format(status))
 
         failonerror = BoolParam.handleParam(pod.get(BaculaAnnotationsClass.RunAfterJobonError), False)     # the default is ignore errors
         # here we execute remote command after Pod backup

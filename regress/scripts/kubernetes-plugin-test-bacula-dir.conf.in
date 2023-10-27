@@ -192,7 +192,7 @@ Job {
 FileSet {
   Name = "TestPluginKubernetesSet4"
   Include { Options { signature=SHA1 }
-    Plugin = "@LPLUG@ namespace=plugintest persistentvolume=@PV_CSI1@ @BACKUP_PROXY_ARGS@"
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@"
   }
 }
 Job {
@@ -261,6 +261,297 @@ Job {
   FileSet = TestPluginKubernetesSet22
 }
 
+FileSet {
+  Name = "TestPluginKubernetesSet30"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest persistentvolume=@PV_CSI1@ @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest30"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet30
+}
+
+FileSet {
+  Name = "TestPluginKubernetesSet31"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=@BACKUP_ONLY_PVC@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest31"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet31
+}
+
+#
+# Jobs with csi-driver to check combinations in pod annotations 
+#
+
+# 40. Check annotation:
+# mode: standard
+# one vol: plugintest-persistent-volume-claim-csi
+FileSet {
+  Name = "TestPluginKubernetesSet40"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest40"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet40
+}
+
+# 41. Check annotation:
+# mode: standard
+# two vols: plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2
+FileSet {
+  Name = "TestPluginKubernetesSet41"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest41"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet41
+}
+
+# 50. Check annotation:
+# mode: snapshot
+# one vol no compatible: plugintest-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet50"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest50"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet50
+}
+
+# 51. Check annotation:
+# mode: snapshot
+# one vol compatible: plugintest-persistent-volume-claim-csi
+FileSet {
+  Name = "TestPluginKubernetesSet51"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest51"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet51
+}
+
+# 52. Check annotation:
+# mode: snapshot
+# two vol compatible: plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2
+FileSet {
+  Name = "TestPluginKubernetesSet52"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest52"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet52
+}
+
+# 53. Check annotation:
+# mode: snapshot
+# one vol compatible and another not: plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet53"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest53"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet53
+}
+
+# 54. Check annotation:
+# mode: snapshot
+# one vol not compatible and another yes: plugintest-persistent-volume-claim,plugintest-persistent-volume-claim-csi
+FileSet {
+  Name = "TestPluginKubernetesSet54"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim,plugintest-persistent-volume-claim-csi"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest54"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet54
+}
+
+# 60. Check annotation:
+# mode: clone
+# one vol compatible: plugintest-persistent-volume-claim-csi
+FileSet {
+  Name = "TestPluginKubernetesSet60"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest60"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet60
+}
+
+# 61. Check annotation:
+# mode: clone
+# one vol no compatible: plugintest-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet61"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest61"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet61
+}
+
+# 62. Check annotation:
+# mode: clone
+# two vols compatible: plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2
+FileSet {
+  Name = "TestPluginKubernetesSet62"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim-csi-2"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest62"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet62
+}
+
+# 63. Check annotation:
+# mode: clone
+# one vol compatible and another not: plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet63"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim-csi,plugintest-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest63"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet63
+}
+
+# 64. Check annotation:
+# mode: clone
+# one vol not compatible and another yes: plugintest-persistent-volume-claim,plugintest-persistent-volume-claim-csi
+FileSet {
+  Name = "TestPluginKubernetesSet64"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim,plugintest-persistent-volume-claim-csi"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest64"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet64
+}
+
+# 70. Check pvcdata:
+# one vol (standard): plugintest-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet70"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest70"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet70
+}
+
+# 71. Check pvcdata:
+# two vols (standard): plugintest-persistent-volume-claim,plugintest3-persistent-volume-claim
+FileSet {
+  Name = "TestPluginKubernetesSet71"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@=plugintest-persistent-volume-claim,plugintest3-persistent-volume-claim"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest71"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet71
+}
+
+# 72. Check pvcdata:
+# any vol (all vols will be backed)
+FileSet {
+  Name = "TestPluginKubernetesSet72"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest72"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet72
+}
+
+# 73. Check pvcdata:
+# any vol, one pod with annotation standard
+FileSet {
+  Name = "TestPluginKubernetesSet73"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest73"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet73
+}
+
+# 74. Check pvcdata:
+# any vol, one pod with annotation clone
+FileSet {
+  Name = "TestPluginKubernetesSet74"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest74"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet74
+}
+
+# 75. Check pvcdata:
+# any vol, one pod with annotation snapshot
+FileSet {
+  Name = "TestPluginKubernetesSet75"
+  Include { Options { signature=SHA1 }
+    Plugin = "@LPLUG@ namespace=plugintest @BACKUP_PROXY_ARGS@"
+  }
+}
+Job {
+  Name = "PluginKubernetesTest75"
+  JobDefs = Default
+  FileSet = TestPluginKubernetesSet75
+}
 
 # List of files to be backed up
 FileSet {

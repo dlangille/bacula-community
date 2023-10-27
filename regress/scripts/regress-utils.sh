@@ -313,11 +313,11 @@ fi
 }
 
 #
-# Check the expected string on any log file
+# Check the expected string in any log file
 #
 # in:
 # $1 - type of log. Values allowed: b,r,e,l
-# $2 - the string to seach into logfile
+# $2 - the string to search into logfile
 # $3 - a test number to examine which means we will check log${ltest}.out logfile
 check_regress_string_in_log()
 {
@@ -334,6 +334,94 @@ check_regress_string_in_log()
       return 1
    else
       return 0
+   fi
+}
+
+#
+# Check expected string is not in any log file
+#
+# in:
+# $1 - type of log. Values allowed: b,r,e,l
+# $2 - the string to search into logfile
+# $3 - a test number to examine which means we will check log${ltest}.out logfile
+check_regress_string_not_in_log()
+{
+   type_log=$1
+   to_search=$2
+   n_test=$3
+   log_file=${tmp}/${type_log}log${n_test}.out
+   grep "${to_search}" ${log_file} > /dev/null
+   F=$?
+   if [ $F -ne 1 ]
+   then
+      error_stat="${type_log}stat"
+      declare -g "${error_stat}"=$((${!error_stat}+1))
+      return 1
+   else
+      return 0
+   fi
+}
+
+#
+# Get a value of parameter
+#
+# in:
+# $1 - type of log. Values allowed: b,r,e,l
+# $2 - the parameter to get value. For example: 'FD Bytes Written', 'SD Bytes Written', 'jobbytes'
+# $3 - a test number to examine which means we will check log${ltest}.out logfile
+#
+# Example of call: To get value of parameter "SD Bytes Written" in test 5
+# get_value_of_parameter_in_log "b" "SD Bytes Written" 5
+get_value_of_parameter_in_log()
+{
+   type_log=$1
+   job_parameter=$2
+   n_test=$3
+   # echo -e "get_value_of_parameter_in_log:381 - Input: ${type_log} ${job_parameter} ${n_test}\n"
+   log_file=${tmp}/${type_log}log${n_test}.out
+   # Catch up the line with job_parameter, remove spaces and ',' and get value after ':'.
+   parameter_value=$(grep "${job_parameter}:" ${log_file} | sed 's/ //g' | sed 's/,//g' | awk -F'[: (]+' '{print $2}')
+   echo $parameter_value
+}
+#
+#
+# Check a value of parameter if greater, equal or less than input value
+#
+# in:
+# $1 - type of log. Values allowed: b,r,e,l
+# $2 - if operator without '-'. For example: 'gt' to greater than, 'ge' to greater than or equal, 'lt' to less than
+# $3 - the parameter to check. For example: 'FD Bytes Written', 'SD Bytes Written', 'jobbytes'
+# $4 - number to check. Can use *KB, *MB format. Example: 5, 50KB, 100MB 
+# $5 - a test number to examine which means we will check log${ltest}.out logfile
+#
+# Example of call: To check if a backup job wrote more than 100MB in test 5
+# check_regress_number_in_log "b" "gt" "SD Bytes Written" "100MB" 5
+check_regress_number_in_log()
+{
+   type_log=$1
+   operator="-"$2
+   job_parameter=$3
+   number=$4
+   n_test=$5
+   # printf "regress-utils.sh:420 - Input: %s;%s;%s;%s;%s\n" "${type_log}" "$operator" "${job_parameter}" "${number}" "${n_test}"
+   
+   parameter_value=$(get_value_of_parameter_in_log "${type_log}" "${job_parameter}" "${n_test}")
+
+   if [[ $number == *KB ]]; then
+      number=$(echo $number | tr -d 'KB' | awk '{print $1 * 1000}')
+   elif [[ $number == *MB ]]; then
+      number=$(echo $number | tr -d 'MB' | awk '{print $1 * 1000 * 1000}')
+   elif [[ $number == *GB ]]; then
+      number=$(echo $number | tr -d 'GB' | awk '{print $1 * 1000 * 1000 * 1000}')
+   fi
+   # printf "regress-utils.sh:420 - %s;%s;%s\n" "${parameter_value}" "$operator" "${number}"
+   if [ "${parameter_value}" $operator "${number}"  ]
+   then
+      return 0
+   else
+      error_stat="${type_log}stat"
+      declare -g "${error_stat}"=$((${!error_stat}+1))
+      return 1
    fi
 }
 

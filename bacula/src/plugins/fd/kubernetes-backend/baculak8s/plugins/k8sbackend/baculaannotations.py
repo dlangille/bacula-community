@@ -41,8 +41,9 @@ class BaculaBackupMode(object):
     This is a class to manage snapshot mode.
     """
     Snapshot = 'snapshot'
+    Clone = 'clone'
     Standard = 'standard'
-    params = (Snapshot, Standard)
+    params = (Snapshot, Clone, Standard)
 
     @staticmethod
     def process_param(mode):

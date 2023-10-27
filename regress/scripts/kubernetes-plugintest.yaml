@@ -77,6 +77,20 @@ spec:
       storage: 1Gi
 ---
 apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: plugintest3-persistent-volume-claim
+  namespace: plugintest
+  labels:
+    app: plugintest
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
 kind: Pod
 metadata:
   name: plugintest1
@@ -118,6 +132,35 @@ spec:
       - sleep
       - "3600"
     name: plugintest
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: plugintest3
+  namespace: plugintest
+  labels:
+    app: plugintest
+    environment: production
+    # tier: frontend
+  annotations:
+    bacula/backup.mode: standard
+    bacula/backup.volumes: plugintest3-persistent-volume-claim
+spec:
+  hostname: plugintest-3
+  subdomain: plugintest-subdomain
+  containers:
+  - image: busybox:1.28
+    command:
+      - sleep
+      - "3600"
+    name: plugintest
+    volumeMounts:
+      - name: plugintest3-persistent-storage
+        mountPath: /data
+  volumes:
+    - name: plugintest3-persistent-storage
+      persistentVolumeClaim:
+        claimName: plugintest3-persistent-volume-claim
 ---
 apiVersion: apps/v1
 kind: ReplicaSet

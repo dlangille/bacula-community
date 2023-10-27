@@ -139,11 +139,11 @@ class EstimationJob(JobPodBacula):
                 # We can define what pvc backup in two places: fileset and pod annotation. So, we save the pod annotations to we don't backup two times the same.
                 pvc_backed={}
                 # here we have a list of pods which are anotated
-                if podsannotated is not None:
+                if podsannotated is not None and self._plugin.config.get('pvcdata') is not None:
                     if isinstance(podsannotated, dict) and podsannotated.get('exception'):
                         self._handle_error(PODS_LIST_ERROR.format(parse_json_descr(podsannotated)))
                     else:
-                        if not estimate:
+                        if len(podsannotated) > 0 and not estimate:
                             self._io.send_info(PROCESSING_PODBACKUP_PHASE_START_INFO)
                         for pod in podsannotated:
                             logging.debug('PODDATA:{}'.format(pod))
@@ -161,6 +161,7 @@ class EstimationJob(JobPodBacula):
                                     self._io.send_info(PROCESSING_PODBACKUP_START_INFO.format(namespace=nsname,
                                                                                               podname=podname))
                                 status = self.process_pod_pvcdata(nsname, pod, pvcnames)
+                                logging.debug("Status in processing_loop: {}".format(status))
                                 if status is None:
                                     for pvc_name in pvcnames.split(','):
                                         pvc_backed[pvc_name] = 'error' 
@@ -172,7 +173,7 @@ class EstimationJob(JobPodBacula):
                                         pvc_backed[pvc_name] = 'ok'
                                     self._io.send_info(PROCESSING_PODBACKUP_FINISH_INFO.format(namespace=nsname,
                                                                                                podname=podname))
-                        if not estimate:
+                        if len(podsannotated) > 0 and not estimate:
                             self._io.send_info(PROCESSING_PODBACKUP_PHASE_FINISH_INFO)
                             logging.debug("PVCs backed through pod annotations: {}".format(pvc_backed))
                 
@@ -192,7 +193,7 @@ class EstimationJob(JobPodBacula):
                                     self._io.send_info(SKIP_PVCDATA_SECOND_BACKUP_INFO.format(pvc))
                                     continue
                                 elif pvc_backed.get(pvc) == 'error':
-                                    self._io.send_info(SECOND_TRY_PVCDATA_INFO.format(pvc))
+                                    self._io.send_warning(SECOND_TRY_PVCDATA_INFO.format(pvc))
                                 self._io.send_info(PROCESSING_PVCDATA_START_INFO.format(pvc=pvc))
                             status = self.process_pvcdata(nsname, pvcdata)
                             if status is None:

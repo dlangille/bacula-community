@@ -89,6 +89,8 @@ class BaculaConnection(object):
         ))
 
     def authenticate(self):
+        logging.debug('Authenticate')
+        logging.debug(self.conn)
         if self.conn is not None:
             # first prepare the hello string
             self.conn.send(bytes('{strlen:03}:Hello:{job}'.format(job=self.jobname, strlen=len(self.jobname) + 7), 'ascii'))
@@ -116,6 +118,12 @@ class BaculaConnection(object):
                 except OSError as e:
                     logging.debug(e)
                     time.sleep(1)
+                    logging.debug('Connected OSError')
+                except Exception as e:
+                    logging.debug(e)
+                    time.sleep(1)
+                    logging.debug('Connected Exception')
+                    break
                 else:
                     logging.info('Connected.')
                     break
@@ -178,6 +186,7 @@ class BaculaConnection(object):
             logging.error('Timeout waiting {} for tar to proceed. Terminate!'.format(self.conntimeout))
             self.tarproc.terminate()
         # send execution logs
+        logging.debug('Final_execute')
         self.connect()
         logging.info('tar exit status:{}'.format(exitcode))
         self.conn.send("{}\n".format(exitcode).encode())
@@ -199,17 +208,22 @@ class BaculaConnection(object):
         self.final_execute()
 
     def execute_backup(self):
+        logging.debug('Execute_backup')
         self.prepare_execute()
+        logging.debug('Executed_prepare_execute')
         if os.path.isdir('/backup'):
+            logging.debug('Isdir')
             self.tarproc = subprocess.Popen([TARCMD, '-cvvf', TARPIPE, '-C', '/backup', '.'],
                                             stderr=self.terr,
                                             stdout=self.tout)
             self.sendfile(TARPIPE)
             self.final_execute()
         else:
+            logging.debug('Nodir')
             self.err_no_dir_found()
 
     def execute_restore(self):
+        logging.debug('Execute_restore')
         self.prepare_execute()
         if os.path.isdir('/restore'):
             self.tarproc = subprocess.Popen([TARCMD, '-xvvf', TARPIPE, '-C', '/restore'],
