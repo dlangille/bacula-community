@@ -45,6 +45,10 @@ class Jobs extends BaculumAPIServer {
 		$type = $this->Request->contains('type') && $misc->isValidJobType($this->Request['type']) ? $this->Request['type'] : '';
 		$jobname = $this->Request->contains('name') && $misc->isValidName($this->Request['name']) ? $this->Request['name'] : '';
 		$clientid = $this->Request->contains('clientid') ? $this->Request['clientid'] : '';
+		$joberrors = null;
+		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
+			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
+		}
 
 		// UNIX timestamp values
 		$schedtime_from = $this->Request->contains('schedtime_from') && $misc->isValidInteger($this->Request['schedtime_from']) ? (int)$this->Request['schedtime_from'] : null;
@@ -399,6 +403,20 @@ class Jobs extends BaculumAPIServer {
 					$error = true;
 					$this->output = $result->output;
 					$this->error = $result->exitcode;
+				}
+			}
+			if (!is_null($joberrors)) {
+				if ($joberrors === true) {
+					$params['Job.JobErrors'] = [];
+					$params['Job.JobErrors'][] = [
+						'operator' => '>',
+						'vals' => 0
+					];
+				} elseif ($joberrors === false) {
+					$params['Job.JobErrors'] = [];
+					$params['Job.JobErrors'][] = [
+						'vals' => 0
+					];
 				}
 			}
 
