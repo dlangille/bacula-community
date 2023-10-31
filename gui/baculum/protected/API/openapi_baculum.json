@@ -1079,6 +1079,15 @@
 						}
 					},
 					{
+						"name": "joberrors",
+						"in": "query",
+						"required": false,
+						"description": "Show jobs that contain or that do not contain errors.",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
 						"name": "schedtime_from",
 						"in": "query",
 						"required": false,
