@@ -1,4 +1,1293 @@
-        ChangeLog for Bacula Enterprise version 13.0.3
+        ChangeLog for Bacula version 15.0.0
+
+31Oct23
+ - baculum: Add joberrors parameter to jobs endpoint
+
+27Oct23
+ - k8s: Add snapshot support feature in pod annotations and fix minor bugs.
+
+25Oct23
+ - baculum: Add fileset parameter to objects endpoint
+
+23Oct23
+ - rpms: Fix aligned package generation
+
+04Oct23
+ - k8s: Fix write the same pvc data two times
+
+03Oct23
+ - baculum: Add filename and path properties to fileevent endpoints
+
+02Oct23
+ - baculum: Add sorting parameters to clients endpoint
+
+28Sep23
+ - baculum: Add running jobs property to clients endpoint
+
+26Sep23
+ - baculum: Add documentation for os and version filters in clients endpoint
+ - baculum: Add os and version parameters to clients endpoint
+
+25Sep23
+ - baculum: Add os, version properties and overview parameter to clients endpoint
+
+22Sep23
+ - baculum: Add endpoint to check disk archive device prformance on storage 
+  daemon host
+
+21Sep23
+ - baculum: Add endpoint to list files and dirs on storage daemon host
+
+15Sep23
+ - baculum: Add delete pool endpoint
+ - baculum: Add delete object endpoint
+ - baculum: Use new delete module in volume and job endpoints
+ - baculum: Add module for delete command
+
+14Sep23
+ - rpms: Add AWS cloud driver
+ - rpms: Adjust spec file
+ - rpm: Fix conflict rule with client
+
+13Sep23
+ - baculum: Add client name parameter to clients endpoint
+ - Generate bxxxjson man pages
+ - rpms: Add man pages for bjson tools
+ - Fix #10369 About clearer message during progressive virtual full
+
+12Sep23
+ - Add man pages for b*json tools
+
+11Sep23
+ - Fix cython detection
+ - Add build procedure for antivirus
+
+08Sep23
+ - Add a dummy baculabackupreport with a pointer to the repository
+ - Remove baculabackupreport. Can be found at https://github.com/waa/baculabackupreport
+ - Fix compilation issue with ZSDT
+
+07Sep23
+ - win32: Fix exchange compilation
+ - rpms: Update spec
+ - rpms: Change storage daemon group to tape instead of disk
+ - baculum: Add file events API endpoint
+ - baculum: Improve extended name validator
+
+06Sep23
+ - Fix compilation with btotp
+ - Add new database upgrade scripts to ./configure
+ - BEE Backport lib files
+ - BEE Backport dird files
+ - BEE Backport stored files
+ - Backport aligned_dev.h
+ - Backport sql_get.c
+ - Fix compilation
+
+05Sep23
+ - Add more checks on update volumeprotect
+ - Fix compilation
+ - Fix compilation
+
+30Aug23
+ - Update PriorJob and PriorJobId in db_update_job_start_record()
+
+25Aug23
+ - Fix #10249 About status schedule output fix
+
+24Aug23
+ - Fix warning with delta_seq on MySQL during restore
+ - Fix mysql warning about OPT_RECONNECT that is deprecated in 8.0.34
+ - cloud: Fix #10259 Oracle cloud failed behind. Several updates
+
+14Aug23
+ - Set default ZSTD level to 3 instead of 10
+
+11Aug23
+ - Fix #0010329: No module named 'csi_snapshot'
+
+10Aug23
+ - Fix ZSTD compression level ignored in FileSet
+
+08Aug23
+ - Fix #10307 Add PriorJobName and PriorJobId to the volume label format
+ - Disable garbage collection based on sm_bytes for big systems
+ - Add tryIncNumConcurrentJobs for CLIENT and STORE class
+ - Change the deadlock check interval to 20mins
+
+07Aug23
+ - Fix #10323 about bug in status storage with incorrect devices
+
+02Aug23
+ - Fix @author in k8s plugin and ignore ouput of function check_regress_string_in_log()
+
+31Jul23
+ - k8s: Add compatibility with csi volume snapshots backup
+
+24Jul23
+ - k8s: Style consistency in string format.
+ - k8s: Fix service upload error and flexible yaml loader
+
+20Jul23
+ - Fix postgresql warning
+
+19Jul23
+ - k8s: Fix #9735 Protocol error when tar file changed while we do backup 
+  it
+ - k8s: Fix clusterIP when we restore a headless service.
+ - k8s: Fix dependence problem with upx package when the kubernetes-pod is 
+  created
+
+15Jul23
+ - baculum: Speed up dashboard page loading
+
+14Jul23
+ - k8s: Fix problem when upgrade libraries
+ - k8s: Upgrade libraries up to Centos7 supports
+ - k8s: Fix pip fixed value with variables pip path.
+ - k8s: Fix build compatibility with old versions and RHEL.
+
+13Jul23
+ - baculum: Fix parsing director time in time endpoint
+
+11Jul23
+ - Fix the selection list bug with jobid=1-2277
+
+10Jul23
+ - baculum: Add objecttype parameter to object categories endpoint
+ - Add sorting by objectcategory in objects overview endpoint
+ - Add sorting by fileset in objects overview endpoint
+
+07Jul23
+ - baculum: Add second dimensional sorting and use it for sorting jobstatus in 
+  sources overview endpoint
+ - Fix compilation k8s.
+ - kubernetes: Allow parameters with simple quotes
+
+06Jul23
+ - baculum: Add modify default object sorting in object overview endpoint
+
+04Jul23
+ - baculum: Fix support for PHP 5.4 in web interface layer
+
+03Jul23
+ - baculum: Fix content field in job record
+ - baculum: Improve support for newer PostgreSQL versions
+ - Fix #10249 Adjust the output of status schedule
+ - Fix compilation issue with tls.c
+ - Update copyright year
+
+30Jun23
+ - baculum: Add fileset content property to jobs endpoint
+ - update copyright year
+
+29Jun23
+ - baculum: Add object categories endpoint
+ - baculum: Add support for ALL action in console ACL
+
+28Jun23
+ - baculum: Add objecttype filter to objects names endpoint
+ - baculum: Add default sorting by endtime to objects overview endpoint
+ - Fix error message code when a FileDaemon cannot connect a Director
+
+26Jun23
+ - baculum: Add sorting parameters to volumes overview endpoint
+ - baculum: Add second dimension of sorting in jobs objects endpoint
+ - fix ifdef logic in fs_get_free_space()
+
+21Jun23
+ - baculum: Add offset and limit parameters to director status endpoint
+ - baculum: Add sorting by endtime and add endtime property to objects overview 
+  endpoint
+
+20Jun23
+ - baculum: Add group_order_by and group_order_direction parameters to documentation
+ - docker: Fix potential segfault with incorrect plugin command line
+
+15Jun23
+ - baculum: Add notes about object type filters in objects overview endpoint
+ - baculum: Fix storing ACL config actions for very old PHP versions
+
+14Jun23
+ - baculum: Add objectsize property to objects overview endpoint
+ - baculum: Add job type property to objects overview endpoint
+ - baculum: Add path property to objects overview endpoint
+ - baculum: Fix offset and limit parameter in jobs objects endpoint
+ - baculum: Add objectname parameter to jobs objects endpoint
+
+13Jun23
+ - baculum: Add objectsource property to objects overview endpoint
+ - baculum: New API config ACLs
+
+12Jun23
+ - Use more specific Job status when verify job is waiting for SD or FD
+
+07Jun23
+ - baculum: Add group_order_by and group_order_direction parameters to objects 
+  endpoint
+ - baculum: Add to grup function sorting group capability
+ - baculum: Add sorting by joberrors if sorted by jobstatus first
+
+05Jun23
+ - baculum: Improve using unique_objects parameter in object endpoint
+ - baculum: Add group_offset and unique_objects parameters to objects endpoint
+
+01Jun23
+ - baculum: Add volume names endpoint
+
+31May23
+ - baculum: Add object names endpoint
+ - baculum: Add object types endpoint
+ - baculum: Add documentation for client parameter in objects endpoint
+ - baculum: Add job status filter to objects endpoint
+ - baculum: Add joberrors filter to sources endpoint
+ - Use size_t for smartalloc
+
+30May23
+ - baculum: Add server parameter to list vsphere datastores endpoint
+ - baculum: Add job level property to sources endpoint
+ - baculum: Add pool resnames endpoint
+ - baculum: Add storage resnames endpoint
+ - baculum: Add director time endpoint
+
+29May23
+ - baculum: Change M365 tenants endpoint output to contain tenant names
+ - baculum: Update documentation
+
+26May23
+ - baculum: Add object overview endpoint
+ - Fix windows compilation
+
+25May23
+ - Fix issue with data spooling introduced in 16.0
+
+24May23
+ - Fix MySQL catalog upgrade script with StatusInfo field
+
+19May23
+ - s3_driver: Fix #10130 Add debug to S3 driver
+ - amazon_driver: Fix #10130 Add support for endpoint_url
+
+17May23
+ - fix #10137 Volume XXX in unavailable now.
+
+12May23
+ - win32: Fix joblist for windows
+
+28Apr23
+ - Fix #10094 About broken var command
+ - Fix #10086: Going backward in BSR because of 2 jobs running in //
+
+24Apr23
+ - Fix #10082 Add Queue RunsWhen to bdirjson
+
+21Apr23
+ - win32: Modify namedpipe to configure the message protocol
+
+11Apr23
+ - Fix #9894 Use Journal instead of Syslog for systemd service output
+
+06Apr23
+ - fix warning in compat.cpp
+
+05Apr23
+ - implement fs_get_free_space for win32
+
+04Apr23
+ - Ensure the Director can work with the previous SD after VolRetention modification
+
+31Mar23
+ - Fix #10020 #9757 Improve Volume Protection code and fix the unprotection 
+  code
+
+30Mar23
+ - Fix #10004 Use VolRetention if greater than MinimumVolumeRetention when 
+  setting volume to Read-Only
+ - Fix #10017 Add support for runscript AtJobCompletion to bdirjson
+
+28Mar23
+ - store-mngr: Rename LastBackupedTo into LastBackedUpTo
+ - Fix #10004 Check if volumes are used when setting the volume protection
+
+24Mar23
+ - Fix missing JobHisto fields in make_mysql_tables
+
+20Mar23
+ - Fix #9981 About segfault in bvfs_get_volume()
+
+17Mar23
+ - Fix list jobmedia command
+
+14Mar23
+ - k8s: Fix 9935 part-2 misspelled reponse instead of response
+
+13Mar23
+ - allow double quote escaping in win32 bpipe
+
+10Mar23
+ - Fix bdb_find_next_volume() with VolEncrypted field
+
+09Mar23
+ - Add .ls dironly parameter to list only client directories
+ - Fix estimate code with limit
+ - k8s: Fix #9935 name 'response' is not defined in get_pods()
+ - Fix #9945 About incorrect job status after Runscript::Console execution
+
+08Mar23
+ - Make Jobs with runscript "Queued" in timeout to wait
+
+07Mar23
+ - Fix #9923 Windows crash when Fileset is empty
+
+06Mar23
+ - Fix #9933 About incorrect message of the setbandwidth command
+ - Fix #9912 About Director crash with status dir
+
+03Mar23
+ - Prune Object records when pruning Files
+
+02Mar23
+ - Fix orphan buffer with plugin list
+
+28Feb23
+ - Enhance MaximumConcurrentJobPerLevel script
+ - Report an error when .query cannot find a suitable plugin
+
+22Feb23
+ - Fix warning reported by new GCC
+
+17Feb23
+ - Fix update_mysql_tables script
+
+16Feb23
+ - Fix bconsole path in MaximumConcurrentJobPerLevel script
+
+15Feb23
+ - Add MaximumConcurrentJobPerLevel script for RunScript Job Queue control 
+  example
+
+13Feb23
+ - Allow to cancel a job in the jobq with the runscript exit status 2
+
+10Feb23
+ - win32: add helper function
+
+03Feb23
+ - store-mngr: Fix #8852 #9572 2 new store-mngr strategies and regress tests
+ - Fix aix compilation
+
+02Feb23
+ - win32: fix HRESULT constant mismatch between signed and unsigned
+
+31Jan23
+ - Add limit option to the estimate command
+ - Add bconsole command 'list jobs reviewed=<0|1>'
+ - fix key-manager.py local variable 'crypto_ctx' referenced before assignment
+
+13Jan23
+ - Fix AIX compilation
+
+12Jan23
+ - Fix compilation for AIX
+ - improve the key-manager to better support master-key
+ - remove xxh_x86dispatch.c that was unused from Makefile
+
+11Jan23
+ - Cloud: Fix #9799 Add objects_default_tiers support into bsdjson
+
+10Jan23
+ - Use the malware command name as description rather than "user defined"
+ - new installation script install-volume-encryption.sh
+ - Cloud: Fix #9747 Fatal error prevents catalog update so Volume was never set 
+  in error.
+
+06Jan23
+ - async.sh: sync the .in files
+ - Add basic master-key support to key-manager
+ - !! handle the Jmsg at an upper level when required
+ - fix Cannot free Volume XXX, because it is reserved by someone else
+
+05Jan23
+ - adjust antivirus-test to new jobid selection
+ - Fix #9780 allow multiple jobids in fileevents request
+
+04Jan23
+ - Fix #9786 About tab completion issue
+ - Fix #9791 About incorrect connection message generated during a Virtual 
+  Full
+ - Fix #9781 About adding "list fileevents" to the help command output
+ - Fix #9790 Enhance Malware error message
+
+21Dec22
+ - Cloud: Add a test that manually delete part.1 so it's correctly restored from 
+  cloud
+ - Fix #9764 Abort a job if a PluginOptions is incorrect
+ - Fix #9765 About FileEvent table permission on Redhat
+
+20Dec22
+ - Install malware database tools to exepath
+ - Fix #9712 about SHA256 size detection for malware
+ - Use number/limit on status schedule output
+ - Improve .help to display information about dot-commands
+ - Fix connection information in verify and virtualfull jobs
+
+19Dec22
+ - Add connection message back in Copy/Migration job log
+ - Fix catalog's update procedure for JobHisto
+
+16Dec22
+ - Fix schema for old MySQL
+ - Cloud: change MaximumVolumeParts type to 32bits
+
+15Dec22
+ - Fix #9742 About incorrect checksum type detection for Malware checking
+ - Improve connection error message with a different code for each target 
+  component
+ - Change connection error code to distinguish from TLS errors
+
+14Dec22
+ - Add runscript RunsWhen=Queue to create advanced job queue management scripts
+ - Fix .status storage devices output
+
+12Dec22
+ - Add Content preview to FileSet catalog record.
+ - Add client=x filter to ".status dir running"
+ - Update pid file after a reload
+
+09Dec22
+ - setup default value for Encryption Command in bacula-sd.conf
+ - Fix #9724 empty EncryptionCommand crash the SD
+ - Fix #9729 bad volume label BlockVer field
+
+08Dec22
+ - k8s: Fix #9727 NoneType object is not subscriptable
+
+07Dec22
+ - update docker and kubernetes image to 07Dec22
+
+06Dec22
+ - cloud: Fix #9714 introduce max_vol_parts_num variable to limit cloud volumes 
+  parts count
+ - fix wrong "Last Volume Bytes" in VirtualFull
+
+05Dec22
+ - Fix #9719 About upgrade issue with grant_postgresql_privileges script
+
+02Dec22
+ - Fix #9715 add VolEncrypted field when upgrading the Catalog
+
+01Dec22
+ - show a warning when trying to read encrypted volume on un-encrypted device
+
+28Nov22
+ - Fix #9682: give a name instead of a number for stream that are unexpected
+ - bscan: initialize the volume type using the device type
+
+24Nov22
+ - improve code for volume selection for encrypted volumes
+
+22Nov22
+ - Fix #9689 VolumeEncryption parameters must be yes|no|strong
+ - Fix #2962 Change btape sample output message
+ - Adjust malware error codes
+
+21Nov22
+ - Add list restoreobject client= option
+ - Adjust some Daemon Event/Error codes
+ - Fix memory leak with RestoreObject compression
+ - Fix compilation without openssl
+
+18Nov22
+ - Update device initialization error code
+ - initialize encrypted volume when recycling with rewrite_volume_label()
+ - bscan: update the VolEncrypted state in the catalog
+ - use VolEncrypted in find_next_volume() only for Volume in 'Append'
+ - sqlite3: use AUTOINCREMENT for JobId to avoid reuse of old jobid when purging
+ - BB03 recycle continuity
+
+16Nov22
+ - fix .bvfs_lsfile SQL query for mysql and sqlite3
+
+15Nov22
+ - Fix VolEncrypted in get_scratch_volume()
+ - fix bsys path split
+
+14Nov22
+ - Display an error message when SSL_shutdown() return -1
+ - Remove unneeded call to gettext()
+ - Add missing error message after incorrect TLS setup
+ - Fix compilation without TLS
+
+11Nov22
+ - Fix error message after connect() in filed and stored
+ - Enhance the network error reporting with between the Director and the File/SD
+
+10Nov22
+ - Store verified JobId/Job name inside PriorJob and PriorJobId Verify job
+
+08Nov22
+ - Fix update_mysql_tables for MODIFY vs ADD for Protected & VolEncrypted
+ - Improve the bsock network errors display
+
+07Nov22
+ - Add VolumeEncrypted field to the catalog
+ - reactivate the 64bits XXHASH checksum in the block
+
+04Nov22
+ - Rename Protect to Protected
+ - Initialize Protect when creating a new media
+ - Stay in non-blocking state for the entire TLS connection
+
+02Nov22
+ - Modify the help command to display only available commands
+
+31Oct22
+ - Limit the 'status dir' scheduled job list to 50 jobs
+ - Add set_limit_offset() to OutputWriter groups
+
+28Oct22
+ - Enhance the output of status director with large job list
+
+27Oct22
+ - Add status director scheduled 'novolume' option
+
+26Oct22
+ - Translate some error messages in file_dev.c
+ - Fix warning in findlib/fstype.c
+ - Update Dmsg() to not modify the errno during a call
+
+25Oct22
+ - fix key-manager.py: don't delete old volume's keyfile
+
+24Oct22
+ - Fix #9563 Inherit JobDefs tags
+ - VolEnc: rename BlockEncrytion into VolumeEncryption
+
+20Oct22
+ - Fix compilation without openssl/encryption
+ - fix XXH3_64bits() not exported by bacula.dll in 64bits
+
+18Oct22
+ - Fix #9569 About incorrect file selection with restore menu 7
+
+17Oct22
+ - Fix warnings in base64
+ - Improve .status dir running with .api
+
+14Oct22
+ - Add %V as a variant of %v in edit_device_codes()
+
+13Oct22
+ - add the script key-manager.py
+ - Modify .status dir running to return the output as a flow
+ - cloud: exercice StorageClass directive for Amazon cloud driver
+ - Fix #9594 Use a default date when the data has not timestamp
+ - Add OT_DATE in OutputWriter
+
+12Oct22
+ - cloud: remove useless edit_device_codes function
+ - Change edit_device_codes() prototype to avoid POOLMEM leaks
+
+10Oct22
+ - Add Storage Daemon SetReadOnly directive
+ - pluginlib: Move the new variables in the JobInfo phase
+ - Fix windows build
+
+07Oct22
+ - fix sqlite3 make table Error: near line 254: near ")": syntax error
+
+06Oct22
+ - New BB03 volume format: volume encryption & new 64bits checksum
+ - remove unused DEV_BLOCK::ser_buf
+ - Convert MySQL TinyBlob to BLOB for some Object table members
+ - Add --enable-check-dmsg option to ./configure
+
+05Oct22
+ - Add ser_skip() and ser_set() to serialisation functions
+ - Fix warnings reported by cppcheck
+ - glacier: fix load_glacier_driver for MT9470
+
+04Oct22
+ - Add bVarSysConfigPath for plugins
+
+03Oct22
+ - Add Worm/UseWorm to MySQL and adapt SQLite
+ - Adapt JobHisto procedure for new Job fields
+ - Add Worm/IsWorm to Media table
+ - create update_mysql_tables for 1026
+
+30Sep22
+ - cats: Update postgresql upgrade procedure
+ - Fix MySQL make script
+ - update mysql updatedb script
+ - bvfs: Add VolType to .bvfs_versions
+
+29Sep22
+ - Send progress information for Migration and Copy Jobs
+ - cats: Adjust MySQL update scripts
+ - glacier: Fix #9470 One glacier instance per s3 driver
+
+28Sep22
+ - Extend the Metadata email search parameters to 512 bytes
+
+26Sep22
+ - Use ERROR instead of FATAL for Meta data insertion problem
+
+23Sep22
+ - meta-plugin: Added extra debug about data size. Fixed hello plugin with 
+  latest parameters
+
+22Sep22
+ - cloud: loosen the glacier transfer test waiting check
+ - glacier: Fix #9511 handle return values in case of glacier retry
+
+21Sep22
+ - new bin_to_base64_pad() that encode into base64 with padding
+
+20Sep22
+ - Enhance .bvfs_ls_files() to support VirtualFull
+
+16Sep22
+ - Add Tenant resource
+ - inventory-fd: b_uname
+
+14Sep22
+ - Fix windows compilation
+ - unittests: allow to use NULL in is() string checking function
+ - Fix windows compilation issue
+ - Add bstrcasestr() for non GNU platforms
+ - Fix #9334 About issue with the AllowXXXXDirectories directive that was not 
+  case sensitive on Unix
+
+13Sep22
+ - Add tools to synchronize Read-Only/Immutable flags with the Storage Daemon
+ - Add Protect fields to the catalog and the SD/DIR protocol
+ - antivirus: Generate FileEvents when a virus is detected
+ - Fix small memory leak when starting a job with PluginOptions
+
+09Sep22
+ - sir: Fix the record number with aligned volume
+ - sir: Fix the record number with aligned volume
+ - cloud: Fix #9419 Avoid abort when truncate() fails
+
+08Sep22
+ - Fix #9455 test-cpp.c in 14.0.5 don't compile on freebsd
+
+07Sep22
+ - Add FileEvents features
+ - Fix #9443 About incorrect management of the STDERR via open_bpipe()
+
+02Sep22
+ - make snapshots works on sqlite
+
+31Aug22
+ - use a UNIX file descriptor instead of FILE* for the trace file
+
+24Aug22
+ - totp: Fix #9445 Add -r option to btotp to remove a key on disk
+
+19Aug22
+ - dbcheck: check Ojbect table for orphan records
+
+17Aug22
+ - Add device function to compute the file_size depending on the device driver
+ - Add device function to compute the file_size depending on the device driver
+ - cloud: format exceptions. 1 liner for stderr, full stack for logger
+ - cloud: configure the generic drivers python logger in non-debug mode
+ - Fix #9428 About incorrect .volstatus output
+ - Fix compilation warning
+
+12Aug22
+ - Fix sqlite query error in VF
+ - Add SQL code to update Job::Encrypted field
+ - Add Job::Encrypted catalog field
+ - Update new field RealStartTime
+ - Move some common code to update_job_end_record()
+ - Add cats functions to deal with new Job table fields
+ - Add new SQL fields inside JOB_DBR
+ - Add new SQLite3 fields in make_sqlite3_tables
+ - Add new MySQL fields in make_mysql_tables
+ - Add new PostgreSQL fields in make_postgresql_tables
+ - Keep the first FATAL code inside jcr->StatusInfo
+ - Fix errors in update_bacula_tables
+
+11Aug22
+ - Optimize the split of the BSR
+
+10Aug22
+ - vss: Fix #9403 About segfault when VSS is not enabled in the FileSet
+
+09Aug22
+ - Add variable to size variable with edit_int64()
+
+08Aug22
+ - Fix #9085 Very long jobid list are truncated in copy/migration/virtualfull
+ - Add multi-line support to sellist
+
+04Aug22
+ - Fix #9341 split BSR when a volume cycle is detected
+
+02Aug22
+ - Fix wrong length returned by base64_to_bin(), rewrite the function
+
+27Jul22
+ - cloud: Fix #9366 type out and err as str rather that bytes
+ - cloud: rename and specialize regress test to check aws StorageClass attribute
+
+26Jul22
+ - cloud: rename ObjectDefaultTier to StorageClass
+ - cloud: object tier passed to generic aws driver
+ - cloud: test default object tier
+ - cloud: introduce a default object tier directive in Cloud
+
+12Jul22
+ - Fix #9315 Save files if accurate/checksum fileset cannot be verified
+
+05Jul22
+ - Fix compilation
+ - Fix #9284 About unnecessary warning message with empty filesets
+ - Fix #9305 At restore time, show wrong Backup Client when modifying client
+
+29Jun22
+ - Fix #9297 MySQL update script with Client/Plugins filed
+
+17Jun22
+ - Optimize Aligned format for Single Item Restore
+
+16Jun22
+ - bpipe: run_program_full with error handling
+
+07Jun22
+ - Rework path 9224 to keep int in the ioctl call
+ - Fix #9224 about Storage Daemon issue with BoostFS
+
+03Jun22
+ - Fix #9209 lsmark don't walk through unselected directory
+
+01Jun22
+ - Use regular LIKE for MySQL and SQLite, use ILIKE for PostgreSQL in .search 
+  command
+ - Add support for PriorJob with VirtualFull to support specific plugins
+ - Fix accurate query issue introduced by "Update db_get_accurate_jobids() to 
+  deal with one single JobId"
+
+31May22
+ - Update db_get_accurate_jobids() to deal with one single JobId
+ - Accept jobid list in "list object" command
+
+30May22
+ - Add FileIndex to Object table for better VirtualFull support
+ - Add VirtualFull plugin support
+
+25May22
+ - Handle incr/diff jobs in test-plugin-fd.c
+
+23May22
+ - Fix some SQL filters for MySQL
+
+12May22
+ - Do not reassign catalog objects after a migration
+
+11May22
+ - Fix "list metadata" command with copy jobs
+
+09May22
+ - Allow small volume poll interval in DEVELOPPER's mode
+ - Ensure that the disk space is checked when finding new media
+
+06May22
+ - cloud: azure driver commit adjustements.
+ - Apply the algorithm in all cases
+
+05May22
+ - New Block crypto functions and types for Volume encryption
+
+04May22
+ - Check malware with Verify jobs
+ - Add bconsole 'list files type=malware' command
+ - Add missing copyright headers
+ - A script to detect copyright headers
+ - cloud: add restore_bucket field to transfer structure.
+
+22Apr22
+ - Fix #1868 Make StorageGroup feature compatible with Copy and Migration 
+  jobs
+ - Fix small logic issue in msgchan
+
+21Apr22
+ - Add core functions to check malware after a backup
+ - Add SQL command to clear the Malware table
+ - Add SQL tables to store Malware database
+ - Add script to download malware database from abuse.ch
+
+12Apr22
+ - Add script scripts/md5tobase64.py
+ - update catalog version to 1026
+ - Fix #9035 Sync the Job and JobHisto table when "update stats" is issued
+ - windows: change windows os version detection
+ - Fix #9035 update job statistics
+
+11Apr22
+ - Send reload messages directly to the UA Console rather than via a Job message
+
+07Apr22
+ - aws-cloud-driver: Update the tranfer regress test
+ - aws-cloud-driver: Support cloud_transfer directives. Fix download
+ - aws-cloud-driver: Enable cloud_transfer directives for generic_driver
+ - Save memory by not keeping the SQL batch session open during the backup
+
+06Apr22
+ - Send security events after incorrect connexion with SD/DIR
+ - Add security event message after incorrect connection to a FD
+ - Fix BSOCKCORE::get_info()
+
+31Mar22
+ - cloud: add restore to generic_driver and aws_cloud_driver
+ - Fix incorrect file:block display while reading block header
+ - Do not display plugin password information in status client
+
+24Mar22
+ - Fix sqlite compilation
+
+23Mar22
+ - Add list joblog pattern= option
+ - cdp: Add file modification detection to windows implemtation
+ - cdp: Fix small memory leak after an error
+
+18Mar22
+ - meta: Terminate jar. rpms: multi-version m365
+
+17Mar22
+ - Modify list metadata to return only the last occurence of the data by default
+ - meta-plugin: Cancel only current backend on protocol error situations
+ - meta: Add complete packets in debug for protocol error. Cancel backend in 
+  those situations
+
+16Mar22
+ - Add target to build mingw dependencies easily in a container
+
+15Mar22
+ - Purge metadata when deleting jobs
+ - Allow to delete orphan metadata records in dbcheck
+
+11Mar22
+ - dedup: remove s at the end of dedupengine in ".status dedupengine"
+ - Add install target for debug-tags_test
+
+09Mar22
+ - Fix comment
+
+07Mar22
+ - Fix #8895 A Jmsg deadlock the PGSQL timezone mismatch handling code
+
+03Mar22
+ - Increase plugin object fields size
+ - Add new fileindex option to the .bvfs_restore command
+
+25Feb22
+ - Reorganize dynamically device order in Autochangers to use read-only devices 
+  first
+
+23Feb22
+ - Windows: windows-env_test created to exercice env var support
+ - Windows: environment variables support added to CreateChildProcess
+ - Add isinline and contenttype filters to metadata list command
+
+17Feb22
+ - Add foldername search parameter to the list metadata type=email command
+
+16Feb22
+ - cloud: Fix #8807 About crash reported with invalid cloud parmeters
+
+14Feb22
+ - Fix windows compilation
+
+11Feb22
+ - Enhance error message in is() call for unittests
+ - Strip leading/ending spaces in plugutil_str_split_to_alist()
+
+08Feb22
+ - Fix compilation issue on old GCC
+
+07Feb22
+ - Fix segfault when doing a Verify job with compressed data
+ - Rename runscript runswhen from JobEnd to AtJobCompletion
+
+04Feb22
+ - edit_uint64_with_suffix() add option to remove the space before the suffix
+ - Fix #8787 Add category shortcuts for Database and Virtual Machine in the list 
+  object command
+
+02Feb22
+ - Fix windows warnings
+
+01Feb22
+ - Fix #8768 Allow to use a copy job in a Single Item Restore session
+ - Fix #8762 Allow up to 4096 in comment field
+
+31Jan22
+ - Add RunScript when=EndJob option
+
+28Jan22
+ - Add command to list metadata owners for a given tenant
+
+25Jan22
+ - command ".status dedupengines [dedupengine=XXXX]" mimic .device command
+
+24Jan22
+ - Fix #8571 About adding intermediate JobStatus for Runscripts
+ - Fix #7999 About 'list events' filtering
+ - Fix test-plugin-fd.c with Metadata insertion
+
+21Jan22
+ - Fix windows compilation
+
+20Jan22
+ - Fix #8275 & #8622 Detect and report postgresql and system timezone mismatch
+
+18Jan22
+ - Fix compilation warning
+ - Fix #5871 About allowing zfs for 'fstype'
+
+14Jan22
+ - Fix compilation
+ - Fix #8371 About bscan setting proper volume retention period
+
+12Jan22
+ - new gdb_dprintf() to be used with gdb for dynamic logging
+ - strengthen JCR reference inc and dec in the FD
+ - Fix #8566 About reusing Immutable volume
+
+07Jan22
+ - new gdb_traceback() that does a stack trace of all the thread
+ - Display bacula's thread_id in Kaboom message
+
+06Jan22
+ - Fix #8542 Display mtime instead of ctime in "estimate listing" output
+
+30Dec21
+ - Fix default check_for_immutable() return value
+
+29Dec21
+ - Small change in bdb_get_file_record()
+
+23Dec21
+ - Fix #8566 About problem with reusing Immutable volume
+ - Fix #8572 About the SD capabilities info more clear
+ - Update AUTHORS
+ - Fix --with-zstd ./configure option
+
+22Dec21
+ - Fix compilation
+ - Update minimum value for MaximumVolumeBytes to 1MB (1000000)
+
+21Dec21
+ - add 'LIBCAP support' log in configure
+ - metaplugin: Ensure MetaData can handle larger packets.
+ - Check both io->status and return code in plugin_verify_data_update()
+
+20Dec21
+ - test-plugin-fd: Add plugin's file attribute update
+ - Allow plugins to update plugin-specific files attributes
+
+17Dec21
+ - test-plugin-fd: Send huge plugin metadata packet
+ - Fix compilation
+ - Introduce 'SetVolumeAppendOnly' and 'SetVolumeImmutable' SD directives
+
+16Dec21
+ - kubernetes: Update k8s agent count handling. Fix #7569
+ - Add append only/immutable info in the `show storage` output
+ - Add more debug info around append_only/immutable feature
+ - Fix problem with manual labelling volumes with 'ProtectVolumes'
+
+15Dec21
+ - cloud: Fix #8428 Processed becomes Processing
+ - Fix for the 'show job' in regards to the Storage Group
+ - Find and delete orphan backup jobs without JobMedia in dbcheck
+
+13Dec21
+ - Introduce 'make_tmp_cmd' helper
+
+09Dec21
+ - Fix #8449 About FreeSpace storage policy
+
+08Dec21
+ - Fix #8448 About 'show job' command not showing StoragePolicy
+ - Fix .status storage output
+
+01Dec21
+ - Revert "Fix #8240 About wrong path in update_bacula_tables"
+ - Fix #8395 About confusing storage source in MAC jobs summary
+ - catalog: update mysql 'meta' tables with Primary Key
+ - Remove unused variable
+
+30Nov21
+ - pluginlib: A better handling of STAT:/... command in metaplugin.
+
+29Nov21
+ - Fix #8275 About incorrect PostgreSQL/system TZ config
+ - Add tzset check in ./configure
+ - Add ASSERTD() to check the MAX_INI_ITEMS in plugin_display_options()
+ - Allow up to 64 configuration items in ConfigIni object
+ - Fix bfdjson with PluginOptions
+ - Fix #8398 About missing database field in upgrade procedure
+ - Update list medata usage message
+
+26Nov21
+ - Add xxhash files for new signatures and block checksum
+ - pluginlib: Remove smart_lock.
+ - Add dummy PKEY to new MySQL tables
+
+25Nov21
+ - kubernetes: Fix missing Unsupported backup level. Fixes #0008231.
+ - pluginlib: Update metplugin to support PluginObj status.
+
+23Nov21
+ - Fix #8356 About very small max volume size
+
+22Nov21
+ - add support for new file signature in the xxhash family
+ - Make 'list object' more resilient for invalid input
+
+19Nov21
+ - Add bconsole .search command
+ - Fix memory leak when restore is aborted
+
+18Nov21
+ - move 'check_for_invalid_chars' helper to common code
+ - Fix compilation issue when ZLIB is available and not LZO and ZSTD
+
+15Nov21
+ - Fix #8335 About 'llist jobs' showing jobstatuslong field
+ - Fix #5240 About 'status client/storage' showing maxConcJobs
+ - Fix #8353 About 'status all' listing disable client
+
+10Nov21
+ - pluginlib: Add named pipe support for Metaplugin extend STAT: command.
+
+05Nov21
+ - kubernetes: Add BACKEND_TIMEOUT default option.
+ - pluginlib: Add per plugin IO timeout for backend.
+ - kubernetes: Add DONOTSAVE_FT_PLUGIN_CONFIG option.
+ - pluginlib: Metaplugin avoid saving FT_PLUGIN_CONFIG Restore Options.
+ - Fix #7946 About distro's 'unknown' string not informative enough
+
+04Nov21
+ - kubernetes: Add missing file.
+ - Fix #390 About Job Message for 'ExcludeDirContaining'
+ - remove the meaning less "Drive X is not loaded" for virtual autochanger
+ - Fix #8240 About wrong path in update_bacula_tables
+ - pluginlib: Metaplugin - add symbolic link support for external STAT command.
+ - pluginlib: Correct build after qemu plugin merge.
+ - rpms: Add 'libcap-devel' requirement for the redhat and suse builds
+ - Fix #8151 About logging IP address for security messages
+
+29Oct21
+ - pluginlib: Fix compilation on older compilers.
+
+28Oct21
+ - cloud: update Makefiles
+
+27Oct21
+ - Add 'BackupJobUser' and 'RestoreJobUser' FD directives
+
+26Oct21
+ - pluginlib: Update execprog to better handle termination.
+
+25Oct21
+ - pluginlib: Update pluginclass to better handle listing.
+ - Add install-bjoblist target to src/tools/Makefile
+ - Fix plugins/Makefile.inc.in
+
+22Oct21
+ - bgit.py: add a --path filter to only shows commit related to a file or 
+  dir
+
+21Oct21
+ - pluginlib: Add pluginlib::parse_param_add_str().
+
+20Oct21
+ - Add ExcludedBackupDirectories FD directive
+
+19Oct21
+ - pluginlib: Fix pluginclass accurate mode handling.
+ - pluginlib: Update execprog class.
+
+18Oct21
+ - Add 'AllowedRestoreDirectories' directive for the FD
+ - Add update_..._tables_1024_to_1025 to ./configure.in
+ - Use transation to create PostgreSQL schema
+
+16Oct21
+ - Add 'allowed scripts directory' directory for the FD
+
+15Oct21
+ - Fix regression in smart_alist.
+ - Extend 'berrno' class with Bacula-specific error handling
+ - Update SQL scripts for version 1025
+ - totp-bpam: Add support for qrencode 3.x on Redhat
+ - Fix compilation when LZO is not available
+
+14Oct21
+ - Add copy operator to smartalist.
+ - pluginclass: Fix command parsing.
+ - Fix zstd issue in ./configure.in
+ - rpms: Add dependency for libzstd
+ - Fix compilation warnings
+
+13Oct21
+ - Fix append/immutable compilation problem for Windows
+ - update autoconf
+ - Add ZSTD to Windows build
+ - Fix postgresql catalog creation script
+
+12Oct21
+ - antivirus regress test. Install antivirus before running test.
+ - Add ZSTD compression support
+ - Fix SQLite3 new Client::Plugins field
+ - Enhance plugin_verify_data_close() plugin interface
+
+11Oct21
+ - Fix windows compilation
+ - Add support for PluginOptions
+ - Add test-verify-fd plugin
+
+09Oct21
+ - metaplugin: Add missing files.
+ - Fix src/plugins/dird/Makefile.in
+
+08Oct21
+ - fix memory leak in ProgressCounter
+ - antivirus: Add Antivirus plugin with Clamav backend
+ - Add simple send() function to bsockcore
+ - Add new SECURITY object to be stored in the catalog
+ - Fix PluginOptions in the run menu interface
+
+07Oct21
+ - Enhance JSON output for .jlist command with error, errmsg and type
+ - Add new plugin options to configure.in
+ - Add new Verify Data plugin framework
+ - Add new Director plugin variables
+ - Add CustomerId Director::Director directive
+ - pluginlib: Add dynamic file backup to Include{} in metaplugin.
+ - Update Plugin API code for FileSet management.
+
+04Oct21
+ - metaplugin: Add AcceptFile() support.
+ - Add api v2 json output
+ - metaplugin: Add new STAT command flavour.
+
+28Sep21
+ - metaplugin: Improve stderr handling from backend.
+
+27Sep21
+ - Fix error message in list command
+
+23Sep21
+ - Add text search for mysql and fix issue with attachment query
+
+22Sep21
+ - Add 'list metadata' help usage and add Name search for attachment
+ - Rename Client.Plugin to Client.Plugins
+ - Add bconsole interface to metaxxx tables and rename Client.Plugin to Client.Plugins
+
+21Sep21
+ - Add Size to Email/Attachment metadata
+
+20Sep21
+ - Add 'AllowedBackupDir' FD directive
+
+17Sep21
+ - totp: Display the keyname on creation
+
+16Sep21
+ - pluginlib: Create plugin base framework for FD Plugins.
+ - Update pluginlib build.
+ - Return name instead of data for file pruning + indent + regress test correction
+
+15Sep21
+ - Modify meta_pkt to always have a terminated buffer
+ - Scan metadata stream and insert into the catalog
+ - update LICENSE-FOSS with cJSON and base32
+ - From printf to dmsg with relevant debug level + add lock system + finished 
+  regress test
+ - Updated help command + basic regress structure
+
+14Sep21
+ - regresss: Schedule accurate-only-meta tests
+ - Add new define keyword in common_fd + changed option -d for debug + check of 
+  argument and store/search return
+
+13Sep21
+ - Add cJSON lib
+ - Parsing and Makefile fixes
+ - bjoblist creation + parsing of command
+
+10Sep21
+ - update autoconf
+ - Fix error message in update_postgresql_tables_1023_to_1024
+ - Add events when reloading the configuration
+
+09Sep21
+ - Check for the needed capabilites at the SD startup
+
+03Sep21
+ - totp: Add %c variable for the console name in the sendcommand
+ - Add TOTP Authentication plugin for the Director
+ - Add console name to the authentication plugin framework
+
+02Sep21
+ - Add support for the APPEND and IMMUTABLE flags for File Volumes
+
+31Aug21
+ - Allow to use edit_job_codes() without a JCR
+
+30Aug21
+ - cloud: Adapt aws driver
+
+27Aug21
+ - cloud: Add generic aws_cloud_driver
+
+26Aug21
+ - Created helloworld project, based in meta-plugin.
+
+17Aug21
+ - Add ./configure option for the totp plugin
+ - Add option to install totp plugin to ./configure
+
+13Aug21
+ - Add bin_to_base32() function
+
+12Aug21
+ - Add Plugin field to sqlite backend
+ - Add Plugin field in SQL Client table
+
+27Jul21
+ - Introduce 'FreeSpace' storage policy
+
+11Jun21
+ - kubernetes: Add Plugin Object support.
+
+26May21
+ - Fix memory problem in bpipe plugin
+
+17Feb21
+ - Fix #7266 About Failing Runscript after not aborting job
+
+22Jan21
+ - bgit: report unknow branch with a friendly message instead of a stacktrace
+
+10Dec20
+ - Add new Makefile to ./configure.in
+
+30Jul19
+ - mysql: Fix #5075 support mariadb backup software.
+
+Bugs fixed/closed since last release:
+0008231 0010329 10004 10017 10020 10082 10086 10094 10130 10137 10249 10259 10307 10323 10369 1868 2962 390 5075 5240 5871 7266 7569 7946 7999 8151 8240 8275 8335 8353 8356 8371 8395 8398 8428 8448 8449 8542 8566 8571 8572 8762 8768 8787 8807 8852 8895 9035 9085 9209 9224 9284 9297 9305 9315 9334 9341 9366 9403 9419 9428 9443 9445 9455 9470 9511 9563 9569 9594 9682 9689 9712 9714 9715 9719 9724 9727 9729 9735 9742 9747 9764 9765 9780 9781 9786 9790 9791 9799 9894 9912 9923 9933 9935 9945 9981
+
+        ChangeLog for Bacula version 13.0.3
 
 
 01May23
@@ -215,7 +1504,7 @@ Bugs fixed/closed since last release:
 10030 10032 10033 9907 9968
 
 
-        ChangeLog for Bacula Enterprise version 13.0.2
+        ChangeLog for Bacula version 13.0.2
 
 16Feb23
  - Fix #9882 About tapealert script issue on rhel8
@@ -304,7 +1593,7 @@ Bugs fixed/closed since last release:
 Bugs fixed/closed since last release:
 2666 2667 8351 9508 9535 9568 9606 9614 9686 9876 9882
 
-        ChangeLog for Bacula Enterprise version 13.0.1
+        ChangeLog for Bacula version 13.0.1
 
 
 19Jan23
@@ -434,7 +1723,7 @@ Bugs fixed/closed since last release:
 Bugs fixed/closed since last release:
 2577 2628 2665 2666 2667
 
-        ChangeLog for Bacula Enterprise version 13.0.0
+        ChangeLog for Bacula version 13.0.0
 
 
 05Aug22

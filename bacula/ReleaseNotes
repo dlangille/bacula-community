@@ -1,7 +1,7 @@
-               Release Notes for Bacula 13.0
+               Release Notes for Bacula 15.0
 
-This is a major release with many new features and a number of changes. Please
-take care to test this code carefully before putting it into
+This is a major beta release with many new features and a number of
+changes. Please take care to test this code carefully before putting it into
 production. Although the new features have been tested, they have not run in a
 production environment.
 
@@ -11,14 +11,19 @@ As always, both the Director and Storage daemon(s) must be upgraded at
 the same time. Any File daemon running on the same machine as a Director
 or Storage daemon must be of the same version.
 
-Older File Daemons should be compatible with the 13.0 Director and Storage
+Older File Daemons should be compatible with the 15.0 Director and Storage
 daemons. There should be no need to upgrade older File Daemons.
 
-New Catalog format in version 13.0.0 and greater
+In 15.0, we have upgraded the volume format from BB02 to BB03 to support
+options such as the Volume encryption. Old volumes can still be used by the
+15.0 Storage Daemon, however, new 15.0 BB03 volumes cannot be used by old
+Storage Daemons.
+
+New Catalog format in version 15.0.0 and greater
 ------------------------------------------------
 This release of Bacula uses a new catalog format.  We provide a set of scripts
-that permit conversion from 9.x and earlier versions to the new 13.0 format
-(1024).  Normally the conversion/upgrade is automatic, though there is a big
+that permit conversion from 9.x and earlier versions to the new 15.0 format
+(1026).  Normally the conversion/upgrade is automatic, though there is a big
 change from 9.x to 11.0 that takes longer than usual, the upgrade process will
 require about twice the disk space of the actual database.
 
@@ -36,6 +41,136 @@ directory after you run the ./configure command.
 As mentioned above, before running this script, please backup your catalog
 database, be sure to shutdown Bacula and be aware that running the script can
 take some time depending on your database size.
+
+----------------------------------------------------------------
+Beta Release 15.0.0 / 01 November 2023
+----------------------------------------------------------------
+
+Security:
+ - Director TOTP Console authentication plugin
+ - Better restricted console support
+ - Add Storage Daemon Volume encryption support
+ - Add support for Immutable filesystem flag for volumes
+ - Add support for Append Only filesystem flag for volumes
+ - Clamav Antivirus plugin
+ - Malware detection code (via Abuse.ch)
+ - Add AllowedBackupDirectories FileDaemon's directive
+ - Add AllowedScriptDirectories FileDaemon's directive
+ - Add ExcludeBackupDirectories FileDaemon's directive
+ - Add AllowedRestoreDirectories FileDaemin's directive
+
+Management:
+ - New FreeSpace and LastBackedUpTo storage group policy
+ - New ZSTD fileset compression support
+ - Add Kubernetes CSI Volume Snapshot support
+ - Add Amazon Cloud driver (in replacement of libS3 cloud driver)
+ - Switch Storage Daemon volume format from BB02 to BB03
+ - New Bacula Installation Manager (BIM) to ease the installation
+ - Add runscript "AtJobCompletion" execution option
+
+Catalog changes:
+ - FileSet content description in the FileSet table
+ - Add Job/RealStartTime catalog field
+ - Add Job/Encrypted catalog field
+ - Add Media Protected and UseProtect fields
+ - Add Media VolEncrypted field
+ - Add FileEvent table and "list fileevent" to track malware and viruses
+ - Plugins list available in the Client table
+ - Store verified jobid into the catalog PriorJobId Job field
+
+Console changes:
+ - Add JSON output to various commands (.jlist, .api 2 api_opts=j)
+ - .help enhancement with description of commands
+ - help command restricted to the available commands
+ - Add .search bconsole command
+ - Add bconsole "list joblog jobid=x pattern=xxx" option
+ - Add fileindex=jobid,fidx option in .bvfs_restore
+ - Add VolType to .bvfs_versions
+ - Add "update volumeprotect storage=xxx" bconsole command
+ - Add "status dir novolume" to not compute volume in status director output
+ - Limit the "status dir" schedule output to 50 jobs. Can be managed via "limit=x offset=y" parameters
+ - Add new error codes to job messages
+ - Update timestamp of the pid file after a reload command
+ - Add ".status dir client=xxxx" filter
+ - Add "list jobs reviewed=<1|0>" command
+ - Add Runscript to control the run queue (RunsWhen=Queue)
+ - Add ".ls dironly" bconsole command
+ - Add new Job statuses when the Job is waiting on SD/FD
+ - Add new PriorJobId and PriorJobName to volume label format variables
+ - Progress Status for Copy/Migration Jobs in "status director" output
+ - Add  "list fileevent" bconsole command
+
+Baculum and Rest API changes:
+ - Add joberrors parameter to jobs endpoint
+ - Add fileset parameter to objects endpoint
+ - Add filename and path properties to fileevent endpoints
+ - Add sorting parameters to clients endpoint
+ - Add running jobs property to clients endpoint
+ - Add documentation for os and version filters in clients endpoint
+ - Add os and version parameters to clients endpoint
+ - Add os, version properties and overview parameter to clients endpoint
+ - Add endpoint to check disk archive device prformance on storage 
+ - Add endpoint to list files and dirs on storage daemon host
+ - Add delete pool endpoint
+ - Add delete object endpoint
+ - Use new delete module in volume and job endpoints
+ - Add module for delete command
+ - Add client name parameter to clients endpoint
+ - Add file events API endpoint
+ - Improve extended name validator
+ - Speed up dashboard page loading
+ - Fix parsing director time in time endpoint
+ - Add objecttype parameter to object categories endpoint
+ - Add second dimensional sorting and use it for sorting jobstatus in 
+ - Add modify default object sorting in object overview endpoint
+ - Fix support for PHP 5.4 in web interface layer
+ - Fix content field in job record
+ - Improve support for newer PostgreSQL versions
+ - Add fileset content property to jobs endpoint
+ - Add object categories endpoint
+ - Add support for ALL action in console ACL
+ - Add objecttype filter to objects names endpoint
+ - Add default sorting by endtime to objects overview endpoint
+ - Add sorting parameters to volumes overview endpoint
+ - Add second dimension of sorting in jobs objects endpoint
+ - Add offset and limit parameters to director status endpoint
+ - Add sorting by endtime and add endtime property to objects overview 
+ - Add group_order_by and group_order_direction parameters to documentation
+ - Add notes about object type filters in objects overview endpoint
+ - Fix storing ACL config actions for very old PHP versions
+ - Add objectsize property to objects overview endpoint
+ - Add job type property to objects overview endpoint
+ - Add path property to objects overview endpoint
+ - Fix offset and limit parameter in jobs objects endpoint
+ - Add objectname parameter to jobs objects endpoint
+ - Add objectsource property to objects overview endpoint
+ - New API config ACLs
+ - Add group_order_by and group_order_direction parameters to objects 
+ - Add to grup function sorting group capability
+ - Add sorting by joberrors if sorted by jobstatus first
+ - Improve using unique_objects parameter in object endpoint
+ - Add group_offset and unique_objects parameters to objects endpoint
+ - Add volume names endpoint
+ - Add object names endpoint
+ - Add object types endpoint
+ - Add documentation for client parameter in objects endpoint
+ - Add job status filter to objects endpoint
+ - Add joberrors filter to sources endpoint
+ - Add server parameter to list vsphere datastores endpoint
+ - Add job level property to sources endpoint
+ - Add pool resnames endpoint
+ - Add storage resnames endpoint
+ - Add director time endpoint
+ - Change M365 tenants endpoint output to contain tenant names
+ - Update documentation
+ - Add object overview endpoint
+
+Misc:
+ - Add XXHASH to FileSet signature option
+ - Add plugins for Verfy jobs
+ - Display mtime instead of ctime in estimate listing output
+ - Add specific jobstatus when executing Runscripts
+ - New man pages
 
 ----------------------------------------------------------------
 Release 13.0.3 / 02 May 2023
