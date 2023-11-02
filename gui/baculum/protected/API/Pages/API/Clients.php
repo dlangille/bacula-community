@@ -132,14 +132,54 @@ class Clients extends BaculumAPIServer {
 				$sort = [[$order_by_lc, $order_direction]];
 			}
 
-			$clients = $this->getModule('client')->getClients(
-				$limit,
-				$offset,
-				$sort,
-				$params,
-				$jobs,
-				$mode
-			);
+			$clients = [];
+			if ($mode == ClientManager::CLIENT_RESULT_MODE_OVERVIEW) {
+				if (!in_array('Client.Uname', $params)) {
+					$params['Client.Uname'] = [];
+				}
+
+				// reachable clients (uname exists)
+				$params['Client.Uname'][] = [
+					'operator' => '!=',
+					'vals' => ''
+				];
+				$clients_reached = $this->getModule('client')->getClients(
+					$limit,
+					$offset,
+					$sort,
+					$params,
+					$jobs,
+					$mode
+				);
+
+				// unreachable clients (uname not exists)
+				array_pop($params['Client.Uname']);
+				$params['Client.Uname'][] = [
+					'operator' => '=',
+					'vals' => ''
+				];
+				$clients_unreached = $this->getModule('client')->getClients(
+					$limit,
+					$offset,
+					$sort,
+					$params,
+					$jobs,
+					$mode
+				);
+				$clients = [
+					'reachable' => $clients_reached,
+					'unreachable' => $clients_unreached
+				];
+			} else {
+				$clients = $this->getModule('client')->getClients(
+					$limit,
+					$offset,
+					$sort,
+					$params,
+					$jobs,
+					$mode
+				);
+			}
 			$this->output = $clients;
 			$this->error = ClientError::ERROR_NO_ERRORS;
 		} else {

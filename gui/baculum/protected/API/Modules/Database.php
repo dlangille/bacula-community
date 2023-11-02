@@ -211,6 +211,14 @@ class Database extends APIModule {
 						$cond[] = "{$key} {$value[$i]['operator']} :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
 						$value[$i]['operator'] = '';
+					} elseif ($value[$i]['operator'] == '=') {
+						$cond[] = "$key = :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
+					} elseif ($value[$i]['operator'] == '!=') {
+						$cond[] = "$key != :{$kval}{$i}";
+						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
+						$value[$i]['operator'] = '';
 					} else {
 						$cond[] = "$key = :{$kval}{$i}";
 						$vals[":{$kval}{$i}"] = $value[$i]['vals'];
