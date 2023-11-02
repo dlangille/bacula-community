@@ -37,7 +37,7 @@
  * Versions of packages needed to build Bacula components
  */
 #define DEPKGS_QT_VERSION  "30Nov17"
-#define DEPKGS_VERSION     "23May20"
+#define DEPKGS_VERSION     "02Nov23"
 #define BQT4_VERSION       "5.9.3"
 #define VIX_VERSION        "29Mar21"
 #define JAVA_VERSION       "26Aug20"
