@@ -140,7 +140,7 @@ cd ../bacula-%{_version}
         --with-mon-fd-password="XXX_REPLACE_WITH_CLIENT_MONITOR_PASSWORD_XXX" \
         --with-mon-sd-password="XXX_REPLACE_WITH_STORAGE_MONITOR_PASSWORD_XXX" \
         --with-openssl  \
-        --with-cython=cython3
+        --with-cython=cython-3.8
 
 make
 
@@ -176,6 +176,8 @@ rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-driver.so
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-was-driver.so
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-gs-driver.so
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-oci-driver.so
+rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-aws-driver.so
+rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-cloud-s3-driver.so
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bpipe-fd.so
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-aligned-driver*
 rm -f $RPM_BUILD_ROOT%{plugin_dir}/bacula-sd-dedup-driver*
