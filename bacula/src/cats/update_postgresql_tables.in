@@ -757,7 +757,7 @@ ALTER TABLE Job ADD COLUMN LastReadDevice    text        default '';
 ALTER TABLE Job ADD COLUMN WriteStorageId    integer     default 0;
 ALTER TABLE Job ADD COLUMN WriteDevice       text        default '';
 ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
-ATLER TABLE Job ADD COLUMN Encrypted         int         default 0;
+ALTER TABLE Job ADD COLUMN Encrypted         int         default 0;
 
 ALTER TABLE JobHisto ADD COLUMN RealStartTime     timestamp   without time zone;
 ALTER TABLE JobHisto ADD COLUMN isVirtualFull     smallint    default 0;
