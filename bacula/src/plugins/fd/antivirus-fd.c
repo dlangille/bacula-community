@@ -387,7 +387,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
          //Dmsg(ctx, dbglvl, "verifyplug: writing\n");
          POOLMEM *p = pack_chunk(io->buf, io->count);
          //Dmsg(ctx, dbglvl, "verifyplug: pack_chunk write %d %s\nOuput :%s",io->count, io->buf, p);
-         if (!self->bs->send(p, io->count+sizeof(uint32_t))) {
+         if (!self->bs->send2(p, io->count+sizeof(uint32_t))) {
             Jmsg(ctx, M_ERROR, "INSTREAM WRITE failed: fname=%s ERR=%s\n", self->fname, strerror(errno));
             delete (self->bs);
             self->bs = NULL;
@@ -405,7 +405,7 @@ static bRC pluginIO(bpContext *ctx, struct io_pkt *io)
          self->bs->msglen = 0;
          POOLMEM *p = pack_chunk(self->bs->msg, self->bs->msglen);
          //Dmsg(ctx, dbglvl, "verifyplug: pack_chunk close %d %s\nOuput :%s",io->count, io->buf, p);
-         if (!self->bs->send(p, self->bs->msglen+sizeof(uint32_t))) {
+         if (!self->bs->send2(p, self->bs->msglen+sizeof(uint32_t))) {
             Jmsg(ctx, M_ERROR, "INSTREAM CLOSE failed: fname=%s ERR=%s\n", self->fname, strerror(errno));
             delete (self->bs);
             self->bs = NULL;

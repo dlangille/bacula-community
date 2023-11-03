@@ -534,10 +534,10 @@ void BSOCKCORE::clear_locking()
  */
 bool BSOCKCORE::send()
 {
-   return send(msg, msglen);
+   return send2(msg, msglen);
 }
 
-bool BSOCKCORE::send(char *buf, uint32_t len)
+bool BSOCKCORE::send2(char *buf, uint32_t len)
 {
    int32_t rc;
    bool ok = true;
