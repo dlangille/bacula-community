@@ -9213,6 +9213,15 @@
 						}
 					},
 					{
+						"name": "fileset",
+						"in": "query",
+						"description": "FileSet name",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
 						"name": "order_by",
 						"in": "query",
 						"required": false,
