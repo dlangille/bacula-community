@@ -312,6 +312,7 @@ LEFT JOIN FileSet USING (FileSetId) '
 					Job.JobStatus   AS jobstatus
 				FROM Object
 				JOIN Job USING (JobId)
+				JOIN FileSet USING (FileSetId)
 				JOIN Client USING (ClientId)
 				' . $object_where['where'] . $obj_order;
 
@@ -373,6 +374,7 @@ LEFT JOIN FileSet USING (FileSetId) '
 						Path            AS path,
 						JobStatus       AS jobstatus
 					FROM Object
+					JOIN FileSet USING (FileSetId)
 					JOIN Job USING (JobId)
 					JOIN Client USING (ClientId)' . $object_where['where'] . $obj_order;
 

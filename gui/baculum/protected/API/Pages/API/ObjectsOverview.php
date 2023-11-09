@@ -47,6 +47,7 @@ class ObjectsOverview extends BaculumAPIServer {
 		$jobids = $this->Request->contains('jobids') && $misc->isValidIdsList($this->Request['jobids']) ? explode(',', $this->Request['jobids']) : [];
 		$jobstatus = $this->Request->contains('jobstatus') && $misc->isValidState($this->Request['jobstatus']) ? $this->Request['jobstatus'] : null;
 		$client = $this->Request->contains('client') && $misc->isValidName($this->Request['client']) ? $this->Request['client'] : '';
+		$fileset = $this->Request->contains('fileset') && $misc->isValidName($this->Request['fileset']) ? $this->Request['fileset'] : '';
 		$joberrors = null;
 		if ($this->Request->contains('joberrors') && $misc->isValidBoolean($this->Request['joberrors'])) {
 			$joberrors = $misc->isValidBooleanTrue($this->Request['joberrors']) ? true : false;
@@ -144,6 +145,12 @@ class ObjectsOverview extends BaculumAPIServer {
 			$general_params['Client.Name'] = [];
 			$general_params['Client.Name'][] = [
 				'vals' => $client
+			];
+		}
+		if (!empty($fileset)) {
+			$general_params['FileSet.FileSet'] = [];
+			$general_params['FileSet.FileSet'][] = [
+				'vals' => $fileset
 			];
 		}
 		if (!is_null($joberrors)) {
