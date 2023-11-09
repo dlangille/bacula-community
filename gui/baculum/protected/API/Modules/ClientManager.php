@@ -33,6 +33,13 @@ use Prado\Data\ActiveRecord\TActiveRecordCriteria;
  */
 class ClientManager extends APIModule {
 
+
+	/**
+	 * Client types
+	 */
+	const CLIENT_TYPE_REACHABLE = 'reachable';
+	const CLIENT_TYPE_UNREACHABLE = 'unreachable';
+
 	/**
 	 * Result modes.
 	 */

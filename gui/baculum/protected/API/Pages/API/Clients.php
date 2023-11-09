@@ -42,6 +42,7 @@ class Clients extends BaculumAPIServer {
 		$plugin = $this->Request->contains('plugin') && $misc->isValidAlphaNumeric($this->Request['plugin']) ? $this->Request['plugin'] : '';
 		$os = $this->Request->contains('os') && $misc->isValidNameExt($this->Request['os']) ? $this->Request['os'] : '';
 		$version = $this->Request->contains('version') && $misc->isValidColumn($this->Request['version']) ? $this->Request['version'] : '';
+		$type = $this->Request->contains('type') && $misc->isValidName($this->Request['type']) ? $this->Request['type'] : null;
 		$mode = $this->Request->contains('overview') && $misc->isValidBooleanTrue($this->Request['overview']) ? ClientManager::CLIENT_RESULT_MODE_OVERVIEW : ClientManager::CLIENT_RESULT_MODE_NORMAL;
 		$order_by = $this->Request->contains('order_by') && $misc->isValidColumn($this->Request['order_by']) ? $this->Request['order_by']: null;
 		$order_direction = $this->Request->contains('order_direction') && $misc->isValidOrderDirection($this->Request['order_direction']) ? $this->Request['order_direction']: null;
@@ -144,8 +145,8 @@ class Clients extends BaculumAPIServer {
 					'vals' => ''
 				];
 				$clients_reached = $this->getModule('client')->getClients(
-					$limit,
-					$offset,
+					(is_null($type) || $type === ClientManager::CLIENT_TYPE_REACHABLE ? $limit : 0),
+					(is_null($type) || $type === ClientManager::CLIENT_TYPE_REACHABLE ? $offset : 0),
 					$sort,
 					$params,
 					$jobs,
@@ -159,8 +160,8 @@ class Clients extends BaculumAPIServer {
 					'vals' => ''
 				];
 				$clients_unreached = $this->getModule('client')->getClients(
-					$limit,
-					$offset,
+					(is_null($type) || $type === ClientManager::CLIENT_TYPE_UNREACHABLE ? $limit : 0),
+					(is_null($type) || $type === ClientManager::CLIENT_TYPE_UNREACHABLE ? $offset : 0),
 					$sort,
 					$params,
 					$jobs,

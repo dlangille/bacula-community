@@ -472,6 +472,16 @@
 						"$ref": "#/components/parameters/Offset"
 					},
 					{
+						"name": "type",
+						"in": "query",
+						"required": false,
+						"description": "Client type (reachable/unreachable). It determines for wich type will be applied offset and limit. This option has meaning only for overview mode (overview=1). For other modes it is ignored. Please note, providing one type does not cause that other types will not be listed, but only offset and limit criteria will be applied for selected type.",
+						"schema": {
+							"type": "string",
+							"enum": ["reachable", "unreachable"]
+						}
+					},
+					{
 						"name": "name",
 						"in": "query",
 						"required": false,
