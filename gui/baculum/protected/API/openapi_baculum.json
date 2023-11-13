@@ -10355,6 +10355,47 @@
 				]
 			}
 		},
+		"/api/v2/plugins/core/{storageid}/storage/diskusage": {
+			"get": {
+				"tags": ["plugins"],
+				"summary": "Check usage of the storage daemon disk devices",,
+				"description": "Check usage of the storage daemon disk devices.",
+				"responses": {
+					"200": {
+						"description": "Check usage of the storage daemon disk devices.",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "object",
+									"properties": {
+										"output": {
+											"type": "array",
+											"items": {
+												"description": "Usage results per archive device",
+												"type": "string"
+											}
+										},
+										"error": {
+											"type": "integer",
+											"description": "Error code",
+											"enum": [0, 1, 2, 3, 4, 5, 6, 7, 9, 11, 20, 150, 1000]
+										}
+									}
+								}
+							}
+						}
+					}
+				},
+				"parameters": [
+					{
+						"$ref": "#/components/parameters/StorageId"
+					},
+					{
+						"$ref": "#/components/parameters/Output"
+					}
+				]
+			}
+		},
 		"/api/v2/plugins/m365/{clientid}/tenants": {
 			"get": {
 				"tags": ["plugins"],
