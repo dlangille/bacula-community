@@ -84,7 +84,7 @@ joblist_test: joblist.o
 	$(LIBTOOL_INSTALL) $(INSTALL_PROGRAM) $@ $(DESTDIR)$(sbindir)/
 
 bjoblist: bjoblist.o
-	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -L../findlib -o $@ bjoblist.o -lbac -lbacfind $(DLIB) $(LIBS) $(GETTEXT_LIBS)
+	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -L../findlib -o $@ bjoblist.o -lbac -lbacfind $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
 
 bsock_meeting_test: bsock_meeting_test.o ../lib/unittests.o
 	$(LIBTOOL_LINK) $(CXX) $(LDFLAGS)  -L../lib -o $@ bsock_meeting_test.o ../lib/unittests.o -lbac $(DLIB) $(LIBS) $(GETTEXT_LIBS) $(OPENSSL_LIBS)
