@@ -6,11 +6,11 @@
 # Shell script to update SQLite3 tables from Bacula
 #
 OLDVERSION=1022
-NEWVERSION=1024
+NEWVERSION=1026
 
 echo " "
 echo "This script will update a Bacula SQLite3 database from version 12-14,$OLDVERSION to $NEWVERSION"
-echo "	which is needed to convert from Bacula Community version 5.0.x, 5.2.x, 7.0.x, 9.x to 11.4.x"
+echo "	which is needed to convert from any Bacula Communty to version 15.0.x"
 echo " "
 
 bindir=@SQLITE_BINDIR@
@@ -506,6 +506,169 @@ END-OF-DATA
 	DBVERSION=1024
     else
 	echo "Update of Bacula SQLite3 tables 1023 to 1024 failed."
+	exit 1
+    fi
+fi
+
+if [ "$DBVERSION" -eq 1024 ] ; then
+    if sqlite3 $* ${db_name}.db <<END-OF-DATA
+begin;
+ALTER TABLE Client ADD COLUMN Plugins VARCHAR(1024) DEFAULT '';
+
+CREATE TABLE MetaEmail
+(
+    EmailTenant       		text,
+    EmailOwner        		text,
+    EmailId           		text,
+    EmailTime 			DATETIME,
+    EmailTags         		text,
+    EmailSubject      		text,
+    EmailFolderName   		text,
+    EmailFrom         		text,
+    EmailTo           		text,
+    EmailCc     		    text,
+    EmailInternetMessageId 	text,  -- no index
+    EmailBodyPreview  		text,
+    EmailImportance   		text,
+    EmailConversationId    	text,
+    EmailIsRead       		smallint,
+    EmailIsDraft      		smallint,
+    EmailHasAttachment	 	smallint,
+    EmailSize    			integer,
+    Plugin      			text,
+    FileIndex  				int,
+    JobId        			int
+);
+
+CREATE INDEX meta_emailowner on MetaEmail (EmailTenant, EmailOwner);
+CREATE INDEX meta_emailtime on MetaEmail (EmailTime);
+CREATE INDEX meta_emailtags on MetaEmail (EmailTags);
+CREATE INDEX meta_emailfoldername on MetaEmail (EmailFolderName);
+-- CREATE INDEX meta_emailsender on MetaEmail (EmailSender);
+CREATE INDEX meta_emailconversationid on MetaEmail (EmailConversationId);
+-- TODO: Implement search op in SQLite
+CREATE INDEX meta_emailimportance on MetaEmail (EmailImportance);
+CREATE INDEX meta_emailisread on MetaEmail (EmailIsRead);
+CREATE INDEX meta_emailhasattachment on MetaEmail (EmailHasAttachment);
+CREATE INDEX meta_emailjobid on MetaEmail (Jobid);
+
+CREATE TABLE MetaAttachment
+(
+    AttachmentTenant            text,
+    AttachmentOwner    		text,
+    AttachmentName     		text,
+    AttachmentEmailId  		text,
+    AttachmentContentType 	text,
+    AttachmentIsInline 		smallint,
+    AttachmentSize    		int,
+    Plugin       			text,
+    FileIndex    			int,
+    JobId        			int
+);
+
+CREATE INDEX meta_attachmentowner ON MetaAttachment (AttachmentTenant,AttachmentOwner);
+CREATE INDEX meta_attachmentemailid ON MetaAttachment (AttachmentEmailId);
+CREATE INDEX meta_attachmentjobid ON MetaAttachment (JobId);
+
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('l', 'Doing data despooling',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('L', 'Committing data (last despool)',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('u', 'Cloud upload',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('w', 'Cloud download',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('q', 'Queued waiting for device',15);
+INSERT INTO Status (JobStatus,JobStatusLong,Severity) VALUES
+   ('W', 'Terminated normally with warnings',25);
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
+  ('DU0001', 'catalog_update', strftime('%Y-%m-%d %H-%M-%S','now'), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1025');
+UPDATE Version SET VersionId=1025;
+commit;
+END-OF-DATA
+    then
+	echo "Update of Bacula SQLite3 tables 1024 to 1025 succeeded."
+	DBVERSION=1025
+    else
+	echo "Update of Bacula SQLite3 tables 1024 to 1025 failed."
+	exit 1
+    fi
+fi
+
+
+if [ "$DBVERSION" -eq 1025 ] ; then
+    if sqlite3 $* ${db_name}.db <<END-OF-DATA
+begin;
+CREATE TABLE MalwareMD5
+(
+    MD5     char(22)    -- Same as File
+);
+CREATE INDEX malwaremd5_idx on MalwareMD5 (MD5);
+
+CREATE TABLE MalwareSHA256
+(
+    MD5     char(65)    -- Same as File
+);
+CREATE INDEX malwaresha256_idx on MalwareSHA256 (MD5);
+
+CREATE TABLE FileEvents 
+(
+   Id	  INTEGER PRIMARY KEY AUTOINCREMENT,
+   Time  DATETIME DEFAULT current_timestamp, -- Time of the detection
+   SourceJobId   int,        -- Can be the Verify job id for example, or the jobid during a restore/backup
+   JobId         int,        -- JobId where the file was found. Used for pruning
+   FileIndex     int,        -- File reference
+   Type          char,       -- Event type (antivirus, malware scanning (M), lost file)
+   Description   text,       -- Description of the event
+   Severity      int,        -- level of severity. (0 OK, 100 Important)
+   Source        text        -- Information about the source of the event
+);
+
+CREATE INDEX FileEvents_jobid_idx ON FileEvents (JobId, FileIndex);
+CREATE INDEX FileEvents_sourcejobid_idx ON FileEvents (SourceJobId);
+CREATE INDEX meta_emailid on MetaEmail (EmailId);
+
+ALTER TABLE Object ADD COLUMN FileIndex    integer  not null default 0;
+
+ALTER TABLE Job ADD COLUMN RealStartTime     DATETIME    DEFAULT 0;
+ALTER TABLE Job ADD COLUMN isVirtualFull     TINYINT     default 0;
+ALTER TABLE Job ADD COLUMN CompressRatio     float       default 0;
+ALTER TABLE Job ADD COLUMN Rate              float       default 0;
+ALTER TABLE Job ADD COLUMN LastReadStorageId integer     default 0;
+ALTER TABLE Job ADD COLUMN LastReadDevice    text        default '';
+ALTER TABLE Job ADD COLUMN WriteStorageId    integer     default 0;
+ALTER TABLE Job ADD COLUMN WriteDevice       text        default '';
+ALTER TABLE Job ADD COLUMN StatusInfo        text        default '';
+ALTER TABLE Job ADD COLUMN Encrypted         int         default 0;
+
+ALTER TABLE JobHisto ADD COLUMN RealStartTime     DATETIME    DEFAULT 0;
+ALTER TABLE JobHisto ADD COLUMN isVirtualFull     TINYINT     default 0;
+ALTER TABLE JobHisto ADD COLUMN CompressRatio     float       default 0;
+ALTER TABLE JobHisto ADD COLUMN Rate              float       default 0;
+ALTER TABLE JobHisto ADD COLUMN LastReadStorageId integer     default 0;
+ALTER TABLE JobHisto ADD COLUMN LastReadDevice    text        default '';
+ALTER TABLE JobHisto ADD COLUMN WriteStorageId    integer     default 0;
+ALTER TABLE JobHisto ADD COLUMN WriteDevice       text        default '';
+ALTER TABLE JobHisto ADD COLUMN StatusInfo        text        default '';
+ALTER TABLE JobHisto ADD COLUMN Encrypted         int         default 0;
+
+ALTER TABLE Media ADD COLUMN Protected       TINYINT     DEFAULT 0;
+ALTER TABLE Media ADD COLUMN UseProtect      TINYINT     DEFAULT 0;
+ALTER TABLE Media ADD COLUMN VolEncrypted    TINYINT     DEFAULT 0;
+
+ALTER TABLE FileSet ADD COLUMN Content    TEXT    DEFAULT '';
+
+INSERT INTO Events (EventsCode, EventsType, EventsTime, EventsDaemon, EventsSource, EventsRef, EventsText) VALUES
+  ('DU0001', 'catalog_update', strftime('%Y-%m-%d %H-%M-%S','now'), '*SHELL*', 'update_bacula_tables', 'pid$$', 'Catalog schema was updated to 1026');
+UPDATE Version SET VersionId=1026;
+commit;
+END-OF-DATA
+    then
+	echo "Update of Bacula SQLite3 tables 1025 to 1026 succeeded."
+	DBVERSION=1026
+    else
+	echo "Update of Bacula SQLite3 tables 1025 to 1026 failed."
 	exit 1
     fi
 fi
