@@ -3303,6 +3303,16 @@
 					},
 					{
 						"$ref": "#/components/parameters/Offset"
+					},
+					{
+						"name": "name",
+						"in": "query",
+						"required": false,
+						"description": "Storage name",
+						"schema": {
+							"type": "string",
+							"pattern": "[a-zA-Z0-9:.-_ ]+"
+						}
 					}
 				]
 			}

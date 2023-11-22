@@ -34,19 +34,36 @@ class Storages extends BaculumAPIServer {
 
 	public function get() {
 		$misc = $this->getModule('misc');
+		$storage = $this->Request->contains('name') && $misc->isValidName($this->Request['name']) ? $this->Request['name'] : '';
 		$limit = $this->Request->contains('limit') ? intval($this->Request['limit']) : null;
 		$offset = $this->Request->contains('offset') && $misc->isValidInteger($this->Request['offset']) ? (int)$this->Request['offset'] : null;
 		$storages = $this->getModule('storage')->getStorages();
 		$result = $this->getModule('bconsole')->bconsoleCommand(
 			$this->director,
-			array('.storage')
+			['.storage'],
+			null,
+			true
 		);
 		if ($result->exitcode === 0) {
-			array_shift($result->output);
-			$storages_output = array();
+			$storages_output = [];
+
+			if (!empty($storage)) {
+				if (in_array($storage, $result->output)) {
+					$storages_output = [$storage];
+				} else {
+					// storage name provided but not found in the configuration
+					$this->output = StorageError::MSG_ERROR_STORAGE_DOES_NOT_EXISTS;
+					$this->error = StorageError::ERROR_STORAGE_DOES_NOT_EXISTS;
+					return;
+				}
+			} else {
+				$storages_output = $result->output;
+			}
+
+			$sds = [];
 			foreach($storages as $storage) {
-				if(in_array($storage->name, $result->output)) {
-					$storages_output[] = $storage;
+				if(in_array($storage->name, $storages_output)) {
+					$sds[] = $storage;
 				}
 			}
 			if (!is_int($offset) || $offset < 0) {
@@ -59,8 +76,8 @@ class Storages extends BaculumAPIServer {
 			 * Slice needs to be done here instead in the db because in the catalog can be storages
 			 * that do not longer exist in the configuration.
 			 */
-			$storages_output = array_slice($storages_output, $offset, $limit);
-			$this->output = $storages_output;
+			$sds = array_slice($sds, $offset, $limit);
+			$this->output = $sds;
 			$this->error = StorageError::ERROR_NO_ERRORS;
 		} else {
 			$this->output = $result->output;
