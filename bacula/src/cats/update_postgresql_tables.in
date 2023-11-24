@@ -219,12 +219,12 @@ EOF
 	exit 1
     fi
 
-    echo "Loading the File table from $PWD/file.$$.data..."
+    echo "Loading the File table from $PWD/file1017.data..."
     # we do everything in the same commit to avoid creating WALs on this operation
     cat file1017.data | $COMP -d | psql --set ON_ERROR_STOP=1 -d ${db_name} $* -c "BEGIN; TRUNCATE File; COPY File FROM STDIN; set maintenance_work_mem='2000MB'; CREATE INDEX file_jpfid_idx on File (JobId, PathId, Filename text_pattern_ops); ALTER TABLE ONLY File ADD CONSTRAINT file_pkey PRIMARY KEY (FileId); COMMIT;"
     
     if [ $? -ne 0 ]; then
-	echo "Inserting File data from file.$$.data failed."
+	echo "Inserting File data from file1017.data failed."
 	exit 1
     fi
 
@@ -318,12 +318,12 @@ EOF
 	exit 1
     fi
 
-    echo "Loading the File table from $PWD/file.$$.data..."
+    echo "Loading the File table from $PWD/file1016.data..."
     # we do everything in the same commit to avoid creating WALs on this operation
     cat file1016.data | $COMP -d | psql --set ON_ERROR_STOP=1 -d ${db_name} $* -c "BEGIN; TRUNCATE File; COPY File FROM STDIN; set maintenance_work_mem='2000MB'; CREATE INDEX file_jpfid_idx on File (JobId, PathId, Filename text_pattern_ops); ALTER TABLE ONLY File ADD CONSTRAINT file_pkey PRIMARY KEY (FileId); COMMIT;"
     
     if [ $? -ne 0 ]; then
-	echo "Inserting File data from file.$$.data failed."
+	echo "Inserting File data from file1016.data failed."
 	exit 1
     fi
 
