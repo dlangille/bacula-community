@@ -186,7 +186,7 @@ if [ "$DBVERSION" -eq 15 -o "$DBVERSION" -eq 16 ]; then
     echo " doesn't have write permission on the current directory,"
     echo " or if the system doesn't have enough space to store a"
     echo " compressed export of the File table"
-    psql --set ON_ERROR_STOP=1 -d ${db_name} $* -c "set work_mem='$WORKMEM';"'set enable_mergejoin to off ; set enable_hashjoin to off; copy (SELECT FileId, FileIndex, JobId, PathId, Filename.Name, DeltaSeq, MarkId, LStat, Md5 FROM File JOIN Filename USING (FilenameId)) TO STDOUT' | $COMP -1 -c > file1017.data
+    psql -q --set ON_ERROR_STOP=1 -d ${db_name} $* -c "set work_mem='$WORKMEM';"'set enable_mergejoin to off ; set enable_hashjoin to off; copy (SELECT FileId, FileIndex, JobId, PathId, Filename.Name, DeltaSeq, MarkId, LStat, Md5 FROM File JOIN Filename USING (FilenameId)) TO STDOUT' | $COMP -1 -c > file1017.data
     
     if [ $? -ne 0 ]; then
 	echo "Error while dumping file table to $PWD/file1017.data"
@@ -285,7 +285,7 @@ if [ "$STOP1015" = "" -a "$DBVERSION" -eq 1015 ]; then
     echo " doesn't have write permission on the current directory,"
     echo " or if the system doesn't have enough space to store a"
     echo " compressed export of the File table"
-    psql --set ON_ERROR_STOP=1 -d ${db_name} $* -c "set work_mem='$WORKMEM';"'set enable_mergejoin to off ; set enable_hashjoin to off; copy (SELECT FileId, FileIndex, JobId, PathId, Filename.Name, DeltaSeq, MarkId, LStat, Md5 FROM File JOIN Filename USING (FilenameId)) TO STDOUT' | $COMP -1 -c > file1016.data
+    psql -q --set ON_ERROR_STOP=1 -d ${db_name} $* -c "set work_mem='$WORKMEM';"'set enable_mergejoin to off ; set enable_hashjoin to off; copy (SELECT FileId, FileIndex, JobId, PathId, Filename.Name, DeltaSeq, MarkId, LStat, Md5 FROM File JOIN Filename USING (FilenameId)) TO STDOUT' | $COMP -1 -c > file1016.data
     
     if [ $? -ne 0 ]; then
 	echo "Error while dumping file table to $PWD/file1016.data"
